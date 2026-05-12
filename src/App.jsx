@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import AttendanceScreen from './pages/Employee/AttendanceScreen';
 import CommandCenter from './pages/SuperAdmin/CommandCenter';
@@ -252,7 +252,7 @@ function App() {
   }, [isAuthenticated]);
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AppRoutes
         isAuthenticated={isAuthenticated}
         userRole={userRole}
@@ -261,7 +261,7 @@ function App() {
         handleImpersonate={handleImpersonate}
         handleGodModeReturn={handleGodModeReturn}
       />
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
