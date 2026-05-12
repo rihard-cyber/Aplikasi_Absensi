@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import AttendanceScreen from './pages/Employee/AttendanceScreen';
 import CommandCenter from './pages/SuperAdmin/CommandCenter';
 import TenantDashboard from './pages/TenantAdmin/TenantDashboard';
 import AuthPortal from './pages/Auth/AuthPortal';
+import SubAdminDashboard from './pages/SubAdmin/SubAdminDashboard';
 
 // Komponen Pembungkus Transisi Halaman (Efek Blur & Scale yang mulus)
 const PageTransition = ({ children }) => (
   <motion.div
-    initial={{ opacity: 0, scale: 0.98, filter: 'blur(5px)' }}
-    animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-    exit={{ opacity: 0, scale: 1.02, filter: 'blur(5px)' }}
+    initial={{ opacity: 0, scale: 0.98 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 1.02 }}
     transition={{ duration: 0.4, ease: "easeInOut" }}
     className="w-full min-h-screen"
   >
@@ -36,46 +37,182 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
     navigate('/superadmin');
   };
 
+  // Back-button Anti-Exit Logic
+  const [backCount, setBackCount] = useState(0);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const backTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    const handleBackButton = (e) => {
+      if (location.pathname === '/' || location.pathname === '/login') {
+        e.preventDefault();
+        window.history.pushState(null, null, window.location.pathname);
+        
+        setBackCount(prev => prev + 1);
+        if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
+        backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
+
+        if (backCount >= 2) {
+          setShowExitModal(true);
+          setBackCount(0);
+        }
+      }
+    };
+
+    window.history.pushState(null, null, window.location.pathname);
+    window.addEventListener('popstate', handleBackButton);
+    return () => window.removeEventListener('popstate', handleBackButton);
+  }, [location.pathname, backCount]);
+
+  const handleCycleRole = () => {
+    if (sessionStorage.getItem('god_key') !== 'DEWA-999') return;
+    
+    const roles = ['SUPER_ADMIN', 'TENANT_ADMIN', 'SUB_ADMIN', 'EMPLOYEE'];
+    const currentIdx = roles.indexOf(userRole);
+    const nextRole = roles[(currentIdx + 1) % roles.length];
+    
+    handleLogin(nextRole);
+    if (nextRole === 'SUPER_ADMIN') navigate('/superadmin');
+    else if (nextRole === 'TENANT_ADMIN') navigate('/tenantadmin');
+    else if (nextRole === 'SUB_ADMIN') navigate('/subadmin');
+    else if (nextRole === 'EMPLOYEE') navigate('/');
+    
+    if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
+  };
+
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        {/* Unified Triple-Gate Portal */}
-        <Route
-          path="/login"
-          element={!isAuthenticated ? <PageTransition><AuthPortal onLogin={handleLogin} /></PageTransition> : <Navigate to="/" replace />}
-        />
+    <>
+      {/* GOD MODE INDICATOR */}
+      {sessionStorage.getItem('god_key') === 'DEWA-999' && (
+        <div 
+          onDoubleClick={handleCycleRole}
+          className="fixed top-2 left-1/2 -translate-x-1/2 z-[9999] px-4 py-1 bg-[var(--danger)] text-white text-[10px] font-bold rounded-full shadow-[0_0_15px_rgba(255,0,85,0.5)] border border-white/20 animate-pulse cursor-pointer hover:bg-red-600 transition-colors"
+          title="Klik 2x untuk Pindah Dasbor"
+        >
+          GOD MODE ACTIVE (KLIK 2X PINDAH DASBOR)
+        </div>
+      )}
 
-        {/* Employee Route */}
-        <Route
-          path="/"
-          element={isAuthenticated && userRole === 'EMPLOYEE' ? <PageTransition><AttendanceScreen onGodModeReturn={handleGodModeReturnWithNav} isImpersonating={originalRole === 'SUPER_ADMIN'} /></PageTransition> : <Navigate to="/login" replace />}
-        />
+      {/* EXIT CONFIRMATION MODAL */}
+      <AnimatePresence>
+        {showExitModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-md p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              className="w-full max-w-sm glass-panel p-8 text-center border border-white/10"
+            >
+              <h3 className="text-xl font-serif font-bold text-white mb-2">Yakin ingin keluar?</h3>
+              <p className="text-sm text-gray-400 mb-8">Anda akan keluar dari aplikasi RichardMeha SI PRESENSI.</p>
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => window.close() || (window.location.href = 'about:blank')}
+                  className="w-full py-4 rounded-xl bg-[var(--danger)] text-white font-bold uppercase tracking-widest text-xs"
+                >
+                  Ya, Keluar Aplikasi
+                </button>
+                <button 
+                  onClick={() => setShowExitModal(false)}
+                  className="w-full py-4 rounded-xl bg-white/5 text-gray-400 font-bold uppercase tracking-widest text-xs border border-white/5"
+                >
+                  Tidak, Tetap di Sini
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        {/* Super Admin Route */}
-        <Route
-          path="/superadmin"
-          element={isAuthenticated && userRole === 'SUPER_ADMIN' ? <PageTransition><CommandCenter onImpersonate={handleImpersonateWithNav} /></PageTransition> : <Navigate to="/login" replace />}
-        />
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          {/* Unified Triple-Gate Portal */}
+          <Route
+            path="/login"
+            element={!isAuthenticated 
+              ? <PageTransition><AuthPortal onLogin={handleLogin} /></PageTransition> 
+              : <Navigate to={userRole === 'SUPER_ADMIN' ? '/superadmin' : userRole === 'TENANT_ADMIN' ? '/tenantadmin' : userRole === 'SUB_ADMIN' ? '/subadmin' : '/'} replace />
+            }
+          />
 
-        {/* Tenant Admin Route */}
-        <Route
-          path="/tenantadmin"
-          element={isAuthenticated && userRole === 'TENANT_ADMIN' ? <PageTransition><TenantDashboard onGodModeReturn={handleGodModeReturnWithNav} isImpersonating={originalRole === 'SUPER_ADMIN'} /></PageTransition> : <Navigate to="/login" replace />}
-        />
+          {/* Employee / Attendance Route (all roles bisa absen) */}
+          <Route
+            path="/"
+            element={
+              isAuthenticated && (userRole === 'EMPLOYEE' || userRole === 'TENANT_ADMIN' || userRole === 'SUB_ADMIN')
+                ? <PageTransition><AttendanceScreen onGodModeReturn={handleGodModeReturnWithNav} isImpersonating={originalRole === 'SUPER_ADMIN'} onCycleRole={handleCycleRole} /></PageTransition>
+                : isAuthenticated && userRole === 'SUPER_ADMIN' ? <Navigate to="/superadmin" replace />
+                : <Navigate to="/login" replace />
+            }
+          />
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </AnimatePresence>
+          {/* Super Admin Route */}
+          <Route
+            path="/superadmin"
+            element={
+              isAuthenticated && userRole === 'SUPER_ADMIN' 
+                ? <PageTransition><CommandCenter onImpersonate={handleImpersonateWithNav} onCycleRole={handleCycleRole} /></PageTransition>
+                : isAuthenticated ? <Navigate to="/" replace />
+                : <Navigate to="/login" replace />
+            }
+          />
+
+          {/* Tenant Admin Route */}
+          <Route
+            path="/tenantadmin"
+            element={
+              isAuthenticated && userRole === 'TENANT_ADMIN' 
+                ? <PageTransition><TenantDashboard onGodModeReturn={handleGodModeReturnWithNav} isImpersonating={originalRole === 'SUPER_ADMIN'} onCycleRole={handleCycleRole} /></PageTransition>
+                : isAuthenticated ? <Navigate to="/" replace />
+                : <Navigate to="/login" replace />
+            }
+          />
+
+          {/* Sub Admin / Otoritas Tim Route */}
+          <Route
+            path="/subadmin"
+            element={
+              isAuthenticated && (userRole === 'SUB_ADMIN' || userRole === 'TENANT_ADMIN' || userRole === 'SUPER_ADMIN')
+                ? <PageTransition><SubAdminDashboard onCycleRole={handleCycleRole} /></PageTransition>
+                : isAuthenticated ? <Navigate to="/" replace />
+                : <Navigate to="/login" replace />
+            }
+          />
+
+          <Route path="*" element={isAuthenticated ? <Navigate to="/" replace /> : <Navigate to="/login" replace />} />
+        </Routes>
+      </AnimatePresence>
+    </>
   );
 };
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState(null); // 'SUPER_ADMIN', 'TENANT_ADMIN', 'EMPLOYEE'
-  const [originalRole, setOriginalRole] = useState(null); // For God Mode impersonation
+  // PERSISTENCE LOGIC: Load initial state from localStorage
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('is_authenticated') === 'true';
+  });
+  const [userRole, setUserRole] = useState(() => {
+    const stored = localStorage.getItem('user_role');
+    return stored ? stored.toUpperCase() : null;
+  });
+  const [originalRole, setOriginalRole] = useState(() => {
+    const stored = localStorage.getItem('original_role');
+    return stored ? stored.toUpperCase() : null;
+  });
+
+  // Sync state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('is_authenticated', isAuthenticated);
+    if (userRole) localStorage.setItem('user_role', userRole);
+    else localStorage.removeItem('user_role');
+    
+    if (originalRole) localStorage.setItem('original_role', originalRole);
+    else localStorage.removeItem('original_role');
+  }, [isAuthenticated, userRole, originalRole]);
 
   const handleLogin = (role) => {
-    setUserRole(role);
+    setUserRole(role?.toUpperCase());
     setIsAuthenticated(true);
     setOriginalRole(null);
   };
@@ -83,7 +220,7 @@ function App() {
   const handleImpersonate = (role) => {
     if (userRole === 'SUPER_ADMIN') {
       setOriginalRole('SUPER_ADMIN');
-      setUserRole(role);
+      setUserRole(role?.toUpperCase());
     }
   };
 
@@ -98,7 +235,21 @@ function App() {
     setIsAuthenticated(false);
     setUserRole(null);
     setOriginalRole(null);
+    sessionStorage.removeItem('god_key');
+    sessionStorage.removeItem('operational_access');
+    localStorage.clear();
   };
+
+  // Session Heartbeat
+  useEffect(() => {
+    const heartbeat = setInterval(() => {
+      if (isAuthenticated) {
+        console.log("Session Heartbeat: Active");
+        // Re-validate session with supabase if needed
+      }
+    }, 60000); // Every 1 minute
+    return () => clearInterval(heartbeat);
+  }, [isAuthenticated]);
 
   return (
     <BrowserRouter>

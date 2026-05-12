@@ -1,3 +1,7 @@
 /supabase_schema.sql
 node_modules
 .env
+dist/
+.vite/
+scratch/
+*.csv

@@ -59,13 +59,17 @@ h6 {
 /* Glassmorphism 2.0 Utilities */
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.37),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   position: relative;
-  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Animated Bokeh Blobs for Glass Panels */
@@ -99,6 +103,15 @@ h6 {
   100% {
     background-position: 0% 50%;
   }
+}
+
+/* Marquee Animation */
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+.animate-marquee {
+  animation: marquee 15s linear infinite;
 }
 
 .running-lights-border {
@@ -228,4 +241,20 @@ button {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 201, 255, 0.6);
   box-shadow: 0 0 6px rgba(0, 201, 255, 0.5);
+}
+
+/* Neon Pulse Animation for Syncing */
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--aurora-3), 0 0 10px var(--aurora-3);
+    border-color: var(--aurora-3);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--aurora-3), 0 0 40px var(--aurora-3);
+    border-color: #fff;
+  }
+}
+
+.neon-sync {
+  animation: neon-pulse 1.5s infinite;
 }

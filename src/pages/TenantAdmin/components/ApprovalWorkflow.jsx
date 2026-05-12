@@ -1,12 +1,70 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, ArrowDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, ArrowDown, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '../../../utils/supabaseClient';
 
 const ApprovalWorkflow = () => {
-  const [stages, setStages] = useState([
-    { id: 1, role: 'Supervisor', requirement: 'Wajib' },
-    { id: 2, role: 'HR Manager', requirement: 'Wajib' }
-  ]);
+  const [stages, setStages] = useState([]);
+  const [tenantId, setTenantId] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchWorkflows();
+  }, []);
+
+  const fetchWorkflows = async () => {
+    setIsLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).single();
+      if (!profile?.tenant_id) return;
+      setTenantId(profile.tenant_id);
+
+      const { data, error } = await supabase.from('approval_workflows').select('*').eq('tenant_id', profile.tenant_id).order('stage_number', { ascending: true });
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setStages(data.map(d => ({ id: d.id, role: d.role, requirement: d.is_required ? 'Wajib' : 'Opsional (Hanya Info)' })));
+      } else {
+        setStages([
+          { id: Date.now(), role: 'Supervisor', requirement: 'Wajib' },
+          { id: Date.now() + 1, role: 'HR Manager', requirement: 'Wajib' }
+        ]);
+      }
+    } catch (e) {
+      console.error("Gagal menarik data alur persetujuan", e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!tenantId) return;
+    setIsSaving(true);
+    try {
+      // Simplest way to sync an ordered array: delete all and insert new
+      await supabase.from('approval_workflows').delete().eq('tenant_id', tenantId);
+      
+      if (stages.length > 0) {
+        const payload = stages.map((s, index) => ({
+          tenant_id: tenantId,
+          stage_number: index + 1,
+          role: s.role,
+          is_required: s.requirement === 'Wajib'
+        }));
+        const { error } = await supabase.from('approval_workflows').insert(payload);
+        if (error) throw error;
+      }
+      
+      alert("Alur persetujuan berhasil disimpan!");
+    } catch (e) {
+      alert("Gagal menyimpan alur: " + e.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const addStage = () => {
     setStages([...stages, { id: Date.now(), role: 'Pilih Peran', requirement: 'Wajib' }]);
@@ -16,11 +74,24 @@ const ApprovalWorkflow = () => {
     setStages(stages.filter(s => s.id !== id));
   };
 
+  const handleRoleChange = (id, newRole) => {
+    setStages(stages.map(s => s.id === id ? { ...s, role: newRole } : s));
+  };
+
+  const handleReqChange = (id, newReq) => {
+    setStages(stages.map(s => s.id === id ? { ...s, requirement: newReq } : s));
+  };
+
   return (
     <div className="glass-panel p-8">
-      <div className="border-b border-white/10 pb-6 mb-8">
-        <h2 className="text-2xl font-serif font-bold text-white tracking-wide">Alur Kerja Multi-Persetujuan</h2>
-        <p className="text-sm text-gray-400 mt-2 font-sans tracking-wide">Konfigurasikan hierarki persetujuan bertingkat untuk permintaan cuti dan lembur.</p>
+      <div className="border-b border-white/10 pb-6 mb-8 flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-serif font-bold text-white tracking-wide">Alur Kerja Multi-Persetujuan</h2>
+          <p className="text-sm text-gray-400 mt-2 font-sans tracking-wide">Konfigurasikan hierarki persetujuan bertingkat untuk permintaan cuti dan lembur.</p>
+        </div>
+        <button onClick={handleSave} disabled={isSaving || isLoading} className="bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-2)] hover:from-[var(--aurora-2)] hover:to-[var(--aurora-3)] text-white px-6 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-all shadow-[0_0_20px_rgba(142,45,226,0.4)] hover:shadow-[0_0_30px_rgba(0,201,255,0.6)] disabled:opacity-50">
+          <Save size={18} /> {isSaving ? 'Menyimpan...' : 'Simpan Alur'}
+        </button>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -44,18 +115,19 @@ const ApprovalWorkflow = () => {
                 </div>
                 
                 <div className="flex-1 z-10">
-                  <select className="w-full bg-[#0B0C10] border border-white/10 rounded-lg p-3 text-white light-bloom-input transition-all outline-none appearance-none cursor-pointer">
-                    <option value="Supervisor">{stage.role}</option>
+                  <select value={stage.role} onChange={e => handleRoleChange(stage.id, e.target.value)} className="w-full bg-[#0B0C10] border border-white/10 rounded-lg p-3 text-white light-bloom-input transition-all outline-none appearance-none cursor-pointer">
+                    <option value="Supervisor">Supervisor</option>
                     <option value="Department Head">Kepala Departemen</option>
                     <option value="HR Manager">Manajer HR</option>
                     <option value="Director">Direktur</option>
+                    <option value="Pilih Peran">Pilih Peran...</option>
                   </select>
                 </div>
                 
                 <div className="w-48 z-10">
-                  <select className="w-full bg-[#0B0C10] border border-white/10 rounded-lg p-3 text-white light-bloom-input transition-all outline-none appearance-none cursor-pointer">
-                    <option>Wajib</option>
-                    <option>Opsional (Hanya Info)</option>
+                  <select value={stage.requirement} onChange={e => handleReqChange(stage.id, e.target.value)} className="w-full bg-[#0B0C10] border border-white/10 rounded-lg p-3 text-white light-bloom-input transition-all outline-none appearance-none cursor-pointer">
+                    <option value="Wajib">Wajib</option>
+                    <option value="Opsional (Hanya Info)">Opsional (Hanya Info)</option>
                   </select>
                 </div>
                 

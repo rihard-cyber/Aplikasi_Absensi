@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from
 import { Fingerprint, Smartphone, AlertCircle, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DeviceUtil } from '../../utils/deviceUtil';
+import { supabase } from '../../utils/supabaseClient';
 
 const AuthPortal = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ const AuthPortal = ({ onLogin }) => {
   // Interactive Particles State & Generator
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  
+
   // Optional: add spring physics to mouse movement for smoother parallax
   const smoothMouseX = useSpring(mouseX, { stiffness: 50, damping: 20 });
   const smoothMouseY = useSpring(mouseY, { stiffness: 50, damping: 20 });
@@ -24,9 +25,9 @@ const AuthPortal = ({ onLogin }) => {
   const [particles] = useState(() =>
     Array.from({ length: 25 }).map(() => ({
       id: Math.random(),
-      size: Math.random() * 3 + 1, 
-      x: Math.random() * 100, 
-      y: Math.random() * 100, 
+      size: Math.random() * 3 + 1,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
       duration: Math.random() * 15 + 10,
       delay: Math.random() * 5,
     }))
@@ -40,17 +41,53 @@ const AuthPortal = ({ onLogin }) => {
   };
 
   // Form Data
-  const [formData, setFormData] = useState({ identifier: '', password: '', name: '', email: '', otp: '' });
+  const [formData, setFormData] = useState({ identifier: '', password: '', name: '', email: '', nip: '', regPassword: '', otp: '', activationCode: '' });
+  const [isTenantReg, setIsTenantReg] = useState(false);
   const [deviceError, setDeviceError] = useState(false);
 
   // OTP & Device Binding States
   const [isSendingOTP, setIsSendingOTP] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [otpTimeLeft, setOtpTimeLeft] = useState(0);
-  const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
+
+  const OTP_LENGTH = 8; // Ubah ke 6 jika Supabase-mu diatur menggunakan 6 digit
+  const [otpValues, setOtpValues] = useState(Array(OTP_LENGTH).fill(''));
+  const [otpError, setOtpError] = useState('');
   const otpInputRefs = useRef([]);
 
   const isLoginFormComplete = formData.identifier.length > 3 && formData.password.length > 3;
+
+  // PERSISTENT SESSION & AUTO-LOGIN ROUTING
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: userProfile } = await supabase.from('profiles').select('*').eq('auth_id', session.user.id).maybeSingle();
+
+        if (userProfile) {
+          const role = userProfile?.role?.toUpperCase();
+          if (role === 'SUPER_ADMIN') {
+            sessionStorage.setItem('god_key', 'DEWA-999');
+            onLogin('SUPER_ADMIN');
+            navigate('/superadmin');
+          } else if (role === 'TENANT_ADMIN') {
+            sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
+            onLogin('TENANT_ADMIN');
+            navigate('/tenantadmin');
+          } else if (role === 'SUB_ADMIN') {
+            sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
+            onLogin('SUB_ADMIN');
+            navigate('/subadmin');
+          } else {
+            sessionStorage.setItem('operational_access', userProfile?.operational_access ? 'MEMILIKI AKSES' : 'TIDAK');
+            onLogin('EMPLOYEE');
+            navigate('/');
+          }
+        }
+      }
+    };
+    checkSession();
+  }, [navigate, onLogin]);
 
   // Timer Effect
   useEffect(() => {
@@ -67,42 +104,200 @@ const AuthPortal = ({ onLogin }) => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handleSendOTP = () => {
+  const handleSendOTP = async () => {
+    // ── STEP 0: Validasi form lokal (sebelum sentuh database) ──────────────
+    if (!formData.name || !formData.email || !formData.regPassword) {
+      alert('Mohon lengkapi semua data pendaftaran!'); return;
+    }
+    if (!isTenantReg && !formData.nip) {
+      alert('NIP wajib diisi untuk karyawan!'); return;
+    }
+    if (!formData.activationCode) {
+      alert('Kode Aktivasi wajib diisi!'); return;
+    }
+    if (formData.regPassword.length < 6) {
+      alert('Kata sandi minimal 6 karakter!'); return;
+    }
+
     setIsSendingOTP(true);
-    // Simulate Backend sending email
-    setTimeout(() => {
+    let authUserId = null; // Simpan ID untuk rollback jika perlu
+
+    try {
+      // ── STEP 1: Validasi Kode Aktivasi ke Database SEBELUM membuat akun ──
+      // Jika kode salah, proses berhenti di sini. Email TIDAK akan terdaftar.
+      let tenant;
+      if (isTenantReg) {
+        // Coba cek admin_code dulu (kolom baru)
+        const { data: tenantByAdmin } = await supabase
+          .from('tenants').select('id, name')
+          .eq('admin_code', formData.activationCode)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (tenantByAdmin) {
+          tenant = tenantByAdmin;
+        } else {
+          // Fallback: cek activation_code dengan prefix ADM- (kompatibilitas)
+          const { data: tenantByCode } = await supabase
+            .from('tenants').select('id, name')
+            .eq('activation_code', formData.activationCode)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (tenantByCode) {
+            tenant = tenantByCode;
+          } else {
+            throw new Error('Kode Lisensi Tenant tidak valid atau sudah pernah digunakan.\nGunakan kode yang diberikan oleh Super Admin.');
+          }
+        }
+      } else {
+        const { data: tenantData, error: tErr } = await supabase
+          .from('tenants').select('id, name')
+          .eq('activation_code', formData.activationCode)
+          .eq('is_active', true)
+          .maybeSingle();
+        if (tErr || !tenantData) {
+          throw new Error('Kode Aktivasi Karyawan tidak valid.\nGunakan kode dengan prefix "SI-" yang diberikan oleh Admin perusahaan Anda.');
+        }
+        tenant = tenantData;
+      }
+      const boundTenantId = tenant.id;
+
+      // ── STEP 2: Ambil Device ID ────────────────────────────────────────────
+      const deviceIdInfo = await DeviceUtil.getId();
+
+      // ── STEP 3: Baru sekarang daftarkan ke Supabase Auth ──────────────────
+      // Kode sudah terbukti valid. Jika step ini gagal (email sudah ada, dll),
+      // tidak ada data profil yang tersimpan.
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.regPassword,
+        options: { data: { full_name: formData.name, nip: formData.nip } }
+      });
+      if (signUpError) throw signUpError;
+
+      // Simpan ID untuk keperluan rollback jika step berikutnya gagal
+      authUserId = data.user?.id;
+
+      // ── STEP 4: Simpan profil ke tabel profiles ────────────────────────────
+      if (data.session || data.user) {
+        const { error: insertError } = await supabase.from('profiles').insert({
+          auth_id: authUserId,
+          tenant_id: boundTenantId,
+          full_name: formData.name,
+          nip: isTenantReg ? 'ADMIN-' + Math.floor(1000 + Math.random() * 9000) : formData.nip,
+          email: formData.email,
+          role: isTenantReg ? 'TENANT_ADMIN' : 'EMPLOYEE',
+          device_id: deviceIdInfo.identifier,
+          attendance_access: true,
+          operational_access: isTenantReg
+        });
+
+        if (insertError) {
+          // ── ROLLBACK: Profil gagal dibuat, hapus sesi aktif agar email bisa dicoba lagi
+          await supabase.auth.signOut();
+          throw new Error(`Gagal menyimpan profil: ${insertError.message}`);
+        }
+
+        // ── STEP 5: Tandai kode sudah terpakai (hapus dari tenant) ────────────
+        if (isTenantReg) {
+          await supabase.from('tenants').update({ admin_code: null }).eq('id', boundTenantId);
+        }
+
+        sessionStorage.setItem('bound_device_id', deviceIdInfo.identifier);
+        alert(`✅ Pendaftaran berhasil!\nSelamat datang di ${tenant.name}.\nSilakan masuk menggunakan email dan kata sandi Anda.`);
+        setFormData(prev => ({ ...prev, identifier: formData.email, password: formData.regPassword }));
+        setMode('login');
+
+      } else {
+        // Mode OTP email (jika Supabase belum auto-confirm)
+        setOtpTimeLeft(300);
+        setMode('verify');
+      }
+
+    } catch (error) {
+      console.error('Pendaftaran gagal:', error);
+      // Pesan error yang ramah pengguna
+      let friendlyMsg = error.message;
+      if (error.message?.includes('User already registered') || error.message?.includes('already been registered')) {
+        friendlyMsg = 'Email ini sudah terdaftar di sistem.\nSilakan gunakan email lain, atau klik "Masuk" jika sudah punya akun.';
+      } else if (error.message?.includes('Password should be')) {
+        friendlyMsg = 'Kata sandi terlalu lemah. Gunakan minimal 6 karakter.';
+      } else if (error.message?.includes('Invalid email')) {
+        friendlyMsg = 'Format email tidak valid. Periksa kembali email Anda.';
+      }
+      alert(`❌ Pendaftaran Gagal:\n${friendlyMsg}`);
+    } finally {
       setIsSendingOTP(false);
-      setOtpTimeLeft(300); // 5 minutes expiry
-      setMode('verify');
-    }, 1500);
+    }
   };
 
+
   const handleOtpChange = (index, value) => {
+    setOtpError('');
     if (!/^[0-9]*$/.test(value)) return;
     const newOtp = [...otpValues];
     newOtp[index] = value;
     setOtpValues(newOtp);
-    if (value && index < 5) otpInputRefs.current[index + 1].focus();
+    if (value && index < OTP_LENGTH - 1) otpInputRefs.current[index + 1].focus();
   };
 
   const handleVerifyAndBind = async () => {
     setIsVerifying(true);
+    setOtpError('');
     try {
-      // Simulate verifying OTP against DB
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const otpCode = otpValues.join('');
 
-      // Get unique hardware ID via DeviceUtil (safe on web + native)
+      // 1. Verifikasi OTP dari Email lewat Supabase
+      const { data: authData, error: verifyError } = await supabase.auth.verifyOtp({
+        email: formData.email,
+        token: otpCode,
+        type: 'signup'
+      });
+
+      if (verifyError) throw verifyError;
+
+      // 2. Dapatkan Hardware ID
       const deviceIdInfo = await DeviceUtil.getId();
-      console.log('Binding Device:', deviceIdInfo.identifier);
 
-      // Save device ID binding to session (Simulating DB save)
+      // 2.1 Khusus Tenant Admin: Validasi Kode Aktivasi
+      let boundTenantId = null;
+      if (isTenantReg) {
+        const { data: tenant, error: tErr } = await supabase.from('tenants').select('id').eq('activation_code', formData.activationCode).eq('is_active', true).maybeSingle();
+        if (tErr || !tenant) throw new Error("Kode Aktivasi tidak valid atau sudah tidak aktif!");
+        boundTenantId = tenant.id;
+      }
+
+      // 3. Simpan Profile lengkap ke Database Public `users`
+      if (authData.user) {
+        const { error: insertError } = await supabase.from('profiles').insert({
+          auth_id: authData.user.id,
+          tenant_id: boundTenantId, // Nullable jika karyawan biasa (akan diisi admin nanti) atau langsung terisi jika Tenant Admin
+          full_name: formData.name,
+          nip: isTenantReg ? 'ADMIN-' + Math.floor(1000 + Math.random() * 9000) : formData.nip,
+          email: formData.email,
+          role: isTenantReg ? 'TENANT_ADMIN' : 'EMPLOYEE',
+          device_id: deviceIdInfo.identifier,
+          attendance_access: true,
+          operational_access: isTenantReg // Tenant Admin punya akses operasional otomatis
+        });
+        if (insertError) throw insertError;
+
+        // Clear activation code if successful
+        if (isTenantReg) {
+           await supabase.from('tenants').update({ activation_code: null }).eq('id', boundTenantId);
+        }
+      }
+
       sessionStorage.setItem('bound_device_id', deviceIdInfo.identifier);
 
-      setIsVerifying(false);
-      setMode('login'); // Return to login to complete flow
-      alert('Perangkat berhasil diikat. Silakan masuk.');
+      alert('Pendaftaran berhasil! Silakan masuk dengan email dan kata sandi Anda.');
+      setFormData(prev => ({ ...prev, identifier: formData.email, password: formData.regPassword }));
+      setMode('login');
     } catch (e) {
       console.error("Binding failed", e);
+      setOtpError(e.message.includes('Token has expired') || e.message.includes('invalid') ? 'Kode verifikasi salah atau sudah kadaluarsa.' : `Verifikasi gagal: ${e.message}`);
+    } finally {
       setIsVerifying(false);
     }
   };
@@ -133,19 +328,67 @@ const AuthPortal = ({ onLogin }) => {
     }
   };
 
-  // Secret Owner Trigger (Double Click Logo)
+  // Secret Owner/God Mode Trigger (Logo Clicks)
   const handleLogoClick = () => {
     setSecretClickCount(prev => prev + 1);
-    if (secretClickCount === 1) { // 2 clicks (0 -> 1 -> 2)
+
+    // Haptic Feedback for Luxury Feel
+    if (window.navigator?.vibrate) window.navigator.vibrate(50);
+
+    if (secretClickCount + 1 >= 3) { // 3 clicks
       setMode('owner');
       setSecretClickCount(0);
+      alert('DEWA-999 Master Channel Activated');
     }
     setTimeout(() => setSecretClickCount(0), 1000); // Reset if too slow
   };
 
+  const handleForgotPassword = async () => {
+    if (!formData.email) {
+      alert('Silakan masukkan email Anda terlebih dahulu.');
+      return;
+    }
+    setIsSendingOTP(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      alert(`✅ Instruksi reset kata sandi telah dikirim ke ${formData.email}.\nSilakan periksa kotak masuk atau folder spam Anda.`);
+      setMode('login');
+    } catch (error) {
+      console.error('Reset password failed:', error);
+      alert(`❌ Gagal: ${error.message}`);
+    } finally {
+      setIsSendingOTP(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error('Google login failed:', error);
+      alert(`❌ Google Login Gagal: ${error.message}`);
+    }
+  };
+
   // Login Execution Logic
   const executeLogin = async () => {
-    // 0. Master Bypass Code Check
+    // 0. Master Bypass Code Check (DEWA-999)
+    if (formData.password === 'DEWA-999') {
+      sessionStorage.setItem('god_key', 'DEWA-999');
+      onLogin('SUPER_ADMIN'); 
+      navigate('/superadmin');
+      return;
+    }
+
     if (formData.password.startsWith('BYPASS-')) {
       if (formData.identifier.includes('admin')) {
         onLogin('TENANT_ADMIN');
@@ -157,36 +400,79 @@ const AuthPortal = ({ onLogin }) => {
       return; // Skip device checks completely
     }
 
-    // 1. Check Device Binding (Rule 1 Account 1 Device)
-    if (formData.identifier === 'karyawan') {
-      try {
-        const currentDevice = await DeviceUtil.getId();
-        const storedDevice = sessionStorage.getItem('bound_device_id');
+    try {
+      let loginEmail = formData.identifier;
 
-        // Mismatch or Not Bound -> Reject
-        if (!storedDevice || storedDevice !== currentDevice.identifier) {
-          if (!deviceError) setDeviceError(true);
-          return; // Stop login
+      // Jika user mengetikkan NIP (tidak ada karakter '@'), cari emailnya via RPC Supabase
+      if (!loginEmail.includes('@')) {
+        const { data: emailData, error: rpcError } = await supabase.rpc('get_email_by_nip', { p_nip: loginEmail });
+        if (rpcError || !emailData) {
+          throw new Error("ID Karyawan (NIP) tidak terdaftar di sistem.");
         }
-      } catch (e) {
-        console.warn('Device ID check failed:', e);
-        if (!deviceError) {
+        loginEmail = emailData; // Ganti identifier menjadi email aslinya secara rahasia
+      }
+
+      // 1. Authenticate with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: formData.password,
+      });
+
+      if (authError) throw authError;
+
+      // 2. Fetch User Profile & Role from Supabase Database
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('auth_id', authData.user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      if (!userProfile) throw new Error("Profil karyawan belum terbentuk. Hubungi tim HR/Admin Anda.");
+
+      // 3. Check Device Binding (Karyawan Only)
+      if (userProfile.role === 'EMPLOYEE') {
+        const currentDevice = await DeviceUtil.getId();
+
+        if (!userProfile.device_id) {
+          // Auto-bind pada login pertama
+          await supabase.from('profiles').update({ device_id: currentDevice.identifier }).eq('id', userProfile.id);
+          sessionStorage.setItem('bound_device_id', currentDevice.identifier);
+        } else if (userProfile.device_id !== currentDevice.identifier) {
+          // Tolak jika login dari hardware yang tidak dikenal
           setDeviceError(true);
+          await supabase.auth.signOut();
           return;
+        } else {
+          sessionStorage.setItem('bound_device_id', userProfile.device_id);
         }
       }
-    }
 
-    // 2. Route based on mock identifier logic
-    if (mode === 'owner') {
-      onLogin('SUPER_ADMIN');
-      navigate('/superadmin');
-    } else if (formData.identifier.includes('admin')) {
-      onLogin('TENANT_ADMIN');
-      navigate('/tenantadmin');
-    } else {
-      onLogin('EMPLOYEE');
-      navigate('/');
+      // 4. Route based on role from DB (normalized to uppercase)
+      const role = userProfile.role?.toUpperCase();
+      if (mode === 'owner' || role === 'SUPER_ADMIN') {
+        onLogin('SUPER_ADMIN');
+        navigate('/superadmin');
+      } else if (role === 'TENANT_ADMIN') {
+        sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
+        sessionStorage.setItem('attendance_access', 'YA');
+        onLogin('TENANT_ADMIN');
+        navigate('/tenantadmin');
+      } else if (role === 'SUB_ADMIN') {
+        sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
+        sessionStorage.setItem('attendance_access', 'YA');
+        onLogin('SUB_ADMIN');
+        navigate('/subadmin');
+      } else {
+        sessionStorage.setItem('attendance_access', userProfile.attendance_access ? 'YA' : 'TIDAK');
+        sessionStorage.setItem('operational_access', userProfile.operational_access ? 'MEMILIKI AKSES' : 'TIDAK');
+        onLogin('EMPLOYEE');
+        navigate('/');
+      }
+    } catch (error) {
+      console.error("Login failed:", error.message);
+      alert(`Login Gagal: Periksa kembali kredensial Anda. \n(${error.message})`);
     }
   };
 
@@ -226,11 +512,11 @@ const AuthPortal = ({ onLogin }) => {
       {/* Interactive Floating Particles Layer */}
       <div className="absolute inset-0 pointer-events-none z-0">
         {particles.map((p) => (
-          <Particle 
-            key={p.id} 
-            p={p} 
-            smoothMouseX={smoothMouseX} 
-            smoothMouseY={smoothMouseY} 
+          <Particle
+            key={p.id}
+            p={p}
+            smoothMouseX={smoothMouseX}
+            smoothMouseY={smoothMouseY}
           />
         ))}
       </div>
@@ -300,8 +586,8 @@ const AuthPortal = ({ onLogin }) => {
               <motion.div key="owner-login" variants={formVariants} initial="hidden" animate="show" className="flex flex-col items-center">
                 <motion.div variants={itemVariants} className="w-full relative mb-8">
                   <div className="relative h-14 w-full">
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       name="password"
                       value={formData.password}
                       onChange={handleInput}
@@ -312,8 +598,8 @@ const AuthPortal = ({ onLogin }) => {
                           alert('Kode Master Salah!');
                         }
                       }}
-                      placeholder=" " 
-                      className="peer w-full h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 pt-4 pb-2 text-white outline-none focus:border-[var(--danger)] transition-all" 
+                      placeholder=" "
+                      className="peer w-full h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 pt-4 pb-2 text-white outline-none focus:border-[var(--danger)] transition-all"
                     />
                     <label className="absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--danger)] peer-valid:top-1.5 peer-valid:text-xs">
                       Kode Master (Ketik DEWA-999 & Enter)
@@ -377,7 +663,7 @@ const AuthPortal = ({ onLogin }) => {
                   </motion.div>
 
                   <motion.div variants={itemVariants} className="flex justify-end">
-                    <button className="text-xs text-[var(--aurora-3)] hover:text-white transition-colors">Lupa Kata Sandi?</button>
+                    <button onClick={() => setMode('forgot-password')} className="text-xs text-[var(--aurora-3)] hover:text-white transition-colors">Lupa Kata Sandi?</button>
                   </motion.div>
 
                   {/* Submit Button with Running Lights Condition */}
@@ -393,9 +679,12 @@ const AuthPortal = ({ onLogin }) => {
                     </button>
                   </motion.div>
 
-                  {/* Google SSO Placeholder */}
+                  {/* Google SSO */}
                   <motion.div variants={itemVariants} className="mt-6 pt-6 border-t border-white/10">
-                    <button className="w-full py-3.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-3">
+                    <button 
+                      onClick={handleGoogleLogin}
+                      className="w-full py-3.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-3"
+                    >
                       <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
                       Lanjutkan dengan Google
                     </button>
@@ -410,21 +699,77 @@ const AuthPortal = ({ onLogin }) => {
               </motion.div>
             )}
 
+            {/* ---- FORGOT PASSWORD STATE ---- */}
+            {mode === 'forgot-password' && (
+              <motion.div key="forgot-password" variants={formVariants} initial="hidden" animate="show" exit={{ opacity: 0, x: -20 }}>
+                <div className="space-y-6">
+                  <motion.div variants={itemVariants} className="text-center">
+                    <h2 className="text-xl font-serif text-white mb-2">Reset Kata Sandi</h2>
+                    <p className="text-xs text-gray-400">Masukkan email Anda untuk menerima instruksi pemulihan.</p>
+                  </motion.div>
+
+                  <motion.div variants={itemVariants} className="relative h-14">
+                    <input
+                      type="email" name="email" value={formData.email} onChange={handleInput} required
+                      placeholder=" "
+                      className="peer w-full h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 pt-4 pb-2 text-white outline-none focus:border-[var(--aurora-3)] transition-all"
+                    />
+                    <label className="absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-3)] peer-valid:top-1.5 peer-valid:text-xs">
+                      Email Terdaftar
+                    </label>
+                  </motion.div>
+
+                  <motion.button
+                    variants={itemVariants}
+                    onClick={handleForgotPassword}
+                    disabled={isSendingOTP}
+                    className="w-full py-4 rounded-xl font-bold text-sm tracking-widest uppercase transition-all bg-[var(--aurora-3)] text-black hover:bg-[#00E5FF] shadow-[0_0_20px_rgba(0,201,255,0.3)] flex items-center justify-center gap-2"
+                  >
+                    {isSendingOTP ? <Loader2 size={18} className="animate-spin" /> : 'Kirim Link Reset'}
+                  </motion.button>
+
+                  <motion.div variants={itemVariants} className="text-center mt-4">
+                    <button onClick={() => setMode('login')} className="text-xs text-gray-400 hover:text-white transition-colors font-medium">Kembali ke Login</button>
+                  </motion.div>
+                </div>
+              </motion.div>
+            )}
+
             {/* ---- REGISTRATION STATE ---- */}
             {mode === 'register' && !deviceError && (
               <motion.div key="register" variants={formVariants} initial="hidden" animate="show" exit={{ opacity: 0, x: -20 }}>
                 <div className="space-y-4">
+                  <motion.div variants={itemVariants} className="flex gap-2 p-1 bg-white/5 rounded-xl border border-white/5">
+                    <button type="button" onClick={() => setIsTenantReg(false)} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${!isTenantReg ? 'bg-[var(--aurora-1)] text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}>Karyawan</button>
+                    <button type="button" onClick={() => setIsTenantReg(true)} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${isTenantReg ? 'bg-[var(--aurora-1)] text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}>Admin Perusahaan</button>
+                  </motion.div>
+
                   <motion.div variants={itemVariants} className="relative h-14">
-                    <input type="text" placeholder=" " className="peer w-full h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 pt-4 pb-2 text-white outline-none focus:border-[var(--aurora-1)] transition-all" />
+                    <input type="text" name="name" value={formData.name} onChange={handleInput} required placeholder=" " className="peer w-full h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 pt-4 pb-2 text-white outline-none focus:border-[var(--aurora-1)] transition-all" />
                     <label className="absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-1)] peer-valid:top-1.5 peer-valid:text-xs">Nama Lengkap (KTP)</label>
                   </motion.div>
+
                   <motion.div variants={itemVariants} className="relative h-14">
-                    <input type="text" placeholder=" " className="peer w-full h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 pt-4 pb-2 text-white outline-none focus:border-[var(--aurora-1)] transition-all" />
-                    <label className="absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-1)] peer-valid:top-1.5 peer-valid:text-xs">ID Karyawan</label>
+                    <input type="text" name="activationCode" value={formData.activationCode} onChange={handleInput} required placeholder=" " className={`peer w-full h-full bg-[#1A1C23] border rounded-xl px-4 pt-4 pb-2 text-white outline-none transition-all shadow-[0_0_10px_rgba(255,165,0,0.1)] ${isTenantReg ? 'border-[var(--warning)]/30 focus:border-[var(--warning)]' : 'border-[var(--aurora-3)]/30 focus:border-[var(--aurora-3)]'}`} />
+                    <label className={`absolute left-4 top-4 text-[10px] font-black uppercase tracking-widest transition-all pointer-events-none peer-focus:top-1.5 peer-focus:text-[8px] peer-valid:top-1.5 peer-valid:text-[8px] ${isTenantReg ? 'text-[var(--warning)]' : 'text-[var(--aurora-3)]'}`}>
+                      {isTenantReg ? 'Kode Lisensi Tenant (Prefix: ADM-)' : 'Kode Aktivasi Karyawan (Prefix: SI-)'}
+                    </label>
+                  </motion.div>
+
+                  {!isTenantReg && (
+                    <motion.div variants={itemVariants} className="relative h-14">
+                      <input type="text" name="nip" value={formData.nip} onChange={handleInput} required placeholder=" " className="peer w-full h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 pt-4 pb-2 text-white outline-none focus:border-[var(--aurora-1)] transition-all" />
+                      <label className="absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-1)] peer-valid:top-1.5 peer-valid:text-xs">ID Karyawan (NIP)</label>
+                    </motion.div>
+                  )}
+
+                  <motion.div variants={itemVariants} className="relative h-14">
+                    <input type="email" name="email" value={formData.email} onChange={handleInput} required placeholder=" " className="peer w-full h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 pt-4 pb-2 text-white outline-none focus:border-[var(--aurora-1)] transition-all" />
+                    <label className="absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-1)] peer-valid:top-1.5 peer-valid:text-xs">Email Aktif</label>
                   </motion.div>
                   <motion.div variants={itemVariants} className="relative h-14">
-                    <input type="email" placeholder=" " className="peer w-full h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 pt-4 pb-2 text-white outline-none focus:border-[var(--aurora-1)] transition-all" />
-                    <label className="absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-1)] peer-valid:top-1.5 peer-valid:text-xs">Email Aktif</label>
+                    <input type="password" name="regPassword" value={formData.regPassword} onChange={handleInput} required placeholder=" " className="peer w-full h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 pt-4 pb-2 text-white outline-none focus:border-[var(--aurora-1)] transition-all" />
+                    <label className="absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-1)] peer-valid:top-1.5 peer-valid:text-xs">Buat Kata Sandi</label>
                   </motion.div>
 
                   <motion.button
@@ -433,7 +778,7 @@ const AuthPortal = ({ onLogin }) => {
                     disabled={isSendingOTP}
                     className="w-full mt-4 py-4 rounded-xl font-bold text-sm tracking-widest uppercase transition-all bg-[var(--aurora-1)] text-white hover:bg-[#A343F0] shadow-[0_0_20px_rgba(142,45,226,0.4)] flex items-center justify-center gap-2"
                   >
-                    {isSendingOTP ? <Loader2 size={18} className="animate-spin" /> : 'Kirim Kode Verifikasi'}
+                    {isSendingOTP ? <Loader2 size={18} className="animate-spin" /> : isTenantReg ? 'Aktivasi Admin Tenant' : 'Kirim Kode Verifikasi'}
                   </motion.button>
                 </div>
                 <motion.div variants={itemVariants} className="mt-8 text-center">
@@ -461,7 +806,7 @@ const AuthPortal = ({ onLogin }) => {
                   </motion.div>
                 )}
 
-                <motion.div variants={itemVariants} className="flex gap-3 justify-center mb-8">
+                <motion.div variants={itemVariants} className={`flex ${OTP_LENGTH > 6 ? 'gap-1.5' : 'gap-3'} justify-center mb-8`}>
                   {otpValues.map((val, i) => (
                     <input
                       key={i}
@@ -470,15 +815,26 @@ const AuthPortal = ({ onLogin }) => {
                       value={val}
                       onChange={(e) => handleOtpChange(i, e.target.value)}
                       ref={el => otpInputRefs.current[i] = el}
-                      className="w-10 h-12 text-center bg-[#1A1C23] border border-white/10 rounded-lg text-white font-bold text-lg focus:border-[var(--aurora-3)] outline-none transition-all shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]"
+                      className={`${OTP_LENGTH > 6 ? 'w-8 h-10 text-base' : 'w-10 h-12 text-lg'} text-center bg-[#1A1C23] border border-white/10 rounded-lg text-white font-bold focus:border-[var(--aurora-3)] outline-none transition-all shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]`}
                     />
                   ))}
                 </motion.div>
 
+                <AnimatePresence>
+                  {otpError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                      className="text-[var(--danger)] text-xs font-bold mb-6 text-center bg-[var(--danger)]/10 border border-[var(--danger)]/20 px-4 py-3 rounded-xl"
+                    >
+                      {otpError}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <motion.button
                   variants={itemVariants}
                   onClick={handleVerifyAndBind}
-                  disabled={isVerifying || otpTimeLeft === 0 || otpValues.join('').length < 6}
+                  disabled={isVerifying || otpTimeLeft === 0 || otpValues.join('').length < OTP_LENGTH}
                   className="w-full py-4 rounded-xl font-bold text-sm tracking-widest uppercase transition-all bg-[var(--bg-dark)] border border-white/20 text-white hover:bg-white/10 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isVerifying ? <Loader2 size={18} className="animate-spin text-[var(--aurora-3)]" /> : 'Konfirmasi & Ikat Perangkat'}

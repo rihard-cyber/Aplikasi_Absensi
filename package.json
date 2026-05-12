@@ -10,17 +10,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/app": "^6.0.3",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/device": "^6.0.0",
+    "@capacitor/geolocation": "^6.1.1",
+    "@supabase/supabase-js": "^2.43.1",
+    "framer-motion": "^11.1.9",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.379.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.23.0",
-    "framer-motion": "^11.1.9",
-    "lucide-react": "^0.379.0",
-    "@supabase/supabase-js": "^2.43.1",
-    "recharts": "^2.12.7",
-    "leaflet": "^1.9.4",
     "react-leaflet": "^4.2.1",
-    "@capacitor/core": "^6.0.0",
-    "@capacitor/device": "^6.0.0"
+    "react-router-dom": "^6.23.0",
+    "recharts": "^2.12.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.1.1",
