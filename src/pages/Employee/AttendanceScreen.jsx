@@ -11,6 +11,7 @@ import DocumentVault from './components/DocumentVault';
 import EmployeeProfile from './components/EmployeeProfile';
 import LeaveRequest from './components/LeaveRequest';
 import { supabase } from '../../utils/supabaseClient';
+import { analyzePosition, logFakeGpsAttempt } from '../../utils/antiFakeGps';
 
 // --- Extracted Clock In UI ---
 const ClockInTab = () => {
@@ -31,6 +32,7 @@ const ClockInTab = () => {
   // --- Camera State ---
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const [cameraError, setCameraError] = useState('');
 
   // Fetch project by code
   const lookupProjectByCode = async (code) => {
@@ -93,6 +95,7 @@ const ClockInTab = () => {
         }
       } catch (err) {
         console.warn("Camera access denied or unavailable", err);
+        setCameraError('Kamera tidak dapat diakses. Pastikan izin kamera sudah diberikan di Pengaturan HP.');
       }
     };
     startCamera();
@@ -129,14 +132,27 @@ const ClockInTab = () => {
       
       const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
 
-      // Anti-Fake GPS (jika plugin meng-expose property mocked di OS tertentu)
-      if (position.mocked === true) {
-        alert('⚠️ PERINGATAN: Upaya Manipulasi Lokasi (Fake GPS) Terdeteksi!');
+      // Anti-Fake GPS: Analisis multi-level
+      const gpsAnalysis = analyzePosition(position);
+      if (gpsAnalysis.isMocked) {
+        alert(`⚠️ ${gpsAnalysis.reason}\n\nAbsensi ditolak demi keamanan.`);
         setLocationState('ERROR');
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            const { data: profile } = await supabase.from('profiles')
+              .select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
+            await logFakeGpsAttempt(session.user.id, profile?.tenant_id, {
+              reason: gpsAnalysis.reason,
+              coords: position.coords,
+              flags: gpsAnalysis.flags
+            });
+          }
+        } catch {}
         return;
       }
 
-      const { latitude, longitude } = position.coords;
+      const { latitude, longitude, accuracy } = position.coords;
       const dist = calculateDistance(latitude, longitude, officeCoords.latitude, officeCoords.longitude);
 
       setDistance(Math.round(dist));
@@ -301,6 +317,16 @@ const ClockInTab = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60 opacity-60" />
           
           <canvas ref={canvasRef} className="hidden" />
+
+          {/* Camera Error Message */}
+          {cameraError && (
+            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 p-6 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-[var(--danger)]/20 flex items-center justify-center mb-3">
+                <span className="text-2xl">📷</span>
+              </div>
+              <p className="text-[11px] text-gray-300 leading-relaxed">{cameraError}</p>
+            </div>
+          )}
 
           {/* Scanning Laser Line */}
           {status === 'SCANNING' && (

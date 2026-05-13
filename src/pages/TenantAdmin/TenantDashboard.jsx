@@ -15,7 +15,7 @@ import SubAdminDashboard from '../SubAdmin/SubAdminDashboard'; // Reuse monitori
 import HRISExportWrapper from '../../components/HRISExportWrapper';
 import { supabase } from '../../utils/supabaseClient';
 
-const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole }) => {
+const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogout }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('tenant_active_tab') || 'profile');
   const [clickCount, setClickCount] = useState(0);
@@ -53,16 +53,10 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole }) => {
     setTimeout(() => setClickCount(0), 1000);
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     if (window.confirm('Apakah Anda yakin ingin keluar?')) {
-      try {
-        await supabase.auth.signOut();
-      } catch (e) {
-        console.error("Logout error:", e);
-      }
-      sessionStorage.clear();
-      localStorage.clear();
-      navigate('/login');
+      supabase.auth.signOut().catch(() => {});
+      if (onLogout) onLogout();
     }
   };
 
@@ -210,8 +204,8 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole }) => {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 p-8 z-10 overflow-y-auto">
-        <div className="max-w-6xl mx-auto mt-4">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 z-10 overflow-y-auto">
+        <div className="max-w-6xl mx-auto mt-2 sm:mt-4">
           {activeTab === 'profile' && <CompanyProfile onUpdate={fetchTenantData} />}
           {activeTab === 'monitoring' && <SubAdminDashboard isEmbedded={true} initialTab="monitor" />}
           {activeTab === 'structure' && <StructureManagement />}

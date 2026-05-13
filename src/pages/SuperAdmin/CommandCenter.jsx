@@ -13,7 +13,7 @@ import HRISExportWrapper from '../../components/HRISExportWrapper';
 import { useSFX } from '../../utils/useSFX';
 import { generatePin } from '../../utils/pinUtil';
 
-const CommandCenter = ({ onImpersonate, onCycleRole }) => {
+const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('god_active_tab') || 'infrastructure'); // infrastructure, operations
   const [bypassCode, setBypassCode] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,16 +44,10 @@ const CommandCenter = ({ onImpersonate, onCycleRole }) => {
     playConfirm();
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     if (window.confirm('Apakah Anda yakin ingin keluar dari God Mode?')) {
-      try {
-        await supabase.auth.signOut();
-      } catch (e) {
-        console.error("Logout error:", e);
-      }
-      sessionStorage.clear();
-      localStorage.clear();
-      navigate('/login');
+      supabase.auth.signOut().catch(() => {});
+      if (onLogout) onLogout();
     }
   };
 
@@ -90,7 +84,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole }) => {
   ];
 
   return (
-    <div className="min-h-screen p-6 lg:p-8 flex flex-col gap-6 bg-[var(--bg-darker)] text-white relative overflow-hidden">
+    <div className="min-h-screen p-3 sm:p-6 lg:p-8 flex flex-col gap-4 sm:gap-6 bg-[var(--bg-darker)] text-white relative overflow-hidden">
       {/* Background Aurora */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 z-0">
         <div className="absolute top-[-20%] left-[20%] w-[40%] h-[40%] bg-[var(--aurora-2)] rounded-full blur-[150px]"></div>
@@ -337,7 +331,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole }) => {
                 </div>
               </section>
 
-              <section className="glass-panel p-6 flex-1 flex flex-col overflow-hidden min-h-[500px]">
+              <section className="glass-panel p-4 sm:p-6 flex-1 flex flex-col overflow-hidden min-h-[300px] sm:min-h-[500px]">
                 <h2 className="font-serif text-lg tracking-wide mb-4 flex items-center gap-3"><Settings size={20} className="text-[var(--aurora-2)]" /> Manajemen SaaS</h2>
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                   <SaaSManagement onImpersonate={onImpersonate} searchQuery={searchQuery} />

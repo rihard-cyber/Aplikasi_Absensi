@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import AttendanceScreen from './pages/Employee/AttendanceScreen';
@@ -6,6 +6,7 @@ import CommandCenter from './pages/SuperAdmin/CommandCenter';
 import TenantDashboard from './pages/TenantAdmin/TenantDashboard';
 import AuthPortal from './pages/Auth/AuthPortal';
 import SubAdminDashboard from './pages/SubAdmin/SubAdminDashboard';
+import { requestAppPermissions } from './utils/permissionInit';
 
 // Komponen Pembungkus Transisi Halaman (Efek Blur & Scale yang mulus)
 const PageTransition = ({ children }) => (
@@ -37,7 +38,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
     navigate('/superadmin');
   };
 
-  // Back-button Anti-Exit Logic
+  // Back-button Anti-Exit Logic (Android + Web)
   const [backCount, setBackCount] = useState(0);
   const [showExitModal, setShowExitModal] = useState(false);
   const backTimeoutRef = useRef(null);
@@ -47,25 +48,28 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
     return !hash || hash === '#/' || hash === '#/login';
   };
 
-  useEffect(() => {
-    const handleBackButton = () => {
-      if (isRootRoute()) {
-        setBackCount(prev => {
-          const next = prev + 1;
-          if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
-          backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
-          if (next >= 2) {
-            setShowExitModal(true);
-            return 0;
-          }
-          return next;
-        });
-      }
-    };
-
-    window.addEventListener('popstate', handleBackButton);
-    return () => window.removeEventListener('popstate', handleBackButton);
+  const onBackPressed = useCallback(() => {
+    if (isRootRoute()) {
+      setBackCount(prev => {
+        const next = prev + 1;
+        if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
+        backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
+        if (next >= 2) {
+          setShowExitModal(true);
+          return 0;
+        }
+        return next;
+      });
+      return true;
+    }
+    return false;
   }, []);
+
+  useEffect(() => {
+    // Web fallback (local only, Capacitor handles back natively)
+    window.addEventListener('popstate', onBackPressed);
+    return () => window.removeEventListener('popstate', onBackPressed);
+  }, [onBackPressed]);
 
   const handleCycleRole = () => {
     if (sessionStorage.getItem('god_key') !== 'DEWA-999') return;
@@ -155,7 +159,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
             path="/superadmin"
             element={
               isAuthenticated && userRole === 'SUPER_ADMIN' 
-                ? <PageTransition><CommandCenter onImpersonate={handleImpersonateWithNav} onCycleRole={handleCycleRole} /></PageTransition>
+                ? <PageTransition><CommandCenter onImpersonate={handleImpersonateWithNav} onCycleRole={handleCycleRole} onLogout={handleLogout} /></PageTransition>
                 : isAuthenticated ? <Navigate to="/" replace />
                 : <Navigate to="/login" replace />
             }
@@ -166,7 +170,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
             path="/tenantadmin"
             element={
               isAuthenticated && userRole === 'TENANT_ADMIN' 
-                ? <PageTransition><TenantDashboard onGodModeReturn={handleGodModeReturnWithNav} isImpersonating={originalRole === 'SUPER_ADMIN'} onCycleRole={handleCycleRole} /></PageTransition>
+                ? <PageTransition><TenantDashboard onGodModeReturn={handleGodModeReturnWithNav} isImpersonating={originalRole === 'SUPER_ADMIN'} onCycleRole={handleCycleRole} onLogout={handleLogout} /></PageTransition>
                 : isAuthenticated ? <Navigate to="/" replace />
                 : <Navigate to="/login" replace />
             }
@@ -252,6 +256,11 @@ function App() {
     }, 60000); // Every 1 minute
     return () => clearInterval(heartbeat);
   }, [isAuthenticated]);
+
+  // Request permissions at startup (Android)
+  useEffect(() => {
+    requestAppPermissions().catch(() => {});
+  }, []);
 
   return (
     <HashRouter>
