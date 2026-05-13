@@ -485,10 +485,13 @@ END;
 $$;
 
 -- ==============================================================================
--- TAHAP 7: STORAGE POLICIES (AVATARS)
+-- TAHAP 7: STORAGE BUCKET AVATARS & POLICIES
 -- ==============================================================================
 
--- Pastikan bucket "avatars" dibuat secara manual di dashboard terlebih dahulu
+-- Buat Ember untuk Foto Profil (Avatar)
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO NOTHING;
 -- Berikan akses ke SEMUA orang untuk melihat foto profil
 DROP POLICY IF EXISTS "Public Access to Avatars" ON storage.objects;
 CREATE POLICY "Public Access to Avatars" 

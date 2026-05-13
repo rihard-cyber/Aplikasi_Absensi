@@ -28,7 +28,7 @@ const HRISDataForm = ({ user, onCancel, onSave }) => {
     certificate_issued_date: '', certificate_expiry_date: ''
   });
 
-  const isSatpam = user.division?.toLowerCase().includes('satpam') || user.division?.toLowerCase().includes('security');
+  const isSatpam = (user.divisions?.name || user.division || '').toLowerCase().includes('satpam') || (user.divisions?.name || user.division || '').toLowerCase().includes('security');
 
   useEffect(() => {
     fetchHRISData();

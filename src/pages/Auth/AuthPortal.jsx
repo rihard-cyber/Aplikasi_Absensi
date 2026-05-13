@@ -260,32 +260,45 @@ const AuthPortal = ({ onLogin }) => {
       // 2. Dapatkan Hardware ID
       const deviceIdInfo = await DeviceUtil.getId();
 
-      // 2.1 Khusus Tenant Admin: Validasi Kode Aktivasi
+      // 2.1 Khusus Tenant Admin: Validasi Kode Aktivasi (sama logikanya dengan handleSendOTP)
       let boundTenantId = null;
+      let usedAdminCode = false;
       if (isTenantReg) {
-        const { data: tenant, error: tErr } = await supabase.from('tenants').select('id').eq('activation_code', formData.activationCode).eq('is_active', true).maybeSingle();
-        if (tErr || !tenant) throw new Error("Kode Aktivasi tidak valid atau sudah tidak aktif!");
-        boundTenantId = tenant.id;
+        const { data: tenantByAdmin } = await supabase.from('tenants').select('id').eq('admin_code', formData.activationCode).eq('is_active', true).maybeSingle();
+        if (tenantByAdmin) {
+          boundTenantId = tenantByAdmin.id;
+          usedAdminCode = true;
+        } else {
+          const { data: tenantByCode } = await supabase.from('tenants').select('id').eq('activation_code', formData.activationCode).eq('is_active', true).maybeSingle();
+          if (tenantByCode) {
+            boundTenantId = tenantByCode.id;
+          } else {
+            throw new Error("Kode Lisensi Tenant tidak valid atau sudah tidak aktif!");
+          }
+        }
       }
 
       // 3. Simpan Profile lengkap ke Database Public `users`
       if (authData.user) {
         const { error: insertError } = await supabase.from('profiles').insert({
           auth_id: authData.user.id,
-          tenant_id: boundTenantId, // Nullable jika karyawan biasa (akan diisi admin nanti) atau langsung terisi jika Tenant Admin
+          tenant_id: boundTenantId,
           full_name: formData.name,
           nip: isTenantReg ? 'ADMIN-' + Math.floor(1000 + Math.random() * 9000) : formData.nip,
           email: formData.email,
           role: isTenantReg ? 'TENANT_ADMIN' : 'EMPLOYEE',
           device_id: deviceIdInfo.identifier,
           attendance_access: true,
-          operational_access: isTenantReg // Tenant Admin punya akses operasional otomatis
+          operational_access: isTenantReg
         });
         if (insertError) throw insertError;
 
-        // Clear activation code if successful
-        if (isTenantReg) {
-           await supabase.from('tenants').update({ activation_code: null }).eq('id', boundTenantId);
+        if (isTenantReg && boundTenantId) {
+          if (usedAdminCode) {
+            await supabase.from('tenants').update({ admin_code: null }).eq('id', boundTenantId);
+          } else {
+            await supabase.from('tenants').update({ activation_code: null }).eq('id', boundTenantId);
+          }
         }
       }
 

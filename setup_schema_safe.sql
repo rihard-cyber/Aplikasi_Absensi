@@ -407,6 +407,22 @@ CREATE POLICY "Admin Lihat Logs Tenant" ON public.audit_logs FOR SELECT USING (
 );
 
 -- ==============================================================================
+-- STORAGE BUCKETS
+-- ==============================================================================
+
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('company-assets', 'company-assets', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('documents', 'documents', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- ==============================================================================
 -- SETUP SUPER ADMIN (ganti email dengan email kamu)
 -- ==============================================================================
 DO $$
