@@ -115,7 +115,15 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
       alert(`Sukses Beb! Tenant ${newTenant.name} aktif.\n\nKode Admin Tenant: ${generatedAdminCode}\nKode Karyawan: ${generatedCode}`);
     } catch (err) {
       console.error("HandleCreate Error:", err);
-      alert("Gagal aktifkan tenant: " + (err.message || "Masalah koneksi database"));
+      if (err.message === 'Failed to fetch') {
+        alert("Gagal aktifkan tenant: Koneksi ke database terputus.\n\n" +
+              "Penyebab: Supabase project sedang sleep/tidur.\n" +
+              "Solusi: Buka https://supabase.com/dashboard,\n" +
+              "klik project 'bhauqlobuiuavaoeoawc', lalu klik RESTORE.\n\n" +
+              "Atau pastikan koneksi internet kamu aktif.");
+      } else {
+        alert("Gagal aktifkan tenant: " + (err.message || "Masalah koneksi database"));
+      }
     } finally {
       setIsCreating(false);
     }
