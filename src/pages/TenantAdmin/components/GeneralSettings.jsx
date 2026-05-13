@@ -211,197 +211,26 @@ const GeneralSettings = () => {
 
       </div>
 
-      {/* Authority Management Section */}
-      <AuthorityManagement tenantId={tenantId} />
-    </div>
-  );
-};
-
-const AuthorityManagement = ({ tenantId }) => {
-  const [admins, setAdmins] = useState([]);
-  const [searchNik, setSearchNik] = useState('');
-  const [selectedRole, setSelectedRole] = useState('PROJECT_ADMIN');
-  const [isSearching, setIsSearching] = useState(false);
-  const [foundEmployee, setFoundEmployee] = useState(null);
-  const [isAdding, setIsAdding] = useState(false);
-
-  useEffect(() => {
-    if (tenantId) fetchAdmins();
-  }, [tenantId]);
-
-  const fetchAdmins = async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, nip, full_name, role, operational_access, projects(name), divisions(name)')
-      .eq('tenant_id', tenantId)
-      .eq('operational_access', true)
-      .in('role', ['SUB_ADMIN', 'TENANT_ADMIN']);
-    
-    if (data) setAdmins(data);
-  };
-
-  const handleSearch = async () => {
-    if (!searchNik) return;
-    setIsSearching(true);
-    setFoundEmployee(null);
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, nip, full_name, project_id, division_id')
-        .eq('tenant_id', tenantId)
-        .eq('nip', searchNik)
-        .maybeSingle();
-      
-      if (data) setFoundEmployee(data);
-      else alert('Karyawan dengan NIK tersebut tidak ditemukan.');
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleAddAdmin = async () => {
-    if (!foundEmployee) return;
-    setIsAdding(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          role: 'SUB_ADMIN', 
-          operational_access: true 
-        })
-        .eq('id', foundEmployee.id);
-      
-      if (!error) {
-        alert(`${foundEmployee.full_name} berhasil diberikan otoritas admin.`);
-        setFoundEmployee(null);
-        setSearchNik('');
-        fetchAdmins();
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsAdding(false);
-    }
-  };
-
-  const handleRevoke = async (adminId) => {
-    if (!window.confirm('Cabut otoritas admin untuk karyawan ini?')) return;
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          role: 'EMPLOYEE', 
-          operational_access: false 
-        })
-        .eq('id', adminId);
-      
-      if (!error) fetchAdmins();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  return (
-    <div className="glass-panel p-6 border border-white/5 mt-10 space-y-6">
-      <div className="flex justify-between items-center border-b border-white/5 pb-4">
-        <div>
-          <h3 className="text-xl font-bold text-white flex items-center gap-2"><ShieldCheck size={24} className="text-[var(--aurora-3)]"/> Manajemen Otoritas Admin</h3>
-          <p className="text-xs text-gray-500 mt-1">Kelola siapa saja yang berhak mengakses dashboard operasional (Project/Divisi).</p>
+      {/* Permission Manager Quick Link */}
+      <div className="glass-panel p-8 rounded-[40px] border border-white/5 mt-10 bg-gradient-to-br from-[var(--aurora-1)]/5 to-transparent relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-10">
+          <ShieldCheck size={120} />
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Form Add */}
-        <div className="lg:col-span-1 space-y-4">
-          <label className="text-xs text-gray-400 uppercase tracking-widest font-bold">Cari Karyawan (NIK)</label>
-          <div className="flex gap-2">
-            <input 
-              type="text" 
-              placeholder="Masukkan NIK..." 
-              value={searchNik}
-              onChange={(e) => setSearchNik(e.target.value)}
-              className="flex-1 bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]"
-            />
-            <button 
-              onClick={handleSearch}
-              disabled={isSearching}
-              className="px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold transition-all"
-            >
-              {isSearching ? <Loader2 size={16} className="animate-spin" /> : 'CARI'}
-            </button>
-          </div>
-
-          {foundEmployee && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 bg-[var(--aurora-3)]/10 border border-[var(--aurora-3)]/30 rounded-2xl space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[var(--aurora-3)]/20 flex items-center justify-center text-[var(--aurora-3)] font-bold">
-                  {foundEmployee.full_name.charAt(0)}
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-white">{foundEmployee.full_name}</p>
-                  <p className="text-[10px] text-gray-400 uppercase">{foundEmployee.nip}</p>
-                </div>
-              </div>
-              <button 
-                onClick={handleAddAdmin}
-                disabled={isAdding}
-                className="w-full py-2.5 bg-[var(--aurora-3)] hover:bg-[var(--aurora-2)] text-black text-xs font-black uppercase rounded-xl transition-all shadow-[0_0_15px_rgba(0,201,255,0.3)]"
-              >
-                JADIKAN ADMIN OPERASIONAL
-              </button>
-            </motion.div>
-          )}
-        </div>
-
-        {/* List Admins */}
-        <div className="lg:col-span-2">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="text-gray-500 uppercase tracking-widest border-b border-white/5">
-                <tr>
-                  <th className="py-4 px-2">Admin</th>
-                  <th className="py-4 px-2">Cakupan (Project/Divisi)</th>
-                  <th className="py-4 px-2 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {admins.length === 0 ? (
-                  <tr><td colSpan="3" className="py-10 text-center text-gray-600 italic">Belum ada admin operasional yang didaftarkan.</td></tr>
-                ) : admins.map(admin => (
-                  <tr key={admin.id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="py-4 px-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-bold text-[var(--aurora-3)] group-hover:bg-[var(--aurora-3)]/20">
-                          {admin.full_name.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-white">{admin.full_name}</p>
-                          <p className="text-[9px] text-gray-500 uppercase">{admin.nip}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-2">
-                      <div className="space-y-1">
-                        <p className="text-[10px] text-gray-300 font-bold">{admin.projects?.name || 'SEMUA PROJECT'}</p>
-                        {admin.divisions?.name && <p className="text-[9px] text-gray-500">Divisi: {admin.divisions.name}</p>}
-                      </div>
-                    </td>
-                    <td className="py-4 px-2 text-right">
-                      <button 
-                        onClick={() => handleRevoke(admin.id)}
-                        className="p-2 text-gray-500 hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 rounded-lg transition-all"
-                        title="Cabut Akses"
-                      >
-                        <ShieldCheck size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="relative z-10">
+          <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-2">
+            <ShieldCheck size={24} className="text-[var(--aurora-1)]"/> Manajemen Otoritas Tim
+          </h3>
+          <p className="text-sm text-gray-400 max-w-lg mb-6">
+            Delegasikan akses dashboard operasional kepada staff kepercayaan Anda. Anda dapat menentukan cakupan otoritas berdasarkan Project atau Divisi tertentu secara spesifik.
+          </p>
+          <button 
+            onClick={() => {
+              alert("Gunakan menu 'Otoritas Tim' di panel samping untuk mengelola delegasi admin.");
+            }}
+            className="px-6 py-3 bg-[var(--aurora-1)] hover:bg-[#8E2DE2] text-white text-xs font-black uppercase rounded-xl transition-all shadow-[0_0_20px_rgba(142,45,226,0.3)]"
+          >
+            Pelajari Lebih Lanjut
+          </button>
         </div>
       </div>
     </div>

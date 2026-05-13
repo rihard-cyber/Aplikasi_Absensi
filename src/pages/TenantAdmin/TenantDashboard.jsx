@@ -6,6 +6,7 @@ import ApprovalWorkflow from './components/ApprovalWorkflow';
 import AuditTrailView from './components/AuditTrailView';
 import StructureManagement from './components/StructureManagement';
 import GeneralSettings from './components/GeneralSettings';
+import PermissionManager from './components/PermissionManager';
 import BroadcastCenter from './components/BroadcastCenter';
 import ShiftDictionary from './components/ShiftDictionary';
 import CompanyProfile from './components/CompanyProfile';
@@ -163,6 +164,12 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole }) => {
               <Calculator size={20} /> <span className="font-medium tracking-wide text-sm">Penggajian & Pajak</span>
             </button>
             <button
+              onClick={() => { setActiveTab('permissions'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'permissions' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <ShieldCheck size={20} /> <span className="font-medium tracking-wide text-sm">Otoritas Tim</span>
+            </button>
+            <button
               onClick={() => { setActiveTab('audit'); setIsSidebarOpen(false); }}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'audit' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
             >
@@ -213,6 +220,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole }) => {
           {activeTab === 'broadcast' && <BroadcastCenter />}
           {activeTab === 'approval' && <SubAdminDashboard isEmbedded={true} initialTab="verification" />}
           {activeTab === 'payroll' && <PayrollSettings />}
+          {activeTab === 'permissions' && <PermissionManager />}
           {activeTab === 'workflow' && <ApprovalWorkflow />}
           {activeTab === 'audit' && <AuditTrailView />}
           {activeTab === 'settings' && <GeneralSettings />}

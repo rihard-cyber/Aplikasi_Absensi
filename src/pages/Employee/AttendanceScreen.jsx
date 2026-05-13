@@ -125,6 +125,8 @@ const ClockInTab = () => {
       }
 
       // Capacitor Geolocation dengan Akurasi Tinggi
+      if (!Geolocation) throw new Error("Geolocation plugin not available");
+      
       const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
 
       // Anti-Fake GPS (jika plugin meng-expose property mocked di OS tertentu)
@@ -146,6 +148,10 @@ const ClockInTab = () => {
     } catch (error) {
       console.warn("Geolocation Error:", error);
       setLocationState('ERROR');
+      // If error is permission or missing, alert user
+      if (error.message?.includes('permission')) {
+        alert("Mohon izinkan akses lokasi untuk melakukan absensi.");
+      }
     }
   };
 
@@ -156,11 +162,15 @@ const ClockInTab = () => {
     const handleOnline = async () => {
         const queue = JSON.parse(localStorage.getItem('offline_attendance') || '[]');
         if (queue.length > 0) {
-          await supabase.from('attendance_logs').insert(queue);
-          localStorage.removeItem('offline_attendance');
-        if (window.navigator?.vibrate) window.navigator.vibrate([50, 100, 50]);
-        alert(`Sinyal kembali! ${queue.length} data absen offline berhasil disinkronisasi.`);
-      }
+          const { error } = await supabase.from('attendance_logs').insert(queue);
+          if (!error) {
+            localStorage.removeItem('offline_attendance');
+            if (window.navigator?.vibrate) window.navigator.vibrate([50, 100, 50]);
+            alert(`Sinyal kembali! ${queue.length} data absen offline berhasil disinkronisasi.`);
+          } else {
+            console.error("Gagal sinkronisasi offline:", error);
+          }
+        }
     };
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
