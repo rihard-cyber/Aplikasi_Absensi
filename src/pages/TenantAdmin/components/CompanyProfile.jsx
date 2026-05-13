@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Building, MapPin, Phone, Globe, Upload, Save, Loader2, CheckCircle2, Key, Copy, RefreshCcw } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
+import { copyToClipboard } from '../../../utils/clipboardUtil';
 
 const CompanyProfile = ({ onUpdate }) => {
   const [tenant, setTenant] = useState({
@@ -204,12 +205,12 @@ const CompanyProfile = ({ onUpdate }) => {
                  </button>
                  <button 
                    type="button"
-                   onClick={() => {
-                     if (!tenant.activation_code) return alert("Generate kode terlebih dahulu!");
-                     navigator.clipboard.writeText(tenant.activation_code);
-                     setIsCopied(true);
-                     setTimeout(() => setIsCopied(false), 2000);
-                   }}
+                    onClick={() => {
+                      if (!tenant.activation_code) return alert("Generate kode terlebih dahulu!");
+                      copyToClipboard(tenant.activation_code);
+                      setIsCopied(true);
+                      setTimeout(() => setIsCopied(false), 2000);
+                    }}
                    className={`p-2 rounded-lg transition-all cursor-pointer flex items-center gap-2 ${isCopied ? 'bg-[var(--success)]/20 text-[var(--success)]' : 'bg-[var(--warning)]/20 hover:bg-[var(--warning)] text-[var(--warning)] hover:text-[#0B0C10]'}`}
                    title="Salin Kode"
                  >

@@ -3,23 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Lock, X, AlertCircle, ShieldCheck } from 'lucide-react';
 import { generatePin } from '../utils/pinUtil';
-
-const exportCSV = (data, name) => {
-  if (!data || !data.length) {
-    alert('⚠️ Tidak ada data pegawai untuk diekspor.\n\nPastikan sudah ada pegawai yang terdaftar di database.');
-    return;
-  }
-  const headers = Object.keys(data[0]);
-  const csv = [
-    headers.join(','),
-    ...data.map(r => headers.map(h => `"${String(r[h] || '').replace(/"/g, '""')}"`).join(','))
-  ].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `${name}_${new Date().toISOString().split('T')[0]}.csv`;
-  a.click(); URL.revokeObjectURL(url);
-};
+import { downloadCSV } from '../utils/downloadUtil';
 
 const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download Data', className = '', scope = 'tenant', scopeId }) => {
   const [showModal, setShowModal] = useState(false);
@@ -41,7 +25,7 @@ const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download 
 
     // SUPER_ADMIN: download langsung
     if (role === 'SUPER_ADMIN') {
-      exportCSV(data, filename);
+      downloadCSV(data, filename);
       setShowModal(false); setPin(['', '', '', '', '', '']); setError('');
       return;
     }
@@ -49,7 +33,7 @@ const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download 
     // TENANT_ADMIN / SUB_ADMIN / DIVISI: validasi PIN
     const expectedPin = generatePin(scopeId);
     if (entered === expectedPin || entered === '999999') {
-      exportCSV(data, filename);
+      downloadCSV(data, filename);
       setShowModal(false); setPin(['', '', '', '', '', '']); setError('');
     } else {
       setError('Kode akses tidak valid!');

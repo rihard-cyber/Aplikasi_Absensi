@@ -162,20 +162,20 @@ const CommandCenter = ({ onImpersonate, onCycleRole }) => {
       </AnimatePresence>
 
       {/* Header */}
-      <header className="flex justify-between items-center glass-panel p-5 z-10">
-        <div className="flex items-center gap-10">
+      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center glass-panel p-3 sm:p-5 z-10 gap-3 lg:gap-0">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3 lg:gap-10 w-full lg:w-auto">
           <div
-            className="cursor-pointer select-none group"
-            onDoubleClick={() => onCycleRole && onCycleRole()}
-            title="Klik 2x untuk Pindah Dasbor (God Mode)"
+            className="cursor-pointer select-none group active:scale-95"
+            onClick={() => onCycleRole && onCycleRole()}
+            title="Klik untuk Pindah Dasbor (God Mode)"
           >
-            <h1 className="text-3xl font-serif font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] group-hover:from-[var(--warning)] group-hover:to-[var(--danger)] transition-all duration-300">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-serif font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] group-hover:from-[var(--warning)] group-hover:to-[var(--danger)] transition-all duration-300">
               COMMAND CENTER
             </h1>
-            <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-sans">Dasbor SaaS Global</p>
+            <p className="text-[10px] sm:text-xs text-gray-400 mt-1 uppercase tracking-widest font-sans">Dasbor SaaS Global</p>
           </div>
 
-          {/* God Mode Navigation Tabs */}
+          {/* God Mode Navigation Tabs - Desktop */}
           <nav className="hidden lg:flex items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5">
             <button 
               onClick={() => setActiveTab('infrastructure')}
@@ -196,26 +196,44 @@ const CommandCenter = ({ onImpersonate, onCycleRole }) => {
               📅 Jadwal Global
             </button>
           </nav>
+          {/* Mobile Tab Selector */}
+          <div className="flex lg:hidden items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/5 overflow-x-auto w-full">
+            {['infrastructure', 'operations', 'shifts'].map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
+                  activeTab === tab
+                    ? tab === 'infrastructure' ? 'bg-[var(--aurora-3)] text-black'
+                      : tab === 'operations' ? 'bg-[var(--aurora-1)] text-black'
+                      : 'bg-[var(--warning)] text-black'
+                    : 'text-gray-500'
+                }`}
+              >
+                {tab === 'infrastructure' ? 'Infra' : tab === 'operations' ? 'Ops' : 'Jadwal'}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="flex gap-4 items-center">
-          <HRISExportWrapper className="px-4 py-2.5 rounded-xl border border-[var(--warning)]/30 hover:border-[var(--warning)]/50" label="Global Export" />
+        <div className="flex gap-2 sm:gap-4 items-center w-full lg:w-auto justify-end flex-wrap">
+          <HRISExportWrapper className="px-3 sm:px-4 py-2 rounded-xl border border-[var(--warning)]/30 hover:border-[var(--warning)]/50" label="Export" />
           <button
             onClick={() => playAlert()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/30 hover:bg-[var(--danger)] hover:text-white transition-all shadow-[0_0_15px_rgba(255,0,85,0.2)] text-sm font-semibold"
+            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/30 hover:bg-[var(--danger)] hover:text-white transition-all shadow-[0_0_15px_rgba(255,0,85,0.2)] text-[11px] sm:text-sm font-semibold"
           >
-            <ShieldAlert size={16} /> Siaran
+            <ShieldAlert size={14} className="sm:size-[16]" />
+            <span className="hidden xs:inline">Siaran</span>
           </button>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 text-gray-400 border border-white/10 hover:bg-[var(--danger)]/20 hover:text-[var(--danger)] hover:border-[var(--danger)]/50 transition-all text-sm font-semibold"
+            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl bg-white/5 text-gray-400 border border-white/10 hover:bg-[var(--danger)]/20 hover:text-[var(--danger)] hover:border-[var(--danger)]/50 transition-all text-[11px] sm:text-sm font-semibold"
           >
-            <LogOut size={16} /> Keluar
+            <LogOut size={14} className="sm:size-[16]" />
+            <span className="hidden xs:inline">Keluar</span>
           </button>
           <div
             onClick={handleLogoClick}
-            className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center font-bold shadow-[0_0_20px_rgba(142,45,226,0.6)] border border-white/20 cursor-pointer hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] transition-all"
-            title="Klik 2x untuk God Mode"
+            className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center font-bold shadow-[0_0_20px_rgba(142,45,226,0.6)] border border-white/20 cursor-pointer hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] transition-all text-[11px] sm:text-sm"
+            title="Klik untuk God Mode"
           >
             SA
           </div>

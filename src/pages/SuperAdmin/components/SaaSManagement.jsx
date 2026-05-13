@@ -3,6 +3,7 @@ import { Power, Crown, Building, Eye, ArrowUp, ChevronDown, ChevronUp, RefreshCc
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSFX } from '../../../utils/useSFX';
 import { supabase } from '../../../utils/supabaseClient';
+import { copyToClipboard } from '../../../utils/clipboardUtil';
 
 const tenantsData = [
   { id: 1, name: 'Tenant Company Alpha', tier: 'Enterprise', users: 1250, maxUsers: 2000, daysLeft: 280, active: true },
@@ -270,7 +271,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
       }
 
       setTenants(prev => prev.map(t => t.id === id ? { ...t, adminCode: newLicCode, activationCode: adminCodeErr ? newLicCode : t.activationCode } : t));
-      navigator.clipboard.writeText(newLicCode).catch(() => {});
+      copyToClipboard(newLicCode);
       alert(`✅ Kode Lisensi berhasil di-generate untuk ${name}:\n\n${newLicCode}\n\n(Kode sudah disalin ke clipboard)\n\nBerikan kode ini ke Admin Tenant untuk mendaftar.`);
       playConfirm();
     } catch (e) {
@@ -390,50 +391,50 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                     </div>
 
                     <div className="flex items-center gap-4 flex-shrink-0 ml-3">
-                      {/* Dual Code Display */}
-                      <div className="hidden sm:flex flex-col gap-1.5 px-3 border-l border-white/5 mr-2">
+                      {/* Dual Code Display - Always visible */}
+                      <div className="flex flex-col gap-1 px-2 sm:px-3 border-l border-white/5 mr-1 sm:mr-2">
                         {/* Admin / Lisensi Code */}
                         <div className="flex flex-col items-end gap-0.5">
-                          <span className="text-[8px] text-[var(--warning)] font-black uppercase tracking-widest">Kode Lisensi</span>
+                          <span className="text-[7px] sm:text-[8px] text-[var(--warning)] font-black uppercase tracking-widest">Lisensi</span>
                           {tenant.adminCode ? (
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigator.clipboard.writeText(tenant.adminCode || '');
+                                copyToClipboard(tenant.adminCode || '');
                                 setCopiedId('adm-' + tenant.id);
                                 setTimeout(() => setCopiedId(null), 2000);
                               }}
-                              className={`text-[10px] font-mono px-2 py-0.5 rounded transition-all flex items-center gap-1.5 ${
+                              className={`text-[8px] sm:text-[10px] font-mono px-1.5 sm:px-2 py-0.5 rounded transition-all flex items-center gap-1 ${
                                 copiedId === 'adm-' + tenant.id 
                                   ? 'bg-[var(--success)]/20 text-[var(--success)] border border-[var(--success)]/30' 
                                   : 'text-[var(--warning)] bg-[var(--warning)]/[0.05] border border-[var(--warning)]/20 hover:bg-[var(--warning)]/20'
                               }`}
                             >
-                              {copiedId === 'adm-' + tenant.id ? 'TERSALIN!' : tenant.adminCode}
-                              {copiedId === 'adm-' + tenant.id ? <CheckCircle2 size={10} /> : <Copy size={10} className="text-gray-600" />}
+                              {copiedId === 'adm-' + tenant.id ? 'OK!' : tenant.adminCode}
+                              {copiedId === 'adm-' + tenant.id ? <CheckCircle2 size={8} /> : <Copy size={8} className="text-gray-600" />}
                             </button>
                           ) : (
-                            <span className="text-[9px] font-mono text-gray-600 italic">Belum di-generate</span>
+                            <span className="text-[8px] font-mono text-gray-600 italic">-</span>
                           )}
                         </div>
                         {/* Employee Code */}
                         <div className="flex flex-col items-end gap-0.5">
-                          <span className="text-[8px] text-gray-600 font-black uppercase tracking-widest">Kode Karyawan</span>
+                          <span className="text-[7px] sm:text-[8px] text-gray-600 font-black uppercase tracking-widest">Karyawan</span>
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigator.clipboard.writeText(tenant.activationCode || '');
+                              copyToClipboard(tenant.activationCode || '');
                               setCopiedId('emp-' + tenant.id);
                               setTimeout(() => setCopiedId(null), 2000);
                             }}
-                            className={`text-[10px] font-mono px-2 py-0.5 rounded transition-all flex items-center gap-1.5 ${
+                            className={`text-[8px] sm:text-[10px] font-mono px-1.5 sm:px-2 py-0.5 rounded transition-all flex items-center gap-1 ${
                               copiedId === 'emp-' + tenant.id 
                                 ? 'bg-[var(--success)]/20 text-[var(--success)] border border-[var(--success)]/30' 
                                 : 'text-[var(--aurora-3)] bg-[var(--aurora-3)]/[0.05] border border-[var(--aurora-3)]/20 hover:bg-[var(--aurora-3)]/20'
                             }`}
                           >
-                            {copiedId === 'emp-' + tenant.id ? 'TERSALIN!' : (tenant.activationCode || '----')}
-                            {copiedId === 'emp-' + tenant.id ? <CheckCircle2 size={10} /> : <Copy size={10} className="text-gray-600" />}
+                            {copiedId === 'emp-' + tenant.id ? 'OK!' : (tenant.activationCode || '----')}
+                            {copiedId === 'emp-' + tenant.id ? <CheckCircle2 size={8} /> : <Copy size={8} className="text-gray-600" />}
                           </button>
                         </div>
                       </div>

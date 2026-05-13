@@ -216,10 +216,14 @@ const BulkScheduleUpload = ({ tenantId, projectId }) => {
     csv += '2,2026-05,PVI-05,701971,TRI WINARSO,BK.PERDAG,Security,' + 'PS,'.repeat(31).slice(0, -1) + '\n';
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
+    a.href = url;
     a.download = 'Template_Jadwal_Bulanan.csv';
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
   };
 
   return (

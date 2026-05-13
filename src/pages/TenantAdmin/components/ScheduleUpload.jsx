@@ -72,8 +72,10 @@ const ScheduleUpload = () => {
     const a = document.createElement('a');
     a.href = url;
     a.download = `Template_Jadwal_${selectedMonth}_${selectedYear}.csv`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
   };
 
   const handleFile = (e) => {

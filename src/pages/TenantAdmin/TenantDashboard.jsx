@@ -101,12 +101,12 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole }) => {
               )}
             </div>
             <h2 
-              className={`font-serif text-[14px] leading-tight tracking-wide bg-clip-text text-transparent bg-gradient-to-r ${(sessionStorage.getItem('god_key') === 'DEWA-999' || isImpersonating) ? 'from-[var(--danger)] to-[var(--warning)] cursor-pointer' : 'from-white to-gray-400'}`}
-              onDoubleClick={() => {
+              className={`font-serif text-[14px] leading-tight tracking-wide bg-clip-text text-transparent bg-gradient-to-r ${(sessionStorage.getItem('god_key') === 'DEWA-999' || isImpersonating) ? 'from-[var(--danger)] to-[var(--warning)] cursor-pointer active:scale-95' : 'from-white to-gray-400'}`}
+              onClick={() => {
                 if (sessionStorage.getItem('god_key') === 'DEWA-999' && onCycleRole) onCycleRole();
                 else if (isImpersonating && onGodModeReturn) onGodModeReturn();
               }}
-              title={(sessionStorage.getItem('god_key') === 'DEWA-999' || isImpersonating) ? "Klik 2x untuk Pindah Dasbor" : ""}
+              title={(sessionStorage.getItem('god_key') === 'DEWA-999' || isImpersonating) ? "Klik untuk Pindah Dasbor" : ""}
             >
               {tenantData.name} {(sessionStorage.getItem('god_key') === 'DEWA-999' || isImpersonating) && <span className="text-[10px] ml-1 block text-[var(--danger)] font-black opacity-80">(God Mode)</span>}
             </h2>

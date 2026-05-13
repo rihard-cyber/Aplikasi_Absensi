@@ -88,11 +88,11 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
       {/* GOD MODE INDICATOR */}
       {sessionStorage.getItem('god_key') === 'DEWA-999' && (
         <div 
-          onDoubleClick={handleCycleRole}
-          className="fixed top-2 left-1/2 -translate-x-1/2 z-[9999] px-4 py-1 bg-[var(--danger)] text-white text-[10px] font-bold rounded-full shadow-[0_0_15px_rgba(255,0,85,0.5)] border border-white/20 animate-pulse cursor-pointer hover:bg-red-600 transition-colors"
-          title="Klik 2x untuk Pindah Dasbor"
+          onClick={handleCycleRole}
+          className="fixed top-2 left-1/2 -translate-x-1/2 z-[9999] px-4 py-1 bg-[var(--danger)] text-white text-[10px] font-bold rounded-full shadow-[0_0_15px_rgba(255,0,85,0.5)] border border-white/20 animate-pulse cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
+          title="Klik untuk Pindah Dasbor"
         >
-          GOD MODE ACTIVE (KLIK 2X PINDAH DASBOR)
+          GOD MODE ACTIVE (TAP TO SWITCH DASHBOARD)
         </div>
       )}
 

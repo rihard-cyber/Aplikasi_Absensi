@@ -120,7 +120,7 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
                   <ShieldAlert size={32} />
                 </div>
               </div>
-              <div className={sessionStorage.getItem('god_key') === 'DEWA-999' ? 'cursor-pointer' : ''} onDoubleClick={() => onCycleRole && onCycleRole()} title={sessionStorage.getItem('god_key') === 'DEWA-999' ? "Klik 2x untuk Pindah Dasbor" : ""}>
+              <div className={sessionStorage.getItem('god_key') === 'DEWA-999' ? 'cursor-pointer active:scale-95' : ''} onClick={() => onCycleRole && onCycleRole()} title={sessionStorage.getItem('god_key') === 'DEWA-999' ? "Klik untuk Pindah Dasbor" : ""}>
                 <div className="flex items-center gap-2">
                   <h1 className="text-3xl font-serif font-bold tracking-tight hover:text-[var(--aurora-3)] transition-colors">Command Center</h1>
                   {sessionStorage.getItem('god_key') === 'DEWA-999' && (

@@ -130,7 +130,7 @@ const ClockInTab = () => {
       const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
 
       // Anti-Fake GPS (jika plugin meng-expose property mocked di OS tertentu)
-      if (position.mocked) {
+      if (position.mocked === true) {
         alert('⚠️ PERINGATAN: Upaya Manipulasi Lokasi (Fake GPS) Terdeteksi!');
         setLocationState('ERROR');
         return;
@@ -628,12 +628,12 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
               </div>
             )}
             <h2
-              className={`text-2xl font-bold font-serif tracking-wide bg-clip-text text-transparent bg-gradient-to-r ${(isGodMode || isImpersonating) ? 'from-[var(--danger)] to-[var(--warning)] cursor-pointer' : 'from-[var(--aurora-1)] to-[var(--aurora-3)]'}`}
-              onDoubleClick={() => {
+              className={`text-2xl font-bold font-serif tracking-wide bg-clip-text text-transparent bg-gradient-to-r ${(isGodMode || isImpersonating) ? 'from-[var(--danger)] to-[var(--warning)] cursor-pointer active:scale-95' : 'from-[var(--aurora-1)] to-[var(--aurora-3)]'}`}
+              onClick={() => {
                 if (isGodMode && onCycleRole) onCycleRole();
                 else if (isImpersonating && onGodModeReturn) onGodModeReturn();
               }}
-              title={(isGodMode || isImpersonating) ? "Klik 2x untuk Pindah Dasbor" : ""}
+              title={(isGodMode || isImpersonating) ? "Klik untuk Pindah Dasbor" : ""}
             >
               {tenantName} {(isGodMode || isImpersonating) && <span className="text-xs ml-1 block">(God Mode)</span>}
             </h2>
