@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SI_PRESENSI</string>
+    <string name="title_activity_main">SI_PRESENSI</string>
+    <string name="package_name">com.sipresensi.app</string>
+    <string name="custom_url_scheme">com.sipresensi.app</string>
+</resources>
