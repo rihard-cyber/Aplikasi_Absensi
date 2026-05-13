@@ -13,7 +13,6 @@ import HRISDataForm from './HRISDataForm';
 
 const EmployeeProfile = () => {
   const navigate = useNavigate();
-  console.log("Rendering EmployeeProfile...");
   const [user, setUser] = useState({
     full_name: 'Memuat...',
     position: 'Staff',
@@ -47,7 +46,6 @@ const EmployeeProfile = () => {
     checkDeviceBinding();
 
     // Cache Pre-fetching: Prefetch other data if needed
-    console.log("Cache Pre-fetching initialized...");
   }, []);
 
   // Haptic Feedback Simulation (Replace with actual Capacitor Haptics if available)
@@ -55,7 +53,6 @@ const EmployeeProfile = () => {
     if (window.navigator && window.navigator.vibrate) {
       window.navigator.vibrate(style === 'HEAVY' ? 100 : 50);
     }
-    console.log(`Haptic Feedback: ${style}`);
   };
 
   const fetchUserData = async () => {
@@ -71,8 +68,6 @@ const EmployeeProfile = () => {
         .eq('auth_id', session.user.id)
         .maybeSingle();
       
-      console.log("Profile Data:", profile);
-
       if (profile) {
         const isSubAdmin = profile.role === 'SUB_ADMIN' || profile.role === 'TENANT_ADMIN';
         const divisionName = profile.divisions?.name || 'All Division';
@@ -178,7 +173,7 @@ const EmployeeProfile = () => {
 
       sessionStorage.clear();
       localStorage.clear();
-      window.location.href = '/login';
+      navigate('/login');
     }
   };
 

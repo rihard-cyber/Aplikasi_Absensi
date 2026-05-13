@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, ShieldAlert, Megaphone, Building2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Geolocation } from '@capacitor/geolocation';
 import { App } from '@capacitor/app';
 
@@ -405,6 +406,7 @@ const ClockInTab = () => {
 // --- End Extracted Clock In UI ---
 
 const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('home');
   const [activeSubView, setActiveSubView] = useState(null); // 'leave', etc.
   const [clickCount, setClickCount] = useState(0);
@@ -648,7 +650,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
       {/* Admin Back to Dashboard */}
       {isAdminUser && !isGodMode && !isImpersonating && (
         <div className="w-full max-w-md mb-4 relative z-10 flex justify-center">
-          <button onClick={() => window.location.href = userRole === 'TENANT_ADMIN' ? '/tenantadmin' : '/subadmin'}
+          <button onClick={() => navigate(userRole === 'TENANT_ADMIN' ? '/tenantadmin' : '/subadmin')}
             className="glass-panel px-5 py-2 rounded-full border border-[var(--aurora-3)]/20 text-[10px] font-bold uppercase tracking-widest text-[var(--aurora-3)] hover:bg-[var(--aurora-3)]/10 transition-all flex items-center gap-2">
             <Building2 size={14} /> Dashboard Admin
           </button>

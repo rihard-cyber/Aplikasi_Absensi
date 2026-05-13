@@ -50,7 +50,7 @@ const AuthPortal = ({ onLogin }) => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [otpTimeLeft, setOtpTimeLeft] = useState(0);
 
-  const OTP_LENGTH = 8; // Ubah ke 6 jika Supabase-mu diatur menggunakan 6 digit
+  const OTP_LENGTH = 6;
   const [otpValues, setOtpValues] = useState(Array(OTP_LENGTH).fill(''));
   const [otpError, setOtpError] = useState('');
   const otpInputRefs = useRef([]);

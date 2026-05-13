@@ -21,7 +21,7 @@ const PageTransition = ({ children }) => (
 );
 
 // Komponen Rute Animasi agar `useLocation` dapat menangkap perubahan path
-const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handleImpersonate, handleGodModeReturn }) => {
+const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handleImpersonate, handleGodModeReturn, handleLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -42,27 +42,30 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
   const [showExitModal, setShowExitModal] = useState(false);
   const backTimeoutRef = useRef(null);
 
-  useEffect(() => {
-    const handleBackButton = (e) => {
-      if (location.pathname === '/' || location.pathname === '/login') {
-        e.preventDefault();
-        window.history.pushState(null, null, window.location.pathname);
-        
-        setBackCount(prev => prev + 1);
-        if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
-        backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
+  const isRootRoute = () => {
+    const hash = window.location.hash;
+    return !hash || hash === '#/' || hash === '#/login';
+  };
 
-        if (backCount >= 2) {
-          setShowExitModal(true);
-          setBackCount(0);
-        }
+  useEffect(() => {
+    const handleBackButton = () => {
+      if (isRootRoute()) {
+        setBackCount(prev => {
+          const next = prev + 1;
+          if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
+          backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
+          if (next >= 2) {
+            setShowExitModal(true);
+            return 0;
+          }
+          return next;
+        });
       }
     };
 
-    window.history.pushState(null, null, window.location.pathname);
     window.addEventListener('popstate', handleBackButton);
     return () => window.removeEventListener('popstate', handleBackButton);
-  }, [location.pathname, backCount]);
+  }, []);
 
   const handleCycleRole = () => {
     if (sessionStorage.getItem('god_key') !== 'DEWA-999') return;
@@ -108,7 +111,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
               <p className="text-sm text-gray-400 mb-8">Anda akan keluar dari aplikasi RichardMeha SI PRESENSI.</p>
               <div className="flex flex-col gap-3">
                 <button 
-                  onClick={() => window.close() || (window.location.href = 'about:blank')}
+                  onClick={handleLogout}
                   className="w-full py-4 rounded-xl bg-[var(--danger)] text-white font-bold uppercase tracking-widest text-xs"
                 >
                   Ya, Keluar Aplikasi
@@ -243,8 +246,7 @@ function App() {
   // Session Heartbeat
   useEffect(() => {
     const heartbeat = setInterval(() => {
-      if (isAuthenticated) {
-        console.log("Session Heartbeat: Active");
+        if (isAuthenticated) {
         // Re-validate session with supabase if needed
       }
     }, 60000); // Every 1 minute
@@ -260,6 +262,7 @@ function App() {
         handleLogin={handleLogin}
         handleImpersonate={handleImpersonate}
         handleGodModeReturn={handleGodModeReturn}
+        handleLogout={handleLogout}
       />
     </HashRouter>
   );

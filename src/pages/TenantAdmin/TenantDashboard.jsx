@@ -61,7 +61,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole }) => {
       }
       sessionStorage.clear();
       localStorage.clear();
-      window.location.href = '/login';
+      navigate('/login');
     }
   };
 

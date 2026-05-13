@@ -14,7 +14,6 @@ import { useSFX } from '../../utils/useSFX';
 import { generatePin } from '../../utils/pinUtil';
 
 const CommandCenter = ({ onImpersonate, onCycleRole }) => {
-  console.log("CommandCenter: Initializing God Mode View...");
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('god_active_tab') || 'infrastructure'); // infrastructure, operations
   const [bypassCode, setBypassCode] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,7 +53,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole }) => {
       }
       sessionStorage.clear();
       localStorage.clear();
-      window.location.href = '/login';
+      navigate('/login');
     }
   };
 
