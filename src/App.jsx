@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 
 import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { requestAppPermissions } from './utils/permissionInit';
-import { ToastProvider } from './components/Toast';
+import { ToastProvider, useToast } from './components/Toast';
 import { ConfirmProvider } from './components/ConfirmDialog';
+import { supabase } from './utils/supabaseClient';
 
 const AttendanceScreen = lazy(() => import('./pages/Employee/AttendanceScreen'));
 const CommandCenter = lazy(() => import('./pages/SuperAdmin/CommandCenter'));
@@ -24,10 +25,36 @@ const PageTransition = ({ children }) => (
   </motion.div>
 );
 
+// Health check: test Supabase connectivity
+const useSupabaseHealthCheck = () => {
+  const toast = useToast();
+  useEffect(() => {
+    const controller = new AbortController();
+    const check = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://bhauqlobuiuavaoeoawc.supabase.co'}/rest/v1/`, {
+          headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '' },
+          signal: controller.signal
+        });
+        if (!res.ok && res.status !== 404 && res.status !== 401) {
+          toast('Koneksi ke database bermasalah. Coba restore project di Supabase Dashboard.', 'error');
+        }
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          toast(`Koneksi ke server terputus (${e.message}). Buka supabase.com/dashboard & restore project.', 'error`);
+        }
+      }
+    };
+    check();
+    return () => controller.abort();
+  }, []);
+};
+
 // Komponen Rute Animasi agar `useLocation` dapat menangkap perubahan path
 const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handleImpersonate, handleGodModeReturn, handleLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  useSupabaseHealthCheck();
 
   // Wrapper that sets role AND navigates to correct path
   const handleImpersonateWithNav = (role) => {

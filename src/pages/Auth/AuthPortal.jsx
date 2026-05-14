@@ -62,7 +62,14 @@ const AuthPortal = ({ onLogin }) => {
   // PERSISTENT SESSION & AUTO-LOGIN ROUTING
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      let session;
+      try {
+        const res = await supabase.auth.getSession();
+        session = res.data?.session;
+      } catch (e) {
+        toast('Gagal terhubung ke server. Cek koneksi atau restore database.', 'error');
+        return;
+      }
       if (session) {
         const { data: userProfile } = await supabase.from('profiles').select('*').eq('auth_id', session.user.id).maybeSingle();
 
@@ -487,7 +494,12 @@ const AuthPortal = ({ onLogin }) => {
       }
     } catch (error) {
       console.error("Login failed:", error.message);
-      toast(`Login Gagal: Periksa kembali kredensial Anda.`, 'error');
+      const isConnectionError = !navigator.onLine || error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError') || error.message?.includes('ERR_NAME_NOT_RESOLVED');
+      if (isConnectionError) {
+        toast(`Koneksi ke server terputus. Periksa koneksi internet atau database mungkin sedang tidur (restore di Supabase Dashboard).`, 'error');
+      } else {
+        toast(`Login Gagal: Periksa kembali kredensial Anda.`, 'error');
+      }
     }
   };
 
