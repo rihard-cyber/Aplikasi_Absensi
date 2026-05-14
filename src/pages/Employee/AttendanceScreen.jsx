@@ -167,9 +167,8 @@ const ClockInTab = () => {
     } catch (error) {
       console.warn("Geolocation Error:", error);
       setLocationState('ERROR');
-      // If error is permission or missing, alert user
       if (error.message?.includes('permission')) {
-        alert("Mohon izinkan akses lokasi untuk melakukan absensi.");
+        toast('Mohon aktifkan izin lokasi di browser Anda agar bisa melakukan presensi.', 'error');
       }
     }
   };
