@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, UserPlus, Trash2, CheckCircle2, Search, Loader2, X } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
+import { useToast } from '../../../components/Toast';
+import { useConfirm } from '../../../components/ConfirmDialog';
 
 const PermissionManager = () => {
   const [subAdmins, setSubAdmins] = useState([]);
@@ -19,6 +21,8 @@ const PermissionManager = () => {
   const [projects, setProjects] = useState([]);
   const [divisions, setDivisions] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchInitialData();
@@ -77,7 +81,7 @@ const PermissionManager = () => {
         setSelectedProjectId(data.project_id || '');
         setSelectedDivisionId(data.division_id || '');
       } else {
-        alert('Karyawan tidak ditemukan!');
+        toast('Karyawan tidak ditemukan!', 'error');
       }
     } catch (e) {
       console.error(e);
@@ -101,7 +105,7 @@ const PermissionManager = () => {
         .eq('id', foundEmployee.id);
       
       if (!error) {
-        alert(`${foundEmployee.full_name} berhasil diberikan otoritas sub-admin.`);
+        toast(`${foundEmployee.full_name} berhasil diberikan otoritas sub-admin.`, 'success');
         setIsAddModalOpen(false);
         setFoundEmployee(null);
         setSearchNik('');
@@ -110,14 +114,15 @@ const PermissionManager = () => {
         throw error;
       }
     } catch (e) {
-      alert("Gagal memberikan otoritas: " + e.message);
+      toast("Gagal memberikan otoritas: " + e.message, 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleRevoke = async (adminId, name) => {
-    if (!window.confirm(`Cabut otoritas admin untuk ${name}? Karyawan ini akan kembali menjadi Employee biasa.`)) return;
+    const ok = await confirm(`Cabut otoritas admin untuk ${name}? Karyawan ini akan kembali menjadi Employee biasa.`, 'Cabut Otoritas');
+    if (!ok) return;
     try {
       const { error } = await supabase
         .from('profiles')
@@ -182,7 +187,7 @@ const PermissionManager = () => {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan="5" className="p-10 text-center text-gray-500">Memuat data...</td></tr>
+                <tr><td colSpan="5" className="p-10"><div className="w-full glass-panel p-6 border border-white/5 animate-pulse space-y-4"><div className="h-4 bg-white/10 rounded w-1/4" /><div className="h-3 bg-white/5 rounded w-1/3" /><div className="h-3 bg-white/5 rounded w-1/2" /></div></td></tr>
               ) : filteredAdmins.length === 0 ? (
                 <tr><td colSpan="5" className="p-10 text-center text-gray-500 italic">Tidak ada Sub-Admin ditemukan.</td></tr>
               ) : filteredAdmins.map((admin) => (

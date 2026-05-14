@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, FileText, CheckCircle, Activity, Calculator, BarChart3, ShieldCheck, Building2, Megaphone, CalendarDays, LogOut, XCircle, Upload, Fingerprint } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useConfirm } from '../../components/ConfirmDialog';
 import PayrollSettings from './components/PayrollSettings';
 import ApprovalWorkflow from './components/ApprovalWorkflow';
 import AuditTrailView from './components/AuditTrailView';
@@ -53,14 +54,16 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
     setTimeout(() => setClickCount(0), 1000);
   };
 
-  const handleLogout = () => {
-    if (window.confirm('Apakah Anda yakin ingin keluar?')) {
+  const handleLogout = async () => {
+    const ok = await confirm('Apakah Anda yakin ingin keluar?', 'Keluar');
+    if (ok) {
       supabase.auth.signOut().catch(() => {});
       if (onLogout) onLogout();
     }
   };
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const confirm = useConfirm();
 
   return (
     <div className="min-h-screen bg-[var(--bg-darker)] flex text-white relative overflow-hidden">
@@ -81,7 +84,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
 
       {/* Sidebar - Glassmorphism */}
       <aside className={`
-        fixed lg:relative top-0 left-0 z-[90] h-full lg:h-[calc(100vh-32px)] w-72 m-0 lg:m-4 
+        fixed lg:relative top-0 left-0 z-[90] h-full lg:h-[calc(100vh-32px)] w-[85vw] max-w-sm lg:w-72 m-0 lg:m-4 
         transition-all duration-500 ease-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>

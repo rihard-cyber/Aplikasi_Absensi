@@ -4,9 +4,11 @@ import { Fingerprint, Smartphone, AlertCircle, CheckCircle2, ChevronRight, Loade
 import { useNavigate } from 'react-router-dom';
 import { DeviceUtil } from '../../utils/deviceUtil';
 import { supabase } from '../../utils/supabaseClient';
+import { useToast } from '../../components/Toast';
 
 const AuthPortal = ({ onLogin }) => {
   const navigate = useNavigate();
+  const toast = useToast();
 
   // State management
   const [mode, setMode] = useState('login'); // login, register, verify, owner
@@ -107,16 +109,16 @@ const AuthPortal = ({ onLogin }) => {
   const handleSendOTP = async () => {
     // ── STEP 0: Validasi form lokal (sebelum sentuh database) ──────────────
     if (!formData.name || !formData.email || !formData.regPassword) {
-      alert('Mohon lengkapi semua data pendaftaran!'); return;
+      toast('Mohon lengkapi semua data pendaftaran!', 'error'); return;
     }
     if (!isTenantReg && !formData.nip) {
-      alert('NIP wajib diisi untuk karyawan!'); return;
+      toast('NIP wajib diisi untuk karyawan!', 'error'); return;
     }
     if (!formData.activationCode) {
-      alert('Kode Aktivasi wajib diisi!'); return;
+      toast('Kode Aktivasi wajib diisi!', 'error'); return;
     }
     if (formData.regPassword.length < 6) {
-      alert('Kata sandi minimal 6 karakter!'); return;
+      toast('Kata sandi minimal 6 karakter!', 'error'); return;
     }
 
     setIsSendingOTP(true);
@@ -204,9 +206,9 @@ const AuthPortal = ({ onLogin }) => {
           await supabase.from('tenants').update({ admin_code: null }).eq('id', boundTenantId);
         }
 
-        sessionStorage.setItem('bound_device_id', deviceIdInfo.identifier);
-        alert(`✅ Pendaftaran berhasil!\nSelamat datang di ${tenant.name}.\nSilakan masuk menggunakan email dan kata sandi Anda.`);
-        setFormData(prev => ({ ...prev, identifier: formData.email, password: formData.regPassword }));
+      sessionStorage.setItem('bound_device_id', deviceIdInfo.identifier);
+      toast('Pendaftaran berhasil! Silakan masuk.', 'success');
+      setFormData(prev => ({ ...prev, identifier: formData.email, password: formData.regPassword }));
         setMode('login');
 
       } else {
@@ -226,7 +228,7 @@ const AuthPortal = ({ onLogin }) => {
       } else if (error.message?.includes('Invalid email')) {
         friendlyMsg = 'Format email tidak valid. Periksa kembali email Anda.';
       }
-      alert(`❌ Pendaftaran Gagal:\n${friendlyMsg}`);
+      toast(`Pendaftaran Gagal: ${friendlyMsg}`, 'error');
     } finally {
       setIsSendingOTP(false);
     }
@@ -304,7 +306,7 @@ const AuthPortal = ({ onLogin }) => {
 
       sessionStorage.setItem('bound_device_id', deviceIdInfo.identifier);
 
-      alert('Pendaftaran berhasil! Silakan masuk dengan email dan kata sandi Anda.');
+      toast('Pendaftaran berhasil! Silakan masuk.', 'success');
       setFormData(prev => ({ ...prev, identifier: formData.email, password: formData.regPassword }));
       setMode('login');
     } catch (e) {
@@ -351,14 +353,14 @@ const AuthPortal = ({ onLogin }) => {
     if (secretClickCount + 1 >= 3) { // 3 clicks
       setMode('owner');
       setSecretClickCount(0);
-      alert('DEWA-999 Master Channel Activated');
+      toast('DEWA-999 Master Channel Activated', 'info');
     }
     setTimeout(() => setSecretClickCount(0), 1000); // Reset if too slow
   };
 
   const handleForgotPassword = async () => {
     if (!formData.email) {
-      alert('Silakan masukkan email Anda terlebih dahulu.');
+      toast('Silakan masukkan email Anda terlebih dahulu.', 'error');
       return;
     }
     setIsSendingOTP(true);
@@ -367,11 +369,11 @@ const AuthPortal = ({ onLogin }) => {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) throw error;
-      alert(`✅ Instruksi reset kata sandi telah dikirim ke ${formData.email}.\nSilakan periksa kotak masuk atau folder spam Anda.`);
+      toast(`Instruksi reset kata sandi telah dikirim ke ${formData.email}.`, 'success');
       setMode('login');
     } catch (error) {
       console.error('Reset password failed:', error);
-      alert(`❌ Gagal: ${error.message}`);
+      toast(`Gagal: ${error.message}`, 'error');
     } finally {
       setIsSendingOTP(false);
     }
@@ -388,7 +390,7 @@ const AuthPortal = ({ onLogin }) => {
       if (error) throw error;
     } catch (error) {
       console.error('Google login failed:', error);
-      alert(`❌ Google Login Gagal: ${error.message}`);
+      toast(`Google Login Gagal: ${error.message}`, 'error');
     }
   };
 
@@ -485,7 +487,7 @@ const AuthPortal = ({ onLogin }) => {
       }
     } catch (error) {
       console.error("Login failed:", error.message);
-      alert(`Login Gagal: Periksa kembali kredensial Anda. \n(${error.message})`);
+      toast(`Login Gagal: Periksa kembali kredensial Anda.`, 'error');
     }
   };
 
@@ -536,7 +538,7 @@ const AuthPortal = ({ onLogin }) => {
       {/* Main Glassmorphism Card */}
       <motion.div
         layout
-        className={`w-full max-w-md ${mode === 'owner' ? 'card-running-light-god shadow-[0_0_50px_rgba(255,0,85,0.2)]' : 'card-running-light shadow-[0_0_50px_rgba(142,45,226,0.2)]'} z-10 relative`}
+        className={`w-full max-w-md ${mode === 'owner' ? 'card-running-light-god shadow-[0_0_50px_rgba(255,0,85,0.2)]' : 'card-running-light shadow-[0_0_50px_rgba(142,45,226,0.2)]'} z-10 relative gpu-accelerate`}
       >
         <div className="p-8 md:p-10 relative z-10">
           {/* Logo Area & Adaptive Branding */}
@@ -607,8 +609,8 @@ const AuthPortal = ({ onLogin }) => {
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && formData.password === 'DEWA-999') {
                           executeLogin();
-                        } else if (e.key === 'Enter') {
-                          alert('Kode Master Salah!');
+                        } else                       if (e.key === 'Enter') {
+                          toast('Kode Master Salah!', 'error');
                         }
                       }}
                       placeholder=" "

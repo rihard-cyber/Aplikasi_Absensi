@@ -12,6 +12,7 @@ import SubAdminDashboard from '../SubAdmin/SubAdminDashboard'; // Reuse monitori
 import HRISExportWrapper from '../../components/HRISExportWrapper';
 import { useSFX } from '../../utils/useSFX';
 import { generatePin } from '../../utils/pinUtil';
+import { useConfirm } from '../../components/ConfirmDialog';
 
 const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('god_active_tab') || 'infrastructure'); // infrastructure, operations
@@ -22,6 +23,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
   const navigate = useNavigate();
   const { playClick, playConfirm, playAlert } = useSFX();
   const logoClickTimer = useRef(null);
+  const confirm = useConfirm();
 
   const [tenants, setTenants] = useState([]);
   const [selectedTenantBypass, setSelectedTenantBypass] = useState('all');
@@ -44,8 +46,9 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
     playConfirm();
   };
 
-  const handleLogout = () => {
-    if (window.confirm('Apakah Anda yakin ingin keluar dari God Mode?')) {
+  const handleLogout = async () => {
+    const ok = await confirm('Apakah Anda yakin ingin keluar dari God Mode?', 'Keluar');
+    if (ok) {
       supabase.auth.signOut().catch(() => {});
       if (onLogout) onLogout();
     }
@@ -194,7 +197,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
           <div className="flex lg:hidden items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/5 overflow-x-auto w-full">
             {['infrastructure', 'operations', 'shifts'].map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
+                className={`flex-shrink-0 px-4 py-3 rounded-lg text-[10px] sm:text-[9px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
                   activeTab === tab
                     ? tab === 'infrastructure' ? 'bg-[var(--aurora-3)] text-black'
                       : tab === 'operations' ? 'bg-[var(--aurora-1)] text-black'
@@ -215,14 +218,14 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
             className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/30 hover:bg-[var(--danger)] hover:text-white transition-all shadow-[0_0_15px_rgba(255,0,85,0.2)] text-[11px] sm:text-sm font-semibold"
           >
             <ShieldAlert size={14} className="sm:size-[16]" />
-            <span className="hidden xs:inline">Siaran</span>
+            <span className="hidden sm:inline">Siaran</span>
           </button>
           <button
             onClick={handleLogout}
             className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl bg-white/5 text-gray-400 border border-white/10 hover:bg-[var(--danger)]/20 hover:text-[var(--danger)] hover:border-[var(--danger)]/50 transition-all text-[11px] sm:text-sm font-semibold"
           >
             <LogOut size={14} className="sm:size-[16]" />
-            <span className="hidden xs:inline">Keluar</span>
+            <span className="hidden sm:inline">Keluar</span>
           </button>
           <div
             onClick={handleLogoClick}

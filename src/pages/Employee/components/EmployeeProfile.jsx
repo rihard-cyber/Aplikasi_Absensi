@@ -9,6 +9,7 @@ import {
 import { supabase } from '../../../utils/supabaseClient';
 import { DeviceUtil } from '../../../utils/deviceUtil';
 import { useNavigate } from 'react-router-dom';
+import { useConfirm } from '../../../components/ConfirmDialog';
 import HRISDataForm from './HRISDataForm';
 
 const EmployeeProfile = () => {
@@ -39,6 +40,7 @@ const EmployeeProfile = () => {
   const [hasSubAdminAccess, setHasSubAdminAccess] = useState(true); // Simulated check
   const [pin, setPin] = useState(['', '', '', '', '', '']);
   const [activeItem, setActiveItem] = useState(null);
+  const confirm = useConfirm();
   const [editData, setEditData] = useState({ ...user });
 
   useEffect(() => {
@@ -164,7 +166,8 @@ const EmployeeProfile = () => {
   };
 
   const handleLogout = async () => {
-    if (window.confirm('Apakah Anda yakin ingin keluar dengan aman?')) {
+    const ok = await confirm('Apakah Anda yakin ingin keluar dengan aman?', 'Keluar');
+    if (ok) {
       try {
         await supabase.auth.signOut();
       } catch (e) {
@@ -218,7 +221,7 @@ const EmployeeProfile = () => {
                 </div>
               )}
             </div>
-            <label className="absolute bottom-1 right-1 w-8 h-8 bg-[var(--aurora-1)] rounded-full flex items-center justify-center border-2 border-[#0B0C10] text-white hover:scale-110 transition-transform cursor-pointer">
+            <label className="absolute bottom-1 right-1 w-10 h-10 bg-[var(--aurora-1)] rounded-full flex items-center justify-center border-2 border-[#0B0C10] text-white hover:scale-110 transition-transform cursor-pointer">
               <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} disabled={isUploadingPhoto} />
               <User size={14} />
             </label>

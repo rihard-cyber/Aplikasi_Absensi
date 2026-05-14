@@ -1,5 +1,14 @@
 {
   "appId": "com.sipresensi.app",
-  "appName": "SI_PRESENSI",
-  "webDir": "dist"
+  "appName": "SI Presensi",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
 }

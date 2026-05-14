@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
 
+/* Preconnect to Google Fonts */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial');
+  size-adjust: 102%;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -46,16 +53,50 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+  max-width: 100vw;
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent zoom on input focus in iOS WebView */
+input, textarea, select {
+  font-size: 16px;
+}
+
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--bg-darker);
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
+  max-width: 100vw;
   -webkit-font-smoothing: antialiased;
   background-image:
     radial-gradient(circle at 15% 50%, rgba(142, 45, 226, 0.05), transparent 25%),
     radial-gradient(circle at 85% 30%, rgba(0, 201, 255, 0.05), transparent 25%);
+}
+
+#root {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Safe area padding for notched devices & gesture bars */
+@supports (padding: max(0px)) {
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 12px), 12px);
+  }
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top, 0px), 0px);
+  }
+  .safe-left {
+    padding-left: max(env(safe-area-inset-left, 0px), 0px);
+  }
+  .safe-right {
+    padding-right: max(env(safe-area-inset-right, 0px), 0px);
+  }
 }
 
 h1,
@@ -82,6 +123,8 @@ h6 {
     inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   position: relative;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 /* Animated Bokeh Blobs for Glass Panels */
@@ -196,6 +239,8 @@ button {
   border-radius: 32px;
   padding: 2px;
   overflow: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .card-running-light::before,
@@ -253,6 +298,20 @@ button {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 201, 255, 0.6);
   box-shadow: 0 0 6px rgba(0, 201, 255, 0.5);
+}
+
+/* Scroll input into view when keyboard opens on mobile */
+input, textarea, select {
+  scroll-margin-bottom: 200px;
+}
+
+/* GPU Acceleration for smoother animations on Android */
+.gpu-accelerate {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 /* Neon Pulse Animation for Syncing */

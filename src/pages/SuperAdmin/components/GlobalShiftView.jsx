@@ -130,7 +130,7 @@ const GlobalShiftView = () => {
       </div>
 
       {isLoading ? (
-        <div className="py-20 text-center text-gray-500 text-sm animate-pulse">Memuat Data Jadwal Global...</div>
+        <div className="py-10"><div className="w-full glass-panel p-8 border border-white/5 animate-pulse space-y-6"><div className="h-5 bg-white/10 rounded w-1/3" /><div className="h-4 bg-white/5 rounded w-2/3" /><div className="grid grid-cols-3 gap-4"><div className="h-32 bg-white/5 rounded-2xl" /><div className="h-32 bg-white/5 rounded-2xl" /><div className="h-32 bg-white/5 rounded-2xl" /></div></div></div>
       ) : activeSubTab === 'dict' ? (
         /* ---- SHIFT DICTIONARY VIEW ---- */
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

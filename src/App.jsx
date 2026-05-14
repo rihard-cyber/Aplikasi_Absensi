@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import AttendanceScreen from './pages/Employee/AttendanceScreen';
-import CommandCenter from './pages/SuperAdmin/CommandCenter';
-import TenantDashboard from './pages/TenantAdmin/TenantDashboard';
-import AuthPortal from './pages/Auth/AuthPortal';
-import SubAdminDashboard from './pages/SubAdmin/SubAdminDashboard';
 import { requestAppPermissions } from './utils/permissionInit';
+import { ToastProvider } from './components/Toast';
+import { ConfirmProvider } from './components/ConfirmDialog';
+
+const AttendanceScreen = lazy(() => import('./pages/Employee/AttendanceScreen'));
+const CommandCenter = lazy(() => import('./pages/SuperAdmin/CommandCenter'));
+const TenantDashboard = lazy(() => import('./pages/TenantAdmin/TenantDashboard'));
+const AuthPortal = lazy(() => import('./pages/Auth/AuthPortal'));
+const SubAdminDashboard = lazy(() => import('./pages/SubAdmin/SubAdminDashboard'));
 
 // Komponen Pembungkus Transisi Halaman (Efek Blur & Scale yang mulus)
 const PageTransition = ({ children }) => (
@@ -15,7 +18,7 @@ const PageTransition = ({ children }) => (
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 1.02 }}
     transition={{ duration: 0.4, ease: "easeInOut" }}
-    className="w-full min-h-screen"
+    className="w-full min-h-screen overflow-x-hidden gpu-accelerate"
   >
     {children}
   </motion.div>
@@ -93,7 +96,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
       {sessionStorage.getItem('god_key') === 'DEWA-999' && (
         <div 
           onClick={handleCycleRole}
-          className="fixed top-2 left-1/2 -translate-x-1/2 z-[9999] px-4 py-1 bg-[var(--danger)] text-white text-[10px] font-bold rounded-full shadow-[0_0_15px_rgba(255,0,85,0.5)] border border-white/20 animate-pulse cursor-pointer hover:bg-red-600 transition-colors active:scale-95"
+          className="fixed top-2 left-1/2 -translate-x-1/2 z-[9999] px-4 py-1 bg-[var(--danger)] text-white text-[10px] font-bold rounded-full shadow-[0_0_15px_rgba(255,0,85,0.5)] border border-white/20 animate-pulse cursor-pointer hover:bg-red-600 transition-colors active:scale-95 safe-top"
           title="Klik untuk Pindah Dasbor"
         >
           GOD MODE ACTIVE (TAP TO SWITCH DASHBOARD)
@@ -132,6 +135,16 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
         )}
       </AnimatePresence>
 
+      <Suspense fallback={
+        <div className="min-h-screen bg-[var(--bg-darker)] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-6 animate-pulse">
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] p-[2px] shadow-[0_0_30px_rgba(142,45,226,0.3)]">
+              <div className="w-full h-full bg-[var(--bg-darker)] rounded-[22px] flex items-center justify-center font-serif font-bold text-white text-lg">SP</div>
+            </div>
+            <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold">Memuat...</p>
+          </div>
+        </div>
+      }>
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           {/* Unified Triple-Gate Portal */}
@@ -190,6 +203,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
           <Route path="*" element={isAuthenticated ? <Navigate to="/" replace /> : <Navigate to="/login" replace />} />
         </Routes>
       </AnimatePresence>
+      </Suspense>
     </>
   );
 };
@@ -264,15 +278,19 @@ function App() {
 
   return (
     <HashRouter>
-      <AppRoutes
-        isAuthenticated={isAuthenticated}
-        userRole={userRole}
-        originalRole={originalRole}
-        handleLogin={handleLogin}
-        handleImpersonate={handleImpersonate}
-        handleGodModeReturn={handleGodModeReturn}
-        handleLogout={handleLogout}
-      />
+      <ToastProvider>
+        <ConfirmProvider>
+        <AppRoutes
+          isAuthenticated={isAuthenticated}
+          userRole={userRole}
+          originalRole={originalRole}
+          handleLogin={handleLogin}
+          handleImpersonate={handleImpersonate}
+          handleGodModeReturn={handleGodModeReturn}
+          handleLogout={handleLogout}
+        />
+        </ConfirmProvider>
+      </ToastProvider>
     </HashRouter>
   );
 }

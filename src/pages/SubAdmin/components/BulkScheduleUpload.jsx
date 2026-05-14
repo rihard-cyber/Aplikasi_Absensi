@@ -245,7 +245,7 @@ const BulkScheduleUpload = ({ tenantId, projectId }) => {
                 : 'Cek konsol untuk detail error.'}
             </p>
           </div>
-          <button onClick={() => setUploadStatus(null)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"><XCircle size={16} /></button>
+          <button onClick={() => setUploadStatus(null)} className="p-3 hover:bg-white/10 rounded-lg transition-colors"><XCircle size={16} /></button>
         </div>
       )}
 

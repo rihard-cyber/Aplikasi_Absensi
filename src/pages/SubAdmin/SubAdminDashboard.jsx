@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/supabaseClient';
 import BulkScheduleUpload from './components/BulkScheduleUpload';
 import HRISExportWrapper from '../../components/HRISExportWrapper';
+import { useToast } from '../../components/Toast';
 
 
 const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycleRole, tenantId = null }) => {
@@ -39,10 +40,11 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [clickCount, setClickCount] = useState(0);
+  const toast = useToast();
 
   React.useEffect(() => {
     if (!isAuthorized && !isEmbedded) {
-      alert('Akses Ditolak: Anda tidak memiliki otoritas operasional.');
+      toast('Akses Ditolak: Anda tidak memiliki otoritas operasional.', 'error');
       navigate('/');
     }
   }, []);
@@ -160,8 +162,8 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
             <TabButton active={activeTab === 'schedule'} onClick={() => { triggerHaptic(); setActiveTab('schedule'); }} icon={<Upload />} label="Upload Jadwal" />
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="flex items-center gap-2 bg-white/5 p-2 px-4 rounded-2xl border border-white/5 flex-1 md:flex-none">
+          <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+            <div className="flex items-center gap-2 bg-white/5 p-2 px-4 rounded-2xl border border-white/5 flex-1 md:flex-none min-w-[140px]">
               <Filter size={14} className="text-[var(--aurora-1)]" />
               <select 
                 value={selectedProject} 
@@ -184,7 +186,7 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
               divisionId={selectedDivision} 
             />
             
-            <div className="flex items-center gap-2 bg-white/5 p-2 px-4 rounded-2xl border border-white/5 flex-1 md:flex-none">
+            <div className="flex items-center gap-2 bg-white/5 p-2 px-4 rounded-2xl border border-white/5 flex-1 md:flex-none min-w-[140px]">
               <Network size={14} className="text-[var(--aurora-3)]" />
               <select 
                 value={selectedDivision} 
@@ -326,7 +328,7 @@ const MonitoringView = ({ filterStatus, selectedDate, onDateChange, selectedProj
           </thead>
           <tbody className="divide-y divide-white/5">
             {loading ? (
-              <tr><td colSpan="6" className="p-10 text-center text-gray-500 font-bold tracking-widest uppercase">Memuat Data...</td></tr>
+              <tr><td colSpan="6" className="p-10"><div className="flex justify-center"><div className="w-full glass-panel p-6 border border-white/5 animate-pulse space-y-4"><div className="h-4 bg-white/10 rounded w-1/4" /><div className="h-3 bg-white/5 rounded w-1/2" /><div className="h-3 bg-white/5 rounded w-1/3" /></div></div></td></tr>
             ) : employees.length === 0 ? (
               <tr><td colSpan="6" className="p-10 text-center text-gray-500 font-bold tracking-widest uppercase">Tidak ada data absensi</td></tr>
             ) : employees.map(emp => (

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Clock, CalendarDays, AlertTriangle, ShieldCheck, Database, Save, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../../utils/supabaseClient';
+import LoadingSkeleton from '../../../components/LoadingSkeleton';
+import { useToast } from '../../../components/Toast';
 
 const GeneralSettings = () => {
   const [settings, setSettings] = useState({
@@ -18,6 +20,7 @@ const GeneralSettings = () => {
   const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, saved, error
   const debounceTimer = useRef(null);
   const [tenantId, setTenantId] = useState(null);
+  const toast = useToast();
 
   useEffect(() => {
     fetchSettings();
@@ -101,7 +104,7 @@ const GeneralSettings = () => {
     }, 1000); // 1 second debounce
   };
 
-  if (isLoading) return <div className="p-10 text-center text-gray-500">Memuat Pengaturan...</div>;
+  if (isLoading) return <div className="p-10"><LoadingSkeleton type="card" /></div>;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
@@ -225,7 +228,7 @@ const GeneralSettings = () => {
           </p>
           <button 
             onClick={() => {
-              alert("Gunakan menu 'Otoritas Tim' di panel samping untuk mengelola delegasi admin.");
+              toast("Gunakan menu 'Otoritas Tim' di panel samping.", 'info');
             }}
             className="px-6 py-3 bg-[var(--aurora-1)] hover:bg-[#8E2DE2] text-white text-xs font-black uppercase rounded-xl transition-all shadow-[0_0_20px_rgba(142,45,226,0.3)]"
           >

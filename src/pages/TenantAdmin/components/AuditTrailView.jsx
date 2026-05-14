@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, ShieldCheck, Loader2 } from 'lucide-react';
+import { Search, Filter, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
+import LoadingSkeleton from '../../../components/LoadingSkeleton';
 
 const actionColor = (action) => {
   if (!action) return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
@@ -130,8 +131,8 @@ const AuditTrailView = () => {
           <tbody className="divide-y divide-white/5">
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="p-10 text-center text-gray-500">
-                  <Loader2 size={20} className="animate-spin inline-block mr-2" /> Memuat data audit...
+                <td colSpan={5} className="p-10">
+                  <div className="flex justify-center"><LoadingSkeleton type="table" /></div>
                 </td>
               </tr>
             ) : filteredLogs.length === 0 ? (

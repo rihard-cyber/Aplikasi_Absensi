@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useSFX } from '../../../utils/useSFX';
 import { supabase } from '../../../utils/supabaseClient';
 import { copyToClipboard } from '../../../utils/clipboardUtil';
+import { useConfirm } from '../../../components/ConfirmDialog';
 
 const tenantsData = [
   { id: 1, name: 'Tenant Company Alpha', tier: 'Enterprise', users: 1250, maxUsers: 2000, daysLeft: 280, active: true },
@@ -57,6 +58,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const scrollRef = useRef(null);
   const { playClick, playAlert, playConfirm } = useSFX();
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchTenants();
@@ -235,7 +237,8 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
   };
 
   const handleResetSecurity = async (id, name) => {
-    if (!window.confirm(`Apakah kamu yakin ingin mereset keamanan ${name}?\nIni akan membuat kode lisensi lama menjadi hangus.`)) return;
+    const ok = await confirm(`Reset keamanan ${name}? Ini akan membuat kode lisensi lama menjadi hangus.`, 'Reset Keamanan');
+    if (!ok) return;
     try {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       let newEmpCode = 'SI-';
@@ -390,9 +393,9 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4 flex-shrink-0 ml-3">
-                      {/* Dual Code Display - Always visible */}
-                      <div className="flex flex-col gap-1 px-2 sm:px-3 border-l border-white/5 mr-1 sm:mr-2">
+                    <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 ml-2">
+                      {/* Dual Code Display - Desktop only */}
+                      <div className="hidden md:flex flex-col gap-1 px-2 sm:px-3 border-l border-white/5 mr-1 sm:mr-2">
                         {/* Admin / Lisensi Code */}
                         <div className="flex flex-col items-end gap-0.5">
                           <span className="text-[7px] sm:text-[8px] text-[var(--warning)] font-black uppercase tracking-widest">Lisensi</span>
@@ -404,11 +407,11 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                                 setCopiedId('adm-' + tenant.id);
                                 setTimeout(() => setCopiedId(null), 2000);
                               }}
-                              className={`text-[8px] sm:text-[10px] font-mono px-1.5 sm:px-2 py-0.5 rounded transition-all flex items-center gap-1 ${
-                                copiedId === 'adm-' + tenant.id 
-                                  ? 'bg-[var(--success)]/20 text-[var(--success)] border border-[var(--success)]/30' 
-                                  : 'text-[var(--warning)] bg-[var(--warning)]/[0.05] border border-[var(--warning)]/20 hover:bg-[var(--warning)]/20'
-                              }`}
+              className={`text-[8px] sm:text-[10px] font-mono px-2 sm:px-3 py-1.5 sm:py-2 rounded transition-all flex items-center gap-1 ${
+                                 copiedId === 'adm-' + tenant.id 
+                                   ? 'bg-[var(--success)]/20 text-[var(--success)] border border-[var(--success)]/30' 
+                                   : 'text-[var(--warning)] bg-[var(--warning)]/[0.05] border border-[var(--warning)]/20 hover:bg-[var(--warning)]/20'
+                               }`}
                             >
                               {copiedId === 'adm-' + tenant.id ? 'OK!' : tenant.adminCode}
                               {copiedId === 'adm-' + tenant.id ? <CheckCircle2 size={8} /> : <Copy size={8} className="text-gray-600" />}
@@ -427,11 +430,11 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                               setCopiedId('emp-' + tenant.id);
                               setTimeout(() => setCopiedId(null), 2000);
                             }}
-                            className={`text-[8px] sm:text-[10px] font-mono px-1.5 sm:px-2 py-0.5 rounded transition-all flex items-center gap-1 ${
-                              copiedId === 'emp-' + tenant.id 
-                                ? 'bg-[var(--success)]/20 text-[var(--success)] border border-[var(--success)]/30' 
-                                : 'text-[var(--aurora-3)] bg-[var(--aurora-3)]/[0.05] border border-[var(--aurora-3)]/20 hover:bg-[var(--aurora-3)]/20'
-                            }`}
+              className={`text-[8px] sm:text-[10px] font-mono px-2 sm:px-3 py-1.5 sm:py-2 rounded transition-all flex items-center gap-1 ${
+                                 copiedId === 'emp-' + tenant.id 
+                                   ? 'bg-[var(--success)]/20 text-[var(--success)] border border-[var(--success)]/30' 
+                                   : 'text-[var(--aurora-3)] bg-[var(--aurora-3)]/[0.05] border border-[var(--aurora-3)]/20 hover:bg-[var(--aurora-3)]/20'
+                               }`}
                           >
                             {copiedId === 'emp-' + tenant.id ? 'OK!' : (tenant.activationCode || '----')}
                             {copiedId === 'emp-' + tenant.id ? <CheckCircle2 size={8} /> : <Copy size={8} className="text-gray-600" />}
@@ -675,7 +678,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
             onClick={scrollToTop}
-            className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-[var(--aurora-3)]/20 border border-[var(--aurora-3)]/40 flex items-center justify-center text-[var(--aurora-3)] shadow-[0_0_15px_rgba(0,201,255,0.4)] animate-pulse"
+            className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-[var(--aurora-3)]/20 border border-[var(--aurora-3)]/40 flex items-center justify-center text-[var(--aurora-3)] shadow-[0_0_15px_rgba(0,201,255,0.4)] animate-pulse"
           >
             <ArrowUp size={14} />
           </motion.button>

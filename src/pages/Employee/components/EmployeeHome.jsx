@@ -74,7 +74,7 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
       </div>
 
       {/* QUICK ACTIONS GRID */}
-      <div className="grid grid-cols-4 gap-4 mb-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-2">
         <ActionButton icon={<Calendar />} label="Izin / Cuti" color="var(--aurora-3)" onClick={() => onAction('leave')} />
         <ActionButton icon={<Zap />} label="Lembur" color="var(--warning)" onClick={() => onAction('lembur')} />
         <ActionButton icon={<RefreshCcw />} label="Tukar Shift" color="var(--aurora-2)" onClick={() => onAction('shift')} />

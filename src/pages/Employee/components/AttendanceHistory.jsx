@@ -151,7 +151,7 @@ const AttendanceHistory = () => {
                     </div>
                   </div>
 
-                  <button className="w-full mt-4 py-2 flex items-center justify-center gap-2 text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] hover:text-white transition-colors group">
+                  <button className="w-full mt-4 py-3 flex items-center justify-center gap-2 text-[11px] text-gray-600 font-black uppercase tracking-[0.3em] hover:text-white transition-colors group">
                     Lihat Detail <ChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                 </motion.div>

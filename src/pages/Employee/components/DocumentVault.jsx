@@ -7,6 +7,7 @@ import {
   MapPin, History, Info, HeartPulse, Banknote
 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
+import { useToast } from '../../../components/Toast';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -14,6 +15,7 @@ const DocumentVault = () => {
   const [activeCategory, setActiveCategory] = useState(null);
   const [view, setView] = useState('categories');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
   const [showSuccess, setShowSuccess] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [hrisData, setHrisData] = useState(null);
@@ -111,8 +113,8 @@ const DocumentVault = () => {
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
-    if (!formData.file) { alert('Lampirkan dokumen terlebih dahulu.'); return; }
-    if (formData.file.size > MAX_FILE_SIZE) { alert('File maksimal 5MB.'); return; }
+    if (!formData.file) { toast('Lampirkan dokumen terlebih dahulu.', 'error'); return; }
+    if (formData.file.size > MAX_FILE_SIZE) { toast('File maksimal 5MB.', 'error'); return; }
 
     setIsSubmitting(true);
     try {
@@ -203,7 +205,7 @@ const DocumentVault = () => {
         setFormData(f => ({ ...f, file: null }));
       }, 2000);
     } catch (err) {
-      alert('Gagal: ' + err.message);
+      toast('Gagal: ' + err.message, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -212,7 +214,7 @@ const DocumentVault = () => {
   const handleFileChange = (e) => {
     const f = e.target.files[0];
     if (!f) return;
-    if (f.size > MAX_FILE_SIZE) { alert('File maksimal 5MB.'); setFormData(fd => ({ ...fd, file: null })); return; }
+    if (f.size > MAX_FILE_SIZE) { toast('File maksimal 5MB.', 'error'); setFormData(fd => ({ ...fd, file: null })); return; }
     setFormData(fd => ({ ...fd, file: f }));
   };
 

@@ -902,6 +902,18 @@
       text-decoration: none;
     }
 
+    /* prefers-reduced-motion */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+      .reveal {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
+
     /* RESPONSIVE */
     @media (max-width: 900px) {
       .hero-grid {
@@ -970,6 +982,71 @@
       }
       .cta-box {
         padding: 40px 24px;
+      }
+      .role-card-mock {
+        padding: 20px 16px;
+      }
+      .role-card-mock .mock-row {
+        font-size: 12px;
+        padding: 8px 0;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .hero {
+        padding: 80px 0 40px;
+      }
+      .hero h1 {
+        font-size: 28px;
+      }
+      .btn-primary, .btn-secondary {
+        padding: 14px 20px;
+        font-size: 13px;
+        width: 100%;
+        justify-content: center;
+      }
+      .hero-actions {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .hero-stats {
+        gap: 12px;
+      }
+      .hero-stat {
+        min-width: 80px;
+      }
+      .hero-stat h3 {
+        font-size: 22px;
+      }
+      .logo-text span {
+        display: none;
+      }
+      .cta-box {
+        padding: 32px 16px;
+      }
+      .cta-box h2 {
+        font-size: 22px;
+      }
+      .cta-box .btn-primary {
+        padding: 14px 24px;
+        font-size: 14px;
+        width: 100%;
+        justify-content: center;
+      }
+      .section {
+        padding: 40px 0;
+      }
+      .features-grid {
+        gap: 16px;
+      }
+      .feature-card {
+        padding: 24px 16px;
+      }
+      .role-card-mock {
+        padding: 16px 12px;
+      }
+      .role-content h3 {
+        font-size: 22px;
       }
     }
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, ShieldAlert, Megaphone, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useConfirm } from '../../components/ConfirmDialog';
 import { Geolocation } from '@capacitor/geolocation';
 import { App } from '@capacitor/app';
 
@@ -12,9 +13,11 @@ import EmployeeProfile from './components/EmployeeProfile';
 import LeaveRequest from './components/LeaveRequest';
 import { supabase } from '../../utils/supabaseClient';
 import { analyzePosition, logFakeGpsAttempt } from '../../utils/antiFakeGps';
+import { useToast } from '../../components/Toast';
 
-// --- Extracted Clock In UI ---
+  // --- Extracted Clock In UI ---
 const ClockInTab = () => {
+  const toast = useToast();
   const [isPressing, setIsPressing] = useState(false);
   const [chargeProgress, setChargeProgress] = useState(0);
   const [status, setStatus] = useState('IDLE'); // IDLE, SCANNING, VERIFIED, FAILED
@@ -49,7 +52,7 @@ const ClockInTab = () => {
         setShowCodeInput(false);
         checkLocation();
       } else {
-        alert(`Kode "${code}" tidak ditemukan.`);
+        toast(`Kode "${code}" tidak ditemukan.`, 'error');
       }
     } catch (e) {
       console.error("Lookup project error:", e);
@@ -135,7 +138,7 @@ const ClockInTab = () => {
       // Anti-Fake GPS: Analisis multi-level
       const gpsAnalysis = analyzePosition(position);
       if (gpsAnalysis.isMocked) {
-        alert(`⚠️ ${gpsAnalysis.reason}\n\nAbsensi ditolak demi keamanan.`);
+        toast(`⚠️ ${gpsAnalysis.reason} - Absensi ditolak.`, 'error');
         setLocationState('ERROR');
         try {
           const { data: { session } } = await supabase.auth.getSession();
@@ -182,7 +185,7 @@ const ClockInTab = () => {
           if (!error) {
             localStorage.removeItem('offline_attendance');
             if (window.navigator?.vibrate) window.navigator.vibrate([50, 100, 50]);
-            alert(`Sinyal kembali! ${queue.length} data absen offline berhasil disinkronisasi.`);
+            toast(`Sinyal kembali! ${queue.length} data absen offline berhasil disinkronisasi.`, 'success');
           } else {
             console.error("Gagal sinkronisasi offline:", error);
           }
@@ -263,7 +266,7 @@ const ClockInTab = () => {
         const queue = JSON.parse(localStorage.getItem('offline_attendance') || '[]');
         queue.push(logData);
         localStorage.setItem('offline_attendance', JSON.stringify(queue));
-        alert('Internet terputus. Data disimpan & dikirim saat online.');
+        toast('Internet terputus. Data disimpan & dikirim saat online.', 'info');
       } else {
         try {
           const { data: { session } } = await supabase.auth.getSession();
@@ -292,7 +295,7 @@ const ClockInTab = () => {
     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex-1 w-full max-w-md flex flex-col items-center justify-center relative z-10 pb-20">
 
       {/* Face ID Scanner Container */}
-      <div className="relative flex items-center justify-center w-72 h-72 mb-10">
+      <div className="relative flex items-center justify-center w-full max-w-[288px] aspect-square mb-10">
 
         {/* Pulsing Outer Rings */}
         {status === 'SCANNING' && (
@@ -303,7 +306,7 @@ const ClockInTab = () => {
         )}
 
         {/* Camera/Scanner Mask */}
-        <div className="w-56 h-56 rounded-full border-4 border-white/5 bg-[#1A1C23] relative overflow-hidden flex items-center justify-center shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+        <div className="w-44 h-44 sm:w-56 sm:h-56 rounded-full border-4 border-white/5 bg-[#1A1C23] relative overflow-hidden flex items-center justify-center shadow-[0_0_40px_rgba(0,0,0,0.5)]">
 
           {/* Real Camera Feed */}
           <video
@@ -371,7 +374,7 @@ const ClockInTab = () => {
           onPointerLeave={() => setIsPressing(false)}
           onClick={handleReset}
           whileTap={{ scale: 0.95 }}
-          className={`absolute z-50 w-44 h-44 rounded-full flex flex-col items-center justify-center transition-all duration-500 border-4 ${status === 'VERIFIED' ? 'bg-[var(--success)] border-white/20 shadow-[0_0_60px_rgba(0,255,135,0.4)]' :
+          className={`absolute z-50 w-36 h-36 sm:w-44 sm:h-44 rounded-full flex flex-col items-center justify-center transition-all duration-500 border-4 ${status === 'VERIFIED' ? 'bg-[var(--success)] border-white/20 shadow-[0_0_60px_rgba(0,255,135,0.4)]' :
             status === 'FAILED' ? 'bg-[var(--danger)] border-white/20' :
               locationState === 'OUT_OF_RANGE' && !isGodMode ? 'bg-[var(--danger)]/20 backdrop-blur-md border-[var(--danger)]/30 cursor-not-allowed' :
                 'bg-black/40 backdrop-blur-md border-white/10'
@@ -382,11 +385,11 @@ const ClockInTab = () => {
               <span className="text-black font-black text-xl tracking-tighter">SUCCESS</span>
             ) : (
               <>
-                <Fingerprint size={32} className={`mb-2 transition-colors ${isPressing ? 'text-[var(--aurora-3)]' : 'text-white/40'}`} />
-                <span className="text-sm font-bold font-serif tracking-widest text-white leading-tight text-center px-2">
+                <Fingerprint size={24} className={`mb-1 sm:mb-2 transition-colors ${isPressing ? 'text-[var(--aurora-3)]' : 'text-white/40'}`} />
+                <span className="text-[11px] sm:text-sm font-bold font-serif tracking-widest text-white leading-tight text-center px-1 sm:px-2">
                   {locationState === 'CHECKING' ? 'MENCARI LOKASI...' : locationState === 'OUT_OF_RANGE' && !isGodMode ? `DILUAR RADIUS (${distance}m)` : isClockOut ? 'ABSEN KELUAR' : 'ABSEN MASUK'}
                 </span>
-                <span className="text-[8px] mt-2 text-gray-500 uppercase tracking-widest font-bold text-center px-4">
+                <span className="text-[7px] sm:text-[8px] mt-1 sm:mt-2 text-gray-500 uppercase tracking-widest font-bold text-center px-2 sm:px-4">
                   {isPressing ? 'HOLD STEADY' : 'TAP & HOLD FACE ID'}
                 </span>
               </>
@@ -452,6 +455,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
   const [todayShift, setTodayShift] = useState(null); // null = follow Pengaturan Umum
   
   // NEW DYNAMIC STATES
+  const confirm = useConfirm();
   const [userData, setUserData] = useState({ full_name: 'User', position: 'Staff', division: 'Division' });
   const [stats, setStats] = useState({ weeklyHours: 0, leaveBalance: 12 });
   const [companyInfo, setCompanyInfo] = useState({ 
@@ -473,16 +477,17 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
 
     const backButtonListener = App.addListener('backButton', ({ canGoBack }) => {
       if (activeTab !== 'home' || activeSubView !== null) {
-        // Jika tidak di home, kembali ke halaman utama
         setActiveTab('home');
         setActiveSubView(null);
       } else {
-        // Jika sudah di Home, perlu 3x klik untuk keluar
         backPressCount++;
         if (backPressCount >= 3) {
-          if (window.confirm('Apakah Anda yakin ingin keluar dari aplikasi SI Presensi?')) {
-            App.exitApp();
-          }
+          (async () => {
+            const shouldExit = await confirm('Apakah Anda yakin ingin keluar dari aplikasi SI Presensi?', 'Keluar');
+            if (shouldExit) {
+              App.exitApp();
+            }
+          })();
           backPressCount = 0;
         } else {
           if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
@@ -623,7 +628,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
 
       {/* GOD MODE OVERLAY */}
       {isGodMode && (
-        <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="fixed top-4 right-4 z-50 bg-[var(--danger)]/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-[var(--danger)] text-white text-[10px] font-black tracking-widest flex items-center gap-2 shadow-[0_0_15px_rgba(255,0,85,0.5)]">
+        <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="fixed top-4 right-4 z-50 bg-[var(--danger)]/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-[var(--danger)] text-white text-[10px] font-black tracking-widest flex items-center gap-2 shadow-[0_0_15px_rgba(255,0,85,0.5)] safe-top">
           <ShieldAlert size={12} /> GOD MODE ACTIVE
         </motion.div>
       )}
@@ -723,8 +728,8 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
       </div>
 
       {/* Floating Dock Navigation Bar */}
-      <div className="fixed bottom-6 w-full px-5 flex justify-center z-50">
-        <div className="glass-panel px-6 py-3 flex items-center justify-between w-full max-w-sm rounded-full">
+      <div className="fixed bottom-6 w-full px-5 flex justify-center z-50 safe-bottom">
+        <div className="glass-panel px-6 py-3 flex items-center justify-between w-full max-w-sm rounded-full gpu-accelerate">
           {[
             { id: 'home', icon: Home },
             { id: 'history', icon: Clock },
@@ -743,7 +748,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
               whileTap={{ scale: 0.9 }}
               className={`relative ${item.center
                 ? 'bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] w-14 h-14 rounded-full flex items-center justify-center text-white shadow-[0_0_15px_rgba(142,45,226,0.5)] -mt-8 border-4 border-[#0B0C10]'
-                : `p-2 rounded-full transition-colors ${activeTab === item.id ? 'text-[var(--aurora-3)]' : 'text-gray-500'}`
+                : `p-3 rounded-full transition-colors ${activeTab === item.id ? 'text-[var(--aurora-3)]' : 'text-gray-500'}`
                 }`}
             >
               <item.icon size={item.center ? 28 : 22} />
@@ -759,7 +764,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
       </div>
 
       {/* GLOBAL BRANDING FOOTER */}
-      <div className="fixed bottom-1 w-full text-center pointer-events-none z-40">
+      <div className="fixed bottom-1 w-full text-center pointer-events-none z-40 safe-bottom">
         <p className="text-[8px] text-gray-600 font-bold tracking-[0.3em] uppercase">SI PRESENSI PRO MAX - v3.5</p>
       </div>
 

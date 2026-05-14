@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Upload, Download, AlertCircle, CheckCircle2, Loader2, CalendarDays, FileSpreadsheet, Users, X, Briefcase, UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../../utils/supabaseClient';
+import { useToast } from '../../../components/Toast';
 
 const parseCSVLine = (line) => {
   const result = [];
@@ -28,6 +29,7 @@ const ScheduleUpload = () => {
   const [preview, setPreview] = useState(null);
   const [results, setResults] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const toast = useToast();
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const fileRef = useRef(null);
@@ -86,7 +88,7 @@ const ScheduleUpload = () => {
       try {
         const text = ev.target.result;
         const lines = text.split('\n').filter(l => l.trim());
-        if (lines.length < 2) { alert('CSV minimal 2 baris.'); return; }
+        if (lines.length < 2) { toast('CSV minimal 2 baris.', 'error'); return; }
 
         const headers = parseCSVLine(lines[0]);
         // Expected format: NIK, Nama, Jabatan, Project, Divisi, Tgl_1, Tgl_2, ...
@@ -113,7 +115,7 @@ const ScheduleUpload = () => {
         setPreview({ headers: dateLabels, rows });
         setStep('parsed');
       } catch (err) {
-        alert('Gagal parse CSV: ' + err.message);
+        toast('Gagal parse CSV: ' + err.message, 'error');
       }
     };
     reader.readAsText(f);
@@ -400,7 +402,7 @@ const ScheduleUpload = () => {
                   <h3 className="text-xl font-bold text-white">Injeksi Selesai</h3>
                 </div>
 
-                <div className="grid grid-cols-4 gap-3 mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                   <div className="bg-[var(--success)]/10 rounded-xl p-4 text-center border border-[var(--success)]/20">
                     <p className="text-2xl font-bold text-[var(--success)]">{results.inserted}</p>
                     <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Jadwal</p>

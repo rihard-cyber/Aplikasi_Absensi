@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, ArrowDown, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../../utils/supabaseClient';
+import { useToast } from '../../../components/Toast';
 
 const ApprovalWorkflow = () => {
   const [stages, setStages] = useState([]);
   const [tenantId, setTenantId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const toast = useToast();
 
   useEffect(() => {
     fetchWorkflows();
@@ -58,9 +60,9 @@ const ApprovalWorkflow = () => {
         if (error) throw error;
       }
       
-      alert("Alur persetujuan berhasil disimpan!");
+      toast("Alur persetujuan berhasil disimpan!", 'success');
     } catch (e) {
-      alert("Gagal menyimpan alur: " + e.message);
+      toast("Gagal menyimpan alur: " + e.message, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -106,7 +108,7 @@ const ApprovalWorkflow = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="flex items-center gap-6 bg-[#1A1C23] p-5 rounded-2xl border border-white/5 shadow-lg relative group transition-all hover:border-white/20"
+                className="flex items-center gap-3 sm:gap-6 bg-[#1A1C23] p-4 sm:p-5 rounded-2xl border border-white/5 shadow-lg relative group transition-all hover:border-white/20"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity"></div>
                 
@@ -124,7 +126,7 @@ const ApprovalWorkflow = () => {
                   </select>
                 </div>
                 
-                <div className="w-48 z-10">
+                <div className="w-32 sm:w-48 z-10">
                   <select value={stage.requirement} onChange={e => handleReqChange(stage.id, e.target.value)} className="w-full bg-[#0B0C10] border border-white/10 rounded-lg p-3 text-white light-bloom-input transition-all outline-none appearance-none cursor-pointer">
                     <option value="Wajib">Wajib</option>
                     <option value="Opsional (Hanya Info)">Opsional (Hanya Info)</option>

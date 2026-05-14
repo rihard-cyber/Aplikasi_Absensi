@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Megaphone, Send, Trash2, Clock, Globe, Building } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
+import LoadingSkeleton from '../../../components/LoadingSkeleton';
+import { useToast } from '../../../components/Toast';
+import { useConfirm } from '../../../components/ConfirmDialog';
 
 const BroadcastCenter = () => {
   const [announcements, setAnnouncements] = useState([]);
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tenantId, setTenantId] = useState(null);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   // Form State
   const [title, setTitle] = useState('');
@@ -49,7 +54,7 @@ const BroadcastCenter = () => {
   const handleBroadcast = async (e) => {
     e.preventDefault();
     if (!title || !message) {
-      alert("Judul dan Pesan wajib diisi!");
+      toast("Judul dan Pesan wajib diisi!", 'error');
       return;
     }
     
@@ -70,9 +75,9 @@ const BroadcastCenter = () => {
       setTitle('');
       setMessage('');
       setTargetProject('ALL');
-      alert("Pengumuman berhasil disiarkan!");
+      toast("Pengumuman berhasil disiarkan!", 'success');
     } catch (e) {
-      alert("Gagal menyiarkan pengumuman: " + e.message);
+      toast("Gagal menyiarkan pengumuman: " + e.message, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -84,22 +89,23 @@ const BroadcastCenter = () => {
       if (error) throw error;
       setAnnouncements(announcements.map(a => a.id === id ? { ...a, is_active: !currentStatus } : a));
     } catch (e) {
-      alert("Gagal merubah status: " + e.message);
+      toast("Gagal merubah status: " + e.message, 'error');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Yakin ingin menghapus pengumuman ini permanen?")) return;
+    const ok = await confirm("Yakin ingin menghapus pengumuman ini permanen?", "Hapus Pengumuman");
+    if (!ok) return;
     try {
       const { error } = await supabase.from('announcements').delete().eq('id', id);
       if (error) throw error;
       setAnnouncements(announcements.filter(a => a.id !== id));
     } catch (e) {
-      alert("Gagal menghapus: " + e.message);
+      toast("Gagal menghapus: " + e.message, 'error');
     }
   };
 
-  if (isLoading) return <div className="p-10 text-center text-gray-500">Memuat Pusat Pengumuman...</div>;
+  if (isLoading) return <div className="p-10"><LoadingSkeleton type="card" /></div>;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">

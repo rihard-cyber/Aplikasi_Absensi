@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, MapPin, Search, Plus, Trash2, Edit3, Network, Building, AlertCircle } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
+import { useToast } from '../../../components/Toast';
+import { useConfirm } from '../../../components/ConfirmDialog';
 
 const StructureManagement = () => {
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('structure_active_tab') || 'projects'); // projects, divisions
@@ -12,6 +14,8 @@ const StructureManagement = () => {
   // Forms
   const [newProject, setNewProject] = useState({ name: '', code: '', _codeEdited: false, address: '', latitude: '', longitude: '', radius: 50 });
   const [newDivision, setNewDivision] = useState({ name: '', project_id: '' });
+  const toast = useToast();
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchStructure();
@@ -61,15 +65,15 @@ const StructureManagement = () => {
       if (error) throw error;
       setProjects([data[0], ...projects]);
       setNewProject({ name: '', code: '', _codeEdited: false, address: '', latitude: '', longitude: '', radius: 50 });
-      alert('Project berhasil ditambahkan!');
+      toast('Project berhasil ditambahkan!', 'success');
     } catch (e) {
-      alert('Gagal menambah project: ' + e.message);
+      toast('Gagal menambah project: ' + e.message, 'error');
     }
   };
 
   const handleAddDivision = async (e) => {
     e.preventDefault();
-    if (!newDivision.project_id) { alert('Pilih Project terlebih dahulu!'); return; }
+    if (!newDivision.project_id) { toast('Pilih Project terlebih dahulu!', 'error'); return; }
     try {
       if (!tenantId) throw new Error("Tenant ID tidak ditemukan!");
       const { data, error } = await supabase.from('divisions').insert([{
@@ -81,32 +85,34 @@ const StructureManagement = () => {
       if (error) throw error;
       setDivisions([data[0], ...divisions]);
       setNewDivision({ name: '', project_id: '' });
-      alert('Divisi berhasil ditambahkan!');
+      toast('Divisi berhasil ditambahkan!', 'success');
     } catch (e) {
-      alert('Gagal menambah divisi: ' + e.message);
+      toast('Gagal menambah divisi: ' + e.message, 'error');
     }
   };
 
   const handleDeleteProject = async (id) => {
-    if (!window.confirm('Yakin ingin menghapus Project ini? Semua Divisi dan data terkait akan ikut terhapus!')) return;
+    const ok = await confirm('Yakin ingin menghapus Project ini? Semua Divisi dan data terkait akan ikut terhapus!', 'Hapus Project');
+    if (!ok) return;
     try {
       const { error } = await supabase.from('projects').delete().eq('id', id);
       if (error) throw error;
       setProjects(projects.filter(p => p.id !== id));
       setDivisions(divisions.filter(d => d.project_id !== id));
     } catch (e) {
-      alert('Gagal menghapus: ' + e.message);
+      toast('Gagal menghapus: ' + e.message, 'error');
     }
   };
 
   const handleDeleteDivision = async (id) => {
-    if (!window.confirm('Yakin ingin menghapus Divisi ini?')) return;
+    const ok = await confirm('Yakin ingin menghapus Divisi ini?', 'Hapus Divisi');
+    if (!ok) return;
     try {
       const { error } = await supabase.from('divisions').delete().eq('id', id);
       if (error) throw error;
       setDivisions(divisions.filter(d => d.id !== id));
     } catch (e) {
-      alert('Gagal menghapus: ' + e.message);
+      toast('Gagal menghapus: ' + e.message, 'error');
     }
   };
 
@@ -191,7 +197,7 @@ const StructureManagement = () => {
 
           {/* List Projects */}
           <div className="lg:col-span-2 space-y-4">
-            {isLoading ? <p className="text-gray-500">Memuat data...</p> : projects.length === 0 ? (
+            {isLoading ? <div className="glass-panel p-6 border border-white/5 animate-pulse space-y-4"><div className="h-4 bg-white/10 rounded w-1/3" /><div className="h-3 bg-white/5 rounded w-2/3" /></div> : projects.length === 0 ? (
               <div className="glass-panel p-10 text-center flex flex-col items-center">
                 <Building2 size={48} className="text-gray-600 mb-4" />
                 <p className="text-gray-400">Belum ada data Project. Silakan tambahkan baru.</p>
@@ -246,7 +252,7 @@ const StructureManagement = () => {
 
           {/* List Divisions */}
           <div className="lg:col-span-2 space-y-4">
-            {isLoading ? <p className="text-gray-500">Memuat data...</p> : divisions.length === 0 ? (
+            {isLoading ? <div className="glass-panel p-6 border border-white/5 animate-pulse space-y-4"><div className="h-4 bg-white/10 rounded w-1/3" /><div className="h-3 bg-white/5 rounded w-1/2" /></div> : divisions.length === 0 ? (
               <div className="glass-panel p-10 text-center flex flex-col items-center">
                 <Network size={48} className="text-gray-600 mb-4" />
                 <p className="text-gray-400">Belum ada data Divisi. Silakan tambahkan baru.</p>

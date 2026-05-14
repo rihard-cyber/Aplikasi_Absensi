@@ -2,15 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar, Clock, FileText, Send, ChevronRight,
-  CheckCircle2, AlertCircle, XCircle, Info, Loader2,
-  Image as ImageIcon, Plus, Filter, History as HistoryIcon,
-  Search, Eye, ArrowLeft, Zap, CheckCircle2 as CheckCircleIcon, Wallet, TrendingUp, RefreshCcw
+  CheckCircle2, AlertCircle, XCircle, Loader2,
+  Image as ImageIcon, Plus, Filter,
+  Eye, ArrowLeft, Zap, CheckCircle2 as CheckCircleIcon, Wallet, TrendingUp, RefreshCcw
 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
+import { useToast } from '../../../components/Toast';
 
 const LeaveRequest = ({ onBack, category = 'leave' }) => {
   const [view, setView] = useState('history'); // 'history', 'form'
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
   const [showSuccess, setShowSuccess] = useState(false);
 
   // CATEGORY CONFIGURATION
@@ -182,7 +184,7 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
         setShowSuccess(false); setView('history'); setFormData({ ...formData, reason: '', file: null });
       }, 2000);
     } catch (err) {
-      alert('Pengajuan Gagal: ' + err.message);
+      toast('Pengajuan Gagal: ' + err.message, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -434,7 +436,7 @@ const StatusBadge = ({ status }) => {
 
 const StatusChip = ({ label, count, color, active, onClick }) => (
   <button onClick={onClick} className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all whitespace-nowrap ${active ? 'bg-white/10 border-white/20' : 'bg-transparent border-transparent'}`}>
-    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{label}</span>
+    <span className="text-[10px] sm:text-[9px] font-bold text-gray-400 uppercase tracking-widest">{label}</span>
     <span className="text-[10px] font-bold px-1.5 rounded-md bg-white/5" style={{ color: color || 'white' }}>{count}</span>
   </button>
 );

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Plus, Trash2, CalendarDays, Moon, Sun, Briefcase } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
+import LoadingSkeleton from '../../../components/LoadingSkeleton';
+import { useToast } from '../../../components/Toast';
+import { useConfirm } from '../../../components/ConfirmDialog';
 
 const ShiftDictionary = () => {
   const [shifts, setShifts] = useState([]);
@@ -8,6 +11,8 @@ const ShiftDictionary = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [tenantId, setTenantId] = useState(null);
   const [projectsLoading, setProjectsLoading] = useState(false);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [newShift, setNewShift] = useState({
     shift_code: '',
@@ -82,24 +87,25 @@ const ShiftDictionary = () => {
 
       setShifts([data[0], ...shifts]);
       setNewShift({ shift_code: '', shift_name: '', time_in: '08:00', time_out: '17:00', is_cross_day: false, project_id: 'ALL' });
-      alert('Kamus Shift berhasil ditambahkan!');
+      toast('Kamus Shift berhasil ditambahkan!', 'success');
     } catch (e) {
-      alert('Gagal menambah shift. Pastikan Kode Shift unik! Error: ' + e.message);
+      toast('Gagal menambah shift. Pastikan Kode Shift unik!', 'error');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Yakin ingin menghapus shift ini? Karyawan yang menggunakan shift ini akan kehilangan referensi jadwal.')) return;
+    const ok = await confirm('Yakin ingin menghapus shift ini? Karyawan yang menggunakan shift ini akan kehilangan referensi jadwal.', 'Hapus Shift');
+    if (!ok) return;
     try {
       const { error } = await supabase.from('master_shifts').delete().eq('id', id);
       if (error) throw error;
       setShifts(shifts.filter(s => s.id !== id));
     } catch (e) {
-      alert('Gagal menghapus: ' + e.message);
+      toast('Gagal menghapus: ' + e.message, 'error');
     }
   };
 
-  if (isLoading) return <div className="p-10 text-center text-gray-500">Memuat Kamus Shift...</div>;
+  if (isLoading) return <div className="p-10"><LoadingSkeleton type="card" /></div>;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">

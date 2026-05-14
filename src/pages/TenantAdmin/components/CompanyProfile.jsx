@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Building, MapPin, Phone, Globe, Upload, Save, Loader2, CheckCircle2, Key, Copy, RefreshCcw } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { copyToClipboard } from '../../../utils/clipboardUtil';
+import LoadingSkeleton from '../../../components/LoadingSkeleton';
+import { useToast } from '../../../components/Toast';
+import { useConfirm } from '../../../components/ConfirmDialog';
 
 const CompanyProfile = ({ onUpdate }) => {
   const [tenant, setTenant] = useState({
@@ -17,6 +20,8 @@ const CompanyProfile = ({ onUpdate }) => {
   const [saveStatus, setSaveStatus] = useState('idle');
   const [isCopied, setIsCopied] = useState(false);
   const fileInputRef = useRef(null);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   useEffect(() => {
     fetchTenantData();
@@ -55,7 +60,7 @@ const CompanyProfile = ({ onUpdate }) => {
 
       if (error) throw error;
       setSaveStatus('saved');
-      alert("Profil perusahaan berhasil disimpan!");
+      toast("Profil perusahaan berhasil disimpan!", 'success');
       if (onUpdate) onUpdate(); // Trigger sidebar refresh
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch (e) {
@@ -91,18 +96,21 @@ const CompanyProfile = ({ onUpdate }) => {
       if (updateError) throw updateError;
       
       setTenant({ ...tenant, logo_url: publicUrl });
-      alert("Logo perusahaan berhasil diperbarui!");
+      toast("Logo perusahaan berhasil diperbarui!", 'success');
       if (onUpdate) onUpdate(); // Trigger sidebar refresh
     } catch (e) {
       console.error("Logo upload failed", e);
-      alert("Gagal mengunggah logo: " + e.message);
+      toast("Gagal mengunggah logo: " + e.message, 'error');
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleGenerateCode = async () => {
-    if (tenant.activation_code && !window.confirm("Peringatan: Mengubah Kode Aktivasi akan membuat kode lama hangus untuk karyawan yang belum mendaftar. Lanjutkan?")) return;
+    if (tenant.activation_code) {
+      const ok = await confirm("Mengubah Kode Aktivasi akan membuat kode lama hangus untuk karyawan yang belum mendaftar. Lanjutkan?", "Ganti Kode Aktivasi");
+      if (!ok) return;
+    }
     try {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       let newCode = 'SI-';
@@ -114,14 +122,14 @@ const CompanyProfile = ({ onUpdate }) => {
       if (error) throw new Error(`Gagal menyimpan kode (${error.code}): ${error.message}`);
       
       setTenant(prev => ({ ...prev, activation_code: newCode }));
-      alert(`Kode Aktivasi Karyawan berhasil diperbarui!\n\nKode Baru: ${newCode}\n\nBagikan kode ini ke karyawan.`);
+      toast(`Kode Aktivasi Karyawan berhasil diperbarui! Kode Baru: ${newCode}`, 'success');
     } catch (e) {
       console.error('Gagal generate kode:', e);
-      alert('Gagal membuat kode baru: ' + e.message);
+      toast('Gagal membuat kode baru: ' + e.message, 'error');
     }
   };
 
-  if (isLoading) return <div className="p-10 text-center text-gray-500">Memuat Profil Perusahaan...</div>;
+  if (isLoading) return <div className="p-10"><LoadingSkeleton type="card" /></div>;
 
   if (!tenant?.id) {
     return (
@@ -206,7 +214,7 @@ const CompanyProfile = ({ onUpdate }) => {
                  <button 
                    type="button"
                     onClick={() => {
-                      if (!tenant.activation_code) return alert("Generate kode terlebih dahulu!");
+                      if (!tenant.activation_code) { toast("Generate kode terlebih dahulu!", 'error'); return; }
                       copyToClipboard(tenant.activation_code);
                       setIsCopied(true);
                       setTimeout(() => setIsCopied(false), 2000);

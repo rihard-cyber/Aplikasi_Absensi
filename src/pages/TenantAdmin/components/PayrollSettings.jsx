@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, AlertCircle } from 'lucide-react';
-
 import { supabase } from '../../../utils/supabaseClient';
+import { useToast } from '../../../components/Toast';
 
 const PayrollSettings = () => {
   const [config, setConfig] = useState({
@@ -11,6 +11,7 @@ const PayrollSettings = () => {
   });
   const [tenantId, setTenantId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchConfig();
@@ -49,9 +50,9 @@ const PayrollSettings = () => {
       }, { onConflict: 'tenant_id' });
       
       if (error) throw error;
-      alert("Konfigurasi penggajian berhasil disimpan!");
+      toast("Konfigurasi penggajian berhasil disimpan!", 'success');
     } catch (e) {
-      alert("Gagal menyimpan konfigurasi: " + e.message);
+      toast("Gagal menyimpan konfigurasi: " + e.message, 'error');
     } finally {
       setIsSaving(false);
     }

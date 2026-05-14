@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Phone, Calendar, MapPin, Briefcase, Heart, CreditCard, Shield, Activity, GraduationCap, Building2, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
+import { useToast } from '../../../components/Toast';
 
 const HRISDataForm = ({ user, onCancel, onSave }) => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
   const [formData, setFormData] = useState({
     // Profiles Table Base Data
     full_name: user.full_name || '',
@@ -122,7 +124,7 @@ const HRISDataForm = ({ user, onCancel, onSave }) => {
 
       onSave({ ...user, ...formData });
     } catch (e) {
-      alert("Gagal menyimpan data: " + e.message);
+      toast("Gagal menyimpan data: " + e.message, 'error');
     } finally {
       setIsSubmitting(false);
     }
