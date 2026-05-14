@@ -46,6 +46,7 @@ const SkeletonRow = () => (
 const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
   const [tenants, setTenants] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -158,12 +159,10 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
           adminCode: t.admin_code
         }));
         setTenants(formatted);
-      } else {
-        setTenants(tenantsData); // Fallback to mock if database is empty
       }
     } catch (err) {
       console.error("Fetch tenants error:", err);
-      setTenants(tenantsData);
+      setFetchError(err.message || 'Koneksi gagal');
     } finally {
       setIsLoading(false);
     }
@@ -534,7 +533,9 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
         )}
 
         {!isLoading && filteredTenants.length === 0 && (
-          <div className="text-center text-gray-500 py-8 text-sm">Tidak ada tenant yang cocok.</div>
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-sm">{fetchError ? `Gagal memuat data (${fetchError}). Cek koneksi database.` : 'Belum ada tenant. Klik "Tambah Tenant" untuk memulai.'}</p>
+          </div>
         )}
       </div>
 
