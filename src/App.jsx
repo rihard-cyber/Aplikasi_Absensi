@@ -25,23 +25,21 @@ const PageTransition = ({ children }) => (
   </motion.div>
 );
 
-// Health check: test Supabase connectivity
+// Health check: test Supabase connectivity via DNS (simple GET, no custom headers = no CORS preflight)
 const useSupabaseHealthCheck = () => {
   const toast = useToast();
   useEffect(() => {
     const controller = new AbortController();
     const check = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://bhauqlobuiuavaoeoawc.supabase.co'}/rest/v1/`, {
-          headers: { 'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '' },
-          signal: controller.signal
-        });
-        if (!res.ok && res.status !== 404 && res.status !== 401) {
-          toast('Koneksi ke database bermasalah. Coba restore project di Supabase Dashboard.', 'error');
+        const url = import.meta.env.VITE_SUPABASE_URL || 'https://bhauqlobuiuavaoeoawc.supabase.co';
+        const res = await fetch(url, { method: 'HEAD', mode: 'no-cors', signal: controller.signal });
+        if (res.type === 'error') {
+          toast('Supabase tidak dapat dijangkau. Cek koneksi internet atau restore project di Supabase Dashboard.', 'error');
         }
       } catch (e) {
         if (e.name !== 'AbortError') {
-          toast(`Koneksi ke server terputus (${e.message}). Buka supabase.com/dashboard & restore project.', 'error`);
+          toast('Supabase tidak dapat dijangkau. Cek koneksi internet atau restore project.', 'error');
         }
       }
     };
