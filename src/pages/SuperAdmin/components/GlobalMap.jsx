@@ -2,18 +2,30 @@ import React from 'react';
 
 const GlobalMap = () => {
   return (
-    <div className="w-full h-full bg-[#1a2333] flex items-center justify-center relative overflow-hidden">
-      {/* Fallback visualization before React-Leaflet is installed */}
-      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at center, #1E90FF 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-      <div className="text-center z-10">
-        <GlobeIcon />
-        <p className="text-sm text-blue-400 mt-2 font-mono animate-pulse">Initializing Live Heatmap...</p>
+    <div className="w-full h-full bg-[#0B0C10] flex items-center justify-center relative overflow-hidden">
+      {/* Dynamic Grid Background */}
+      <div className="absolute inset-0 opacity-10" 
+           style={{ 
+             backgroundImage: 'linear-gradient(#1E90FF 1px, transparent 1px), linear-gradient(90deg, #1E90FF 1px, transparent 1px)', 
+             backgroundSize: '40px 40px' 
+           }}>
       </div>
       
-      {/* Simulated Heatmap blips */}
-      <div className="absolute top-1/3 left-1/4 w-4 h-4 bg-red-500 rounded-full blur-md animate-pulse"></div>
-      <div className="absolute top-1/2 left-2/3 w-6 h-6 bg-purple-500 rounded-full blur-md animate-pulse" style={{ animationDelay: '1s' }}></div>
-      <div className="absolute bottom-1/4 right-1/4 w-3 h-3 bg-blue-500 rounded-full blur-md animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+      {/* Radar Circles */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+        <div className="w-[300px] h-[300px] border border-blue-500 rounded-full animate-pulse"></div>
+        <div className="absolute w-[500px] h-[500px] border border-blue-500/50 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+      </div>
+
+      <div className="text-center z-10">
+        <GlobeIcon />
+        <p className="text-xs text-blue-400 mt-3 font-mono tracking-widest animate-pulse uppercase">Scanning Global Assets...</p>
+      </div>
+      
+      {/* Active Points */}
+      <div className="absolute top-1/4 left-1/3 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_15px_red] animate-ping"></div>
+      <div className="absolute bottom-1/3 right-1/4 w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_15px_#10b981] animate-ping" style={{ animationDelay: '1.5s' }}></div>
+      <div className="absolute top-1/2 right-1/3 w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_15px_#3b82f6] animate-ping" style={{ animationDelay: '0.8s' }}></div>
     </div>
   );
 };

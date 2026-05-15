@@ -276,14 +276,14 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
           >
             {/* Left Column: Map & Analytics (8 Columns) */}
             <div className="lg:col-span-8 flex flex-col gap-6 lg:gap-8">
-              <section className="glass-panel p-6 lg:p-8 relative overflow-hidden group min-h-[450px] lg:min-h-[500px]">
-                <div className="absolute top-6 left-6 lg:top-8 lg:left-8 z-20">
+              <section className="glass-panel p-6 lg:p-8 relative overflow-hidden group min-h-[450px] lg:min-h-[500px] flex flex-col">
+                <div className="relative z-20 mb-6 lg:mb-8">
                   <h2 className="font-serif text-xl lg:text-2xl tracking-wide flex items-center gap-4 text-white">
                     <Globe size={24} className="text-[var(--aurora-3)] animate-pulse" /> Peta Pengawasan Global
                   </h2>
                   <p className="text-[9px] lg:text-[10px] text-gray-500 uppercase tracking-[0.3em] mt-2 font-black">Live Satellite Infrastructure</p>
                 </div>
-                <div className="w-full h-full min-h-[350px] lg:min-h-[400px] mt-12 lg:mt-16 rounded-2xl lg:rounded-3xl overflow-hidden border border-white/10 relative">
+                <div className="flex-1 rounded-2xl lg:rounded-3xl overflow-hidden border border-white/10 relative">
                   <GlobalMap />
                 </div>
               </section>
