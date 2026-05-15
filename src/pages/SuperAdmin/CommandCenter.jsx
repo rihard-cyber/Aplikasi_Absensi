@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { ShieldAlert, Globe, Activity, Settings, Key, Search, Users, Zap, BarChart3, ShieldCheck, MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../utils/supabaseClient';
@@ -24,6 +25,16 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
   const { playClick, playConfirm, playAlert } = useSFX();
   const logoClickTimer = useRef(null);
   const confirm = useConfirm();
+
+  // Prevent background scroll when God Menu is open
+  React.useEffect(() => {
+    if (showGodMenu) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [showGodMenu]);
 
   const [tenants, setTenants] = useState([]);
   const [selectedTenantBypass, setSelectedTenantBypass] = useState('all');
@@ -94,53 +105,55 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
         <div className="absolute bottom-[10%] right-[-10%] w-[30%] h-[30%] bg-[var(--aurora-1)] rounded-full blur-[150px]"></div>
       </div>
 
-      {/* God Mode Navigation Popup */}
+      {/* God Mode Navigation Popup - FIXED CENTERED */}
       <AnimatePresence>
         {showGodMenu && (
-          <>
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             {/* Backdrop */}
             <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/85 backdrop-blur-md"
               onClick={() => setShowGodMenu(false)}
             />
+            
             {/* Menu Panel */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.85, y: -20 }}
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.85, y: -20 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-sm"
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+              className="relative z-[10000] w-full max-w-sm"
             >
-              <div className="glass-panel p-6 border border-[var(--warning)]/40 shadow-[0_0_60px_rgba(255,215,0,0.2)]">
-                <div className="text-center mb-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--warning)]/10 border border-[var(--warning)]/30 mb-3">
-                    <Zap size={12} className="text-[var(--warning)] animate-pulse" />
-                    <span className="text-[10px] text-[var(--warning)] uppercase tracking-widest font-bold">God Mode Aktif</span>
+              <div className="glass-panel p-6 sm:p-8 border border-[var(--warning)]/40 shadow-[0_0_80px_rgba(255,215,0,0.3)]">
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--warning)]/10 border border-[var(--warning)]/30 mb-4">
+                    <Zap size={14} className="text-[var(--warning)] animate-pulse" />
+                    <span className="text-[10px] text-[var(--warning)] uppercase tracking-widest font-black">Authority Override</span>
                   </div>
-                  <h3 className="font-serif text-xl text-white tracking-wide">Navigasi Kilat</h3>
-                  <p className="text-xs text-gray-400 mt-1">Pilih dasbor tujuan Anda</p>
+                  <h2 className="font-serif text-2xl text-white tracking-wide">Navigasi Kilat</h2>
+                  <p className="text-[10px] text-gray-500 mt-2 uppercase tracking-widest">Sistem Kendali Pusat</p>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {navItems.map((item) => (
                     <motion.button
                       key={item.role}
                       whileHover={{ scale: 1.02, x: 4 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleGodNavigate(item.role)}
-                      className="w-full flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 text-left transition-all group"
-                      style={{ '--item-color': item.color }}
+                      className="w-full flex items-center gap-5 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all group"
                     >
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: `${item.color}20`, color: item.color, boxShadow: `0 0 15px ${item.color}40` }}
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: `${item.color}20`, color: item.color, boxShadow: `0 0 20px ${item.color}40` }}
                       >
-                        <item.icon size={18} />
+                        <item.icon size={22} />
                       </div>
-                      <div>
+                      <div className="text-left">
                         <p className="font-bold text-sm text-white tracking-wide">{item.label}</p>
-                        <p className="text-[11px] text-gray-500 mt-0.5">{item.desc}</p>
+                        <p className="text-[10px] text-gray-400 mt-1 leading-tight opacity-70">{item.desc}</p>
                       </div>
                     </motion.button>
                   ))}
@@ -148,13 +161,13 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
 
                 <button
                   onClick={() => setShowGodMenu(false)}
-                  className="w-full mt-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white text-sm font-medium transition-colors"
+                  className="w-full mt-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-gray-500 hover:text-white hover:bg-white/10 text-[10px] font-black uppercase tracking-[0.2em] transition-all"
                 >
-                  Tutup
+                  Tutup Sesi
                 </button>
               </div>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
 

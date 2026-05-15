@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, ShieldAlert, Megaphone, Building2 } from 'lucide-react';
+import { MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, ShieldAlert, Megaphone, Building2, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../components/ConfirmDialog';
 import { Geolocation } from '@capacitor/geolocation';
@@ -648,40 +648,46 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
 
       {/* Floating Header */}
       <div className="w-full max-w-md mb-8 relative z-10">
-        <div className="running-lights-border p-[1px] rounded-2xl">
-          <div className="glass-panel p-5 text-center bg-[#0B0C10]/80">
+        <div className={`${(isGodMode || isImpersonating) ? 'card-running-light-god' : 'running-lights-border'} p-[1px] rounded-2xl shadow-2xl transition-all duration-700`}>
+          <div className={`glass-panel p-6 text-center transition-colors duration-700 ${ (isGodMode || isImpersonating) ? 'bg-red-950/20' : 'bg-[#0B0C10]/80' }`}>
             {companyInfo.logo_url && (
               <div className="flex justify-center mb-4">
-                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 p-2 overflow-hidden">
+                <div className={`w-16 h-16 rounded-2xl bg-white/5 border p-2 overflow-hidden ${ (isGodMode || isImpersonating) ? 'border-[var(--danger)]/30' : 'border-white/10' }`}>
                   <img src={companyInfo.logo_url} alt="Logo" className="w-full h-full object-contain" />
                 </div>
               </div>
             )}
-            <h2
-              className={`text-2xl font-bold font-serif tracking-wide bg-clip-text text-transparent bg-gradient-to-r ${(isGodMode || isImpersonating) ? 'from-[var(--danger)] to-[var(--warning)] cursor-pointer active:scale-95' : 'from-[var(--aurora-1)] to-[var(--aurora-3)]'}`}
-              onClick={() => {
-                if (isGodMode && onCycleRole) onCycleRole();
-                else if (isImpersonating && onGodModeReturn) onGodModeReturn();
-              }}
-              title={(isGodMode || isImpersonating) ? "Klik untuk Pindah Dasbor" : ""}
-            >
-              {tenantName} {(isGodMode || isImpersonating) && <span className="text-xs ml-1 block">(God Mode)</span>}
-            </h2>
-            <p className="text-xs mt-2 text-[var(--aurora-3)] font-sans tracking-widest uppercase font-bold">{structureName}</p>
+            
+            <div className="flex items-center justify-center gap-2 mb-1">
+              {(isGodMode || isImpersonating) && <Zap size={18} className="text-[var(--warning)] animate-bounce" />}
+              <h2
+                className={`text-2xl font-bold font-serif tracking-wide bg-clip-text text-transparent bg-gradient-to-r ${(isGodMode || isImpersonating) ? 'from-[var(--danger)] via-[var(--warning)] to-[var(--danger)] animate-pulse cursor-pointer active:scale-95' : 'from-[var(--aurora-1)] to-[var(--aurora-3)]'}`}
+                onClick={() => {
+                  if (isGodMode && onCycleRole) onCycleRole();
+                  else if (isImpersonating && onGodModeReturn) onGodModeReturn();
+                }}
+              >
+                {tenantName}
+              </h2>
+            </div>
+
+            <p className={`text-[10px] mt-2 font-sans tracking-[0.3em] uppercase font-black ${ (isGodMode || isImpersonating) ? 'text-[var(--warning)] opacity-100' : 'text-[var(--aurora-3)] opacity-70' }`}>
+              { (isGodMode || isImpersonating) ? 'Sistem Otoritas Global' : structureName }
+            </p>
+
             {todayShift ? (
-              <div className={`mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border ${
-                todayShift.shift_code === 'OFF' 
+              <div className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black tracking-widest uppercase border transition-all ${
+                (isGodMode || isImpersonating)
+                  ? 'bg-[var(--danger)]/20 border-[var(--danger)]/40 text-[var(--warning)]'
+                  : todayShift.shift_code === 'OFF' 
                   ? 'bg-gray-500/10 border-gray-500/30 text-gray-400' 
-                  : todayShift.is_cross_day 
-                  ? 'bg-[var(--aurora-3)]/10 border-[var(--aurora-3)]/30 text-[var(--aurora-3)]'
                   : 'bg-[var(--success)]/10 border-[var(--success)]/30 text-[var(--success)]'
               }`}>
-                <span>{todayShift.shift_code === 'OFF' ? '🔴' : todayShift.is_cross_day ? '🌙' : '☀️'}</span>
-                {todayShift.shift_code}: {todayShift.shift_name}
-                {todayShift.time_in && <span className="opacity-60">• {todayShift.time_in.substring(0,5)} – {todayShift.time_out.substring(0,5)}</span>}
+                <span>{(isGodMode || isImpersonating) ? '⚡' : todayShift.shift_code === 'OFF' ? '🔴' : '☀️'}</span>
+                { (isGodMode || isImpersonating) ? 'GOD MODE OVERRIDE' : `${todayShift.shift_code}: ${todayShift.shift_name}` }
               </div>
             ) : (
-              <p className="mt-2 text-[10px] text-gray-500 tracking-widest">JADWAL REGULER</p>
+              <p className="mt-2 text-[10px] text-gray-500 tracking-widest uppercase font-bold">Jadwal Reguler</p>
             )}
           </div>
         </div>
@@ -728,7 +734,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
 
       {/* Floating Dock Navigation Bar */}
       <div className="fixed bottom-6 w-full px-5 flex justify-center z-50 safe-bottom">
-        <div className="glass-panel px-6 py-3 flex items-center justify-between w-full max-w-sm rounded-full gpu-accelerate">
+        <div className="glass-panel px-6 py-3 flex items-center justify-between w-full max-w-sm rounded-full">
           {[
             { id: 'home', icon: Home },
             { id: 'history', icon: Clock },

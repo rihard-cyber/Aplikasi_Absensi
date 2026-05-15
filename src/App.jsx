@@ -19,7 +19,7 @@ const PageTransition = ({ children }) => (
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 1.02 }}
     transition={{ duration: 0.4, ease: "easeInOut" }}
-    className="w-full min-h-screen overflow-x-hidden gpu-accelerate"
+    className="w-full min-h-screen overflow-x-hidden"
   >
     {children}
   </motion.div>
