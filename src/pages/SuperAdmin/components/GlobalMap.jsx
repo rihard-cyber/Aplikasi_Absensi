@@ -2,21 +2,21 @@ import React from 'react';
 
 const GlobalMap = () => {
   return (
-    <div className="w-full h-full bg-[#050505] flex items-center justify-center relative overflow-hidden">
+    <div className="absolute inset-0 bg-[#050505] flex items-center justify-center overflow-hidden">
       {/* 1. Global Grid - Full Coverage */}
       <div className="absolute inset-0 opacity-20" 
            style={{ 
              backgroundImage: 'linear-gradient(#1E90FF 1px, transparent 1px), linear-gradient(90deg, #1E90FF 1px, transparent 1px)', 
-             backgroundSize: '30px 30px' 
+             backgroundSize: '40px 40px',
+             backgroundRepeat: 'repeat'
            }}>
       </div>
       
       {/* 2. World Map Silhouette - To fill the 'empty' space */}
-      <div className="absolute inset-0 opacity-10 flex items-center justify-center p-10">
-        <svg viewBox="0 0 1000 500" className="w-full h-full text-blue-500 fill-current">
-          <path d="M150,150 L180,140 L220,160 L250,150 L280,180 L250,220 L200,210 L150,190 Z M400,100 L450,90 L500,110 L550,100 L580,130 L550,180 L480,200 L420,180 Z M700,200 L750,190 L800,220 L820,280 L780,320 L720,310 L680,260 Z M200,350 L250,340 L300,370 L320,420 L280,450 L220,440 L180,400 Z" />
-          {/* Simplified world map shapes */}
-          <circle cx="500" cy="250" r="200" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="5,5" />
+      <div className="absolute inset-0 opacity-[0.15] flex items-center justify-center p-4">
+        <svg viewBox="0 0 1000 500" className="w-full h-full text-blue-400 fill-current preserve-3d" style={{ filter: 'blur(1px)' }}>
+          <path d="M150,150 L180,140 L220,160 L250,150 L280,180 L250,220 L200,210 L150,190 Z M400,100 L450,90 L500,110 L550,100 L580,130 L550,180 L480,200 L420,180 Z M700,200 L750,190 L800,220 L820,280 L780,320 L720,310 L680,260 Z M200,350 L250,340 L300,370 L320,420 L280,450 L220,440 L180,400 Z M600,350 L650,340 L700,370 L720,420 L680,450 L620,440 L580,400 Z" />
+          <circle cx="500" cy="250" r="230" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="10,10" className="animate-[spin_60s_linear_infinite]" />
         </svg>
       </div>
 
