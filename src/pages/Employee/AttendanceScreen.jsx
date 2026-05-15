@@ -11,6 +11,7 @@ import AttendanceHistory from './components/AttendanceHistory';
 import DocumentVault from './components/DocumentVault';
 import EmployeeProfile from './components/EmployeeProfile';
 import LeaveRequest from './components/LeaveRequest';
+import BannerCarousel from './components/BannerCarousel';
 import { supabase } from '../../utils/supabaseClient';
 import { analyzePosition, logFakeGpsAttempt } from '../../utils/antiFakeGps';
 import { useToast } from '../../components/Toast';
@@ -619,7 +620,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
   };
 
   return (
-    <div className="min-h-screen pb-24 pt-8 px-5 flex flex-col items-center relative overflow-hidden bg-[var(--bg-darker)]">
+    <div className="min-h-screen pb-24 pt-8 px-0 flex flex-col items-center relative overflow-hidden bg-[var(--bg-darker)]">
 
       <div className="absolute inset-0 pointer-events-none opacity-20 z-0">
         <div className="absolute top-0 left-0 w-full h-[30%] bg-gradient-to-b from-[var(--aurora-1)]/20 to-transparent"></div>
@@ -634,7 +635,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
 
       {/* Announcements Marquee */}
       {announcements.length > 0 && (
-        <div className="w-full max-w-md mb-4 bg-[var(--aurora-1)]/10 border border-[var(--aurora-1)]/30 rounded-xl overflow-hidden relative z-10 flex items-center px-3 py-2">
+        <div className="w-full mx-4 mb-4 bg-[var(--aurora-1)]/10 border border-[var(--aurora-1)]/30 rounded-xl overflow-hidden relative z-10 flex items-center px-3 py-2">
           <Megaphone size={14} className="text-[var(--aurora-1)] flex-shrink-0 mr-3 animate-pulse" />
           <div className="flex-1 overflow-hidden relative">
             <div className="whitespace-nowrap animate-marquee inline-block text-xs text-[var(--aurora-1)] font-bold tracking-wide">
@@ -646,52 +647,17 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
         </div>
       )}
 
-      {/* Floating Header */}
-      <div className="w-full max-w-md mb-8 relative z-10">
-        <div className={`${(isGodMode || isImpersonating) ? 'card-running-light-god' : 'running-lights-border'} p-[1px] rounded-2xl shadow-2xl transition-all duration-700`}>
-          <div className={`glass-panel p-6 text-center transition-colors duration-700 ${ (isGodMode || isImpersonating) ? 'bg-red-950/20' : 'bg-[#0B0C10]/80' }`}>
-            {companyInfo.logo_url && (
-              <div className="flex justify-center mb-4">
-                <div className={`w-16 h-16 rounded-2xl bg-white/5 border p-2 overflow-hidden ${ (isGodMode || isImpersonating) ? 'border-[var(--danger)]/30' : 'border-white/10' }`}>
-                  <img src={companyInfo.logo_url} alt="Logo" className="w-full h-full object-contain" />
-                </div>
-              </div>
-            )}
-            
-            <div className="flex items-center justify-center gap-2 mb-1">
-              {(isGodMode || isImpersonating) && <Zap size={18} className="text-[var(--warning)] animate-bounce" />}
-              <h2
-                className={`text-2xl font-bold font-serif tracking-wide bg-clip-text text-transparent bg-gradient-to-r ${(isGodMode || isImpersonating) ? 'from-[var(--danger)] via-[var(--warning)] to-[var(--danger)] animate-pulse cursor-pointer active:scale-95' : 'from-[var(--aurora-1)] to-[var(--aurora-3)]'}`}
-                onClick={() => {
-                  if (isGodMode && onCycleRole) onCycleRole();
-                  else if (isImpersonating && onGodModeReturn) onGodModeReturn();
-                }}
-              >
-                {tenantName}
-              </h2>
-            </div>
-
-            <p className={`text-[10px] mt-2 font-sans tracking-[0.3em] uppercase font-black ${ (isGodMode || isImpersonating) ? 'text-[var(--warning)] opacity-100' : 'text-[var(--aurora-3)] opacity-70' }`}>
-              { (isGodMode || isImpersonating) ? 'Sistem Otoritas Global' : structureName }
-            </p>
-
-            {todayShift ? (
-              <div className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black tracking-widest uppercase border transition-all ${
-                (isGodMode || isImpersonating)
-                  ? 'bg-[var(--danger)]/20 border-[var(--danger)]/40 text-[var(--warning)]'
-                  : todayShift.shift_code === 'OFF' 
-                  ? 'bg-gray-500/10 border-gray-500/30 text-gray-400' 
-                  : 'bg-[var(--success)]/10 border-[var(--success)]/30 text-[var(--success)]'
-              }`}>
-                <span>{(isGodMode || isImpersonating) ? '⚡' : todayShift.shift_code === 'OFF' ? '🔴' : '☀️'}</span>
-                { (isGodMode || isImpersonating) ? 'GOD MODE OVERRIDE' : `${todayShift.shift_code}: ${todayShift.shift_name}` }
-              </div>
-            ) : (
-              <p className="mt-2 text-[10px] text-gray-500 tracking-widest uppercase font-bold">Jadwal Reguler</p>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Banner Carousel Header */}
+      <BannerCarousel
+        tenantName={tenantName}
+        structureName={structureName}
+        isGodMode={isGodMode}
+        isImpersonating={isImpersonating}
+        todayShift={todayShift}
+        onCycleRole={onCycleRole}
+        onGodModeReturn={onGodModeReturn}
+        companyInfo={companyInfo}
+      />
 
       {/* Admin Back to Dashboard */}
       {isAdminUser && !isGodMode && !isImpersonating && (
@@ -704,7 +670,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
       )}
 
       {/* Dynamic Tab Content */}
-      <div className="w-full max-w-md flex-1 relative z-10 overflow-y-auto hide-scrollbar">
+      <div className="w-full flex-1 relative z-10 overflow-y-auto hide-scrollbar px-4">
         <AnimatePresence mode="wait">
           {activeSubView ? (
             <LeaveRequest
@@ -733,8 +699,8 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
       </div>
 
       {/* Floating Dock Navigation Bar */}
-      <div className="fixed bottom-6 w-full px-5 flex justify-center z-50 safe-bottom">
-        <div className="glass-panel px-6 py-3 flex items-center justify-between w-full max-w-sm rounded-full">
+      <div className="fixed bottom-6 w-full px-0 flex justify-center z-50 safe-bottom">
+        <div className="glass-panel px-6 py-3 mx-4 flex items-center justify-between w-full rounded-full">
           {[
             { id: 'home', icon: Home },
             { id: 'history', icon: Clock },

@@ -111,7 +111,7 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
         </div>
       )}
 
-      <div className={`relative z-10 max-w-7xl mx-auto ${isEmbedded ? 'p-0' : 'p-6 pb-32'}`}>
+      <div className={`relative z-10 w-full ${isEmbedded ? 'p-0' : 'p-0 pb-32'}`}>
         
         {/* HEADER: Only if not embedded */}
         {!isEmbedded && (

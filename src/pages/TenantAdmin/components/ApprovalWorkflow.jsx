@@ -20,7 +20,7 @@ const ApprovalWorkflow = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).single();
+      const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
       if (!profile?.tenant_id) return;
       setTenantId(profile.tenant_id);
 

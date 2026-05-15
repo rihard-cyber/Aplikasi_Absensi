@@ -19,6 +19,24 @@ const severityMap = {
   UPDATE_PROFILE: 'low',
   CREATE_USER: 'medium',
   ATTENDANCE_ANOMALY: 'high',
+  FACE_NOT_MATCH: 'high',
+  UNKNOWN_LOCATION: 'medium'
+};
+
+const readableAction = (action) => {
+  const maps = {
+    FAKE_GPS_ATTEMPT: 'Mencoba Menggunakan Aplikasi Fake GPS',
+    DEVICE_MISMATCH: 'Perangkat Tidak Dikenal / Belum Terikat',
+    CREATE_USER: 'Pendaftaran Karyawan Baru',
+    ATTENDANCE_ANOMALY: 'Anomali Lokasi Presensi Terdeteksi',
+    FACE_NOT_MATCH: 'Wajah Tidak Cocok / Manipulasi Kamera',
+    MULTIPLE_LOGIN_ATTEMPT: 'Percobaan Login Berulang (Brute Force)',
+    MASS_DATA_EXPORT: 'Ekspor Data Massal Terdeteksi',
+    DEACTIVATE_TENANT: 'Penonaktifan Unit SaaS Terdeteksi',
+    UNKNOWN_LOCATION: 'Lokasi Tidak Terdeteksi / GPS Mati',
+    LOGOUT: 'User Keluar dari Sistem'
+  };
+  return maps[action] || action?.replace(/_/g, ' ') || 'Aktivitas Tidak Dikenal';
 };
 
 const typeIcon = (type) => {
@@ -46,6 +64,7 @@ const SecurityAudit = ({ searchQuery = '' }) => {
   const [isLive, setIsLive] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState(null);
   const scrollRef = useRef(null);
   const { playClick, playAlert } = useSFX();
 
@@ -76,6 +95,7 @@ const SecurityAudit = ({ searchQuery = '' }) => {
           time: timeAgo(log.created_at),
           severity: severityMap[log.action] || 'low',
           isNew: i < 3,
+          details: log.details || 'Tidak ada detail teknis tambahan.'
         }));
         setLogs(formatted);
       } else {
@@ -167,33 +187,61 @@ const SecurityAudit = ({ searchQuery = '' }) => {
                 initial={log.isNew ? { opacity: 0, x: -30, boxShadow: '0 0 30px rgba(0,201,255,0.6)' } : { opacity: 1 }}
                 animate={{ opacity: 1, x: 0, boxShadow: '0 0 0px rgba(0,201,255,0)' }}
                 exit={{ opacity: 0, scale: 0.95, x: 20 }}
-                className={`p-5 rounded-[24px] border flex items-center gap-5 overflow-hidden relative backdrop-blur-xl group hover:scale-[1.01] transition-all cursor-default ${
+                className={`p-5 rounded-[24px] border flex flex-col gap-3 overflow-hidden relative backdrop-blur-xl group hover:scale-[1.01] transition-all cursor-pointer ${
+                  expandedId === log.id ? 'ring-2 ring-[var(--aurora-1)] bg-white/5' : ''
+                } ${
                   log.severity === 'high'
                     ? 'bg-[var(--danger)]/[0.03] border-[var(--danger)]/30 hover:bg-[var(--danger)]/[0.06]'
                     : log.severity === 'medium'
                       ? 'bg-[var(--warning)]/[0.03] border-[var(--warning)]/20 hover:bg-[var(--warning)]/[0.06]'
                       : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.04]'
                 }`}
+                onClick={() => { setExpandedId(expandedId === log.id ? null : log.id); playClick(); }}
               >
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border border-white/5 transition-transform group-hover:scale-110 ${
-                  log.severity === 'high' ? 'bg-[var(--danger)] text-white shadow-[0_0_20px_rgba(255,0,85,0.3)]' :
-                  log.severity === 'medium' ? 'bg-[var(--warning)] text-gray-900 shadow-[0_0_20px_rgba(255,200,0,0.2)]' : 'bg-[#1A1C23] text-gray-400 border border-white/10'
-                }`}>
-                  {typeIcon(log.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center gap-4">
-                    <h4 className={`font-black text-[10px] uppercase tracking-[0.2em] truncate ${
-                      log.severity === 'high' ? 'text-[var(--danger)]' : 'text-gray-200'
-                    }`}>
-                      {log.type?.replace(/_/g, ' ') || 'UNKNOWN'}
-                    </h4>
-                    <span className="text-[9px] text-gray-600 font-bold uppercase tracking-widest shrink-0 italic">{log.time}</span>
+                <div className="flex items-center gap-5">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border border-white/5 transition-transform group-hover:scale-110 ${
+                    log.severity === 'high' ? 'bg-[var(--danger)] text-white shadow-[0_0_20px_rgba(255,0,85,0.3)] animate-pulse' :
+                    log.severity === 'medium' ? 'bg-[var(--warning)] text-gray-900 shadow-[0_0_20px_rgba(255,200,0,0.2)]' : 'bg-[#1A1C23] text-gray-400 border border-white/10'
+                  }`}>
+                    {typeIcon(log.type)}
                   </div>
-                  <p className="text-[12px] text-gray-400 mt-1.5 truncate leading-relaxed">
-                    <span className="text-white/80 font-bold">{log.user}</span> <span className="text-gray-600 px-1">@</span> <span className="text-[var(--aurora-3)]">{log.tenant}</span>
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center gap-4">
+                      <h4 className={`font-black text-[10px] uppercase tracking-[0.15em] ${
+                        log.severity === 'high' ? 'text-[var(--danger)]' : 'text-gray-200'
+                      }`}>
+                        {readableAction(log.type)}
+                      </h4>
+                      <span className="text-[9px] text-gray-600 font-bold uppercase tracking-widest shrink-0 italic">{log.time}</span>
+                    </div>
+                    <p className="text-[12px] text-gray-400 mt-1.5 leading-relaxed">
+                      <span className="text-white/80 font-bold">{log.user}</span> <span className="text-gray-600 px-1">@</span> <span className="text-[var(--aurora-3)]">{log.tenant}</span>
+                    </p>
+                  </div>
                 </div>
+
+                <AnimatePresence>
+                  {expandedId === log.id && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-3 mt-3 border-t border-white/5">
+                        <div className="flex items-start gap-2 bg-black/40 p-3 rounded-xl border border-white/5">
+                          <AlertTriangle size={12} className="text-[var(--danger)] mt-0.5 shrink-0" />
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Detail Teknis</span>
+                            <p className="text-[11px] text-gray-300 font-mono leading-relaxed break-all">
+                              {log.details}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.01] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </motion.div>

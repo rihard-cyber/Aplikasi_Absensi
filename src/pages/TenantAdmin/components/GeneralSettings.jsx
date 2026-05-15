@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Clock, CalendarDays, AlertTriangle, ShieldCheck, Database, Save, Loader2 } from 'lucide-react';
+import { Clock, CalendarDays, AlertTriangle, ShieldCheck, Database, Save, Loader2, DollarSign, Sun } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../../utils/supabaseClient';
 import LoadingSkeleton from '../../../components/LoadingSkeleton';
@@ -14,7 +14,14 @@ const GeneralSettings = () => {
     late_penalty_fee: 0,
     auto_approval_toggle: false,
     delegated_approval: false,
-    audit_retention_days: 90
+    audit_retention_days: 90,
+    overtime_rate_weekday: 1.5,
+    overtime_rate_holiday: 2.0,
+    bpjs_kesehatan_company: 4,
+    bpjs_ketenagakerjaan_company: 3.7,
+    pph21_method: 'TER',
+    payday_date: 25,
+    use_attendance_deduction: false
   });
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, saved, error
@@ -46,7 +53,14 @@ const GeneralSettings = () => {
             late_penalty_fee: ts.late_penalty_fee || 0,
             auto_approval_toggle: ts.auto_approval_toggle || false,
             delegated_approval: ts.delegated_approval || false,
-            audit_retention_days: ts.audit_retention_days || 90
+            audit_retention_days: ts.audit_retention_days || 90,
+            overtime_rate_weekday: ts.overtime_rate_weekday || 1.5,
+            overtime_rate_holiday: ts.overtime_rate_holiday || 2.0,
+            bpjs_kesehatan_company: ts.bpjs_kesehatan_company || 4,
+            bpjs_ketenagakerjaan_company: ts.bpjs_ketenagakerjaan_company || 3.7,
+            pph21_method: ts.pph21_method || 'TER',
+            payday_date: ts.payday_date || 25,
+            use_attendance_deduction: ts.use_attendance_deduction || false
           });
         }
       }
@@ -89,7 +103,14 @@ const GeneralSettings = () => {
           late_penalty_fee: parseFloat(newSettings.late_penalty_fee) || 0,
           auto_approval_toggle: newSettings.auto_approval_toggle,
           delegated_approval: newSettings.delegated_approval,
-          audit_retention_days: parseInt(newSettings.audit_retention_days) || 90
+          audit_retention_days: parseInt(newSettings.audit_retention_days) || 90,
+          overtime_rate_weekday: parseFloat(newSettings.overtime_rate_weekday) || 1.5,
+          overtime_rate_holiday: parseFloat(newSettings.overtime_rate_holiday) || 2.0,
+          bpjs_kesehatan_company: parseFloat(newSettings.bpjs_kesehatan_company) || 4,
+          bpjs_ketenagakerjaan_company: parseFloat(newSettings.bpjs_ketenagakerjaan_company) || 3.7,
+          pph21_method: newSettings.pph21_method || 'TER',
+          payday_date: parseInt(newSettings.payday_date) || 25,
+          use_attendance_deduction: newSettings.use_attendance_deduction || false
         };
 
         const { error } = await supabase.from('tenant_settings').upsert(payload, { onConflict: 'tenant_id' });
@@ -212,6 +233,53 @@ const GeneralSettings = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* Advanced Settings */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div className="glass-panel p-6 border border-white/5 space-y-5">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2"><DollarSign size={20} className="text-[var(--success)]" /> Kompensasi & Lembur</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Rate Lembur (Weekday)</label>
+              <input type="number" step="0.1" value={settings.overtime_rate_weekday} onChange={e => handleUpdate('overtime_rate_weekday', e.target.value)} className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white text-sm outline-none focus:border-[var(--success)]" />
+            </div>
+            <div>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Rate Lembur (Holiday)</label>
+              <input type="number" step="0.1" value={settings.overtime_rate_holiday} onChange={e => handleUpdate('overtime_rate_holiday', e.target.value)} className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white text-sm outline-none focus:border-[var(--success)]" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tanggal Payroll (tgl gajian)</label>
+            <input type="number" min="1" max="31" value={settings.payday_date} onChange={e => handleUpdate('payday_date', e.target.value)} className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white text-sm outline-none focus:border-[var(--success)]" />
+          </div>
+          <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-white/5 hover:bg-white/5">
+            <input type="checkbox" checked={settings.use_attendance_deduction} onChange={e => handleUpdate('use_attendance_deduction', e.target.checked)} className="w-4 h-4" />
+            <span className="text-xs text-gray-300">Potong gaji berdasarkan absensi (tidak hadir = tidak dibayar)</span>
+          </label>
+        </div>
+
+        <div className="glass-panel p-6 border border-white/5 space-y-5">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2"><Sun size={20} className="text-[var(--warning)]" /> BPJS & Pajak</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">BPJS Kes (Perusahaan %)</label>
+              <input type="number" step="0.1" value={settings.bpjs_kesehatan_company} onChange={e => handleUpdate('bpjs_kesehatan_company', e.target.value)} className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white text-sm outline-none focus:border-[var(--warning)]" />
+            </div>
+            <div>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">BPJS TK (Perusahaan %)</label>
+              <input type="number" step="0.1" value={settings.bpjs_ketenagakerjaan_company} onChange={e => handleUpdate('bpjs_ketenagakerjaan_company', e.target.value)} className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white text-sm outline-none focus:border-[var(--warning)]" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Metode PPh 21</label>
+            <select value={settings.pph21_method} onChange={e => handleUpdate('pph21_method', e.target.value)} className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white outline-none">
+              <option value="TER">TER (Tarif Efektif Rata-rata)</option>
+              <option value="GROSS_UP">Gross Up</option>
+              <option value="NETTO">Netto</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Permission Manager Quick Link */}

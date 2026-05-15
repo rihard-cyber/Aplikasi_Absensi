@@ -4,12 +4,17 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { requestAppPermissions } from './utils/permissionInit';
 import { ToastProvider, useToast } from './components/Toast';
 import { ConfirmProvider } from './components/ConfirmDialog';
+import { NotificationProvider } from './components/Notifications';
+import OfflineIndicator from './components/OfflineIndicator';
 import { supabase } from './utils/supabaseClient';
+import ErrorBoundary from './components/ErrorBoundary';
 
-const AttendanceScreen = lazy(() => import('./pages/Employee/AttendanceScreen'));
+import AttendanceScreen from './pages/Employee/AttendanceScreen';
+import AuthPortal from './pages/Auth/AuthPortal';
+import LandingPage from './pages/LandingPage';
+import NotFound from './pages/NotFound';
 const CommandCenter = lazy(() => import('./pages/SuperAdmin/CommandCenter'));
 const TenantDashboard = lazy(() => import('./pages/TenantAdmin/TenantDashboard'));
-const AuthPortal = lazy(() => import('./pages/Auth/AuthPortal'));
 const SubAdminDashboard = lazy(() => import('./pages/SubAdmin/SubAdminDashboard'));
 
 // Komponen Pembungkus Transisi Halaman (Efek Blur & Scale yang mulus)
@@ -48,17 +53,61 @@ const useSupabaseHealthCheck = () => {
   }, []);
 };
 
+// Page loading bar
+const RouteLoadingBar = () => {
+  const [loading, setLoading] = useState(false);
+  const location = useLocation();
+  useEffect(() => {
+    setLoading(true);
+    const timer = setTimeout(() => setLoading(false), 400);
+    return () => clearTimeout(timer);
+  }, [location]);
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[99999] h-0.5">
+      <div className={`h-full bg-gradient-to-r from-[var(--aurora-1)] via-[var(--aurora-3)] to-[var(--aurora-1)] transition-all duration-300 ease-out ${loading ? 'w-full opacity-100' : 'w-0 opacity-0'}`} style={{ backgroundSize: '200% 100%', animation: 'running-light 2s linear infinite' }} />
+    </div>
+  );
+};
+
 // Komponen Rute Animasi agar `useLocation` dapat menangkap perubahan path
 const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handleImpersonate, handleGodModeReturn, handleLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [navStack, setNavStack] = useState([]);
   useSupabaseHealthCheck();
+
+  // Track navigation history
+  useEffect(() => {
+    setNavStack(prev => {
+      if (prev.length === 0 || prev[prev.length - 1] !== location.pathname) {
+        return [...prev, location.pathname].slice(-10);
+      }
+      return prev;
+    });
+  }, [location.pathname]);
+
+  const handleGoBack = useCallback(() => {
+    if (navStack.length >= 2) {
+      navigate(navStack[navStack.length - 2]);
+    } else if (location.pathname === '/login') {
+      return;
+    } else {
+      navigate('/');
+    }
+  }, [navStack, navigate, location.pathname]);
+
+  // Add popstate listener for Android back button
+  useEffect(() => {
+    const handler = () => handleGoBack();
+    window.addEventListener('app-go-back', handler);
+    return () => window.removeEventListener('app-go-back', handler);
+  }, [handleGoBack]);
 
   // Wrapper that sets role AND navigates to correct path
   const handleImpersonateWithNav = (role) => {
     handleImpersonate(role);
     if (role === 'TENANT_ADMIN') navigate('/tenantadmin');
-    else if (role === 'EMPLOYEE') navigate('/');
+    else if (role === 'EMPLOYEE') navigate('/app');
   };
 
   const handleGodModeReturnWithNav = () => {
@@ -110,7 +159,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
     if (nextRole === 'SUPER_ADMIN') navigate('/superadmin');
     else if (nextRole === 'TENANT_ADMIN') navigate('/tenantadmin');
     else if (nextRole === 'SUB_ADMIN') navigate('/subadmin');
-    else if (nextRole === 'EMPLOYEE') navigate('/');
+    else if (nextRole === 'EMPLOYEE') navigate('/app');
     
     if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
   };
@@ -161,10 +210,17 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
       </AnimatePresence>
 
       <Suspense fallback={
-        <div className="min-h-screen bg-[var(--bg-darker)] flex items-center justify-center">
-          <div className="flex flex-col items-center gap-6 animate-pulse">
-            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] p-[2px] shadow-[0_0_30px_rgba(142,45,226,0.3)]">
-              <div className="w-full h-full bg-[var(--bg-darker)] rounded-[22px] flex items-center justify-center font-serif font-bold text-white text-lg">SP</div>
+        <div className="fixed inset-0 bg-[#0B0C10] z-[99999] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-6">
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] p-[2px] shadow-[0_0_40px_rgba(142,45,226,0.4)] animate-pulse">
+              <div className="w-full h-full bg-[#0B0C10] rounded-[22px] flex items-center justify-center font-serif font-bold text-white text-lg relative overflow-hidden">
+                <span className="relative z-10">SP</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-[var(--aurora-1)] animate-bounce" style={{ animationDelay: '0s' }} />
+              <div className="w-2 h-2 rounded-full bg-[var(--aurora-3)] animate-bounce" style={{ animationDelay: '0.15s' }} />
+              <div className="w-2 h-2 rounded-full bg-[var(--aurora-1)] animate-bounce" style={{ animationDelay: '0.3s' }} />
             </div>
             <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold">Memuat...</p>
           </div>
@@ -172,19 +228,22 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
       }>
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
-          {/* Unified Triple-Gate Portal */}
-          <Route
-            path="/login"
-            element={!isAuthenticated 
-              ? <PageTransition><AuthPortal onLogin={handleLogin} /></PageTransition> 
-              : <Navigate to={userRole === 'SUPER_ADMIN' ? '/superadmin' : userRole === 'TENANT_ADMIN' ? '/tenantadmin' : userRole === 'SUB_ADMIN' ? '/subadmin' : '/'} replace />
-            }
-          />
+          {/* LANDING PAGE — company profile / marketing */}
+          <Route path="/" element={
+            isAuthenticated 
+              ? <Navigate to={userRole === 'SUPER_ADMIN' ? '/superadmin' : userRole === 'TENANT_ADMIN' ? '/tenantadmin' : userRole === 'SUB_ADMIN' ? '/subadmin' : '/app'} replace />
+              : <PageTransition><LandingPage /></PageTransition>
+          } />
 
-          {/* Employee / Attendance Route (all roles bisa absen) */}
-          <Route
-            path="/"
-            element={
+          {/* LOGIN */}
+          <Route path="/login" element={
+            !isAuthenticated 
+              ? <PageTransition><AuthPortal onLogin={handleLogin} /></PageTransition> 
+              : <Navigate to={userRole === 'SUPER_ADMIN' ? '/superadmin' : userRole === 'TENANT_ADMIN' ? '/tenantadmin' : userRole === 'SUB_ADMIN' ? '/subadmin' : '/app'} replace />
+          } />
+
+          {/* EMPLOYEE DASHBOARD */}
+          <Route path="/app" element={
               isAuthenticated && (userRole === 'EMPLOYEE' || userRole === 'TENANT_ADMIN' || userRole === 'SUB_ADMIN')
                 ? <PageTransition><AttendanceScreen onGodModeReturn={handleGodModeReturnWithNav} isImpersonating={originalRole === 'SUPER_ADMIN'} onCycleRole={handleCycleRole} /></PageTransition>
                 : isAuthenticated && userRole === 'SUPER_ADMIN' ? <Navigate to="/superadmin" replace />
@@ -225,10 +284,33 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
             }
           />
 
-          <Route path="*" element={isAuthenticated ? <Navigate to="/" replace /> : <Navigate to="/login" replace />} />
+          <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>
       </AnimatePresence>
       </Suspense>
+
+      {/* ROUTE LOADING BAR */}
+      <RouteLoadingBar />
+
+      {/* GLOBAL BACK BUTTON */}
+      {navStack.length > 1 && location.pathname !== '/login' && (
+        <button onClick={handleGoBack}
+          className="fixed bottom-24 left-4 z-[9999] w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-lg hover:bg-white/20 active:scale-90 transition-all safe-bottom">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+      )}
+
+      {/* GLOBAL BRANDING FOOTER */}
+      <div className="fixed bottom-1 w-full text-center pointer-events-none z-40 safe-bottom">
+        <p className="text-[8px] text-gray-600 font-black tracking-[0.4em] uppercase opacity-40">
+          SI PRESENSI PRO MAX — BY RICHARD MEHA
+        </p>
+      </div>
+
+      {/* OFFLINE INDICATOR */}
+      <OfflineIndicator />
     </>
   );
 };
@@ -277,13 +359,15 @@ function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsAuthenticated(false);
     setUserRole(null);
     setOriginalRole(null);
-    sessionStorage.removeItem('god_key');
-    sessionStorage.removeItem('operational_access');
-    localStorage.clear();
+    sessionStorage.clear();
+    try { await supabase.auth.signOut(); } catch (e) { /* ignore */ }
+    localStorage.removeItem('is_authenticated');
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('original_role');
   };
 
   // Session Heartbeat
@@ -302,21 +386,25 @@ function App() {
   }, []);
 
   return (
-    <HashRouter>
-      <ToastProvider>
-        <ConfirmProvider>
-        <AppRoutes
-          isAuthenticated={isAuthenticated}
-          userRole={userRole}
-          originalRole={originalRole}
-          handleLogin={handleLogin}
-          handleImpersonate={handleImpersonate}
-          handleGodModeReturn={handleGodModeReturn}
-          handleLogout={handleLogout}
-        />
-        </ConfirmProvider>
-      </ToastProvider>
-    </HashRouter>
+    <ErrorBoundary>
+      <HashRouter>
+        <ToastProvider>
+          <ConfirmProvider>
+            <NotificationProvider>
+            <AppRoutes
+              isAuthenticated={isAuthenticated}
+              userRole={userRole}
+              originalRole={originalRole}
+              handleLogin={handleLogin}
+              handleImpersonate={handleImpersonate}
+              handleGodModeReturn={handleGodModeReturn}
+              handleLogout={handleLogout}
+            />
+            </NotificationProvider>
+          </ConfirmProvider>
+        </ToastProvider>
+      </HashRouter>
+    </ErrorBoundary>
   );
 }
 

@@ -1,24 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Settings, FileText, CheckCircle, Activity, Calculator, BarChart3, ShieldCheck, Building2, Megaphone, CalendarDays, LogOut, XCircle, Upload, Fingerprint } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../components/ConfirmDialog';
-import PayrollSettings from './components/PayrollSettings';
-import ApprovalWorkflow from './components/ApprovalWorkflow';
-import AuditTrailView from './components/AuditTrailView';
-import StructureManagement from './components/StructureManagement';
-import GeneralSettings from './components/GeneralSettings';
-import PermissionManager from './components/PermissionManager';
-import BroadcastCenter from './components/BroadcastCenter';
-import ShiftDictionary from './components/ShiftDictionary';
+import DashboardHome from './components/DashboardHome';
 import CompanyProfile from './components/CompanyProfile';
-import ScheduleUpload from './components/ScheduleUpload';
 import SubAdminDashboard from '../SubAdmin/SubAdminDashboard'; // Reuse monitoring components
+
+const PayrollSettings = lazy(() => import('./components/PayrollSettings'));
+const ApprovalWorkflow = lazy(() => import('./components/ApprovalWorkflow'));
+const AuditTrailView = lazy(() => import('./components/AuditTrailView'));
+const StructureManagement = lazy(() => import('./components/StructureManagement'));
+const GeneralSettings = lazy(() => import('./components/GeneralSettings'));
+const PermissionManager = lazy(() => import('./components/PermissionManager'));
+const BroadcastCenter = lazy(() => import('./components/BroadcastCenter'));
+const ShiftDictionary = lazy(() => import('./components/ShiftDictionary'));
+const ScheduleUpload = lazy(() => import('./components/ScheduleUpload'));
 import HRISExportWrapper from '../../components/HRISExportWrapper';
 import { supabase } from '../../utils/supabaseClient';
 
 const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogout }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('tenant_active_tab') || 'profile');
+  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('tenant_active_tab') || 'home');
   const [clickCount, setClickCount] = useState(0);
   const [tenantData, setTenantData] = useState({ name: 'Memuat...', logo_url: null });
 
@@ -207,8 +209,9 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 z-10 overflow-y-auto">
-        <div className="max-w-6xl mx-auto mt-2 sm:mt-4">
+      <main className="flex-1 p-0 z-10 overflow-y-auto">
+        <div className="w-full px-4 mt-2 sm:mt-4">
+          {activeTab === 'home' && <DashboardHome onNavigate={(tab) => { setActiveTab(tab); setIsSidebarOpen(false); }} />}
           {activeTab === 'profile' && <CompanyProfile onUpdate={fetchTenantData} />}
           {activeTab === 'monitoring' && <SubAdminDashboard isEmbedded={true} initialTab="monitor" />}
           {activeTab === 'structure' && <StructureManagement />}

@@ -121,9 +121,9 @@ h6 {
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 24px;
   box-shadow: 
     0 8px 32px 0 rgba(0, 0, 0, 0.37),
@@ -135,22 +135,51 @@ h6 {
   transform: translateZ(0);
 }
 
-/* Animated Bokeh Blobs for Glass Panels */
+/* Thin running light border on ALL glass-panel cards - appears on hover */
 .glass-panel::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(90deg, transparent 0%, transparent 40%, var(--aurora-1) 50%, var(--aurora-3) 70%, transparent 100%);
+  background-size: 300% 100%;
+  z-index: -1;
+  border-radius: 26px;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s ease;
+  animation: running-light 3s linear infinite;
   pointer-events: none;
+}
+
+.glass-panel:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.37),
+    0 0 20px rgba(142, 45, 226, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .glass-panel:hover::before {
   opacity: 1;
+}
+
+/* Subtle pulse glow on all glass-panel cards even without hover */
+.glass-panel::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 25px;
+  background: linear-gradient(135deg, rgba(142,45,226,0.03), rgba(0,201,255,0.03));
+  z-index: -1;
+  opacity: 0.5;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+.glass-panel:hover::after {
+  opacity: 0;
 }
 
 /* Running Lights Marquee Animation */
@@ -166,6 +195,16 @@ h6 {
   100% {
     background-position: 0% 50%;
   }
+}
+
+/* Subtle border pulse for glass panels */
+@keyframes border-pulse {
+  0%, 100% { border-color: rgba(255, 255, 255, 0.08); }
+  50% { border-color: rgba(142, 45, 226, 0.15); }
+}
+
+.glass-panel {
+  animation: border-pulse 8s ease-in-out infinite;
 }
 
 /* Marquee Animation */
@@ -209,12 +248,108 @@ h6 {
   box-shadow: 0 0 15px rgba(0, 201, 255, 0.3);
 }
 
+/* ========== GLOBAL BUTTON STYLES ========== */
 button {
   font-family: inherit;
   border: none;
   cursor: pointer;
   background: none;
   color: inherit;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Hover: scale up + shadow glow */
+button:hover:not(:disabled):not(.no-glow) {
+  transform: scale(1.03);
+  filter: brightness(1.1);
+}
+
+/* Active: press down */
+button:active:not(:disabled) {
+  transform: scale(0.96) !important;
+  filter: brightness(0.95);
+}
+
+/* Disabled: muted */
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Focus visible ring for accessibility */
+button:focus-visible {
+  outline: 2px solid var(--aurora-3);
+  outline-offset: 2px;
+}
+
+/* Gradient buttons base enhancement */
+[class*="bg-gradient"]:not(:disabled):hover {
+  box-shadow: 0 4px 20px rgba(142, 45, 226, 0.3);
+}
+
+[class*="bg-\\[var\\(--danger\\)\\]"]:not(:disabled):hover,
+[class*="bg-red"]:not(:disabled):hover {
+  box-shadow: 0 4px 20px rgba(255, 0, 85, 0.3);
+}
+
+[class*="bg-\\[var\\(--success\\)\\]"]:not(:disabled):hover,
+[class*="bg-green"]:not(:disabled):hover {
+  box-shadow: 0 4px 20px rgba(0, 255, 135, 0.3);
+}
+
+/* ========== TEXT HOVER GLOW ========== */
+/* Global hover glow on all heading texts */
+h1, h2, h3, h4, h5, h6, p, span, label, a, button, li, td, th {
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+/* Hover glow on interactive text elements */
+a:hover, button:hover .font-bold, 
+.glass-panel h1:hover, .glass-panel h2:hover, 
+.glass-panel h3:hover, .glass-panel label:hover,
+[class*="text-white"]:hover {
+  text-shadow: 0 0 12px rgba(142, 45, 226, 0.3), 0 0 30px rgba(0, 201, 255, 0.1);
+}
+
+/* Stronger glow on aurora-colored text */
+[class*="text-\\[var\\(--aurora-3\\)\\]"]:hover,
+[style*="var(--aurora-3)"]:hover,
+.text-\[var\(--aurora-3\)\]:hover {
+  text-shadow: 0 0 15px rgba(0, 201, 255, 0.5), 0 0 40px rgba(0, 201, 255, 0.2);
+  color: #33D6FF !important;
+}
+
+[class*="text-\\[var\\(--aurora-1\\)\\]"]:hover,
+[style*="var(--aurora-1)"]:hover,
+.text-\[var\(--aurora-1\)\]:hover {
+  text-shadow: 0 0 15px rgba(142, 45, 226, 0.5), 0 0 40px rgba(142, 45, 226, 0.2);
+  color: #B266FF !important;
+}
+
+[class*="text-\\[var\\(--success\\)\\]"]:hover,
+.text-\[var\(--success\)\]:hover {
+  text-shadow: 0 0 15px rgba(0, 255, 135, 0.5);
+  color: #33FF9F !important;
+}
+
+[class*="text-\\[var\\(--warning\\)\\]"]:hover,
+.text-\[var\(--warning\)\]:hover {
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+[class*="text-\\[var\\(--danger\\)\\]"]:hover,
+.text-\[var\(--danger\)\]:hover {
+  text-shadow: 0 0 15px rgba(255, 0, 85, 0.5);
+  color: #FF3377 !important;
+}
+
+/* Input/select focus glow enhancement */
+input:focus, select:focus, textarea:focus {
+  box-shadow: 0 0 0 2px rgba(0, 201, 255, 0.15), 0 0 20px rgba(0, 201, 255, 0.1) !important;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */

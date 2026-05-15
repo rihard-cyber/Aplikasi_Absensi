@@ -42,6 +42,48 @@ const LoadingSkeleton = ({ type = 'page' }) => {
     );
   }
 
+  if (type === 'stats') {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-pulse mb-8">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="glass-panel p-5 space-y-3">
+            <div className="h-3 bg-white/10 rounded w-20" />
+            <div className="h-6 bg-white/10 rounded w-24" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (type === 'list') {
+    return (
+      <div className="space-y-3 animate-pulse">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="glass-panel p-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-white/10" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-white/10 rounded w-1/3" />
+              <div className="h-3 bg-white/5 rounded w-1/2" />
+            </div>
+            <div className="h-6 bg-white/10 rounded w-20" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (type === 'form') {
+    return (
+      <div className="space-y-4 animate-pulse">
+        <div className="h-10 bg-white/10 rounded-xl w-full" />
+        <div className="h-10 bg-white/10 rounded-xl w-full" />
+        <div className="h-10 bg-white/10 rounded-xl w-1/2" />
+        <div className="h-24 bg-white/5 rounded-xl w-full" />
+        <div className="h-12 bg-white/10 rounded-xl w-40" />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full flex flex-col items-center justify-center py-16 gap-6 animate-pulse">
       <div className="w-16 h-16 rounded-full bg-white/5" />

@@ -8,8 +8,28 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
+import PayslipView from './PayslipView';
+import LoanRequest from './LoanRequest';
+import ReimbursementRequest from './ReimbursementRequest';
+import QRScanner from './QRScanner';
+import ProfileEditor from './ProfileEditor';
 
 const LeaveRequest = ({ onBack, category = 'leave' }) => {
+  if (category === 'salary') {
+    return <div><button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition-colors"><ArrowLeft size={18} /> Kembali</button><PayslipView /></div>;
+  }
+  if (category === 'loan') {
+    return <div><LoanRequest onBack={onBack} /></div>;
+  }
+  if (category === 'reimbursement') {
+    return <div><ReimbursementRequest onBack={onBack} /></div>;
+  }
+  if (category === 'qr') {
+    return <div><QRScanner onBack={onBack} /></div>;
+  }
+  if (category === 'edit-profile') {
+    return <div><ProfileEditor onBack={onBack} /></div>;
+  }
   const [view, setView] = useState('history'); // 'history', 'form'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();

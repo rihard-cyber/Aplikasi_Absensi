@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Lock, X, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Download, Lock, X, AlertCircle, ShieldCheck, CheckCircle2, Loader2 } from 'lucide-react';
 import { generatePin } from '../utils/pinUtil';
 import { downloadCSV } from '../utils/downloadUtil';
 
@@ -9,6 +9,8 @@ const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download 
   const [showModal, setShowModal] = useState(false);
   const [pin, setPin] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState(false);
 
   const role = (sessionStorage.getItem('god_key') === 'DEWA-999') ? 'SUPER_ADMIN'
     : localStorage.getItem('user_role') || 'EMPLOYEE';
@@ -20,24 +22,27 @@ const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download 
     division: 'DIVISI'
   }[scope] || 'DATA';
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    setExporting(true);
+    await new Promise(r => setTimeout(r, 600));
     const entered = pin.join('');
 
-    // SUPER_ADMIN: download langsung
     if (role === 'SUPER_ADMIN') {
       downloadCSV(data, filename);
-      setShowModal(false); setPin(['', '', '', '', '', '']); setError('');
+      setExportSuccess(true);
+      setTimeout(() => { setShowModal(false); setExportSuccess(false); setExporting(false); }, 800);
       return;
     }
 
-    // TENANT_ADMIN / SUB_ADMIN / DIVISI: validasi PIN
     const expectedPin = generatePin(scopeId);
     if (entered === expectedPin || entered === '999999') {
       downloadCSV(data, filename);
-      setShowModal(false); setPin(['', '', '', '', '', '']); setError('');
+      setExportSuccess(true);
+      setTimeout(() => { setShowModal(false); setExportSuccess(false); setExporting(false); }, 800);
     } else {
       setError('Kode akses tidak valid!');
       setPin(['', '', '', '', '', '']);
+      setExporting(false);
       setTimeout(() => setError(''), 3000);
     }
   };
@@ -46,7 +51,8 @@ const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download 
 
   const handleClick = () => {
     if (!data || !data.length) {
-      alert('📭 Database HRIS masih kosong.\n\nBelum ada data pegawai yang bisa diunduh.\nSilakan isi data pegawai terlebih dahulu melalui Upload Jadwal atau pendaftaran karyawan.');
+      setError('📭 Database masih kosong — belum ada data untuk diexport');
+      setTimeout(() => setError(''), 3500);
       return;
     }
     setShowModal(true);
@@ -55,9 +61,20 @@ const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download 
   return (
     <>
       <button onClick={handleClick}
-        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-bold uppercase tracking-widest text-xs transition-all ${className || 'bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/30 hover:bg-[var(--danger)] hover:text-white'}`}>
-        <Download size={16} /> {label}
+        className={`group relative flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-bold uppercase tracking-widest text-xs transition-all duration-300 hover:scale-105 active:scale-95 ${className || 'bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/30 hover:bg-[var(--danger)] hover:text-white hover:shadow-[0_0_20px_rgba(255,0,85,0.3)]'}`}>
+        <Download size={16} className="group-hover:animate-bounce" /> {label}
+        <span className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/5 transition-all duration-300" />
       </button>
+
+      {/* Error toast inline */}
+      <AnimatePresence>
+        {error && !showModal && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            className="flex items-center gap-2 mt-2 px-3 py-2 bg-[var(--warning)]/10 border border-[var(--warning)]/30 rounded-xl text-[10px] text-[var(--warning)] font-bold">
+            <AlertCircle size={12} /> {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showModal && createPortal(
@@ -93,16 +110,24 @@ const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download 
               </div>
 
               {error && (
-                <div className="mb-4 py-2 px-3 bg-[var(--danger)]/20 border border-[var(--danger)]/40 rounded-lg flex items-center justify-center gap-2 text-[var(--danger)] text-xs font-bold animate-pulse">
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                  className="mb-4 py-2.5 px-3 bg-[var(--danger)]/15 border border-[var(--danger)]/30 rounded-xl flex items-center justify-center gap-2 text-[var(--danger)] text-xs font-bold">
                   <AlertCircle size={14} /> {error}
-                </div>
+                </motion.div>
               )}
 
-              {!isDirect && (
+              {exportSuccess && (
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                  className="mb-4 py-2.5 px-3 bg-[var(--success)]/15 border border-[var(--success)]/30 rounded-xl flex items-center justify-center gap-2 text-[var(--success)] text-xs font-bold">
+                  <CheckCircle2 size={14} /> Berhasil! File sedang diunduh...
+                </motion.div>
+              )}
+
+              {!isDirect && !exportSuccess && (
                 <div className="flex justify-between gap-2 mb-6">
                   {pin.map((digit, i) => (
                     <input key={i} id={`apin-${i}`} type="password" maxLength="1" autoFocus={i === 0}
-                      className="w-10 h-12 bg-white/5 border border-white/10 rounded-lg text-center text-xl font-bold text-white focus:border-[var(--danger)] outline-none"
+                      className="w-10 h-12 bg-white/5 border border-white/10 rounded-lg text-center text-xl font-bold text-white focus:border-[var(--danger)] outline-none transition-all duration-200 focus:scale-110 focus:shadow-[0_0_15px_rgba(255,0,85,0.3)]"
                       value={digit}
                       onChange={(e) => {
                         const val = e.target.value.replace(/[^0-9]/g, '');
@@ -117,12 +142,20 @@ const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download 
                 </div>
               )}
 
-              <button onClick={handleExport}
-                className={`w-full py-4 rounded-xl text-white font-bold uppercase tracking-widest transition-all ${isDirect
-                  ? 'bg-gradient-to-r from-[var(--success)] to-emerald-500 hover:shadow-[0_0_20px_rgba(0,255,135,0.3)]'
-                  : 'bg-gradient-to-r from-[var(--danger)] to-red-600 hover:shadow-[0_0_20px_rgba(255,0,0,0.4)]'}`}>
-                {isDirect ? `Unduh ${data.length} Data` : 'Verifikasi & Unduh'}
-              </button>
+              {!exportSuccess && (
+                <button onClick={handleExport} disabled={exporting}
+                  className={`w-full py-4 rounded-xl text-white font-bold uppercase tracking-widest transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 ${
+                    isDirect
+                      ? 'bg-gradient-to-r from-[var(--success)] to-emerald-500 hover:shadow-[0_0_30px_rgba(0,255,135,0.4)]'
+                      : 'bg-gradient-to-r from-[var(--danger)] to-red-600 hover:shadow-[0_0_30px_rgba(255,0,0,0.4)]'
+                  }`}>
+                  {exporting ? (
+                    <span className="flex items-center justify-center gap-2"><Loader2 size={16} className="animate-spin" /> Memproses...</span>
+                  ) : (
+                    isDirect ? `Unduh ${data.length} Data` : 'Verifikasi & Unduh'
+                  )}
+                </button>
+              )}
             </motion.div>
           </motion.div>,
           document.body

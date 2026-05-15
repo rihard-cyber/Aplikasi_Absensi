@@ -1,14 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Calendar, Wallet, TrendingUp, Zap, RefreshCcw, CheckCircle2, FileText, Megaphone } from 'lucide-react';
+import { Clock, Calendar, Wallet, TrendingUp, Zap, RefreshCcw, CheckCircle2, FileText, Megaphone, Sun, QrCode, DollarSign, Receipt, Edit3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../../utils/supabaseClient';
 
 const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
   const [announcements, setAnnouncements] = useState([]);
+  const [leaveBalance, setLeaveBalance] = useState(null);
+  const [upcomingHolidays, setUpcomingHolidays] = useState([]);
+  const [anniversaryData, setAnniversaryData] = useState([]);
 
   useEffect(() => {
     fetchAnnouncements();
+    fetchLeaveBalance();
+    fetchHolidays();
+    fetchAnniversary();
   }, []);
+
+  const fetchLeaveBalance = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data: prof } = await supabase.from('profiles').select('id').eq('auth_id', session.user.id).maybeSingle();
+      if (!prof?.id) return;
+      const year = new Date().getFullYear();
+      let { data: lb } = await supabase.from('leave_balances').select('*').eq('user_id', prof.id).eq('year', year).maybeSingle();
+      if (!lb) {
+        const { data: newLb } = await supabase.from('leave_balances').insert({ user_id: prof.id, year, total_days: 12, used_days: 0, pending_days: 0 }).select().single();
+        if (newLb) lb = newLb;
+      }
+      if (lb) setLeaveBalance(lb);
+    } catch (e) { console.error('Failed to fetch leave balance', e); }
+  };
+
+  const fetchHolidays = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data: prof } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
+      if (!prof?.tenant_id) return;
+      const today = new Date().toISOString().split('T')[0];
+      const threeMonths = new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0];
+      const { data } = await supabase.from('company_holidays').select('*').eq('tenant_id', prof.tenant_id).gte('date', today).lte('date', threeMonths).order('date');
+      if (data) setUpcomingHolidays(data);
+    } catch (e) { console.warn('Holiday fetch error', e); }
+  };
+
+  const fetchAnniversary = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data: prof } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
+      if (!prof?.tenant_id) return;
+      const { data } = await supabase.from('profiles').select('id, full_name, position, birth_date').eq('tenant_id', prof.tenant_id).in('role', ['EMPLOYEE', 'SUB_ADMIN']);
+      if (data) {
+        const thisMonth = new Date().getMonth();
+        const monthBirthdays = data.filter(e => e.birth_date && e.id !== prof.id).filter(e => new Date(e.birth_date).getMonth() === thisMonth);
+        setAnniversaryData(monthBirthdays.slice(0, 5));
+      }
+    } catch (e) { console.warn('Anniversary error', e); }
+  };
 
   const fetchAnnouncements = async () => {
     try {
@@ -68,8 +118,8 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
           <div className="text-[var(--aurora-1)] bg-[var(--aurora-1)]/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">
             <Calendar size={24} />
           </div>
-          <h3 className="text-2xl font-bold text-white mt-1">{stats?.leaveBalance || 0}</h3>
-          <p className="text-xs text-gray-500 uppercase tracking-widest">Sisa cuti</p>
+          <h3 className="text-2xl font-bold text-white mt-1">{leaveBalance ? leaveBalance.total_days - leaveBalance.used_days : stats?.leaveBalance || 0}</h3>
+          <p className="text-xs text-gray-500 uppercase tracking-widest">Sisa cuti {leaveBalance ? `(${leaveBalance.used_days} terpakai)` : ''}</p>
         </div>
       </div>
 
@@ -77,11 +127,14 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-2">
         <ActionButton icon={<Calendar />} label="Izin / Cuti" color="var(--aurora-3)" onClick={() => onAction('leave')} />
         <ActionButton icon={<Zap />} label="Lembur" color="var(--warning)" onClick={() => onAction('lembur')} />
+        <ActionButton icon={<QrCode />} label="QR Absen" color="var(--aurora-3)" onClick={() => onAction('qr')} />
         <ActionButton icon={<RefreshCcw />} label="Tukar Shift" color="var(--aurora-2)" onClick={() => onAction('shift')} />
         <ActionButton icon={<CheckCircle2 />} label="Req. Absen" color="var(--success)" onClick={() => onAction('req-absen')} />
         <ActionButton icon={<Wallet />} label="Slip Gaji" color="var(--aurora-1)" onClick={() => onAction('salary')} />
+        <ActionButton icon={<DollarSign />} label="Pinjaman" color="var(--aurora-3)" onClick={() => onAction('loan')} />
+        <ActionButton icon={<Receipt />} label="Klaim Biaya" color="var(--success)" onClick={() => onAction('reimbursement')} />
+        <ActionButton icon={<Edit3 />} label="Edit Profil" color="var(--aurora-1)" onClick={() => onAction('edit-profile')} />
         <ActionButton icon={<FileText />} label="PKWT / Kontrak" color="var(--aurora-3)" onClick={() => onAction('contract')} />
-        <ActionButton icon={<TrendingUp />} label="Overtime" color="var(--warning)" onClick={() => onAction('overtime')} />
       </div>
 
       {/* ANNOUNCEMENTS SECTION */}
@@ -103,6 +156,44 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
                   <Clock size={10} /> 
                   {new Date(ann.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* UPCOMING HOLIDAYS */}
+      {upcomingHolidays.length > 0 && (
+        <div className="glass-panel p-5 rounded-[32px] border border-[var(--warning)]/20 bg-gradient-to-br from-[var(--warning)]/5 to-transparent">
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Sun size={16} className="text-[var(--warning)]" /> Hari Libur Mendatang</h3>
+          <div className="space-y-2">
+            {upcomingHolidays.map(h => {
+              const d = new Date(h.date);
+              const daysLeft = Math.ceil((d - new Date()) / (1000 * 60 * 60 * 24));
+              return (
+                <div key={h.id} className="flex items-center justify-between bg-white/5 rounded-xl p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-center w-10"><p className="text-sm font-bold text-white">{d.getDate()}</p><p className="text-[8px] text-gray-500 uppercase">{d.toLocaleDateString('id-ID', { month: 'short' })}</p></div>
+                    <div><p className="text-xs font-bold text-white">{h.name}</p><p className="text-[9px] text-gray-500">{h.type}</p></div>
+                  </div>
+                  <span className={`text-[9px] font-bold ${daysLeft <= 3 ? 'text-[var(--danger)]' : daysLeft <= 7 ? 'text-[var(--warning)]' : 'text-gray-500'}`}>{daysLeft === 0 ? 'Hari ini!' : `${daysLeft} hari lagi`}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* BIRTHDAYS THIS MONTH */}
+      {anniversaryData.length > 0 && (
+        <div className="glass-panel p-5 rounded-[32px] border border-[var(--aurora-1)]/20">
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Calendar size={16} className="text-[var(--aurora-1)]" /> Ulang Tahun Bulan Ini</h3>
+          <div className="flex flex-wrap gap-2">
+            {anniversaryData.map(e => (
+              <div key={e.id} className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-full border border-white/5">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center text-[8px] font-bold text-white">{e.full_name?.charAt(0)}</div>
+                <span className="text-[10px] text-gray-300">{e.full_name?.split(' ')[0]}</span>
+                {e.position && <span className="text-[8px] text-gray-500">• {e.position}</span>}
               </div>
             ))}
           </div>

@@ -90,7 +90,7 @@ const AuthPortal = ({ onLogin }) => {
           } else {
             sessionStorage.setItem('operational_access', userProfile?.operational_access ? 'MEMILIKI AKSES' : 'TIDAK');
             onLogin('EMPLOYEE');
-            navigate('/');
+            navigate('/app');
           }
         }
       }
@@ -417,7 +417,7 @@ const AuthPortal = ({ onLogin }) => {
         navigate('/tenantadmin');
       } else {
         onLogin('EMPLOYEE');
-        navigate('/');
+        navigate('/app');
       }
       return; // Skip device checks completely
     }
@@ -490,7 +490,7 @@ const AuthPortal = ({ onLogin }) => {
         sessionStorage.setItem('attendance_access', userProfile.attendance_access ? 'YA' : 'TIDAK');
         sessionStorage.setItem('operational_access', userProfile.operational_access ? 'MEMILIKI AKSES' : 'TIDAK');
         onLogin('EMPLOYEE');
-        navigate('/');
+        navigate('/app');
       }
     } catch (error) {
       console.error("Login failed:", error.message);
@@ -521,7 +521,7 @@ const AuthPortal = ({ onLogin }) => {
   }, [mode, biometricScan]);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-darker)] flex flex-col items-center justify-center relative overflow-hidden font-sans px-4" onMouseMove={handleMouseMove}>
+    <div className="min-h-screen bg-[var(--bg-darker)] flex flex-col items-center justify-center relative overflow-hidden font-sans px-0" onMouseMove={handleMouseMove}>
       {/* Drifting Neon Blobs */}
       <div className="absolute inset-0 pointer-events-none opacity-40 z-0">
         <motion.div
@@ -550,7 +550,7 @@ const AuthPortal = ({ onLogin }) => {
       {/* Main Glassmorphism Card */}
       <motion.div
         layout
-        className={`w-full max-w-md ${mode === 'owner' ? 'card-running-light-god shadow-[0_0_50px_rgba(255,0,85,0.2)]' : 'card-running-light shadow-[0_0_50px_rgba(142,45,226,0.2)]'} z-10 relative gpu-accelerate`}
+        className={`w-full mx-4 ${mode === 'owner' ? 'card-running-light-god shadow-[0_0_50px_rgba(255,0,85,0.2)]' : 'card-running-light shadow-[0_0_50px_rgba(142,45,226,0.2)]'} z-10 relative gpu-accelerate`}
       >
         <div className="p-8 md:p-10 relative z-10">
           {/* Logo Area & Adaptive Branding */}

@@ -9,6 +9,8 @@ import LuxuryMetrics from './components/LuxuryMetrics';
 import SecurityAudit from './components/SecurityAudit';
 import SaaSManagement from './components/SaaSManagement';
 import GlobalShiftView from './components/GlobalShiftView';
+import GlobalFinance from './components/GlobalFinance';
+import GlobalAudit from './components/GlobalAudit';
 import SubAdminDashboard from '../SubAdmin/SubAdminDashboard'; // Reuse monitoring components
 import HRISExportWrapper from '../../components/HRISExportWrapper';
 import { useSFX } from '../../utils/useSFX';
@@ -98,7 +100,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
   ];
 
   return (
-    <div className="min-h-screen p-3 sm:p-6 lg:p-8 flex flex-col gap-4 sm:gap-6 bg-[var(--bg-darker)] text-white relative overflow-hidden">
+    <div className="min-h-screen p-3 flex flex-col gap-3 bg-[var(--bg-darker)] text-white relative overflow-x-hidden">
       {/* Background Aurora */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 z-0">
         <div className="absolute top-[-20%] left-[20%] w-[40%] h-[40%] bg-[var(--aurora-2)] rounded-full blur-[150px]"></div>
@@ -205,16 +207,30 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
             >
               📅 Jadwal Global
             </button>
+            <button 
+              onClick={() => setActiveTab('finance')}
+              className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'finance' ? 'bg-[var(--success)] text-black' : 'text-gray-500 hover:text-white'}`}
+            >
+              💰 Finance
+            </button>
+            <button 
+              onClick={() => setActiveTab('audit')}
+              className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'audit' ? 'bg-[var(--danger)] text-white' : 'text-gray-500 hover:text-white'}`}
+            >
+              📋 Global Audit
+            </button>
           </nav>
           {/* Mobile Tab Selector */}
           <div className="flex lg:hidden items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/5 overflow-x-auto w-full">
-            {['infrastructure', 'operations', 'shifts'].map(tab => (
+            {['infrastructure', 'operations', 'shifts', 'finance', 'audit'].map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)}
                 className={`flex-shrink-0 px-4 py-3 rounded-lg text-[10px] sm:text-[9px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
                   activeTab === tab
                     ? tab === 'infrastructure' ? 'bg-[var(--aurora-3)] text-black'
                       : tab === 'operations' ? 'bg-[var(--aurora-1)] text-black'
-                      : 'bg-[var(--warning)] text-black'
+                      : tab === 'shifts' ? 'bg-[var(--warning)] text-black'
+                      : tab === 'finance' ? 'bg-[var(--success)] text-black'
+                      : 'bg-[var(--danger)] text-white'
                     : 'text-gray-500'
                 }`}
               >
@@ -279,64 +295,47 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
 
       {/* Main Grid Layout */}
       <AnimatePresence mode="wait">
-        {activeTab === 'infrastructure' ? (
+        {activeTab === 'infrastructure' && (
           <motion.div 
             key="infra" 
             initial={{ opacity: 0, x: -20 }} 
             animate={{ opacity: 1, x: 0 }} 
             exit={{ opacity: 0, x: 20 }} 
-            className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 flex-1 z-10 items-start"
+            className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-12 gap-4 flex-1 z-10 items-start"
           >
-            {/* Left Column: Map & Analytics (8 Columns) */}
-            <div className="lg:col-span-8 flex flex-col gap-6 lg:gap-8">
-              <section className="glass-panel p-6 lg:p-8 relative overflow-hidden group min-h-[450px] lg:min-h-[500px] flex flex-col">
-                <div className="relative z-20 mb-6 lg:mb-8">
-                  <h2 className="font-serif text-xl lg:text-2xl tracking-wide flex items-center gap-4 text-white">
-                    <Globe size={24} className="text-[var(--aurora-3)] animate-pulse" /> Peta Pengawasan Global
+            <div className="lg:col-span-8 flex flex-col gap-4">
+              <section className="glass-panel p-4 relative flex flex-col">
+                <div className="relative z-20 mb-3">
+                  <h2 className="font-serif text-lg tracking-wide flex items-center gap-3 text-white">
+                    <Globe size={20} className="text-[var(--aurora-3)] animate-pulse" /> Peta Pengawasan Global
                   </h2>
-                  <p className="text-[9px] lg:text-[10px] text-gray-500 uppercase tracking-[0.3em] mt-2 font-black">Live Satellite Infrastructure</p>
+                  <p className="text-[9px] text-gray-500 uppercase tracking-[0.3em] mt-1 font-black">Live Satellite Infrastructure</p>
                 </div>
-                <div className="flex-1 rounded-2xl lg:rounded-3xl overflow-hidden border border-white/10 relative">
+                <div className="flex-1 rounded-2xl lg:rounded-3xl overflow-hidden border border-white/10 relative min-h-[300px]">
                   <GlobalMap />
                 </div>
               </section>
-
-              <section className="glass-panel p-6 lg:p-8">
-                <div className="flex items-center justify-between mb-6 lg:mb-8">
+              <section className="glass-panel p-4">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="font-serif text-xl lg:text-2xl tracking-wide flex items-center gap-4">
-                      <Activity size={24} lg:size={28} className="text-[var(--aurora-1)]" /> Analitik Pertumbuhan
+                    <h2 className="font-serif text-lg tracking-wide flex items-center gap-3">
+                      <Activity size={20} className="text-[var(--aurora-1)]" /> Analitik Pertumbuhan
                     </h2>
-                    <p className="text-[9px] lg:text-[10px] text-gray-500 uppercase tracking-[0.3em] mt-2 font-black">Real-time Business Intelligence</p>
+                    <p className="text-[9px] text-gray-500 uppercase tracking-[0.3em] mt-1 font-black">Real-time Business Intelligence</p>
                   </div>
                 </div>
-                <div className="w-full h-[300px] lg:h-[350px]">
-                  <LuxuryMetrics />
-                </div>
+                <div className="w-full h-[250px]"><LuxuryMetrics /></div>
               </section>
             </div>
-
-            {/* Right Column: SaaS & Security (4 Columns) */}
-            <div className="lg:col-span-4 flex flex-col gap-6 lg:gap-8">
-              <section className="glass-panel p-6 border border-[var(--warning)]/30 bg-[var(--warning)]/[0.02]">
-                <h2 className="font-serif text-lg tracking-wide mb-4 flex items-center gap-3 text-[var(--warning)]">
-                  <Key size={20} /> Master Bypass Console
-                </h2>
+            <div className="lg:col-span-4 flex flex-col gap-4">
+              <section className="glass-panel p-4 border border-[var(--warning)]/30 bg-[var(--warning)]/[0.02]">
+                <h2 className="font-serif text-lg tracking-wide mb-4 flex items-center gap-3 text-[var(--warning)]"><Key size={20} /> Master Bypass Console</h2>
                 <div className="flex flex-col gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">Target Entitas (Tenant)</label>
-                    <select
-                      value={selectedTenantBypass}
-                      onChange={(e) => {
-                        setSelectedTenantBypass(e.target.value);
-                        setBypassCode(''); // Reset when changing target
-                      }}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-xs text-white outline-none focus:border-[var(--warning)]"
-                    >
+                    <select value={selectedTenantBypass} onChange={(e) => { setSelectedTenantBypass(e.target.value); setBypassCode(''); }} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-xs text-white outline-none focus:border-[var(--warning)]">
                       <option value="all" className="bg-[#0B0C10]">GLOBAL (Master PIN)</option>
-                      {tenants.map(t => (
-                        <option key={t.id} value={t.id} className="bg-[#0B0C10]">{t.name}</option>
-                      ))}
+                      {tenants.map(t => (<option key={t.id} value={t.id} className="bg-[#0B0C10]">{t.name}</option>))}
                     </select>
                   </div>
                   <div className="flex items-center justify-between bg-black/40 p-4 rounded-xl border border-white/5">
@@ -346,27 +345,34 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
                   <button onClick={generateBypassCode} className="w-full py-3 rounded-xl bg-[var(--warning)]/10 text-[var(--warning)] text-[10px] font-black uppercase tracking-widest border border-[var(--warning)]/20 hover:bg-[var(--warning)] hover:text-black transition-all">GENERATE PIN</button>
                 </div>
               </section>
-
-              <section className="glass-panel p-4 sm:p-6 flex-1 flex flex-col overflow-hidden min-h-[300px] sm:min-h-[500px]">
-                <h2 className="font-serif text-lg tracking-wide mb-4 flex items-center gap-3"><Settings size={20} className="text-[var(--aurora-2)]" /> Manajemen SaaS</h2>
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
-                  <SaaSManagement onImpersonate={onImpersonate} searchQuery={searchQuery} />
-                </div>
+              <section className="glass-panel p-4 flex-1 flex flex-col overflow-visible min-h-[350px]">
+                <SaaSManagement onImpersonate={onImpersonate} searchQuery={searchQuery} />
               </section>
-
-              <section className="glass-panel p-5 border border-[var(--danger)]/30 shadow-[0_0_30px_rgba(255,0,85,0.05)]">
+              <section className="glass-panel p-4 border border-[var(--danger)]/30">
                 <h2 className="font-serif text-lg tracking-wide mb-4 flex items-center gap-3 text-[var(--danger)]"><ShieldAlert size={20} /> Audit Keamanan</h2>
                 <SecurityAudit searchQuery={searchQuery} />
               </section>
             </div>
           </motion.div>
-        ) : activeTab === 'operations' ? (
+        )}
+        {activeTab === 'operations' && (
           <motion.div key="ops" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 z-10">
             <SubAdminDashboard isEmbedded={true} initialTab="monitor" />
           </motion.div>
-        ) : (
+        )}
+        {activeTab === 'shifts' && (
           <motion.div key="shifts" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="flex-1 z-10">
             <GlobalShiftView />
+          </motion.div>
+        )}
+        {activeTab === 'finance' && (
+          <motion.div key="finance" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="flex-1 z-10">
+            <GlobalFinance />
+          </motion.div>
+        )}
+        {activeTab === 'audit' && (
+          <motion.div key="audit" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="flex-1 z-10">
+            <GlobalAudit />
           </motion.div>
         )}
       </AnimatePresence>

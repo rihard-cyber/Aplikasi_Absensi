@@ -542,128 +542,87 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
       {/* Create Tenant Modal */}
       <AnimatePresence>
         {showCreateModal && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 lg:p-8">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-6 pt-10 pb-10">
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 
               exit={{ opacity: 0 }} 
               onClick={() => !isCreating && setShowCreateModal(false)} 
-              className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
             />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 30 }} 
               animate={{ scale: 1, opacity: 1, y: 0 }} 
               exit={{ scale: 0.9, opacity: 0, y: 30 }} 
-              className="bg-[#14151A] border border-white/10 rounded-[30px] lg:rounded-[40px] w-full max-w-2xl p-6 lg:p-10 relative z-[210] overflow-y-auto max-h-[90vh] shadow-[0_0_100px_rgba(0,0,0,0.5)] custom-scrollbar"
+              className="bg-[#14151A] border border-white/10 rounded-[32px] w-[98%] sm:max-w-lg px-4 pt-4 pb-14 relative z-[210] overflow-y-auto max-h-[85vh] shadow-[0_0_80px_rgba(0,0,0,0.9)] custom-scrollbar"
             >
-              <div className="absolute top-4 right-4 lg:top-8 lg:right-8">
-                <button 
-                  disabled={isCreating} 
-                  onClick={() => setShowCreateModal(false)} 
-                  className="p-2 lg:p-3 rounded-2xl hover:bg-white/5 text-gray-500 hover:text-white transition-colors"
-                >
-                  <X size={20} lg:size={24}/>
+              <div className="absolute top-3 right-3">
+                <button disabled={isCreating} onClick={() => setShowCreateModal(false)} className="p-1.5 rounded-xl hover:bg-white/5 text-gray-500 hover:text-white transition-colors">
+                  <X size={18} />
                 </button>
               </div>
 
-              <div className="flex items-center gap-4 lg:gap-6 mb-8 lg:mb-10">
-                <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-2xl lg:rounded-[24px] bg-gradient-to-br from-[var(--aurora-1)]/20 to-[var(--aurora-3)]/20 flex items-center justify-center text-[var(--aurora-1)] border border-white/5 shrink-0">
-                  <Globe size={24} lg:size={32} />
+              <div className="h-14"></div> {/* Top Spacer: Inilah rahasia scroll atas mentok & estetik */}
+
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--aurora-1)]/20 to-[var(--aurora-3)]/20 flex items-center justify-center text-[var(--aurora-1)] border border-white/5 shrink-0">
+                  <Globe size={20} />
                 </div>
                 <div>
-                  <h3 className="text-xl lg:text-2xl font-serif font-bold text-white tracking-tight">Onboarding Perusahaan Baru</h3>
-                  <p className="text-[8px] lg:text-[10px] text-[var(--aurora-3)] uppercase tracking-[0.3em] font-black mt-1 lg:mt-2">Strategic SaaS Expansion</p>
+                  <h3 className="text-base sm:text-xl font-serif font-bold text-white leading-tight">Onboarding Perusahaan Baru</h3>
+                  <p className="text-[8px] sm:text-[10px] text-[var(--aurora-3)] uppercase tracking-[0.2em] sm:tracking-[0.3em] font-black mt-0.5 sm:mt-1">Strategic SaaS Expansion</p>
                 </div>
               </div>
 
-              <form onSubmit={handleCreateTenant} className="space-y-5 lg:space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[9px] lg:text-[10px] text-gray-500 uppercase tracking-widest font-black ml-1">Nama Resmi Entitas</label>
-                  <input 
-                    required 
-                    value={newTenant.name} 
-                    onChange={e => setNewTenant({...newTenant, name: e.target.value})} 
-                    type="text" 
-                    className="w-full bg-black/40 border border-white/10 rounded-2xl lg:rounded-[24px] px-5 lg:px-6 py-4 lg:py-5 text-sm lg:text-base text-white outline-none focus:border-[var(--aurora-1)] transition-all placeholder:text-gray-700" 
-                    placeholder="Masukkan Nama Perusahaan..." 
-                  />
+              <form onSubmit={handleCreateTenant} className="space-y-4">
+                <div>
+                  <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">Nama Resmi Entitas</label>
+                  <input required value={newTenant.name} onChange={e => setNewTenant({...newTenant, name: e.target.value})} type="text" 
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--aurora-1)] transition-all placeholder:text-gray-700" 
+                    placeholder="Masukkan Nama Perusahaan..." />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[9px] lg:text-[10px] text-gray-500 uppercase tracking-widest font-black ml-1">Tier Subscription</label>
-                    <select 
-                      value={newTenant.tier} 
-                      onChange={e => setNewTenant({...newTenant, tier: e.target.value})} 
-                      className="w-full bg-black/40 border border-white/10 rounded-2xl lg:rounded-[24px] px-5 lg:px-6 py-4 lg:py-5 text-sm lg:text-base text-white outline-none focus:border-[var(--aurora-1)] transition-all appearance-none"
-                    >
-                      <option value="Bronze">Tier 1 - Bronze (Trial)</option>
-                      <option value="Silver">Tier 2 - Silver</option>
-                      <option value="Gold">Tier 3 - Gold</option>
-                      <option value="Enterprise">Tier 4 - Enterprise</option>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">Tier Subscription</label>
+                    <select value={newTenant.tier} onChange={e => setNewTenant({...newTenant, tier: e.target.value})} 
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--aurora-1)] transition-all appearance-none">
+                      <option value="Bronze">Bronze (Trial)</option><option value="Silver">Silver</option>
+                      <option value="Gold">Gold</option><option value="Enterprise">Enterprise</option>
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] lg:text-[10px] text-gray-500 uppercase tracking-widest font-black ml-1">Limit Kapasitas User</label>
-                    <input 
-                      type="number" 
-                      value={newTenant.maxUsers} 
-                      onChange={e => setNewTenant({...newTenant, maxUsers: e.target.value})} 
-                      className="w-full bg-black/40 border border-white/10 rounded-2xl lg:rounded-[24px] px-5 lg:px-6 py-4 lg:py-5 text-sm lg:text-base text-white outline-none focus:border-[var(--aurora-1)] transition-all" 
-                    />
+                  <div>
+                    <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">Limit User</label>
+                    <input type="number" value={newTenant.maxUsers} onChange={e => setNewTenant({...newTenant, maxUsers: e.target.value})} 
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--aurora-1)] transition-all" />
                   </div>
                 </div>
 
-                <div className="p-6 lg:p-8 bg-white/[0.02] rounded-[24px] lg:rounded-[32px] border border-white/5 space-y-4 lg:space-y-5">
-                  <div className="flex items-center justify-between px-2">
-                    <span className="text-[9px] lg:text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">Dual Activation Key Generator</span>
-                    <button type="button" onClick={generateCode} className="text-[9px] lg:text-[10px] text-[var(--aurora-3)] font-black hover:underline tracking-widest">RE-GENERATE</button>
+                <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[8px] text-gray-500 font-black uppercase tracking-[0.15em]">Kode Aktivasi</span>
+                    <button type="button" onClick={generateCode} className="text-[8px] text-[var(--aurora-3)] font-black hover:underline tracking-wider">GENERATE</button>
                   </div>
 
-                  {/* Admin Code */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 px-2">
-                      <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-[var(--warning)]" />
-                      <span className="text-[8px] lg:text-[9px] text-[var(--warning)] font-black uppercase tracking-widest">Kode Lisensi Tenant (Admin)</span>
-                    </div>
-                    {generatedAdminCode ? (
-                      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-4 lg:py-5 bg-black/60 rounded-[16px] lg:rounded-[20px] border border-[var(--warning)]/40 shadow-[0_0_20px_rgba(255,165,0,0.1)]">
-                        <span className="text-xl lg:text-2xl font-mono font-black text-[var(--warning)] tracking-[0.25em]">{generatedAdminCode}</span>
-                      </motion.div>
-                    ) : (
-                      <div className="w-full py-4 lg:py-5 bg-white/5 rounded-[16px] lg:rounded-[20px] text-center text-[9px] lg:text-[10px] text-gray-600 font-black uppercase tracking-[0.2em] border border-dashed border-white/10">Klik Generate</div>
-                    )}
-                  </div>
-
-                  {/* Employee Code */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 px-2">
-                      <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-[var(--aurora-3)]" />
-                      <span className="text-[8px] lg:text-[9px] text-[var(--aurora-3)] font-black uppercase tracking-widest">Kode Karyawan (Pendaftaran)</span>
-                    </div>
-                    {generatedCode ? (
-                      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-4 lg:py-5 bg-black/60 rounded-[16px] lg:rounded-[20px] border border-[var(--aurora-3)]/40 shadow-[0_0_20px_rgba(0,201,255,0.1)]">
-                        <span className="text-xl lg:text-2xl font-mono font-black text-[var(--aurora-3)] tracking-[0.25em]">{generatedCode}</span>
-                      </motion.div>
-                    ) : (
-                      <div className="w-full py-4 lg:py-5 bg-white/5 rounded-[16px] lg:rounded-[20px] text-center text-[9px] lg:text-[10px] text-gray-600 font-black uppercase tracking-[0.2em] border border-dashed border-white/10">Klik Generate</div>
-                    )}
-                  </div>
-                </div>
-
-                <button 
-                  disabled={isCreating} 
-                  type="submit" 
-                  className="w-full py-5 lg:py-6 rounded-[20px] lg:rounded-[28px] bg-gradient-to-r from-[var(--aurora-1)] to-[#00C9FF] text-white font-black tracking-[0.2em] lg:tracking-[0.3em] uppercase shadow-[0_15px_40px_rgba(142,45,226,0.3)] hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3 text-xs lg:text-sm"
-                >
-                  {isCreating ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      MEMPROSES AKTIVASI...
-                    </>
+                  {generatedAdminCode ? (
+                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-3 bg-black/60 rounded-xl border border-[var(--warning)]/40">
+                      <span className="text-xs text-[var(--warning)] font-black uppercase tracking-wider mb-1 block">Kode Admin Tenant</span>
+                      <span className="text-lg font-mono font-black text-[var(--warning)] tracking-[0.2em]">{generatedAdminCode}</span>
+                    </motion.div>
+                  ) : null}
+                  {generatedCode ? (
+                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-3 bg-black/60 rounded-xl border border-[var(--aurora-3)]/40">
+                      <span className="text-xs text-[var(--aurora-3)] font-black uppercase tracking-wider mb-1 block">Kode Karyawan</span>
+                      <span className="text-lg font-mono font-black text-[var(--aurora-3)] tracking-[0.2em]">{generatedCode}</span>
+                    </motion.div>
                   ) : (
-                    'AKTIFKAN ENTITAS BARU'
+                    <div className="w-full py-3 bg-white/5 rounded-xl text-center text-[9px] text-gray-600 font-black uppercase tracking-[0.15em] border border-dashed border-white/10">Klik Generate untuk membuat kode</div>
                   )}
+                </div>
+
+                <button disabled={isCreating} type="submit" 
+                  className="w-full py-5 rounded-2xl bg-gradient-to-r from-[var(--aurora-1)] to-[#00C9FF] text-white font-black tracking-[0.2em] uppercase shadow-[0_15px_35px_rgba(142,45,226,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-xs mt-4">
+                  {isCreating ? <><Loader2 size={16} className="animate-spin" /> MEMPROSES...</> : 'AKTIFKAN ENTITAS BARU'}
                 </button>
               </form>
             </motion.div>
