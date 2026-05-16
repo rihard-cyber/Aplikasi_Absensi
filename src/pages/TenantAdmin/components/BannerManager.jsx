@@ -83,7 +83,8 @@ const BannerManager = () => {
       const manifest = JSON.stringify({ banners: bannersArr, updatedAt: new Date().toISOString() });
       const blob = new Blob([manifest], { type: 'application/json' });
       const path = `tenants/${tenantId}/banners_manifest.json`;
-      await supabase.storage.from('banners').upload(path, blob, { upsert: true, contentType: 'application/json' });
+      const { error: uploadError } = await supabase.storage.from('banners').upload(path, blob, { upsert: true, contentType: 'application/json' });
+      if (uploadError) console.warn('Storage manifest upload error:', uploadError.message);
     } catch {}
   };
 

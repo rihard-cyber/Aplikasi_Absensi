@@ -414,7 +414,7 @@ const ClockInTab = () => {
             <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="absolute inset-0 bg-[var(--aurora-3)] rounded-2xl" />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-sm tracking-wide text-white truncate">{locationState === 'CHECKING' ? 'Mencari Satelit GPS...' : `${officeCoords.name} • Jarak: ${distance}m`}</h3>
+            <h3 className="font-bold text-sm tracking-wide text-white truncate">{locationState === 'CHECKING' ? 'Mencari Satelit GPS...' : `${officeCoords.name} • Jarak: ${distance !== null ? distance + 'm' : '...'}`}</h3>
             <div className="flex items-center gap-2 mt-1">
               <div className={`w-2 h-2 rounded-full shadow-[0_0_10px_currentColor] animate-pulse ${locationState === 'IN_RANGE' || isGodMode ? 'bg-[var(--success)] text-[var(--success)]' : 'bg-[var(--danger)] text-[var(--danger)]'}`} />
               <p className={`text-[10px] font-black uppercase tracking-widest ${locationState === 'IN_RANGE' || isGodMode ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>{locationState === 'IN_RANGE' ? 'Dalam Radius Aman' : isGodMode ? 'God Mode Bypass' : 'Di Luar Radius Aman'}</p>
@@ -470,7 +470,8 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
     workDays: 'Senin - Jumat', 
     gracePeriod: '15 Menit',
     tenantName: 'PT. PERUSAHAAN',
-    logo_url: null 
+    logo_url: null,
+    banners: []
   });
 
   const isGodMode = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
@@ -517,7 +518,23 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
           .eq('auth_id', session.user.id).maybeSingle();
         
         if (profile) {
-          const tName = profile.tenants?.name || 'PT. PERUSAHAAN CONTOH';
+          let tName = profile.tenants?.name;
+          let tLogo = profile.tenants?.logo_url;
+
+          // Fallback if join fails (RLS or Schema) or if God Mode with no tenant_id
+          if (!tName && (profile.tenant_id || isGodMode)) {
+            let tQuery = supabase.from('tenants').select('name, logo_url');
+            if (profile.tenant_id) tQuery = tQuery.eq('id', profile.tenant_id);
+            else tQuery = tQuery.order('created_at').limit(1);
+            
+            const { data: tData } = await tQuery.maybeSingle();
+            if (tData) {
+              tName = tData.name;
+              tLogo = tData.logo_url;
+            }
+          }
+
+          tName = tName || 'PT. PERUSAHAAN CONTOH';
           const pName = profile.projects?.name || 'GLOBAL';
           const dName = profile.divisions?.name || 'ALL DIVISION';
           
@@ -560,22 +577,29 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
           }
 
           // Fetch Company Settings
-          const { data: tSettings } = await supabase
-            .from('tenant_settings')
-            .select('*')
-            .eq('tenant_id', profile.tenant_id)
-            .maybeSingle();
+          const tid = profile.tenant_id;
+          let tSettingsQuery = supabase.from('tenant_settings').select('*');
+          if (tid) {
+            tSettingsQuery = tSettingsQuery.eq('tenant_id', tid);
+          } else if (isGodMode) {
+            // God mode: pick any tenant that has settings
+            tSettingsQuery = tSettingsQuery.order('created_at').limit(1);
+          }
+          
+          const { data: tSettings } = await (tid || isGodMode ? tSettingsQuery.maybeSingle() : Promise.resolve({ data: null }));
           
           if (tSettings) {
             setCompanyInfo({
+              tenantId: tid || tSettings.tenant_id,
               tenantName: tName,
-              logo_url: profile.tenants?.logo_url,
+              logo_url: tLogo,
               workHours: `${tSettings.check_in_time?.substring(0, 5) || '08:00'} - ${tSettings.check_out_time?.substring(0, 5) || '17:00'}`,
               workDays: tSettings.work_days?.join(', ') || 'Senin - Jumat',
-              gracePeriod: `${tSettings.grace_period_minutes || 0} Menit`
+              gracePeriod: `${tSettings.grace_period_minutes || 0} Menit`,
+              banners: tSettings.banners || []
             });
           } else {
-            setCompanyInfo(prev => ({ ...prev, tenantName: tName, logo_url: profile.tenants?.logo_url }));
+            setCompanyInfo(prev => ({ ...prev, tenantId: tid, tenantName: tName, logo_url: tLogo, banners: [] }));
           }
 
           // Fetch Announcements
@@ -664,6 +688,8 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
         onCycleRole={onCycleRole}
         onGodModeReturn={onGodModeReturn}
         companyInfo={companyInfo}
+        bannersList={companyInfo.banners}
+        tenantId={companyInfo.tenantId}
       />
 
       {/* Admin Back to Dashboard */}

@@ -47,6 +47,47 @@
   --warning: #FFD700;
 }
 
+[data-theme="light"] {
+  --bg-dark: #F1F5F9;
+  --bg-darker: #F8FAFC;
+  --text-primary: #1E293B;
+  --text-secondary: #475569;
+  --aurora-1: #4F46E5;
+  --aurora-2: #3730A3;
+  --aurora-3: #0284C7;
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(0, 0, 0, 0.12);
+  --glass-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="aurora"] {
+  --bg-dark: #0F172A;
+  --bg-darker: #020617;
+  --aurora-1: #00F2FE;
+  --aurora-2: #4FACFE;
+  --aurora-3: #7042FB;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --glass-bg: rgba(15, 23, 42, 0.6);
+  --glass-border: rgba(112, 66, 251, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(112, 66, 251, 0.2);
+}
+
+[data-theme="neon"] {
+  --bg-dark: #000000;
+  --bg-darker: #000000;
+  --aurora-1: #FF00FF;
+  --aurora-2: #00FFFF;
+  --aurora-3: #FFFF00;
+  --text-primary: #FFFFFF;
+  --text-secondary: #AAAAAA;
+  --glass-bg: rgba(0, 0, 0, 0.8);
+  --glass-border: rgba(0, 255, 255, 0.3);
+  --glass-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+  --success: #00FF00;
+  --danger: #FF0000;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -350,6 +391,27 @@ a:hover, button:hover .font-bold,
 /* Input/select focus glow enhancement */
 input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 2px rgba(0, 201, 255, 0.15), 0 0 20px rgba(0, 201, 255, 0.1) !important;
+}
+
+/* Light Mode Shadow & Glow Fixes */
+[data-theme="light"] a:hover, 
+[data-theme="light"] button:hover .font-bold, 
+[data-theme="light"] .glass-panel h1:hover, 
+[data-theme="light"] .glass-panel h2:hover, 
+[data-theme="light"] .glass-panel h3:hover, 
+[data-theme="light"] .glass-panel label:hover,
+[data-theme="light"] [class*="text-white"]:hover,
+[data-theme="light"] [class*="text-\\[var\\(--aurora-3\\)\\]"]:hover,
+[data-theme="light"] [class*="text-\\[var\\(--aurora-1\\)\\]"]:hover {
+  text-shadow: none !important;
+}
+
+[data-theme="light"] .glass-panel {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .glass-panel::before {
+  display: none !important; /* Remove running light in light mode for clarity */
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */

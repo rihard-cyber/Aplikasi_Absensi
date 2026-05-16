@@ -95,37 +95,37 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
     >
       {/* Greeting Card */}
       <div className="glass-panel p-6 rounded-[32px] border-t border-[var(--aurora-1)]/30 shadow-[0_10px_40px_rgba(142,45,226,0.15)] relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--aurora-1)] rounded-full blur-[80px] opacity-40"></div>
-        <h2 className="text-2xl font-serif font-bold text-white tracking-wide">Selamat datang kembali, <br /><span className="text-[var(--aurora-3)]">{user?.full_name?.split(' ')[0] || 'Alexander'}!</span></h2>
-        <p className="text-gray-400 text-sm mt-1 font-sans">{user?.position || 'Software Engineer'} • Divisi {user?.division || 'Frontend'}</p>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--aurora-1)] rounded-full blur-[80px] opacity-20"></div>
+        <h2 className="text-2xl font-serif font-bold text-[var(--text-primary)] tracking-wide">Selamat datang kembali, <br /><span className="text-[var(--aurora-3)]">{user?.full_name?.split(' ')[0] || 'Alexander'}!</span></h2>
+        <p className="text-[var(--text-secondary)] text-sm mt-1 font-sans">{user?.position || 'Software Engineer'} • Divisi {user?.division || 'Frontend'}</p>
 
-        <div className="mt-6 flex items-center gap-3 bg-white/5 border border-white/10 p-3 rounded-2xl">
+        <div className="mt-6 flex items-center gap-3 bg-[var(--text-primary)]/5 border border-[var(--text-primary)]/10 p-3 rounded-2xl">
           <div className="w-10 h-10 rounded-xl bg-[var(--aurora-1)]/20 text-[var(--aurora-1)] flex items-center justify-center">
             <Zap size={20} className="drop-shadow-[0_0_10px_var(--aurora-1)]" />
           </div>
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-widest">Status Kehadiran</p>
-            <p className="font-bold text-white text-sm">Aktif • Sesuai Jadwal</p>
+            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest font-bold opacity-60">Status Kehadiran</p>
+            <p className="font-bold text-[var(--text-primary)] text-sm">Aktif • Sesuai Jadwal</p>
           </div>
         </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="glass-panel p-5 rounded-3xl flex flex-col items-center text-center justify-center gap-2 border border-white/5 hover:border-[var(--aurora-3)]/50 transition-all group">
+        <div className="glass-panel p-5 rounded-3xl flex flex-col items-center text-center justify-center gap-2 border border-[var(--text-primary)]/5 hover:border-[var(--aurora-3)]/50 transition-all group">
           <div className="text-[var(--aurora-3)] bg-[var(--aurora-3)]/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">
             <Clock size={24} />
           </div>
-          <h3 className="text-2xl font-bold text-white mt-1">{stats?.weeklyHours || 0}h</h3>
-          <p className="text-xs text-gray-500 uppercase tracking-widest">Jam kerja minggu ini</p>
+          <h3 className="text-2xl font-bold text-[var(--text-primary)] mt-1">{stats?.weeklyHours || 0}h</h3>
+          <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest font-bold opacity-60">Jam kerja minggu ini</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-3xl flex flex-col items-center text-center justify-center gap-2 border border-white/5 hover:border-[var(--aurora-1)]/50 transition-all group">
+        <div className="glass-panel p-5 rounded-3xl flex flex-col items-center text-center justify-center gap-2 border border-[var(--text-primary)]/5 hover:border-[var(--aurora-1)]/50 transition-all group">
           <div className="text-[var(--aurora-1)] bg-[var(--aurora-1)]/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">
             <Calendar size={24} />
           </div>
-          <h3 className="text-2xl font-bold text-white mt-1">{leaveBalance ? leaveBalance.total_days - leaveBalance.used_days : stats?.leaveBalance || 0}</h3>
-          <p className="text-xs text-gray-500 uppercase tracking-widest">Sisa cuti {leaveBalance ? `(${leaveBalance.used_days} terpakai)` : ''}</p>
+          <h3 className="text-2xl font-bold text-[var(--text-primary)] mt-1">{leaveBalance ? leaveBalance.total_days - leaveBalance.used_days : stats?.leaveBalance || 0}</h3>
+          <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest font-bold opacity-60">Sisa cuti {leaveBalance ? `(${leaveBalance.used_days} terpakai)` : ''}</p>
         </div>
       </div>
 
@@ -242,12 +242,12 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
 // --- SUB-COMPONENTS ---
 const InfoRow = ({ icon, label, value, color }) => (
   <div className="flex items-center gap-4 group">
-    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center transition-all group-hover:scale-110" style={{ color }}>
+    <div className="w-8 h-8 rounded-lg bg-[var(--text-primary)]/5 flex items-center justify-center transition-all group-hover:scale-110" style={{ color }}>
       {React.cloneElement(icon, { size: 16, className: 'opacity-80' })}
     </div>
     <div className="flex-1">
-      <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold">{label}</p>
-      <p className="text-xs font-bold text-white tracking-wide">{value}</p>
+      <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-widest font-bold opacity-60">{label}</p>
+      <p className="text-xs font-bold text-[var(--text-primary)] tracking-wide">{value}</p>
     </div>
   </div>
 );

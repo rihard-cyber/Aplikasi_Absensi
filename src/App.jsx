@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'r
 import { AnimatePresence, motion } from 'framer-motion';
 import { requestAppPermissions } from './utils/permissionInit';
 import { ToastProvider, useToast } from './components/Toast';
+import { ThemeProvider } from './context/ThemeContext';
 import { ConfirmProvider } from './components/ConfirmDialog';
 import { NotificationProvider } from './components/Notifications';
 import OfflineIndicator from './components/OfflineIndicator';
@@ -388,6 +389,7 @@ function App() {
 
   return (
     <ErrorBoundary>
+      <ThemeProvider>
       <HashRouter>
         <ToastProvider>
           <ConfirmProvider>
@@ -405,6 +407,7 @@ function App() {
           </ConfirmProvider>
         </ToastProvider>
       </HashRouter>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

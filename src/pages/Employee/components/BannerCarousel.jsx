@@ -2,22 +2,42 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../../utils/supabaseClient';
 
-const BannerCarousel = ({ tenantName, structureName, isGodMode, isImpersonating, todayShift, onCycleRole, onGodModeReturn, companyInfo }) => {
-  const [banners, setBanners] = useState([]);
+const BannerCarousel = ({ tenantName, structureName, isGodMode, isImpersonating, todayShift, onCycleRole, onGodModeReturn, companyInfo, bannersList = [], tenantId }) => {
+  const [banners, setBanners] = useState(bannersList);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(bannersList.length > 0);
   const intervalRef = useRef(null);
 
   useEffect(() => {
-    fetchBanners();
+    if (bannersList?.length > 0) {
+      setBanners(bannersList);
+      setLoaded(true);
+      startInterval(bannersList);
+    } else {
+      fetchBanners();
+    }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, []);
+  }, [bannersList, tenantId]);
+
+  const startInterval = (list) => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (list.length > 1) {
+      intervalRef.current = setInterval(() => {
+        setCurrentIndex(prev => (prev + 1) % list.length);
+      }, 5000);
+    }
+  };
 
   const fetchBanners = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
-    const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-    const tid = p?.tenant_id;
+
+    let tid = tenantId;
+    if (!tid) {
+      const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
+      tid = p?.tenant_id;
+    }
+    
     if (!tid && !isGodMode) { setLoaded(true); return; }
     let q = supabase.from('tenant_settings').select('banners, banner_interval');
     if (tid) q = q.eq('tenant_id', tid); else q = q.not('banners', 'is', null).order('tenant_id').limit(1);
@@ -25,28 +45,39 @@ const BannerCarousel = ({ tenantName, structureName, isGodMode, isImpersonating,
     setLoaded(true);
     if (ts?.banners?.length > 0) {
       setBanners(ts.banners);
-      const interval = (ts.banner_interval || 5) * 1000;
-      intervalRef.current = setInterval(() => {
-        setCurrentIndex(prev => (prev + 1) % ts.banners.length);
-      }, interval);
+      startInterval(ts.banners);
       return;
     }
-    // Fallback: coba baca manifest dari storage bucket (public, tidak kena RLS)
+    // Fallback: baca manifest dari storage via authenticated API (bypass RLS & CORS)
     if (tid) {
       try {
-        const manifestUrl = supabase.storage.from('banners').getPublicUrl(`tenants/${tid}/banners_manifest.json`).data.publicUrl;
-        const res = await fetch(manifestUrl);
-        if (res.ok) {
-          const manifest = await res.json();
+        const { data: fileData } = await supabase.storage.from('banners').download(`tenants/${tid}/banners_manifest.json`);
+        if (fileData) {
+          const manifest = JSON.parse(await fileData.text());
           if (manifest?.banners?.length > 0) {
             setBanners(manifest.banners);
-            const interval = 5000;
             intervalRef.current = setInterval(() => {
               setCurrentIndex(prev => (prev + 1) % manifest.banners.length);
-            }, interval);
+            }, 5000);
           }
         }
       } catch {}
+      // Second fallback: coba via public URL (kalau bucket public)
+      if (banners.length === 0) {
+        try {
+          const manifestUrl = supabase.storage.from('banners').getPublicUrl(`tenants/${tid}/banners_manifest.json`).data.publicUrl;
+          const res = await fetch(manifestUrl);
+          if (res.ok) {
+            const manifest = await res.json();
+            if (manifest?.banners?.length > 0) {
+              setBanners(manifest.banners);
+              intervalRef.current = setInterval(() => {
+                setCurrentIndex(prev => (prev + 1) % manifest.banners.length);
+              }, 5000);
+            }
+          }
+        } catch {}
+      }
     }
   };
 
@@ -56,12 +87,12 @@ const BannerCarousel = ({ tenantName, structureName, isGodMode, isImpersonating,
     return (
       <div className="w-full max-w-md mb-4 relative z-10">
         <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: '3/1' }}>
-          <div className="w-full h-full bg-gradient-to-br from-[var(--aurora-1)]/15 to-[var(--aurora-3)]/15 flex flex-col items-center justify-center">
+          <div className="w-full h-full bg-gradient-to-br from-[var(--aurora-1)]/20 to-[var(--aurora-3)]/20 flex flex-col items-center justify-center">
             {companyInfo?.logo_url && (
-              <img src={companyInfo.logo_url} alt="Logo" className="w-10 h-10 object-contain mb-2 opacity-60" />
+              <img src={companyInfo.logo_url} alt="Logo" className="w-10 h-10 object-contain mb-2 opacity-80" />
             )}
-            <h3 className="text-lg font-bold text-white/80 font-serif tracking-wide">{tenantName}</h3>
-            <p className="text-[9px] text-gray-500 uppercase tracking-widest">{structureName}</p>
+            <h3 className="text-lg font-bold text-[var(--text-primary)] font-serif tracking-wide">{tenantName}</h3>
+            <p className="text-[9px] text-[var(--text-secondary)] uppercase tracking-widest">{structureName}</p>
           </div>
           <div className="absolute top-2 right-2">
             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[8px] font-bold tracking-widest uppercase border transition-all ${

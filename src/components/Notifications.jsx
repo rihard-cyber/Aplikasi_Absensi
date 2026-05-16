@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CheckCircle2, DollarSign, FileText, X, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 
+import ThemeToggle from './ThemeToggle';
+
 const NotificationContext = createContext(null);
 export const useNotifications = () => useContext(NotificationContext);
 
@@ -53,7 +55,8 @@ export const NotificationProvider = ({ children }) => {
     <NotificationContext.Provider value={{ notifications, unreadCount, showPanel, setShowPanel, refresh: fetchNotifications }}>
       {children}
 
-      <div className="fixed top-4 right-16 z-[9999]">
+      <div className="fixed top-4 right-16 z-[9999] flex items-center gap-2">
+        <ThemeToggle />
         <button onClick={() => setShowPanel(!showPanel)} className="relative w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md">
           <Bell size={18} />
           {unreadCount > 0 && (
