@@ -18,7 +18,7 @@ class ErrorBoundary extends React.Component {
   }
 
   handleReset = () => {
-    sessionStorage.clear();
+    try { sessionStorage.clear(); } catch {}
     window.location.href = window.location.origin + window.location.pathname;
   };
 

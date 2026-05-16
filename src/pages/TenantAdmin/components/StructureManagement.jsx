@@ -5,7 +5,9 @@ import { useToast } from '../../../components/Toast';
 import { useConfirm } from '../../../components/ConfirmDialog';
 
 const StructureManagement = () => {
-  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('structure_active_tab') || 'projects'); // projects, divisions
+  const [activeTab, setActiveTab] = useState(() => {
+    try { return sessionStorage.getItem('structure_active_tab') || 'projects'; } catch { return 'projects'; }
+  }); // projects, divisions
   const [projects, setProjects] = useState([]);
   const [divisions, setDivisions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,27 +24,35 @@ const StructureManagement = () => {
   }, []);
 
   useEffect(() => {
-    sessionStorage.setItem('structure_active_tab', activeTab);
+    try { sessionStorage.setItem('structure_active_tab', activeTab); } catch {}
   }, [activeTab]);
 
   const fetchStructure = async () => {
     setIsLoading(true);
     try {
+      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       
       const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-      if (!profile?.tenant_id) return;
+      if (!profile?.tenant_id && !isGod) return;
       
-      setTenantId(profile.tenant_id);
+      if (profile?.tenant_id) setTenantId(profile.tenant_id);
 
-      const { data: projData, error: projErr } = await supabase.from('projects').select('*').eq('tenant_id', profile.tenant_id).order('created_at', { ascending: false });
+      let q1 = supabase.from('projects').select('*');
+      if (profile?.tenant_id) q1 = q1.eq('tenant_id', profile.tenant_id);
+      q1 = q1.order('created_at', { ascending: false });
+      const { data: projData, error: projErr } = await q1;
       if (!projErr && projData) setProjects(projData);
 
-      const { data: divData, error: divErr } = await supabase.from('divisions').select('*, projects(name)').eq('tenant_id', profile.tenant_id).order('created_at', { ascending: false });
+      let q2 = supabase.from('divisions').select('*, projects(name)');
+      if (profile?.tenant_id) q2 = q2.eq('tenant_id', profile.tenant_id);
+      q2 = q2.order('created_at', { ascending: false });
+      const { data: divData, error: divErr } = await q2;
       if (!divErr && divData) setDivisions(divData);
     } catch (e) {
       console.error("Error fetching structure:", e);
+      if (e?.message) console.error("Detail:", e.message);
     } finally {
       setIsLoading(false);
     }

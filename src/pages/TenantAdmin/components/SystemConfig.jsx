@@ -19,13 +19,16 @@ const SystemConfig = () => {
   useEffect(() => { fetchConfig(); }, []);
 
   const fetchConfig = async () => {
+    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-    if (!p?.tenant_id) return;
-    setTenantId(p.tenant_id);
+    if (!p?.tenant_id && !isGod) return;
+    if (p?.tenant_id) setTenantId(p.tenant_id);
 
-    const { data: c } = await supabase.from('system_configs').select('*').eq('tenant_id', p.tenant_id).maybeSingle();
+    let q = supabase.from('system_configs').select('*');
+    if (p?.tenant_id) q = q.eq('tenant_id', p.tenant_id);
+    const { data: c } = await q.maybeSingle();
     if (c) {
       setConfig({
         email_sender_name: c.email_sender_name || 'SI PRESENSI',

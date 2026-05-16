@@ -16,13 +16,17 @@ const LoanManagement = () => {
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
+    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-    if (!p?.tenant_id) return;
-    setTenantId(p.tenant_id);
+    if (!p?.tenant_id && !isGod) return;
+    if (p?.tenant_id) setTenantId(p.tenant_id);
 
-    const { data: l } = await supabase.from('loans').select('*, profiles!inner(full_name, nip)').eq('tenant_id', p.tenant_id).order('created_at', { ascending: false });
+    let q = supabase.from('loans').select('*, profiles!inner(full_name, nip)');
+    if (p?.tenant_id) q = q.eq('tenant_id', p.tenant_id);
+    q = q.order('created_at', { ascending: false });
+    const { data: l } = await q;
     if (l) setLoans(l);
   };
 

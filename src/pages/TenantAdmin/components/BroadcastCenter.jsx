@@ -26,22 +26,26 @@ const BroadcastCenter = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
+      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
       
-      if (profile?.tenant_id) {
-        setTenantId(profile.tenant_id);
+      if (profile?.tenant_id || isGod) {
+        if (profile?.tenant_id) setTenantId(profile.tenant_id);
 
         // Fetch Projects for Dropdown
-        const { data: pData } = await supabase.from('projects').select('id, name, code').eq('tenant_id', profile.tenant_id);
+        let q1 = supabase.from('projects').select('id, name, code');
+        if (profile?.tenant_id) q1 = q1.eq('tenant_id', profile.tenant_id);
+        const { data: pData } = await q1;
         if (pData) setProjects(pData);
 
         // Fetch Announcements
-        const { data: aData } = await supabase.from('announcements')
-          .select('*, projects(name)')
-          .eq('tenant_id', profile.tenant_id)
-          .order('created_at', { ascending: false });
+        let q2 = supabase.from('announcements')
+          .select('*, projects(name)');
+        if (profile?.tenant_id) q2 = q2.eq('tenant_id', profile.tenant_id);
+        q2 = q2.order('created_at', { ascending: false });
+        const { data: aData } = await q2;
         if (aData) setAnnouncements(aData);
       }
     } catch (e) {

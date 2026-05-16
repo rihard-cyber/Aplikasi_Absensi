@@ -22,7 +22,7 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
       const finalTenant = propTenantId && propTenantId !== 'all' ? propTenantId : null;
       const scope = finalDiv ? 'division' : finalProj ? 'project' : 'tenant';
       const scopeId = finalDiv || finalProj || finalTenant;
-      const role = localStorage.getItem('user_role') || 'SUB_ADMIN';
+      const role = (() => { try { return localStorage.getItem('user_role') || 'SUB_ADMIN'; } catch { return 'SUB_ADMIN'; } })();
       setAuthInfo({ role, scope, scopeId, label: scope ? 'Filter Manual' : 'Tenant' });
       fetchData(scope, scopeId);
       setLoading(false);
@@ -35,7 +35,7 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
   const resolveAuth = async () => {
     setLoading(true);
     try {
-      const isGod = sessionStorage.getItem('god_key') === 'DEWA-999';
+      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
 
       if (isGod || session?.user?.id) {

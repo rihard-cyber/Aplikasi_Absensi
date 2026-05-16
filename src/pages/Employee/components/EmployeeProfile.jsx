@@ -84,7 +84,15 @@ const EmployeeProfile = () => {
           attendance_access: profile.attendance_access !== false
         }));
         setEditData(profile);
-        setHasSubAdminAccess(isSubAdmin || profile.operational_access === true);
+        const hasAccess = isSubAdmin || profile.operational_access === true;
+        setHasSubAdminAccess(hasAccess);
+        
+        // SYNC: Ensure App knows about this authority for the session
+        if (hasAccess) {
+          sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
+        } else {
+          sessionStorage.removeItem('operational_access');
+        }
       }
 
       // If God Mode, force all access
@@ -102,7 +110,7 @@ const EmployeeProfile = () => {
 
   const checkDeviceBinding = async () => {
     const device = await DeviceUtil.getId();
-    setIsBound(user.device_id === device.identifier || !!sessionStorage.getItem('bound_device_id'));
+    setIsBound(user.device_id === device.identifier || (() => { try { return !!sessionStorage.getItem('bound_device_id'); } catch { return false; } })());
   };
 
   const handleUpdateProfile = async () => {
@@ -160,7 +168,7 @@ const EmployeeProfile = () => {
     const { error } = await supabase.from('profiles').update({ device_id: device.identifier }).eq('id', user.id);
     if (error) { alert('Gagal mengikat perangkat'); return; }
 
-    sessionStorage.setItem('bound_device_id', device.identifier);
+    try { sessionStorage.setItem('bound_device_id', device.identifier); } catch {}
     setIsBound(true);
     alert('Perangkat berhasil diikat!');
   };
@@ -174,8 +182,8 @@ const EmployeeProfile = () => {
         console.error("Logout error:", e);
       }
 
-      sessionStorage.clear();
-      localStorage.clear();
+      try { sessionStorage.clear(); } catch {}
+      try { localStorage.clear(); } catch {}
       navigate('/login');
     }
   };
@@ -386,7 +394,8 @@ const EmployeeProfile = () => {
             <button
               onClick={() => {
                 triggerHaptic('HEAVY');
-                alert('Beralih ke Dashboard Sub-Admin...');
+                // Ensure state is set before navigating
+                sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
                 navigate('/subadmin');
               }}
               className="glass-panel p-5 rounded-3xl border border-[var(--warning)]/30 group relative overflow-hidden flex items-center gap-4 hover:border-[var(--warning)]/60 transition-all"

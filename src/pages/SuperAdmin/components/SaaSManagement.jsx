@@ -283,7 +283,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
   };
 
   const handleImpersonate = (tenant) => {
-    localStorage.setItem('impersonated_tenant', JSON.stringify(tenant));
+    try { localStorage.setItem('impersonated_tenant', JSON.stringify(tenant)); } catch {}
     alert(`[GOD MODE: ON]\nSedang mengambil alih panel admin ${tenant.name}...`);
     playClick();
   };

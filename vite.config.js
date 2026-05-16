@@ -8,4 +8,16 @@ const isGithubPages = process.env.GITHUB_PAGES === 'true'
 export default defineConfig({
   base: isGithubPages ? '/Aplikasi_Absensi/' : './',
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          motion: ['framer-motion'],
+          supabase: ['@supabase/supabase-js'],
+          icons: ['lucide-react'],
+        },
+      },
+    },
+  },
 })

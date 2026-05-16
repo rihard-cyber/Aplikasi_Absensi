@@ -1,484 +1,424 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, Activity, Camera, Calendar, Download, Upload, 
   Search, Filter, CheckCircle2, XCircle, ChevronLeft, 
   MoreVertical, ArrowLeftRight, ShieldAlert, Zap,
   BarChart3, Clock, AlertTriangle, FileSpreadsheet,
-  ShieldCheck, CheckSquare, Eye, Trash2, Network
+  ShieldCheck, CheckSquare, Eye, Trash2, Network, Building2,
+  Loader2, LogOut, Home, UserCheck, DollarSign, ClipboardList
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/supabaseClient';
-import BulkScheduleUpload from './components/BulkScheduleUpload';
-import HRISExportWrapper from '../../components/HRISExportWrapper';
+import { downloadCSV } from '../../utils/downloadUtil';
 import { useToast } from '../../components/Toast';
 
+const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
-const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycleRole, tenantId = null }) => {
+const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycleRole, onGodModeReturn }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState(() => {
-    if (isEmbedded) return initialTab;
-    return sessionStorage.getItem('subadmin_active_tab') || initialTab;
-  });
-
-  // Sync auth check (no useEffect delay)
-  const checkAccess = () => {
-    const userRole = localStorage.getItem('user_role');
-    const godKey = sessionStorage.getItem('god_key');
-    const opAccess = sessionStorage.getItem('operational_access');
-    if (godKey === 'DEWA-999' || opAccess === 'MEMILIKI AKSES' || isEmbedded) return true;
-    if (userRole === 'TENANT_ADMIN' || userRole === 'SUB_ADMIN' || userRole === 'SUPER_ADMIN') return true;
-    return false;
-  };
-  const [isAuthorized] = useState(() => checkAccess());
-
-  const [selectedDivision, setSelectedDivision] = useState('all');
-  const [selectedProject, setSelectedProject] = useState('all');
-  const [projectsList, setProjectsList] = useState([]);
-  const [divisionsList, setDivisionsList] = useState([]);
-  const [myTenantId, setMyTenantId] = useState(null);
-  const [filterStatus, setFilterStatus] = useState('ALL');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [clickCount, setClickCount] = useState(0);
   const toast = useToast();
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [isChecking, setIsChecking] = useState(true);
+  const [myTenantId, setMyTenantId] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isGod, setIsGod] = useState(false);
+  const [isImpersonating, setIsImpersonating] = useState(false);
 
-  React.useEffect(() => {
-    if (!isAuthorized && !isEmbedded) {
-      toast('Akses Ditolak: Anda tidak memiliki otoritas operasional.', 'error');
-      navigate('/');
-    }
+  // --- Data states ---
+  const [todayAttendance, setTodayAttendance] = useState([]);
+  const [attLoading, setAttLoading] = useState(false);
+  const [pendingLeaves, setPendingLeaves] = useState([]);
+  const [pendingLoans, setPendingLoans] = useState([]);
+  const [pendingReimb, setPendingReimb] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [empSearch, setEmpSearch] = useState('');
+  const [empLoading, setEmpLoading] = useState(false);
+  const [stats, setStats] = useState({ total: 0, present: 0, late: 0, leave: 0 });
+
+  useEffect(() => {
+    const isG = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isI = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999' || false; } catch { return false; } })();
+    setIsGod(isG);
+    setIsImpersonating(isI);
+    fetchAuth();
   }, []);
 
-  const handleLogoClick = () => {
-    if (sessionStorage.getItem('god_key') !== 'DEWA-999') return;
-    setClickCount(prev => prev + 1);
-    if (window.navigator?.vibrate) window.navigator.vibrate(50);
-    if (clickCount === 1) { if (onCycleRole) onCycleRole(); setClickCount(0); }
-    setTimeout(() => setClickCount(0), 1000);
+  useEffect(() => { if (isAuthorized && isChecking === false) { fetchToday(); fetchPending(); fetchEmployees(); fetchStats(); } }, [isAuthorized, isChecking]);
+
+  const checkAccess = () => {
+    try {
+      const userRole = (localStorage.getItem('user_role') || '').toUpperCase();
+      const godKey = sessionStorage.getItem('god_key');
+      const opAccess = sessionStorage.getItem('operational_access');
+      if (godKey === 'DEWA-999' || opAccess === 'MEMILIKI AKSES' || isEmbedded) return true;
+      if (['TENANT_ADMIN', 'SUB_ADMIN', 'SUPER_ADMIN'].includes(userRole)) return true;
+    } catch {}
+    return false;
   };
 
-  const triggerHaptic = (style = 'MEDIUM') => {
-    if (window.navigator?.vibrate) window.navigator.vibrate(style === 'HEAVY' ? 80 : 40);
-  };
-
-  useEffect(() => {
-    const fetchHierarchy = async () => {
-      try {
-        const userRole = localStorage.getItem('user_role');
-        const { data: { session } } = await supabase.auth.getSession();
-        let tenantFilter = null;
-        if (userRole === 'TENANT_ADMIN' && session?.user?.id) {
-          const { data: prof } = await supabase
-            .from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-          if (prof?.tenant_id) {
-            tenantFilter = prof.tenant_id;
-            setMyTenantId(prof.tenant_id);
-          }
+  const fetchAuth = async () => {
+    try {
+      const authOk = checkAccess();
+      if (!authOk) { setIsChecking(false); return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setIsChecking(false); return; }
+      const { data: prof } = await supabase.from('profiles')
+        .select('role, operational_access, tenant_id')
+        .eq('auth_id', session.user.id)
+        .maybeSingle();
+      if (prof) {
+        if (prof.role === 'EMPLOYEE' && !prof.operational_access && !isGod) {
+          navigate('/');
+          return;
         }
-        let pQuery = supabase.from('projects').select('id, name, code');
-        if (tenantFilter) pQuery = pQuery.eq('tenant_id', tenantFilter);
-        const { data: pData } = await pQuery;
-        if (pData) setProjectsList(pData);
-        let dQuery = supabase.from('divisions').select('id, name, project_id');
-        if (tenantFilter) dQuery = dQuery.eq('tenant_id', tenantFilter);
-        const { data: dData } = await dQuery;
-        if (dData) setDivisionsList(dData);
-      } catch (e) {
-        console.error("Failed to fetch hierarchy", e);
+        setMyTenantId(prof.tenant_id);
+        setIsAuthorized(true);
+      } else if (isGod) {
+        setIsAuthorized(true);
       }
-    };
-    fetchHierarchy();
-  }, [isEmbedded]);
+    } catch (e) { console.error(e); }
+    finally { setIsChecking(false); }
+  };
 
-  useEffect(() => {
-    if (!isEmbedded) sessionStorage.setItem('subadmin_active_tab', activeTab);
-  }, [activeTab, isEmbedded]);
+  const tid = myTenantId;
 
-  if (!isAuthorized) return <div className="p-20 text-center opacity-50 uppercase tracking-widest text-xs">Authenticating Authority...</div>;
+  const fetchToday = async () => {
+    setAttLoading(true);
+    const today = new Date().toISOString().split('T')[0];
+    let q = supabase.from('attendance_logs')
+      .select('user_id, status, timestamp, profiles!inner(full_name, nip, position, division_id, divisions(name))')
+      .gte('timestamp', today + 'T00:00:00Z')
+      .lte('timestamp', today + 'T23:59:59Z')
+      .order('timestamp', { ascending: false });
+    if (tid) q = q.eq('tenant_id', tid);
+    const { data } = await q;
+    setTodayAttendance(data || []);
+    setAttLoading(false);
+  };
 
-  // Filter divisions dynamically based on selected project
-  const filteredDivisionsList = selectedProject === 'all' 
-    ? divisionsList 
-    : divisionsList.filter(d => d.project_id === selectedProject);
+  const fetchPending = async () => {
+    let ql = supabase.from('leave_requests').select('*, profiles!inner(full_name, nip)').eq('status', 'PENDING').order('created_at');
+    if (tid) ql = ql.eq('tenant_id', tid);
+    const { data: leaves } = await ql;
+    setPendingLeaves(leaves || []);
+
+    let qln = supabase.from('loans').select('*, profiles!inner(full_name, nip)').eq('status', 'PENDING').order('created_at');
+    if (tid) qln = qln.eq('tenant_id', tid);
+    const { data: loans } = await qln;
+    setPendingLoans(loans || []);
+
+    let qr = supabase.from('reimbursements').select('*, profiles!inner(full_name, nip)').eq('status', 'PENDING').order('created_at');
+    if (tid) qr = qr.eq('tenant_id', tid);
+    const { data: reimb } = await qr;
+    setPendingReimb(reimb || []);
+  };
+
+  const fetchEmployees = async () => {
+    setEmpLoading(true);
+    let q = supabase.from('profiles')
+      .select('id, full_name, nip, position, role, divisions(name), projects(name), operational_access, attendance_access')
+      .in('role', ['EMPLOYEE', 'SUB_ADMIN'])
+      .order('full_name');
+    if (tid) q = q.eq('tenant_id', tid);
+    const { data } = await q;
+    setEmployees(data || []);
+    setEmpLoading(false);
+  };
+
+  const fetchStats = async () => {
+    let qEmp = supabase.from('profiles').select('*', { count: 'exact', head: true }).in('role', ['EMPLOYEE', 'SUB_ADMIN']);
+    if (tid) qEmp = qEmp.eq('tenant_id', tid);
+    const { count: total } = await qEmp;
+    const today = new Date().toISOString().split('T')[0];
+    let qAtt = supabase.from('attendance_logs').select('status').gte('timestamp', today + 'T00:00:00Z').lte('timestamp', today + 'T23:59:59Z');
+    if (tid) qAtt = qAtt.eq('tenant_id', tid);
+    const { data: logs } = await qAtt;
+    const present = (logs || []).filter(l => l.status === 'ONTIME').length;
+    const late = (logs || []).filter(l => l.status === 'LATE' || l.status === 'OUT_OF_RANGE').length;
+    let qLeave = supabase.from('leave_requests').select('*', { count: 'exact', head: true });
+    if (tid) qLeave = qLeave.eq('tenant_id', tid);
+    qLeave = qLeave.eq('status', 'APPROVED').lte('start_date', today).gte('end_date', today);
+    const { count: leave } = await qLeave;
+    setStats({ total: total || 0, present, late, leave: leave || 0 });
+  };
+
+  const exportAttendance = async () => {
+    setAttLoading(true);
+    const today = new Date().toISOString().split('T')[0];
+    let q = supabase.from('attendance_logs')
+      .select('timestamp, status, profiles!inner(full_name, nip, position, divisions(name))')
+      .gte('timestamp', today + 'T00:00:00Z')
+      .lte('timestamp', today + 'T23:59:59Z')
+      .order('timestamp', { ascending: false });
+    if (tid) q = q.eq('tenant_id', tid);
+    const { data, error } = await q;
+    if (error) { toast('Gagal memuat data', 'error'); setAttLoading(false); return; }
+    const rows = (data || []).map(r => ({
+      Nama: r.profiles?.full_name || '',
+      NIK: r.profiles?.nip || '',
+      Jabatan: r.profiles?.position || '',
+      Divisi: r.profiles?.divisions?.name || '',
+      Jam: new Date(r.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      Status: r.status === 'ONTIME' ? 'Tepat Waktu' : r.status === 'LATE' ? 'Terlambat' : r.status
+    }));
+    downloadCSV(rows, 'absensi');
+    setAttLoading(false);
+    toast('Download berhasil', 'success');
+  };
+
+  const exportPayroll = async () => {
+    let q = supabase.from('payroll_periods').select('id, period_month, period_year').in('status', ['LOCKED', 'PAID']).order('period_year', { ascending: false }).order('period_month', { ascending: false }).limit(1);
+    if (tid) q = q.eq('tenant_id', tid);
+    const { data: periods } = await q;
+    if (!periods?.length) { toast('Belum ada periode payroll terkunci', 'info'); return; }
+    const period = periods[0];
+    let qs = supabase.from('payroll_summary').select('take_home_pay, total_allowance, total_deduction, total_days_worked, total_late_minutes, profiles!inner(full_name, nip, position)').eq('period_id', period.id);
+    if (tid) qs = qs.eq('profiles.tenant_id', tid);
+    const { data: sum } = await qs;
+    if (!sum?.length) { toast('Data payroll kosong', 'info'); return; }
+    const rows = sum.map((s, i) => ({
+      No: i + 1,
+      Nama: s.profiles?.full_name || '',
+      NIP: s.profiles?.nip || '',
+      Posisi: s.profiles?.position || '',
+      Tunjangan: Number(s.total_allowance).toLocaleString('id-ID'),
+      Potongan: Number(s.total_deduction).toLocaleString('id-ID'),
+      'Take Home Pay': Number(s.take_home_pay).toLocaleString('id-ID'),
+      'Hari Kerja': s.total_days_worked || 0,
+      'Terlambat (menit)': s.total_late_minutes || 0,
+    }));
+    downloadCSV(rows, `payroll_${MONTHS[period.period_month - 1]}_${period.period_year}`);
+    toast('Download berhasil', 'success');
+  };
+
+  const exportEmployees = async () => {
+    setEmpLoading(true);
+    let q = supabase.from('profiles')
+      .select('full_name, nip, position, role, divisions(name), projects(name)')
+      .in('role', ['EMPLOYEE', 'SUB_ADMIN'])
+      .order('full_name');
+    if (tid) q = q.eq('tenant_id', tid);
+    const { data, error } = await q;
+    if (error) { toast('Gagal memuat data', 'error'); setEmpLoading(false); return; }
+    const rows = (data || []).map(r => ({
+      Nama: r.full_name || '',
+      NIK: r.nip || '',
+      Jabatan: r.position || '',
+      Divisi: r.divisions?.name || '',
+      Project: r.projects?.name || '',
+      Role: r.role === 'SUB_ADMIN' ? 'Sub Admin' : 'Karyawan'
+    }));
+    downloadCSV(rows, 'karyawan');
+    setEmpLoading(false);
+    toast('Download berhasil', 'success');
+  };
+
+  const handleApprove = async (table, id) => {
+    const { error } = await supabase.from(table).update({ status: 'APPROVED', reviewed_at: new Date().toISOString() }).eq('id', id);
+    if (error) { toast('Gagal: ' + error.message, 'error'); return; }
+    toast('Disetujui!', 'success');
+    fetchPending();
+  };
+
+  const handleReject = async (table, id) => {
+    const { error } = await supabase.from(table).update({ status: 'REJECTED', reviewed_at: new Date().toISOString() }).eq('id', id);
+    if (error) { toast('Gagal: ' + error.message, 'error'); return; }
+    toast('Ditolak', 'info');
+    fetchPending();
+  };
+
+  if (isChecking) {
+    return (<div className="fixed inset-0 bg-[#0B0C10] flex items-center justify-center z-50"><div className="text-white animate-pulse">MEMVERIFIKASI...</div></div>);
+  }
+  if (!isAuthorized) {
+    return (<div className="min-h-screen bg-[#0B0C10] flex items-center justify-center text-white">Akses Ditolak</div>);
+  }
+
+  const navItems = [
+    { key: 'monitor', label: 'Monitoring', icon: <Activity size={18} /> },
+    { key: 'approval', label: 'Persetujuan' + (pendingLeaves.length + pendingLoans.length + pendingReimb.length > 0 ? ` (${pendingLeaves.length + pendingLoans.length + pendingReimb.length})` : ''), icon: <CheckCircle2 size={18} /> },
+    { key: 'employees', label: 'Karyawan', icon: <Users size={18} /> },
+    { key: 'reports', label: 'Laporan', icon: <BarChart3 size={18} /> },
+  ];
 
   return (
-    <div className={`min-h-screen text-white font-sans selection:bg-[var(--aurora-3)]/30 ${isEmbedded ? 'bg-transparent' : 'bg-[#0B0C10]'}`}>
-      
-      {!isEmbedded && (
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-[var(--aurora-3)]/10 rounded-full blur-[120px]" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-[var(--aurora-1)]/5 rounded-full blur-[120px]" />
-        </div>
-      )}
-
-      <div className={`relative z-10 w-full ${isEmbedded ? 'p-0' : 'p-0 pb-32'}`}>
-        
-        {/* HEADER: Only if not embedded */}
+    <div className={`min-h-screen bg-[#0B0C10] text-white ${isEmbedded ? '' : 'p-4 sm:p-6'}`}>
+      <div className="max-w-6xl mx-auto">
         {!isEmbedded && (
-          <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--aurora-3)] to-[var(--aurora-2)] p-[1px] shadow-[0_0_20px_rgba(0,201,255,0.3)]">
-                <div className="w-full h-full bg-[#0B0C10] rounded-2xl flex items-center justify-center text-[var(--aurora-3)]">
-                  <ShieldAlert size={32} />
-                </div>
-              </div>
-              <div className={sessionStorage.getItem('god_key') === 'DEWA-999' ? 'cursor-pointer active:scale-95' : ''} onClick={() => onCycleRole && onCycleRole()} title={sessionStorage.getItem('god_key') === 'DEWA-999' ? "Klik untuk Pindah Dasbor" : ""}>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-3xl font-serif font-bold tracking-tight hover:text-[var(--aurora-3)] transition-colors">Command Center</h1>
-                  {sessionStorage.getItem('god_key') === 'DEWA-999' && (
-                    <span className="px-2 py-0.5 rounded bg-[var(--danger)] text-[8px] font-black uppercase tracking-tighter">GOD MODE</span>
-                  )}
-                </div>
-                <p className="text-[var(--aurora-3)] text-[10px] uppercase tracking-[0.4em] font-bold mt-1 opacity-80">Operational Authority Portal</p>
-              </div>
-            </motion.div>
-            <motion.button 
-              initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-              onClick={() => { triggerHaptic(); navigate('/'); }}
-              className="glass-panel px-6 py-3 flex items-center gap-3 border border-white/10 hover:border-[var(--aurora-3)]/50 transition-all group"
-            >
-              <ArrowLeftRight size={16} className="text-gray-500 group-hover:text-[var(--aurora-3)] transition-colors" />
-              <span className="text-xs font-bold uppercase tracking-widest">Kembali ke Portal</span>
-            </motion.button>
+          <header className="flex justify-between items-center mb-6 bg-white/5 p-4 sm:p-6 rounded-3xl border border-white/10">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-3">
+                <ShieldCheck className="text-[var(--aurora-3)]" /> 
+                Portal Operasional
+              </h1>
+              <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">Manajemen Otoritas & Monitoring</p>
+            </div>
+            <div className="flex gap-2">
+              {isGod && onCycleRole && (
+                <button onClick={onCycleRole} className="px-3 py-2 bg-[var(--danger)]/20 text-[var(--danger)] rounded-xl text-[10px] font-bold border border-[var(--danger)]/30 hover:bg-[var(--danger)]/30 transition-all">Ganti Role</button>
+              )}
+              <button onClick={() => navigate('/')} className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-bold border border-white/10 hover:bg-white/10 transition-all flex items-center gap-1"><Home size={14} /> Home</button>
+            </div>
           </header>
         )}
 
-        {/* QUICK METRICS GRID */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
-          <MetricCard icon={<Users />} label="Tim Aktif" value="128" color="var(--aurora-3)" />
-          <MetricCard icon={<Activity />} label="Hadir" value="112" color="var(--success)" active={filterStatus === 'PRESENT'} onClick={() => setFilterStatus('PRESENT')} />
-          <MetricCard icon={<Clock />} label="Terlambat" value="05" color="var(--warning)" active={filterStatus === 'LATE'} onClick={() => setFilterStatus('LATE')} />
-          <MetricCard icon={<ShieldCheck />} label="Ijin" value="08" color="#8E2DE2" active={filterStatus === 'PERMISSION'} onClick={() => setFilterStatus('PERMISSION')} />
-          <MetricCard icon={<Zap />} label="Cuti" value="03" color="#FF0055" active={filterStatus === 'LEAVE'} onClick={() => setFilterStatus('LEAVE')} />
-          <MetricCard icon={<XCircle />} label="Mangkir" value="02" color="var(--danger)" active={filterStatus === 'ABSENT'} onClick={() => setFilterStatus('ABSENT')} />
-        </div>
+        <nav className="flex flex-wrap gap-2 mb-6">
+          {navItems.map(item => (
+            <button key={item.key} onClick={() => setActiveTab(item.key)}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === item.key ? 'bg-[var(--aurora-3)]/20 text-[var(--aurora-3)] border border-[var(--aurora-3)]/30 shadow-[0_0_10px_rgba(0,201,255,0.1)]' : 'bg-white/5 text-gray-400 border border-white/5 hover:bg-white/10 hover:text-white'}`}>
+              {item.icon} {item.label}
+            </button>
+          ))}
+        </nav>
 
-        {/* NAVIGATION & FILTER */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-          <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar w-full md:w-auto">
-            <TabButton active={activeTab === 'monitor'} onClick={() => { triggerHaptic(); setActiveTab('monitor'); }} icon={<BarChart3 />} label="Monitoring" />
-            <TabButton active={activeTab === 'verification'} onClick={() => { triggerHaptic(); setActiveTab('verification'); }} icon={<ShieldCheck />} label="Verifikasi & Ijin" />
-            <TabButton active={activeTab === 'selfie'} onClick={() => { triggerHaptic(); setActiveTab('selfie'); }} icon={<Camera />} label="Gallery" />
-            <TabButton active={activeTab === 'schedule'} onClick={() => { triggerHaptic(); setActiveTab('schedule'); }} icon={<Upload />} label="Upload Jadwal" />
-          </div>
-
-          <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
-            <div className="flex items-center gap-2 bg-white/5 p-2 px-4 rounded-2xl border border-white/5 flex-1 md:flex-none min-w-[140px]">
-              <Filter size={14} className="text-[var(--aurora-1)]" />
-              <select 
-                value={selectedProject} 
-                onChange={(e) => {
-                  setSelectedProject(e.target.value);
-                  setSelectedDivision('all'); // Reset division when project changes
-                }}
-                className="bg-transparent text-[10px] font-bold text-white outline-none cursor-pointer uppercase w-full"
-              >
-                <option value="all" className="bg-[#0B0C10] text-gray-400">Semua Project</option>
-                {projectsList.map(p => (
-                  <option key={p.id} value={p.id} className="bg-[#0B0C10] text-white">{p.code ? `[${p.code}] ` : ''}{p.name}</option>
-                ))}
-              </select>
+        {activeTab === 'monitor' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="glass-panel p-4 rounded-2xl border border-white/5 text-center">
+                <p className="text-2xl font-bold text-white">{stats.total}</p>
+                <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">Total Karyawan</p>
+              </div>
+              <div className="glass-panel p-4 rounded-2xl border border-white/5 text-center">
+                <p className="text-2xl font-bold text-[var(--success)]">{stats.present}</p>
+                <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">Hadir</p>
+              </div>
+              <div className="glass-panel p-4 rounded-2xl border border-white/5 text-center">
+                <p className="text-2xl font-bold text-[var(--warning)]">{stats.late}</p>
+                <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">Terlambat</p>
+              </div>
+              <div className="glass-panel p-4 rounded-2xl border border-white/5 text-center">
+                <p className="text-2xl font-bold text-[var(--aurora-1)]">{stats.leave}</p>
+                <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">Cuti</p>
+              </div>
             </div>
-            
-            <HRISExportWrapper 
-              tenantId={tenantId} 
-              projectId={selectedProject} 
-              divisionId={selectedDivision} 
-            />
-            
-            <div className="flex items-center gap-2 bg-white/5 p-2 px-4 rounded-2xl border border-white/5 flex-1 md:flex-none min-w-[140px]">
-              <Network size={14} className="text-[var(--aurora-3)]" />
-              <select 
-                value={selectedDivision} 
-                onChange={(e) => setSelectedDivision(e.target.value)}
-                className="bg-transparent text-[10px] font-bold text-white outline-none cursor-pointer uppercase w-full"
-              >
-                <option value="all" className="bg-[#0B0C10] text-gray-400">Semua Divisi</option>
-                {filteredDivisionsList.map(d => (
-                  <option key={d.id} value={d.id} className="bg-[#0B0C10] text-white">{d.name}</option>
-                ))}
-              </select>
+
+            <div className="glass-panel rounded-2xl border border-white/5 overflow-hidden">
+              <div className="p-4 border-b border-white/5 flex justify-between items-center">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Absensi Hari Ini</h3>
+                <button onClick={fetchToday} className="text-[10px] text-[var(--aurora-3)] hover:underline">Refresh</button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-[11px]">
+                  <thead><tr className="bg-white/5 text-[9px] text-gray-500 uppercase tracking-widest"><th className="p-3 font-medium">Nama</th><th className="p-3 font-medium">NIK</th><th className="p-3 font-medium">Jam</th><th className="p-3 font-medium">Status</th></tr></thead>
+                  <tbody>
+                    {attLoading ? (
+                      <tr><td colSpan="4" className="p-8 text-center"><Loader2 size={20} className="animate-spin mx-auto text-[var(--aurora-3)]" /></td></tr>
+                    ) : todayAttendance.length === 0 ? (
+                      <tr><td colSpan="4" className="p-8 text-center text-gray-500 italic">Belum ada absensi hari ini</td></tr>
+                    ) : todayAttendance.map((a, i) => (
+                      <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02]">
+                        <td className="p-3 font-bold text-white">{a.profiles?.full_name}</td>
+                        <td className="p-3 text-gray-400">{a.profiles?.nip}</td>
+                        <td className="p-3 text-gray-400">{new Date(a.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</td>
+                        <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${a.status === 'ONTIME' ? 'bg-[var(--success)]/10 text-[var(--success)]' : a.status === 'LATE' ? 'bg-[var(--warning)]/10 text-[var(--warning)]' : 'bg-[var(--danger)]/10 text-[var(--danger)]'}`}>{a.status === 'ONTIME' ? 'Tepat' : a.status === 'LATE' ? 'Terlambat' : a.status}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* CONTENT */}
-        <AnimatePresence mode="wait">
-          <motion.div key={activeTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-            {activeTab === 'monitor' && <MonitoringView filterStatus={filterStatus} selectedDate={selectedDate} onDateChange={setSelectedDate} selectedProject={selectedProject} selectedDivision={selectedDivision} />}
-            {activeTab === 'verification' && <VerificationCenterView selectedProject={selectedProject} selectedDivision={selectedDivision} />}
-            {activeTab === 'selfie' && <SelfieGalleryView />}
-            {activeTab === 'schedule' && <SchedulePortalView tenantId={myTenantId} projectId={selectedProject} />}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-};
-
-// --- SUB-COMPONENTS ---
-
-const MetricCard = ({ icon, label, value, color, active, onClick }) => (
-  <div 
-    onClick={onClick}
-    className={`glass-panel p-5 rounded-3xl border transition-all cursor-pointer group ${active ? 'border-[var(--aurora-3)] bg-white/5 shadow-[0_0_20px_rgba(0,201,255,0.1)]' : 'border-white/5 hover:border-white/20'}`}
-  >
-    <div className="flex items-center gap-3 mb-3">
-      <div className={`p-2 rounded-xl bg-white/5 text-[${color}]`} style={{ color }}>{icon}</div>
-      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{label}</p>
-    </div>
-    <h3 className="text-3xl font-bold text-white tracking-tighter">{value}</h3>
-  </div>
-);
-
-const TabButton = ({ active, onClick, icon, label }) => (
-  <button 
-    onClick={onClick}
-    className={`flex items-center gap-2 px-6 py-3 rounded-2xl transition-all whitespace-nowrap border ${active ? 'bg-white/10 border-white/20 text-[var(--aurora-3)]' : 'bg-transparent border-transparent text-gray-500 hover:text-white'}`}
-  >
-    {icon} <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
-  </button>
-);
-
-const MonitoringView = ({ filterStatus, selectedDate, onDateChange, selectedProject, selectedDivision }) => {
-  const [employees, setEmployees] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [divisions, setDivisions] = useState({});
-
-  useEffect(() => {
-    supabase.from('divisions').select('id, name').then(({ data }) => {
-      if (data) {
-        const map = {}; data.forEach(d => map[d.id] = d.name);
-        setDivisions(map);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    fetchLogs();
-  }, [selectedDate, filterStatus, selectedProject, selectedDivision]);
-
-  const fetchLogs = async () => {
-    setLoading(true);
-    try {
-      let query = supabase
-        .from('attendance_logs')
-        .select(`
-          id, action, status, timestamp, distance_meters,
-          profiles!inner ( full_name, role, division_id, tenant_id )
-        `)
-        .gte('timestamp', `${selectedDate}T00:00:00Z`)
-        .lte('timestamp', `${selectedDate}T23:59:59Z`);
-
-      if (selectedProject && selectedProject !== 'all') {
-        query = query.eq('profiles.project_id', selectedProject);
-      }
-      if (selectedDivision && selectedDivision !== 'all') {
-        query = query.eq('profiles.division_id', selectedDivision);
-      }
-      
-      const { data, error } = await query;
-      if (error) throw error;
-
-      if (data) {
-        let formatted = data.map(log => ({
-          id: log.id,
-          name: log.profiles?.full_name || 'Unknown User',
-          division: divisions[log.profiles?.division_id] || log.profiles?.role || 'Staff',
-          time: new Date(log.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-          status: log.status,
-          remarks: log.action === 'CLOCK_IN' ? 'Masuk' : 'Keluar'
-        }));
-        
-        if (filterStatus !== 'ALL') {
-          const statusMap = { 'PRESENT': 'ONTIME', 'LATE': 'LATE', 'PERMISSION': 'PERMISSION', 'LEAVE': 'LEAVE', 'ABSENT': 'ABSENT' };
-          formatted = formatted.filter(e => 
-            e.status === filterStatus || 
-            e.status === statusMap[filterStatus] ||
-            (filterStatus === 'LATE' && e.status === 'OUT_OF_RANGE')
-          );
-        }
-        
-        setEmployees(formatted);
-      }
-    } catch (e) {
-      console.error("Fetch monitoring error", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="glass-panel rounded-[32px] border border-white/5 overflow-hidden">
-      <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-        <h3 className="text-sm font-bold uppercase tracking-widest">Live Monitoring • {selectedDate}</h3>
-        <input type="date" value={selectedDate} onChange={(e) => onDateChange(e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs outline-none focus:border-[var(--aurora-3)]" />
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs whitespace-nowrap">
-          <thead className="bg-white/5 text-gray-500 uppercase tracking-widest">
-            <tr>
-              <th className="p-5 font-bold">Karyawan</th>
-              <th className="p-5 font-bold">Role</th>
-              <th className="p-5 font-bold">Waktu</th>
-              <th className="p-5 font-bold">Status</th>
-              <th className="p-5 font-bold">Keterangan</th>
-              <th className="p-5 font-bold text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {loading ? (
-              <tr><td colSpan="6" className="p-10"><div className="flex justify-center"><div className="w-full glass-panel p-6 border border-white/5 animate-pulse space-y-4"><div className="h-4 bg-white/10 rounded w-1/4" /><div className="h-3 bg-white/5 rounded w-1/2" /><div className="h-3 bg-white/5 rounded w-1/3" /></div></div></td></tr>
-            ) : employees.length === 0 ? (
-              <tr><td colSpan="6" className="p-10 text-center text-gray-500 font-bold tracking-widest uppercase">Tidak ada data absensi</td></tr>
-            ) : employees.map(emp => (
-              <tr key={emp.id} className="hover:bg-white/[0.02] transition-colors">
-                <td className="p-5 font-bold">{emp.name}</td>
-                <td className="p-5 text-gray-400">{emp.division}</td>
-                <td className="p-5 font-mono">{emp.time}</td>
-                <td className="p-5"><StatusBadge status={emp.status} /></td>
-                <td className="p-5 text-gray-500 italic">"{emp.remarks}"</td>
-                <td className="p-5 text-right"><button className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white"><MoreVertical size={16} /></button></td>
-              </tr>
+        {activeTab === 'approval' && (
+          <div className="space-y-6">
+            {[{ label: 'Cuti', data: pendingLeaves, table: 'leave_requests', color: 'var(--aurora-1)' },
+              { label: 'Pinjaman', data: pendingLoans, table: 'loans', color: 'var(--warning)' },
+              { label: 'Reimbursemen', data: pendingReimb, table: 'reimbursements', color: 'var(--aurora-3)' }
+            ].map(category => (
+              <div key={category.table} className="glass-panel rounded-2xl border border-white/5 overflow-hidden">
+                <div className="p-4 border-b border-white/5">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest" style={{ color: category.color }}>{category.label} — {category.data.length} menunggu</h3>
+                </div>
+                {category.data.length === 0 ? (
+                  <div className="p-6 text-center text-gray-500 text-xs italic">Tidak ada pengajuan pending</div>
+                ) : (
+                  <div className="divide-y divide-white/5">
+                    {category.data.map((item, i) => (
+                      <div key={i} className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-xs font-bold text-white">{item.profiles?.full_name?.charAt(0)}</div>
+                          <div>
+                            <p className="text-xs font-bold text-white">{item.profiles?.full_name}</p>
+                            <p className="text-[9px] text-gray-500">{item.profiles?.nip}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                          <button onClick={() => handleApprove(category.table, item.id)} className="flex-1 sm:flex-none px-3 py-1.5 bg-[var(--success)]/10 text-[var(--success)] rounded-lg text-[10px] font-bold border border-[var(--success)]/20 hover:bg-[var(--success)]/20 transition-all flex items-center justify-center gap-1"><CheckCircle2 size={12} /> Setuju</button>
+                          <button onClick={() => handleReject(category.table, item.id)} className="flex-1 sm:flex-none px-3 py-1.5 bg-[var(--danger)]/10 text-[var(--danger)] rounded-lg text-[10px] font-bold border border-[var(--danger)]/20 hover:bg-[var(--danger)]/20 transition-all flex items-center justify-center gap-1"><XCircle size={12} /> Tolak</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
+          </div>
+        )}
 
-const VerificationCenterView = ({ selectedProject, selectedDivision }) => {
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchRequests();
-  }, [selectedProject, selectedDivision]);
-
-  const fetchRequests = async () => {
-    setLoading(true);
-    try {
-      let leavesQuery = supabase
-        .from('leave_requests')
-        .select('id, type, start_date, reason, status, file_url, created_at, profiles!inner ( full_name, project_id, division_id )')
-        .eq('status', 'PENDING')
-        .order('created_at', { ascending: false });
-
-      if (selectedProject && selectedProject !== 'all') leavesQuery = leavesQuery.eq('profiles.project_id', selectedProject);
-      if (selectedDivision && selectedDivision !== 'all') leavesQuery = leavesQuery.eq('profiles.division_id', selectedDivision);
-
-      const { data: leaves, error: leavesErr } = await leavesQuery;
-
-      let docsQuery = supabase
-        .from('employee_documents')
-        .select('id, doc_type, file_url, verification_status, created_at, profiles!inner ( full_name, project_id, division_id )')
-        .eq('verification_status', 'PENDING')
-        .order('created_at', { ascending: false });
-
-      if (selectedProject && selectedProject !== 'all') docsQuery = docsQuery.eq('profiles.project_id', selectedProject);
-      if (selectedDivision && selectedDivision !== 'all') docsQuery = docsQuery.eq('profiles.division_id', selectedDivision);
-
-      const { data: docs, error: docsErr } = await docsQuery;
-
-      let combined = [];
-      if (leaves) {
-        combined = [...combined, ...leaves.map(l => ({
-          id: `leave_${l.id}`,
-          originalId: l.id,
-          source: 'leave_requests',
-          name: l.profiles?.full_name || 'Unknown',
-          type: l.type,
-          date: l.start_date,
-          reason: l.reason,
-          file_url: l.file_url,
-          timestamp: new Date(l.created_at).getTime()
-        }))];
-      }
-      if (docs) {
-        combined = [...combined, ...docs.map(d => ({
-          id: `doc_${d.id}`,
-          originalId: d.id,
-          source: 'employee_documents',
-          name: d.profiles?.full_name || 'Unknown',
-          type: d.doc_type,
-          date: new Date(d.created_at).toISOString().split('T')[0],
-          reason: 'Verifikasi Dokumen Baru',
-          file_url: d.file_url,
-          timestamp: new Date(d.created_at).getTime()
-        }))];
-      }
-      combined.sort((a, b) => b.timestamp - a.timestamp);
-      setRequests(combined);
-    } catch (e) {
-      console.error("Error fetching requests", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerification = async (req, action) => {
-    try {
-      if (req.source === 'leave_requests') {
-        await supabase.from('leave_requests').update({ status: action }).eq('id', req.originalId);
-      } else {
-        await supabase.from('employee_documents').update({ verification_status: action }).eq('id', req.originalId);
-      }
-      setRequests(prev => prev.filter(r => r.id !== req.id));
-      // Optional: Add to audit_logs
-    } catch (e) {
-      console.error("Verification failed", e);
-    }
-  };
-
-  if (loading) return <div className="p-20 text-center text-gray-500 font-bold uppercase tracking-widest">Memuat Permintaan...</div>;
-  if (requests.length === 0) return <div className="p-20 text-center text-[var(--success)] font-bold uppercase tracking-widest">Semua Permintaan Sudah Diverifikasi</div>;
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {requests.map(req => (
-        <div key={req.id} className="glass-panel p-6 rounded-3xl border border-white/5 space-y-4">
-          <div className="flex justify-between items-start">
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[var(--aurora-3)]"><ShieldCheck size={20} /></div>
-              <div><h4 className="font-bold text-white">{req.name}</h4><p className="text-[10px] text-gray-500 uppercase">{req.type} • {req.date}</p></div>
+        {activeTab === 'employees' && (
+          <div className="glass-panel rounded-2xl border border-white/5 overflow-hidden">
+            <div className="p-4 border-b border-white/5">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Direktori Karyawan ({employees.length})</h3>
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+                  <input type="text" placeholder="Cari nama/NIK..." value={empSearch} onChange={e => setEmpSearch(e.target.value)}
+                    className="w-full bg-[#0B0C10] border border-white/10 rounded-xl py-2 pl-9 pr-3 text-xs text-white outline-none focus:border-[var(--aurora-3)]" />
+                </div>
+              </div>
             </div>
-            {req.file_url && (
-              <a href={req.file_url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-white/5 rounded-xl text-[var(--aurora-3)]" title="Lihat Lampiran">
-                <Eye size={18} />
-              </a>
-            )}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-[11px]">
+                <thead><tr className="bg-white/5 text-[9px] text-gray-500 uppercase tracking-widest"><th className="p-3 font-medium">Nama</th><th className="p-3 font-medium">NIK</th><th className="p-3 font-medium">Posisi</th><th className="p-3 font-medium">Divisi</th><th className="p-3 font-medium">Project</th></tr></thead>
+                <tbody>
+                  {empLoading ? (
+                    <tr><td colSpan="5" className="p-8 text-center"><Loader2 size={20} className="animate-spin mx-auto text-[var(--aurora-3)]" /></td></tr>
+                  ) : employees.filter(e => e.full_name.toLowerCase().includes(empSearch.toLowerCase()) || e.nip.toLowerCase().includes(empSearch.toLowerCase())).length === 0 ? (
+                    <tr><td colSpan="5" className="p-8 text-center text-gray-500 italic">Karyawan tidak ditemukan</td></tr>
+                  ) : employees.filter(e => e.full_name.toLowerCase().includes(empSearch.toLowerCase()) || e.nip.toLowerCase().includes(empSearch.toLowerCase())).map((e, i) => (
+                    <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02]">
+                      <td className="p-3 font-bold text-white">{e.full_name}</td>
+                      <td className="p-3 text-gray-400">{e.nip}</td>
+                      <td className="p-3 text-gray-400">{e.position || '-'}</td>
+                      <td className="p-3 text-gray-400">{e.divisions?.name || '-'}</td>
+                      <td className="p-3 text-gray-400">{e.projects?.name || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-          <p className="text-xs text-gray-400 italic">"{req.reason}"</p>
-          <div className="flex gap-3 pt-2">
-            <button onClick={() => handleVerification(req, 'APPROVED')} className="flex-1 py-3 rounded-xl bg-[var(--success)] hover:bg-green-600 transition-colors text-black text-[10px] font-bold uppercase">Setujui</button>
-            <button onClick={() => handleVerification(req, 'REJECTED')} className="flex-1 py-3 rounded-xl bg-white/5 border border-[var(--danger)]/50 text-[var(--danger)] hover:bg-[var(--danger)] hover:text-white transition-colors text-[10px] font-bold uppercase">Tolak</button>
+        )}
+
+        {activeTab === 'reports' && (
+          <div className="space-y-6">
+            <div className="glass-panel rounded-2xl border border-white/5 p-6 text-center">
+              <FileSpreadsheet size={40} className="mx-auto mb-4 text-gray-600" />
+              <h3 className="text-sm font-bold text-white mb-2">Ekspor Data</h3>
+              <p className="text-xs text-gray-500 mb-4">Download laporan absensi dan payroll dalam format spreadsheet.</p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <button onClick={exportAttendance} className="px-4 py-2 bg-white/5 rounded-xl text-xs font-bold border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2"><Download size={14} /> Absensi</button>
+                <button onClick={exportPayroll} className="px-4 py-2 bg-white/5 rounded-xl text-xs font-bold border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2"><Download size={14} /> Payroll</button>
+                <button onClick={exportEmployees} className="px-4 py-2 bg-white/5 rounded-xl text-xs font-bold border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2"><Download size={14} /> Karyawan</button>
+              </div>
+            </div>
+
+            <div className="glass-panel rounded-2xl border border-white/5 p-6 text-center">
+              <BarChart3 size={40} className="mx-auto mb-4 text-gray-600" />
+              <h3 className="text-sm font-bold text-white mb-2">Ringkasan Bulan Ini</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                <div className="bg-white/5 rounded-xl p-3"><p className="text-lg font-bold text-white">{stats.total}</p><p className="text-[9px] text-gray-500 uppercase mt-1">Karyawan</p></div>
+                <div className="bg-white/5 rounded-xl p-3"><p className="text-lg font-bold text-[var(--success)]">{stats.present}</p><p className="text-[9px] text-gray-500 uppercase mt-1">Hadir</p></div>
+                <div className="bg-white/5 rounded-xl p-3"><p className="text-lg font-bold text-[var(--warning)]">{stats.late}</p><p className="text-[9px] text-gray-500 uppercase mt-1">Terlambat</p></div>
+                <div className="bg-white/5 rounded-xl p-3"><p className="text-lg font-bold text-[var(--aurora-1)]">{stats.leave}</p><p className="text-[9px] text-gray-500 uppercase mt-1">Cuti</p></div>
+              </div>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const SelfieGalleryView = () => <div className="p-20 text-center opacity-30 uppercase tracking-widest text-xs">Gallery System Initializing...</div>;
-
-const SchedulePortalView = ({ tenantId, projectId }) => {
-  return (
-    <div className="space-y-6">
-      <div className="glass-panel p-6 border border-white/5">
-        <h2 className="text-xl font-serif font-bold text-white mb-2 flex items-center gap-2">
-          <Upload size={20} className="text-[var(--aurora-3)]" /> Manajemen Jadwal Shift
-        </h2>
-        <p className="text-sm text-gray-400">Upload file CSV untuk mendistribusikan jadwal ke karyawan secara massal.</p>
+        )}
       </div>
-      <BulkScheduleUpload tenantId={tenantId} projectId={projectId} />
     </div>
   );
-};
-
-const StatusBadge = ({ status }) => {
-  const colors = { 'ONTIME': 'var(--success)', 'OUT_OF_RANGE': 'var(--warning)', 'PRESENT': 'var(--success)', 'LATE': 'var(--warning)', 'PERMISSION': '#8E2DE2', 'LEAVE': '#FF0055', 'ABSENT': 'var(--danger)' };
-  return <span className="px-2 py-1 rounded bg-black/40 text-[8px] font-black uppercase tracking-tighter border border-white/5" style={{ color: colors[status] || 'white' }}>{status}</span>;
 };
 
 export default SubAdminDashboard;

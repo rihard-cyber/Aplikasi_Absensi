@@ -31,31 +31,33 @@ const PermissionManager = () => {
   const fetchInitialData = async () => {
     setIsLoading(true);
     try {
+      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
       const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-      if (!profile?.tenant_id) return;
-      
-      setTenantId(profile.tenant_id);
+      const tenantId = profile?.tenant_id;
+
+      if (!tenantId && !isGod) return;
+
+      setTenantId(tenantId);
 
       // Fetch Sub-Admins
-      const { data: admins } = await supabase
+      let query = supabase
         .from('profiles')
         .select('id, full_name, role, nip, operational_access, projects(name), divisions(name)')
-        .eq('tenant_id', profile.tenant_id)
         .eq('operational_access', true)
-        .in('role', ['SUB_ADMIN', 'TENANT_ADMIN'])
-        .order('full_name');
-      
+        .in('role', ['SUB_ADMIN', 'TENANT_ADMIN']);
+      if (tenantId) query = query.eq('tenant_id', tenantId);
+      const { data: admins } = await query.order('full_name');
       if (admins) setSubAdmins(admins);
 
-      // Fetch Projects & Divisions for form
-      const { data: projData } = await supabase.from('projects').select('id, name').eq('tenant_id', profile.tenant_id);
-      if (projData) setProjects(projData);
-
-      const { data: divData } = await supabase.from('divisions').select('id, name, project_id').eq('tenant_id', profile.tenant_id);
-      if (divData) setDivisions(divData);
+      if (tenantId) {
+        const { data: projData } = await supabase.from('projects').select('id, name').eq('tenant_id', tenantId);
+        if (projData) setProjects(projData);
+        const { data: divData } = await supabase.from('divisions').select('id, name, project_id').eq('tenant_id', tenantId);
+        if (divData) setDivisions(divData);
+      }
 
     } catch (e) {
       console.error("Error fetching data:", e);
@@ -69,12 +71,12 @@ const PermissionManager = () => {
     setIsSearching(true);
     setFoundEmployee(null);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
         .select('id, nip, full_name, project_id, division_id')
-        .eq('tenant_id', tenantId)
-        .eq('nip', searchNik)
-        .maybeSingle();
+        .eq('nip', searchNik);
+      if (tenantId) query = query.eq('tenant_id', tenantId);
+      const { data } = await query.maybeSingle();
       
       if (data) {
         setFoundEmployee(data);
@@ -147,21 +149,21 @@ const PermissionManager = () => {
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
-      <div className="flex justify-between items-center bg-white/5 p-6 rounded-[32px] border border-white/10">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white/5 p-6 rounded-[32px] border border-white/10">
         <div>
-          <h2 className="text-2xl font-serif font-bold text-white tracking-wide">Permission Manager</h2>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-wide">Permission Manager</h2>
           <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Delegasikan Otoritas Pengelolaan Tim</p>
         </div>
         <button 
           onClick={() => setIsAddModalOpen(true)}
-          className="bg-[var(--aurora-1)] text-white px-6 py-3 rounded-2xl flex items-center gap-2 font-bold text-sm hover:shadow-[0_0_20px_rgba(142,45,226,0.4)] transition-all"
+          className="bg-[var(--aurora-1)] text-white px-6 py-3 rounded-2xl flex items-center gap-2 font-bold text-sm hover:shadow-[0_0_20px_rgba(142,45,226,0.4)] transition-all whitespace-nowrap"
         >
           <UserPlus size={18} /> Tambah Sub-Admin
         </button>
       </div>
 
       <div className="glass-panel rounded-3xl border border-white/5 overflow-hidden">
-        <div className="p-6 border-b border-white/5 flex justify-between items-center">
+        <div className="p-6 border-b border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
             <input 
@@ -189,7 +191,7 @@ const PermissionManager = () => {
               {isLoading ? (
                 <tr><td colSpan="5" className="p-10"><div className="w-full glass-panel p-6 border border-white/5 animate-pulse space-y-4"><div className="h-4 bg-white/10 rounded w-1/4" /><div className="h-3 bg-white/5 rounded w-1/3" /><div className="h-3 bg-white/5 rounded w-1/2" /></div></td></tr>
               ) : filteredAdmins.length === 0 ? (
-                <tr><td colSpan="5" className="p-10 text-center text-gray-500 italic">Tidak ada Sub-Admin ditemukan.</td></tr>
+                <tr><td colSpan="5" className="p-10 text-center text-gray-500 italic">{(() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })() ? 'GOD MODE — Tidak ada tenant terpilih. Silakan pilih tenant untuk mengelola otoritas.' : 'Tidak ada Sub-Admin ditemukan.'}</td></tr>
               ) : filteredAdmins.map((admin) => (
                 <tr key={admin.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
                   <td className="p-6">

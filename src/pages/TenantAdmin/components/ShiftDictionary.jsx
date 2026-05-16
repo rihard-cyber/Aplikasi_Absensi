@@ -31,30 +31,35 @@ const ShiftDictionary = () => {
     setIsLoading(true);
     setProjectsLoading(true);
     try {
+      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data: profile } = await supabase.from('profiles')
         .select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
       
-      if (profile?.tenant_id) {
-        setTenantId(profile.tenant_id);
+      if (profile?.tenant_id || isGod) {
+        if (profile?.tenant_id) setTenantId(profile.tenant_id);
 
-        const { data: pData } = await supabase.from('projects')
-          .select('id, name, code').eq('tenant_id', profile.tenant_id);
+        let q1 = supabase.from('projects')
+          .select('id, name, code');
+        if (profile?.tenant_id) q1 = q1.eq('tenant_id', profile.tenant_id);
+        const { data: pData } = await q1;
         if (pData) {
           setProjects(pData);
         } else {
-          // Fallback if code column doesn't exist yet
-          const { data: fallback } = await supabase.from('projects')
-            .select('*').eq('tenant_id', profile.tenant_id);
+          let q1b = supabase.from('projects')
+            .select('*');
+          if (profile?.tenant_id) q1b = q1b.eq('tenant_id', profile.tenant_id);
+          const { data: fallback } = await q1b;
           if (fallback) setProjects(fallback);
         }
         setProjectsLoading(false);
 
-        const { data: sData } = await supabase.from('master_shifts')
-          .select('*, projects(name, code)')
-          .eq('tenant_id', profile.tenant_id)
-          .order('created_at', { ascending: false });
+        let q2 = supabase.from('master_shifts')
+          .select('*, projects(name, code)');
+        if (profile?.tenant_id) q2 = q2.eq('tenant_id', profile.tenant_id);
+        q2 = q2.order('created_at', { ascending: false });
+        const { data: sData } = await q2;
         if (sData) setShifts(sData);
       } else {
         setProjectsLoading(false);

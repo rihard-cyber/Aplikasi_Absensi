@@ -36,13 +36,16 @@ const GeneralSettings = () => {
   const fetchSettings = async () => {
     setIsLoading(true);
     try {
+      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
       
-      if (profile?.tenant_id) {
-        setTenantId(profile.tenant_id);
-        const { data: ts } = await supabase.from('tenant_settings').select('*').eq('tenant_id', profile.tenant_id).maybeSingle();
+      if (profile?.tenant_id || isGod) {
+        if (profile?.tenant_id) setTenantId(profile.tenant_id);
+        let q = supabase.from('tenant_settings').select('*');
+        if (profile?.tenant_id) q = q.eq('tenant_id', profile.tenant_id);
+        const { data: ts } = await q.maybeSingle();
         if (ts) {
           // parse times if needed
           setSettings({
@@ -129,9 +132,9 @@ const GeneralSettings = () => {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
         <div>
-          <h2 className="text-2xl font-serif font-bold text-white tracking-wide">Pengaturan Umum</h2>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-wide">Pengaturan Umum</h2>
           <p className="text-gray-400 text-sm mt-1">Regulasi Operasional Terpusat (Auto-Saved).</p>
         </div>
         <div className="flex items-center gap-2">

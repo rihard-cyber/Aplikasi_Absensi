@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Download, ChevronDown, ChevronUp, DollarSign, Percent, FileText, Printer } from 'lucide-react';
+import { Download, ChevronDown, ChevronUp, DollarSign, Percent, FileText, Printer, ArrowLeft } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
-const PayslipView = () => {
+const PayslipView = ({ onBack }) => {
   const [periods, setPeriods] = useState([]);
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [summary, setSummary] = useState(null);
@@ -161,6 +161,11 @@ const PayslipView = () => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6 pb-8">
+      {onBack && (
+        <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors w-fit mb-2">
+          <ArrowLeft size={18} /> Kembali
+        </button>
+      )}
       <div className="glass-panel p-6 text-center relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[var(--aurora-1)]/10 to-transparent rounded-full blur-2xl" />
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center mx-auto mb-4 shadow-lg">

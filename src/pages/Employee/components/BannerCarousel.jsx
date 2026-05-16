@@ -17,15 +17,36 @@ const BannerCarousel = ({ tenantName, structureName, isGodMode, isImpersonating,
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-    if (!p?.tenant_id) return;
-    const { data: ts } = await supabase.from('tenant_settings').select('banners, banner_interval').eq('tenant_id', p.tenant_id).maybeSingle();
+    const tid = p?.tenant_id;
+    if (!tid && !isGodMode) { setLoaded(true); return; }
+    let q = supabase.from('tenant_settings').select('banners, banner_interval');
+    if (tid) q = q.eq('tenant_id', tid); else q = q.not('banners', 'is', null).order('tenant_id').limit(1);
+    const { data: ts } = await q.maybeSingle();
+    setLoaded(true);
     if (ts?.banners?.length > 0) {
       setBanners(ts.banners);
-      setLoaded(true);
       const interval = (ts.banner_interval || 5) * 1000;
       intervalRef.current = setInterval(() => {
         setCurrentIndex(prev => (prev + 1) % ts.banners.length);
       }, interval);
+      return;
+    }
+    // Fallback: coba baca manifest dari storage bucket (public, tidak kena RLS)
+    if (tid) {
+      try {
+        const manifestUrl = supabase.storage.from('banners').getPublicUrl(`tenants/${tid}/banners_manifest.json`).data.publicUrl;
+        const res = await fetch(manifestUrl);
+        if (res.ok) {
+          const manifest = await res.json();
+          if (manifest?.banners?.length > 0) {
+            setBanners(manifest.banners);
+            const interval = 5000;
+            intervalRef.current = setInterval(() => {
+              setCurrentIndex(prev => (prev + 1) % manifest.banners.length);
+            }, interval);
+          }
+        }
+      } catch {}
     }
   };
 

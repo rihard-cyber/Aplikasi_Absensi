@@ -14,22 +14,28 @@ const OrgChart = () => {
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
+    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-    if (!p?.tenant_id) return;
+    if (!p?.tenant_id && !isGod) return;
 
-    const { data: projs } = await supabase.from('projects').select('*').eq('tenant_id', p.tenant_id).order('name');
+    let q1 = supabase.from('projects').select('*');
+    if (p?.tenant_id) q1 = q1.eq('tenant_id', p.tenant_id);
+    q1 = q1.order('name');
+    const { data: projs } = await q1;
     setProjects(projs || []);
 
-    const { data: divs } = await supabase.from('divisions').select('*').eq('tenant_id', p.tenant_id);
+    let q2 = supabase.from('divisions').select('*');
+    if (p?.tenant_id) q2 = q2.eq('tenant_id', p.tenant_id);
+    const { data: divs } = await q2;
     setDivisions(divs || []);
 
-    const { data: emps } = await supabase.from('profiles')
-      .select('id, full_name, nip, position, role, project_id, division_id')
-      .eq('tenant_id', p.tenant_id)
-      .in('role', ['EMPLOYEE', 'SUB_ADMIN', 'TENANT_ADMIN'])
-      .order('full_name');
+    let q3 = supabase.from('profiles')
+      .select('id, full_name, nip, position, role, project_id, division_id');
+    if (p?.tenant_id) q3 = q3.eq('tenant_id', p.tenant_id);
+    q3 = q3.in('role', ['EMPLOYEE', 'SUB_ADMIN', 'TENANT_ADMIN']).order('full_name');
+    const { data: emps } = await q3;
     setEmployees(emps || []);
     setLoading(false);
   };

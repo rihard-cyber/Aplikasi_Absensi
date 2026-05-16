@@ -12,8 +12,7 @@ const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download 
   const [exporting, setExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
 
-  const role = (sessionStorage.getItem('god_key') === 'DEWA-999') ? 'SUPER_ADMIN'
-    : localStorage.getItem('user_role') || 'EMPLOYEE';
+  const role = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999' ? 'SUPER_ADMIN' : localStorage.getItem('user_role') || 'EMPLOYEE'; } catch { return 'EMPLOYEE'; } })();
 
   const scopeLabel = {
     superadmin: 'SEMUA TENANT (GOD MODE)',

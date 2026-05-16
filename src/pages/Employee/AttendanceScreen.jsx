@@ -11,6 +11,11 @@ import AttendanceHistory from './components/AttendanceHistory';
 import DocumentVault from './components/DocumentVault';
 import EmployeeProfile from './components/EmployeeProfile';
 import LeaveRequest from './components/LeaveRequest';
+import LoanRequest from './components/LoanRequest';
+import ReimbursementRequest from './components/ReimbursementRequest';
+import PayslipView from './components/PayslipView';
+import QRScanner from './components/QRScanner';
+import ProfileEditor from './components/ProfileEditor';
 import BannerCarousel from './components/BannerCarousel';
 import { supabase } from '../../utils/supabaseClient';
 import { analyzePosition, logFakeGpsAttempt } from '../../utils/antiFakeGps';
@@ -31,7 +36,7 @@ const ClockInTab = () => {
   const [officeCoords, setOfficeCoords] = useState({ latitude: -6.200000, longitude: 106.816666, radius: 50, name: 'Mencari Lokasi...' });
   const [projectCode, setProjectCode] = useState('');
   const [showCodeInput, setShowCodeInput] = useState(false);
-  const isGodMode = sessionStorage.getItem('god_key') === 'DEWA-999';
+  const isGodMode = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
 
   // --- Camera State ---
   const videoRef = useRef(null);
@@ -44,9 +49,11 @@ const ClockInTab = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-      if (!profile?.tenant_id) return;
-      const { data: project } = await supabase.from('projects')
-        .select('*').eq('code', code.toUpperCase()).eq('tenant_id', profile.tenant_id).maybeSingle();
+      const tid = profile?.tenant_id;
+      if (!tid && !isGodMode) return;
+      let q = supabase.from('projects').select('*').eq('code', code.toUpperCase());
+      if (tid) q = q.eq('tenant_id', tid);
+      const { data: project } = await q.maybeSingle();
       if (project) {
         setOfficeCoords({ latitude: project.latitude, longitude: project.longitude, radius: project.radius || 50, name: project.name });
         setProjectCode(code.toUpperCase());
@@ -125,7 +132,7 @@ const ClockInTab = () => {
   const checkLocation = async () => {
     setLocationState('CHECKING');
     try {
-      if (sessionStorage.getItem('god_key') === 'DEWA-999') {
+      const _g = (() => { try { return sessionStorage.getItem('god_key'); } catch { return null; } })(); if (_g === 'DEWA-999') {
         setDistance(0);
         setLocationState('IN_RANGE');
         return;
@@ -179,11 +186,11 @@ const ClockInTab = () => {
 
     // Fitur: Offline Sync Auto-Sender
     const handleOnline = async () => {
-        const queue = JSON.parse(localStorage.getItem('offline_attendance') || '[]');
+        let queue = []; try { queue = JSON.parse(localStorage.getItem('offline_attendance') || '[]'); } catch {}
         if (queue.length > 0) {
           const { error } = await supabase.from('attendance_logs').insert(queue);
           if (!error) {
-            localStorage.removeItem('offline_attendance');
+            try { localStorage.removeItem('offline_attendance'); } catch {}
             if (window.navigator?.vibrate) window.navigator.vibrate([50, 100, 50]);
             toast(`Sinyal kembali! ${queue.length} data absen offline berhasil disinkronisasi.`, 'success');
           } else {
@@ -263,9 +270,9 @@ const ClockInTab = () => {
       };
 
       if (!navigator.onLine) {
-        const queue = JSON.parse(localStorage.getItem('offline_attendance') || '[]');
+        let queue = []; try { queue = JSON.parse(localStorage.getItem('offline_attendance') || '[]'); } catch {}
         queue.push(logData);
-        localStorage.setItem('offline_attendance', JSON.stringify(queue));
+        try { localStorage.setItem('offline_attendance', JSON.stringify(queue)); } catch {}
         toast('Internet terputus. Data disimpan & dikirim saat online.', 'info');
       } else {
         try {
@@ -466,8 +473,8 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
     logo_url: null 
   });
 
-  const isGodMode = sessionStorage.getItem('god_key') === 'DEWA-999';
-  const userRole = localStorage.getItem('user_role');
+  const isGodMode = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+  const userRole = (() => { try { return localStorage.getItem('user_role'); } catch { return null; } })();
   const isAdminUser = userRole === 'TENANT_ADMIN' || userRole === 'SUB_ADMIN';
 
   // --- SMART NAVIGATION (ANTI-EXIT) ---
@@ -672,11 +679,36 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
       {/* Dynamic Tab Content */}
       <div className="w-full flex-1 relative z-10 overflow-y-auto hide-scrollbar px-4">
         <AnimatePresence mode="wait">
-          {activeSubView ? (
+          {activeSubView === 'leave' || activeSubView === 'lembur' || activeSubView === 'req-absen' || activeSubView === 'shift' || activeSubView === 'contract' ? (
             <LeaveRequest
               key={activeSubView}
               onBack={() => setActiveSubView(null)}
               category={activeSubView}
+            />
+          ) : activeSubView === 'loan' ? (
+            <LoanRequest
+              key="loan"
+              onBack={() => setActiveSubView(null)}
+            />
+          ) : activeSubView === 'reimbursement' ? (
+            <ReimbursementRequest
+              key="reimbursement"
+              onBack={() => setActiveSubView(null)}
+            />
+          ) : activeSubView === 'salary' ? (
+            <PayslipView
+              key="salary"
+              onBack={() => setActiveSubView(null)}
+            />
+          ) : activeSubView === 'qr' ? (
+            <QRScanner
+              key="qr"
+              onBack={() => setActiveSubView(null)}
+            />
+          ) : activeSubView === 'edit-profile' ? (
+            <ProfileEditor
+              key="edit-profile"
+              onBack={() => setActiveSubView(null)}
             />
           ) : activeTab === 'home' ? (
             <EmployeeHome 

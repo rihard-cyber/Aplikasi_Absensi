@@ -10,11 +10,13 @@ function getOrCreateWebDeviceId() {
   if (_webDeviceId) return _webDeviceId;
 
   // Check sessionStorage first
-  const stored = sessionStorage.getItem('__web_device_id');
-  if (stored) {
-    _webDeviceId = stored;
-    return _webDeviceId;
-  }
+  try {
+    const stored = sessionStorage.getItem('__web_device_id');
+    if (stored) {
+      _webDeviceId = stored;
+      return _webDeviceId;
+    }
+  } catch {}
 
   // Generate a new UUID for this browser session
   const uuid = 'web-' + ([1e7] + -1e3 + -4e3 + -8e3 + -1e11)
@@ -23,7 +25,7 @@ function getOrCreateWebDeviceId() {
       (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
     );
 
-  sessionStorage.setItem('__web_device_id', uuid);
+  try { sessionStorage.setItem('__web_device_id', uuid); } catch {};
   _webDeviceId = uuid;
   return _webDeviceId;
 }

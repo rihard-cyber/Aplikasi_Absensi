@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Settings, FileText, CheckCircle, Activity, Calculator, BarChart3, ShieldCheck, Building2, Megaphone, CalendarDays, LogOut, XCircle, Upload, Fingerprint } from 'lucide-react';
+import { Settings, FileText, CheckCircle, Activity, Calculator, BarChart3, ShieldCheck, Building2, Megaphone, CalendarDays, LogOut, XCircle, Upload, Fingerprint, Users, DollarSign, TrendingUp, Sun, Calendar, Star, Briefcase, Gift, ScrollText, PartyPopper, ClipboardList, QrCode, Activity as ActivityIcon, LineChart, UserCircle, Wallet, Layers, GitBranch, Landmark, ClipboardCheck, Image, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../components/ConfirmDialog';
 import DashboardHome from './components/DashboardHome';
@@ -15,12 +15,41 @@ const PermissionManager = lazy(() => import('./components/PermissionManager'));
 const BroadcastCenter = lazy(() => import('./components/BroadcastCenter'));
 const ShiftDictionary = lazy(() => import('./components/ShiftDictionary'));
 const ScheduleUpload = lazy(() => import('./components/ScheduleUpload'));
+const LoanManagement = lazy(() => import('./components/LoanManagement'));
+const FinanceDashboard = lazy(() => import('./components/FinanceDashboard'));
+const ScheduleCalendar = lazy(() => import('./components/ScheduleCalendar'));
+const HolidayManagement = lazy(() => import('./components/HolidayManagement'));
+const EmployeeDirectory = lazy(() => import('./components/EmployeeDirectory'));
+const ReimbursementManagement = lazy(() => import('./components/ReimbursementManagement'));
+const OrgChart = lazy(() => import('./components/OrgChart'));
+const PerformanceAppraisal = lazy(() => import('./components/PerformanceAppraisal'));
+const AssetManagement = lazy(() => import('./components/AssetManagement'));
+const CompanyEvents = lazy(() => import('./components/CompanyEvents'));
+const CompanyPolicies = lazy(() => import('./components/CompanyPolicies'));
+const PayrollRun = lazy(() => import('./components/PayrollRun'));
+const THRCalculation = lazy(() => import('./components/THRCalculation'));
+const BulkImport = lazy(() => import('./components/BulkImport'));
+const QRCodeManagement = lazy(() => import('./components/QRCodeManagement'));
+const ActivityFeed = lazy(() => import('./components/ActivityFeed'));
+const AnalyticsDashboard = lazy(() => import('./components/AnalyticsDashboard'));
+const BankExport = lazy(() => import('./components/BankExport'));
+const BannerManager = lazy(() => import('./components/BannerManager'));
+const EmployeeProfileView = lazy(() => import('./components/EmployeeProfileView'));
+const EmployeeSalary = lazy(() => import('./components/EmployeeSalary'));
+const OnboardingChecklist = lazy(() => import('./components/OnboardingChecklist'));
+const PayrollReports = lazy(() => import('./components/PayrollReports'));
+const SalaryComponents = lazy(() => import('./components/SalaryComponents'));
+const SalaryRevision = lazy(() => import('./components/SalaryRevision'));
+const SystemConfig = lazy(() => import('./components/SystemConfig'));
+const TaxReports = lazy(() => import('./components/TaxReports'));
 import HRISExportWrapper from '../../components/HRISExportWrapper';
 import { supabase } from '../../utils/supabaseClient';
 
 const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogout }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('tenant_active_tab') || 'home');
+  const [activeTab, setActiveTab] = useState(() => {
+    try { return sessionStorage.getItem('tenant_active_tab') || 'home'; } catch { return 'home'; }
+  });
   const [clickCount, setClickCount] = useState(0);
   const [tenantData, setTenantData] = useState({ name: 'Memuat...', logo_url: null });
 
@@ -29,7 +58,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
   }, []);
 
   useEffect(() => {
-    sessionStorage.setItem('tenant_active_tab', activeTab);
+    try { sessionStorage.setItem('tenant_active_tab', activeTab); } catch {}
   }, [activeTab]);
 
   const fetchTenantData = async () => {
@@ -100,14 +129,16 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
               )}
             </div>
             <h2 
-              className={`font-serif text-[14px] leading-tight tracking-wide bg-clip-text text-transparent bg-gradient-to-r ${(sessionStorage.getItem('god_key') === 'DEWA-999' || isImpersonating) ? 'from-[var(--danger)] to-[var(--warning)] cursor-pointer active:scale-95' : 'from-white to-gray-400'}`}
+              className={`font-serif text-[14px] leading-tight tracking-wide bg-clip-text text-transparent bg-gradient-to-r ${(() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999' || isImpersonating; } catch { return isImpersonating; } })() ? 'from-[var(--danger)] to-[var(--warning)] cursor-pointer active:scale-95' : 'from-white to-gray-400'}`}
               onClick={() => {
-                if (sessionStorage.getItem('god_key') === 'DEWA-999' && onCycleRole) onCycleRole();
-                else if (isImpersonating && onGodModeReturn) onGodModeReturn();
+                try {
+                  if (sessionStorage.getItem('god_key') === 'DEWA-999' && onCycleRole) onCycleRole();
+                  else if (isImpersonating && onGodModeReturn) onGodModeReturn();
+                } catch {}
               }}
-              title={(sessionStorage.getItem('god_key') === 'DEWA-999' || isImpersonating) ? "Klik untuk Pindah Dasbor" : ""}
+              title={(isImpersonating) ? "Klik untuk Pindah Dasbor" : ""}
             >
-              {tenantData.name} {(sessionStorage.getItem('god_key') === 'DEWA-999' || isImpersonating) && <span className="text-[10px] ml-1 block text-[var(--danger)] font-black opacity-80">(God Mode)</span>}
+              {tenantData.name} {(() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999' || isImpersonating; } catch { return isImpersonating; } })() && <span className="text-[10px] ml-1 block text-[var(--danger)] font-black opacity-80">(God Mode)</span>}
             </h2>
           </div>
 
@@ -120,10 +151,24 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             </button>
 
             <button
+              onClick={() => { setActiveTab('home'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'home' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <BarChart3 size={20} /> <span className="font-medium tracking-wide text-sm">Dashboard</span>
+            </button>
+
+            <button
               onClick={() => { setIsSidebarOpen(false); navigate('/'); }}
               className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-400 hover:bg-[var(--success)]/10 hover:text-[var(--success)] border border-dashed border-white/5 hover:border-[var(--success)]/30"
             >
               <Fingerprint size={20} /> <span className="font-medium tracking-wide text-sm">Absensi Saya</span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('employee-directory'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'employee-directory' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Users size={20} /> <span className="font-medium tracking-wide text-sm">Direktori Karyawan</span>
             </button>
 
             <button
@@ -157,10 +202,142 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
               <ShieldCheck size={20} /> <span className="font-medium tracking-wide text-sm">Pusat Persetujuan</span>
             </button>
             <button
+              onClick={() => { setActiveTab('loans'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'loans' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <DollarSign size={20} /> <span className="font-medium tracking-wide text-sm">Manajemen Pinjaman</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('reimbursements'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'reimbursements' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <FileText size={20} /> <span className="font-medium tracking-wide text-sm">Reimbursemen</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('finance'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'finance' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <TrendingUp size={20} /> <span className="font-medium tracking-wide text-sm">Dashboard Keuangan</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('schedule-calendar'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'schedule-calendar' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Calendar size={20} /> <span className="font-medium tracking-wide text-sm">Kalender Jadwal</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('holidays'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'holidays' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Sun size={20} /> <span className="font-medium tracking-wide text-sm">Kalendar Libur</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('org-chart'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'org-chart' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Briefcase size={20} /> <span className="font-medium tracking-wide text-sm">Bagan Organisasi</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('performance'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'performance' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Star size={20} /> <span className="font-medium tracking-wide text-sm">Penilaian Kinerja</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('activity-feed'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'activity-feed' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <ActivityIcon size={20} /> <span className="font-medium tracking-wide text-sm">Umpan Aktivitas</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('analytics'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'analytics' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <LineChart size={20} /> <span className="font-medium tracking-wide text-sm">Dashboard Analitik</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('employee-profile'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'employee-profile' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <UserCircle size={20} /> <span className="font-medium tracking-wide text-sm">Profil Karyawan</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('onboarding'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'onboarding' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <ClipboardCheck size={20} /> <span className="font-medium tracking-wide text-sm">Checklist Onboarding</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('assets'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'assets' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <ClipboardList size={20} /> <span className="font-medium tracking-wide text-sm">Manajemen Aset</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('events'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'events' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <PartyPopper size={20} /> <span className="font-medium tracking-wide text-sm">Acara Perusahaan</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('policies'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'policies' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <ScrollText size={20} /> <span className="font-medium tracking-wide text-sm">Kebijakan Perusahaan</span>
+            </button>
+            <button
               onClick={() => { setActiveTab('payroll'); setIsSidebarOpen(false); }}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'payroll' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
             >
               <Calculator size={20} /> <span className="font-medium tracking-wide text-sm">Penggajian & Pajak</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('salary-components'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'salary-components' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Layers size={20} /> <span className="font-medium tracking-wide text-sm">Komponen Gaji</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('salary-revision'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'salary-revision' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <GitBranch size={20} /> <span className="font-medium tracking-wide text-sm">Revisi Gaji</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('employee-salary'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'employee-salary' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Wallet size={20} /> <span className="font-medium tracking-wide text-sm">Data Gaji Karyawan</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('payroll-run'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'payroll-run' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <DollarSign size={20} /> <span className="font-medium tracking-wide text-sm">Proses Penggajian</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('payroll-reports'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'payroll-reports' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <FileText size={20} /> <span className="font-medium tracking-wide text-sm">Laporan Penggajian</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('tax-reports'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'tax-reports' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Landmark size={20} /> <span className="font-medium tracking-wide text-sm">Laporan Pajak</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('bank-export'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'bank-export' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Landmark size={20} /> <span className="font-medium tracking-wide text-sm">Ekspor Bank</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('thr'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'thr' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Gift size={20} /> <span className="font-medium tracking-wide text-sm">Perhitungan THR</span>
             </button>
             <button
               onClick={() => { setActiveTab('permissions'); setIsSidebarOpen(false); }}
@@ -179,6 +356,36 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'broadcast' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
             >
               <Megaphone size={20} /> <span className="font-medium tracking-wide text-sm">Pusat Pengumuman</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('banners'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'banners' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Image size={20} /> <span className="font-medium tracking-wide text-sm">Manajemen Banner</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('bulk-import'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'bulk-import' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Upload size={20} /> <span className="font-medium tracking-wide text-sm">Import Data</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('qrcode'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'qrcode' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <QrCode size={20} /> <span className="font-medium tracking-wide text-sm">Manajemen QR</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('workflow'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'workflow' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <GitBranch size={20} /> <span className="font-medium tracking-wide text-sm">Workflow Persetujuan</span>
+            </button>
+            <button
+              onClick={() => { setActiveTab('system-config'); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'system-config' ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <Wrench size={20} /> <span className="font-medium tracking-wide text-sm">Konfigurasi Sistem</span>
             </button>
           </div>
           
@@ -211,19 +418,48 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
       {/* Main Content Area */}
       <main className="flex-1 p-0 z-10 overflow-y-auto">
         <div className="w-full px-4 mt-2 sm:mt-4">
-          {activeTab === 'home' && <DashboardHome onNavigate={(tab) => { setActiveTab(tab); setIsSidebarOpen(false); }} />}
-          {activeTab === 'profile' && <CompanyProfile onUpdate={fetchTenantData} />}
-          {activeTab === 'monitoring' && <SubAdminDashboard isEmbedded={true} initialTab="monitor" />}
-          {activeTab === 'structure' && <StructureManagement />}
-          {activeTab === 'shift' && <ShiftDictionary />}
-          {activeTab === 'schedule' && <ScheduleUpload />}
-          {activeTab === 'broadcast' && <BroadcastCenter />}
-          {activeTab === 'approval' && <SubAdminDashboard isEmbedded={true} initialTab="verification" />}
-          {activeTab === 'payroll' && <PayrollSettings />}
-          {activeTab === 'permissions' && <PermissionManager />}
-          {activeTab === 'workflow' && <ApprovalWorkflow />}
-          {activeTab === 'audit' && <AuditTrailView />}
-          {activeTab === 'settings' && <GeneralSettings />}
+          <Suspense fallback={<div className="p-20 text-center"><div className="w-8 h-8 border-2 border-[var(--aurora-3)] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
+            {activeTab === 'home' && <DashboardHome onNavigate={(tab) => { setActiveTab(tab); setIsSidebarOpen(false); }} />}
+            {activeTab === 'profile' && <CompanyProfile onUpdate={fetchTenantData} />}
+            {activeTab === 'employee-directory' && <EmployeeDirectory />}
+            {activeTab === 'monitoring' && <SubAdminDashboard isEmbedded={true} initialTab="monitor" />}
+            {activeTab === 'structure' && <StructureManagement />}
+            {activeTab === 'shift' && <ShiftDictionary />}
+            {activeTab === 'schedule' && <ScheduleUpload />}
+            {activeTab === 'broadcast' && <BroadcastCenter />}
+            {activeTab === 'approval' && <SubAdminDashboard isEmbedded={true} initialTab="verification" />}
+            {activeTab === 'loans' && <LoanManagement />}
+            {activeTab === 'reimbursements' && <ReimbursementManagement />}
+            {activeTab === 'finance' && <FinanceDashboard />}
+            {activeTab === 'schedule-calendar' && <ScheduleCalendar />}
+            {activeTab === 'holidays' && <HolidayManagement />}
+            {activeTab === 'org-chart' && <OrgChart />}
+            {activeTab === 'performance' && <PerformanceAppraisal />}
+            {activeTab === 'assets' && <AssetManagement />}
+            {activeTab === 'events' && <CompanyEvents />}
+            {activeTab === 'policies' && <CompanyPolicies />}
+            {activeTab === 'payroll' && <PayrollSettings />}
+            {activeTab === 'payroll-run' && <PayrollRun />}
+            {activeTab === 'thr' && <THRCalculation />}
+            {activeTab === 'permissions' && <PermissionManager />}
+            {activeTab === 'workflow' && <ApprovalWorkflow />}
+            {activeTab === 'audit' && <AuditTrailView />}
+            {activeTab === 'activity-feed' && <ActivityFeed />}
+            {activeTab === 'analytics' && <AnalyticsDashboard />}
+            {activeTab === 'employee-profile' && <EmployeeProfileView />}
+            {activeTab === 'onboarding' && <OnboardingChecklist />}
+            {activeTab === 'salary-components' && <SalaryComponents />}
+            {activeTab === 'salary-revision' && <SalaryRevision />}
+            {activeTab === 'employee-salary' && <EmployeeSalary />}
+            {activeTab === 'payroll-reports' && <PayrollReports />}
+            {activeTab === 'tax-reports' && <TaxReports />}
+            {activeTab === 'bank-export' && <BankExport />}
+            {activeTab === 'bulk-import' && <BulkImport />}
+            {activeTab === 'qrcode' && <QRCodeManagement />}
+            {activeTab === 'banners' && <BannerManager />}
+            {activeTab === 'system-config' && <SystemConfig />}
+            {activeTab === 'settings' && <GeneralSettings />}
+          </Suspense>
         </div>
       </main>
     </div>

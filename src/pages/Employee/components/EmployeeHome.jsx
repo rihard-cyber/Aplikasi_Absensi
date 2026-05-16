@@ -34,27 +34,35 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
 
   const fetchHolidays = async () => {
     try {
+      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data: prof } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-      if (!prof?.tenant_id) return;
+      const tid = prof?.tenant_id;
+      if (!tid && !isGod) return;
       const today = new Date().toISOString().split('T')[0];
       const threeMonths = new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0];
-      const { data } = await supabase.from('company_holidays').select('*').eq('tenant_id', prof.tenant_id).gte('date', today).lte('date', threeMonths).order('date');
+      let q = supabase.from('company_holidays').select('*').gte('date', today).lte('date', threeMonths);
+      if (tid) q = q.eq('tenant_id', tid); else q = q.limit(10);
+      const { data } = await q.order('date');
       if (data) setUpcomingHolidays(data);
     } catch (e) { console.warn('Holiday fetch error', e); }
   };
 
   const fetchAnniversary = async () => {
     try {
+      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data: prof } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-      if (!prof?.tenant_id) return;
-      const { data } = await supabase.from('profiles').select('id, full_name, position, birth_date').eq('tenant_id', prof.tenant_id).in('role', ['EMPLOYEE', 'SUB_ADMIN']);
+      const tid = prof?.tenant_id;
+      if (!tid && !isGod) return;
+      let q = supabase.from('profiles').select('id, full_name, position, birth_date').in('role', ['EMPLOYEE', 'SUB_ADMIN']);
+      if (tid) q = q.eq('tenant_id', tid); else q = q.limit(50);
+      const { data } = await q;
       if (data) {
         const thisMonth = new Date().getMonth();
-        const monthBirthdays = data.filter(e => e.birth_date && e.id !== prof.id).filter(e => new Date(e.birth_date).getMonth() === thisMonth);
+        const monthBirthdays = data.filter(e => e.birth_date).filter(e => new Date(e.birth_date).getMonth() === thisMonth);
         setAnniversaryData(monthBirthdays.slice(0, 5));
       }
     } catch (e) { console.warn('Anniversary error', e); }
@@ -62,19 +70,17 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
 
   const fetchAnnouncements = async () => {
     try {
+      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data: profile } = await supabase.from('profiles')
         .select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-      if (!profile?.tenant_id) return;
+      const tid = profile?.tenant_id;
+      if (!tid && !isGod) return;
 
-      const { data, error } = await supabase
-        .from('announcements')
-        .select('*')
-        .eq('tenant_id', profile.tenant_id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(3);
+      let q = supabase.from('announcements').select('*').eq('is_active', true);
+      if (tid) q = q.eq('tenant_id', tid); else q = q.limit(10);
+      const { data } = await q.order('created_at', { ascending: false }).limit(3);
       
       if (data) setAnnouncements(data);
     } catch (e) {

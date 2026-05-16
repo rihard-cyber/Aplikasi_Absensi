@@ -1,24 +1,28 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { ShieldAlert, Globe, Activity, Settings, Key, Search, Users, Zap, BarChart3, ShieldCheck, MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, LogOut } from 'lucide-react';
+import React, { useState, useRef, useCallback, Suspense } from 'react';
+import { ShieldAlert, Globe, Activity, Settings, Key, Search, Users, Zap, BarChart3, ShieldCheck, MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, LogOut, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../utils/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import GlobalMap from './components/GlobalMap';
-import LuxuryMetrics from './components/LuxuryMetrics';
-import SecurityAudit from './components/SecurityAudit';
-import SaaSManagement from './components/SaaSManagement';
-import GlobalShiftView from './components/GlobalShiftView';
-import GlobalFinance from './components/GlobalFinance';
-import GlobalAudit from './components/GlobalAudit';
-import SubAdminDashboard from '../SubAdmin/SubAdminDashboard'; // Reuse monitoring components
 import HRISExportWrapper from '../../components/HRISExportWrapper';
 import { useSFX } from '../../utils/useSFX';
 import { generatePin } from '../../utils/pinUtil';
 import { useConfirm } from '../../components/ConfirmDialog';
 
+const GlobalMap = React.lazy(() => import('./components/GlobalMap'));
+const LuxuryMetrics = React.lazy(() => import('./components/LuxuryMetrics'));
+const SecurityAudit = React.lazy(() => import('./components/SecurityAudit'));
+const SaaSManagement = React.lazy(() => import('./components/SaaSManagement'));
+const GlobalShiftView = React.lazy(() => import('./components/GlobalShiftView'));
+const GlobalFinance = React.lazy(() => import('./components/GlobalFinance'));
+const GlobalAudit = React.lazy(() => import('./components/GlobalAudit'));
+const SubAdminDashboard = React.lazy(() => import('../SubAdmin/SubAdminDashboard'));
+
+const LSusp = ({ children }) => <Suspense fallback={<div className="flex items-center justify-center py-16"><Loader2 size={24} className="animate-spin text-[var(--aurora-3)]" /></div>}>{children}</Suspense>;
+
 const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
-  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('god_active_tab') || 'infrastructure'); // infrastructure, operations
+  const [activeTab, setActiveTab] = useState(() => {
+    try { return sessionStorage.getItem('god_active_tab') || 'infrastructure'; } catch { return 'infrastructure'; }
+  }); // infrastructure, operations
   const [bypassCode, setBypassCode] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [logoClickCount, setLogoClickCount] = useState(0);
@@ -42,7 +46,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
   const [selectedTenantBypass, setSelectedTenantBypass] = useState('all');
 
   React.useEffect(() => {
-    sessionStorage.setItem('god_active_tab', activeTab);
+    try { sessionStorage.setItem('god_active_tab', activeTab); } catch {}
   }, [activeTab]);
 
   React.useEffect(() => {
@@ -312,7 +316,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
                   <p className="text-[9px] text-gray-500 uppercase tracking-[0.3em] mt-1 font-black">Live Satellite Infrastructure</p>
                 </div>
                 <div className="flex-1 rounded-2xl lg:rounded-3xl overflow-hidden border border-white/10 relative min-h-[300px]">
-                  <GlobalMap />
+                  <LSusp><GlobalMap /></LSusp>
                 </div>
               </section>
               <section className="glass-panel p-4">
@@ -324,7 +328,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
                     <p className="text-[9px] text-gray-500 uppercase tracking-[0.3em] mt-1 font-black">Real-time Business Intelligence</p>
                   </div>
                 </div>
-                <div className="w-full h-[250px]"><LuxuryMetrics /></div>
+                <div className="w-full h-[250px]"><LSusp><LuxuryMetrics /></LSusp></div>
               </section>
             </div>
             <div className="lg:col-span-4 flex flex-col gap-4">
@@ -346,33 +350,33 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
                 </div>
               </section>
               <section className="glass-panel p-4 flex-1 flex flex-col overflow-visible min-h-[350px]">
-                <SaaSManagement onImpersonate={onImpersonate} searchQuery={searchQuery} />
+                <LSusp><SaaSManagement onImpersonate={onImpersonate} searchQuery={searchQuery} /></LSusp>
               </section>
               <section className="glass-panel p-4 border border-[var(--danger)]/30">
                 <h2 className="font-serif text-lg tracking-wide mb-4 flex items-center gap-3 text-[var(--danger)]"><ShieldAlert size={20} /> Audit Keamanan</h2>
-                <SecurityAudit searchQuery={searchQuery} />
+                <LSusp><SecurityAudit searchQuery={searchQuery} /></LSusp>
               </section>
             </div>
           </motion.div>
         )}
         {activeTab === 'operations' && (
           <motion.div key="ops" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 z-10">
-            <SubAdminDashboard isEmbedded={true} initialTab="monitor" />
+            <LSusp><SubAdminDashboard isEmbedded={true} initialTab="monitor" /></LSusp>
           </motion.div>
         )}
         {activeTab === 'shifts' && (
           <motion.div key="shifts" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="flex-1 z-10">
-            <GlobalShiftView />
+            <LSusp><GlobalShiftView /></LSusp>
           </motion.div>
         )}
         {activeTab === 'finance' && (
           <motion.div key="finance" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="flex-1 z-10">
-            <GlobalFinance />
+            <LSusp><GlobalFinance /></LSusp>
           </motion.div>
         )}
         {activeTab === 'audit' && (
           <motion.div key="audit" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="flex-1 z-10">
-            <GlobalAudit />
+            <LSusp><GlobalAudit /></LSusp>
           </motion.div>
         )}
       </AnimatePresence>

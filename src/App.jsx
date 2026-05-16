@@ -9,10 +9,10 @@ import OfflineIndicator from './components/OfflineIndicator';
 import { supabase } from './utils/supabaseClient';
 import ErrorBoundary from './components/ErrorBoundary';
 
-import AttendanceScreen from './pages/Employee/AttendanceScreen';
-import AuthPortal from './pages/Auth/AuthPortal';
-import LandingPage from './pages/LandingPage';
-import NotFound from './pages/NotFound';
+const AttendanceScreen = lazy(() => import('./pages/Employee/AttendanceScreen'));
+const AuthPortal = lazy(() => import('./pages/Auth/AuthPortal'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 const CommandCenter = lazy(() => import('./pages/SuperAdmin/CommandCenter'));
 const TenantDashboard = lazy(() => import('./pages/TenantAdmin/TenantDashboard'));
 const SubAdminDashboard = lazy(() => import('./pages/SubAdmin/SubAdminDashboard'));
@@ -149,7 +149,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
   }, [onBackPressed]);
 
   const handleCycleRole = () => {
-    if (sessionStorage.getItem('god_key') !== 'DEWA-999') return;
+    try { if (sessionStorage.getItem('god_key') !== 'DEWA-999') return; } catch { return; }
     
     const roles = ['SUPER_ADMIN', 'TENANT_ADMIN', 'SUB_ADMIN', 'EMPLOYEE'];
     const currentIdx = roles.indexOf(userRole);
@@ -167,7 +167,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
   return (
     <>
       {/* GOD MODE INDICATOR */}
-      {sessionStorage.getItem('god_key') === 'DEWA-999' && (
+      {(() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })() && (
         <div 
           onClick={handleCycleRole}
           className="fixed top-2 left-1/2 -translate-x-1/2 z-[9999] px-4 py-1 bg-[var(--danger)] text-white text-[10px] font-bold rounded-full shadow-[0_0_15px_rgba(255,0,85,0.5)] border border-white/20 animate-pulse cursor-pointer hover:bg-red-600 transition-colors active:scale-95 safe-top"
@@ -226,8 +226,8 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
           </div>
         </div>
       }>
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
+      <AnimatePresence>
+        <Routes>
           {/* LANDING PAGE — company profile / marketing */}
           <Route path="/" element={
             isAuthenticated 
@@ -245,7 +245,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
           {/* EMPLOYEE DASHBOARD */}
           <Route path="/app" element={
               isAuthenticated && (userRole === 'EMPLOYEE' || userRole === 'TENANT_ADMIN' || userRole === 'SUB_ADMIN')
-                ? <PageTransition><AttendanceScreen onGodModeReturn={handleGodModeReturnWithNav} isImpersonating={originalRole === 'SUPER_ADMIN'} onCycleRole={handleCycleRole} /></PageTransition>
+                ? <AttendanceScreen onGodModeReturn={handleGodModeReturnWithNav} isImpersonating={originalRole === 'SUPER_ADMIN'} onCycleRole={handleCycleRole} />
                 : isAuthenticated && userRole === 'SUPER_ADMIN' ? <Navigate to="/superadmin" replace />
                 : <Navigate to="/login" replace />
             }
@@ -256,7 +256,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
             path="/superadmin"
             element={
               isAuthenticated && userRole === 'SUPER_ADMIN' 
-                ? <PageTransition><CommandCenter onImpersonate={handleImpersonateWithNav} onCycleRole={handleCycleRole} onLogout={handleLogout} /></PageTransition>
+                ? <CommandCenter onImpersonate={handleImpersonateWithNav} onCycleRole={handleCycleRole} onLogout={handleLogout} />
                 : isAuthenticated ? <Navigate to="/" replace />
                 : <Navigate to="/login" replace />
             }
@@ -267,7 +267,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
             path="/tenantadmin"
             element={
               isAuthenticated && userRole === 'TENANT_ADMIN' 
-                ? <PageTransition><TenantDashboard onGodModeReturn={handleGodModeReturnWithNav} isImpersonating={originalRole === 'SUPER_ADMIN'} onCycleRole={handleCycleRole} onLogout={handleLogout} /></PageTransition>
+                ? <TenantDashboard onGodModeReturn={handleGodModeReturnWithNav} isImpersonating={originalRole === 'SUPER_ADMIN'} onCycleRole={handleCycleRole} onLogout={handleLogout} />
                 : isAuthenticated ? <Navigate to="/" replace />
                 : <Navigate to="/login" replace />
             }
@@ -277,8 +277,8 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
           <Route
             path="/subadmin"
             element={
-              isAuthenticated && (userRole === 'SUB_ADMIN' || userRole === 'TENANT_ADMIN' || userRole === 'SUPER_ADMIN')
-                ? <PageTransition><SubAdminDashboard onCycleRole={handleCycleRole} /></PageTransition>
+              isAuthenticated && (['SUB_ADMIN', 'TENANT_ADMIN', 'SUPER_ADMIN', 'EMPLOYEE'].includes(userRole))
+                ? <SubAdminDashboard onCycleRole={handleCycleRole} />
                 : isAuthenticated ? <Navigate to="/" replace />
                 : <Navigate to="/login" replace />
             }
@@ -318,25 +318,26 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
 function App() {
   // PERSISTENCE LOGIC: Load initial state from localStorage
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('is_authenticated') === 'true';
+    try { return localStorage.getItem('is_authenticated') === 'true'; } catch { return false; }
   });
   const [userRole, setUserRole] = useState(() => {
-    const stored = localStorage.getItem('user_role');
-    return stored ? stored.toUpperCase() : null;
+    try {
+      const stored = localStorage.getItem('user_role');
+      return stored ? stored.toUpperCase() : null;
+    } catch { return null; }
   });
   const [originalRole, setOriginalRole] = useState(() => {
-    const stored = localStorage.getItem('original_role');
-    return stored ? stored.toUpperCase() : null;
+    try {
+      const stored = localStorage.getItem('original_role');
+      return stored ? stored.toUpperCase() : null;
+    } catch { return null; }
   });
 
   // Sync state to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('is_authenticated', isAuthenticated);
-    if (userRole) localStorage.setItem('user_role', userRole);
-    else localStorage.removeItem('user_role');
-    
-    if (originalRole) localStorage.setItem('original_role', originalRole);
-    else localStorage.removeItem('original_role');
+    try { localStorage.setItem('is_authenticated', isAuthenticated); } catch {}
+    try { if (userRole) localStorage.setItem('user_role', userRole); else localStorage.removeItem('user_role'); } catch {}
+    try { if (originalRole) localStorage.setItem('original_role', originalRole); else localStorage.removeItem('original_role'); } catch {}
   }, [isAuthenticated, userRole, originalRole]);
 
   const handleLogin = (role) => {
@@ -363,11 +364,11 @@ function App() {
     setIsAuthenticated(false);
     setUserRole(null);
     setOriginalRole(null);
-    sessionStorage.clear();
+    try { sessionStorage.clear(); } catch {}
     try { await supabase.auth.signOut(); } catch (e) { /* ignore */ }
-    localStorage.removeItem('is_authenticated');
-    localStorage.removeItem('user_role');
-    localStorage.removeItem('original_role');
+    try { localStorage.removeItem('is_authenticated'); } catch {}
+    try { localStorage.removeItem('user_role'); } catch {}
+    try { localStorage.removeItem('original_role'); } catch {}
   };
 
   // Session Heartbeat
