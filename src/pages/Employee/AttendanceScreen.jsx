@@ -36,7 +36,7 @@ const ClockInTab = () => {
   const [officeCoords, setOfficeCoords] = useState({ latitude: -6.200000, longitude: 106.816666, radius: 50, name: 'Mencari Lokasi...' });
   const [projectCode, setProjectCode] = useState('');
   const [showCodeInput, setShowCodeInput] = useState(false);
-  const isGodMode = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+  const isGodMode = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
 
   // --- Camera State ---
   const videoRef = useRef(null);
@@ -132,7 +132,7 @@ const ClockInTab = () => {
   const checkLocation = async () => {
     setLocationState('CHECKING');
     try {
-      const _g = (() => { try { return sessionStorage.getItem('god_key'); } catch { return null; } })(); if (_g === 'DEWA-999') {
+      if (sessionStorage.getItem('super_admin_verified') === 'true') {
         setDistance(0);
         setLocationState('IN_RANGE');
         return;
@@ -209,25 +209,17 @@ const ClockInTab = () => {
       interval = setInterval(() => {
         setChargeProgress(prev => {
           if (prev >= 100) {
-            // Anti-Fraud Simulation: 10% chance of random mismatch if not steady
-            const isMatch = Math.random() > 0.1;
-            if (isMatch) {
-              if (locationState === 'OUT_OF_RANGE' && !isGodMode) {
-                setStatus('FAILED');
-                setFraudBlocked(true);
-                if (window.navigator?.vibrate) window.navigator.vibrate([300]);
-                setTimeout(() => { setStatus('IDLE'); setFraudBlocked(false); }, 3000);
-                return 100;
-              }
-              setStatus('VERIFIED');
-              saveAttendanceLog();
-              if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
-            } else {
+            if (locationState === 'OUT_OF_RANGE' && !isGodMode) {
               setStatus('FAILED');
               setFraudBlocked(true);
               if (window.navigator?.vibrate) window.navigator.vibrate([300]);
               setTimeout(() => { setStatus('IDLE'); setFraudBlocked(false); }, 3000);
+              setIsPressing(false);
+              return 100;
             }
+            setStatus('VERIFIED');
+            saveAttendanceLog();
+            if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
             setIsPressing(false);
             return 100;
           }
@@ -256,7 +248,19 @@ const ClockInTab = () => {
         canvas.height = video.videoHeight || 640;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        capturedPhoto = canvas.toDataURL('image/jpeg', 0.8);
+        if (navigator.onLine) {
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.75));
+          if (blob) {
+            const filePath = `${session.user.id}/attendance_${Date.now()}.jpg`;
+            const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, blob, {
+              contentType: 'image/jpeg',
+              upsert: false
+            });
+            if (!uploadError) {
+              capturedPhoto = supabase.storage.from('documents').getPublicUrl(filePath).data.publicUrl;
+            }
+          }
+        }
       }
 
       const logData = {
@@ -349,7 +353,7 @@ const ClockInTab = () => {
           {/* Verification Progress Overlay */}
           {status === 'SCANNING' && (
             <div className="absolute inset-0 flex flex-col items-center justify-center z-40 bg-[var(--aurora-3)]/10 backdrop-blur-[2px]">
-              <p className="text-[10px] font-bold text-[var(--aurora-3)] uppercase tracking-[0.3em] mb-2">Analyzing Face...</p>
+                <p className="text-[10px] font-bold text-[var(--aurora-3)] uppercase tracking-[0.3em] mb-2">Merekam Bukti...</p>
               <div className="w-24 h-1 bg-white/10 rounded-full overflow-hidden">
                 <motion.div className="h-full bg-[var(--aurora-3)]" style={{ width: `${chargeProgress}%` }} />
               </div>
@@ -361,14 +365,14 @@ const ClockInTab = () => {
             {status === 'VERIFIED' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-[var(--success)]/20 backdrop-blur-md flex flex-col items-center justify-center z-50">
                 <CheckCircle2 size={48} className="text-[var(--success)] drop-shadow-[0_0_10px_var(--success)]" />
-                <p className="text-[10px] font-black text-[var(--success)] uppercase tracking-widest mt-2">Face ID Matched</p>
+                <p className="text-[10px] font-black text-[var(--success)] uppercase tracking-widest mt-2">Bukti Terekam</p>
               </motion.div>
             )}
             {status === 'FAILED' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-[var(--danger)]/20 backdrop-blur-md flex flex-col items-center justify-center z-50 text-center p-4">
                 <ShieldAlert size={48} className="text-[var(--danger)]" />
-                <p className="text-[10px] font-black text-[var(--danger)] uppercase tracking-widest mt-2">Mismatch Detected</p>
-                <p className="text-[8px] text-white/60 mt-1 uppercase">Anti-Fraud Protection Active</p>
+                <p className="text-[10px] font-black text-[var(--danger)] uppercase tracking-widest mt-2">Lokasi Tidak Valid</p>
+                <p className="text-[8px] text-white/60 mt-1 uppercase">Absensi diblokir oleh validasi lokasi</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -397,7 +401,7 @@ const ClockInTab = () => {
                   {locationState === 'CHECKING' ? 'MENCARI LOKASI...' : locationState === 'OUT_OF_RANGE' && !isGodMode ? `DILUAR RADIUS (${distance}m)` : isClockOut ? 'ABSEN KELUAR' : 'ABSEN MASUK'}
                 </span>
                 <span className="text-[7px] sm:text-[8px] mt-1 sm:mt-2 text-gray-500 uppercase tracking-widest font-bold text-center px-2 sm:px-4">
-                  {isPressing ? 'HOLD STEADY' : 'TAP & HOLD FACE ID'}
+                  {isPressing ? 'TAHAN SEBENTAR' : 'TAP & HOLD ABSEN'}
                 </span>
               </>
             )}
@@ -417,7 +421,7 @@ const ClockInTab = () => {
             <h3 className="font-bold text-sm tracking-wide text-white truncate">{locationState === 'CHECKING' ? 'Mencari Satelit GPS...' : `${officeCoords.name} • Jarak: ${distance !== null ? distance + 'm' : '...'}`}</h3>
             <div className="flex items-center gap-2 mt-1">
               <div className={`w-2 h-2 rounded-full shadow-[0_0_10px_currentColor] animate-pulse ${locationState === 'IN_RANGE' || isGodMode ? 'bg-[var(--success)] text-[var(--success)]' : 'bg-[var(--danger)] text-[var(--danger)]'}`} />
-              <p className={`text-[10px] font-black uppercase tracking-widest ${locationState === 'IN_RANGE' || isGodMode ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>{locationState === 'IN_RANGE' ? 'Dalam Radius Aman' : isGodMode ? 'God Mode Bypass' : 'Di Luar Radius Aman'}</p>
+              <p className={`text-[10px] font-black uppercase tracking-widest ${locationState === 'IN_RANGE' || isGodMode ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>{locationState === 'IN_RANGE' ? 'Dalam Radius Aman' : isGodMode ? 'SUPER ADMIN PREVIEW Bypass' : 'Di Luar Radius Aman'}</p>
             </div>
           </div>
         </div>
@@ -474,7 +478,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
     banners: []
   });
 
-  const isGodMode = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+  const isGodMode = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
   const userRole = (() => { try { return localStorage.getItem('user_role'); } catch { return null; } })();
   const isAdminUser = userRole === 'TENANT_ADMIN' || userRole === 'SUB_ADMIN';
 
@@ -521,7 +525,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
           let tName = profile.tenants?.name;
           let tLogo = profile.tenants?.logo_url;
 
-          // Fallback if join fails (RLS or Schema) or if God Mode with no tenant_id
+          // Fallback if join fails (RLS or Schema) or if SUPER ADMIN PREVIEW with no tenant_id
           if (!tName && (profile.tenant_id || isGodMode)) {
             let tQuery = supabase.from('tenants').select('name, logo_url');
             if (profile.tenant_id) tQuery = tQuery.eq('id', profile.tenant_id);
@@ -582,7 +586,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
           if (tid) {
             tSettingsQuery = tSettingsQuery.eq('tenant_id', tid);
           } else if (isGodMode) {
-            // God mode: pick any tenant that has settings
+            // SUPER ADMIN PREVIEW: pick any tenant that has settings
             tSettingsQuery = tSettingsQuery.order('created_at').limit(1);
           }
           
@@ -657,10 +661,10 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
         <div className="absolute top-0 left-0 w-full h-[30%] bg-gradient-to-b from-[var(--aurora-1)]/20 to-transparent"></div>
       </div>
 
-      {/* GOD MODE OVERLAY */}
+      {/* SUPER ADMIN PREVIEW OVERLAY */}
       {isGodMode && (
         <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="fixed top-4 right-4 z-50 bg-[var(--danger)]/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-[var(--danger)] text-white text-[10px] font-black tracking-widest flex items-center gap-2 shadow-[0_0_15px_rgba(255,0,85,0.5)] safe-top">
-          <ShieldAlert size={12} /> GOD MODE ACTIVE
+          <ShieldAlert size={12} /> SUPER ADMIN PREVIEW ACTIVE
         </motion.div>
       )}
 

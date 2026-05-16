@@ -76,7 +76,8 @@ const AuthPortal = ({ onLogin }) => {
         if (userProfile) {
           const role = userProfile?.role?.toUpperCase();
           if (role === 'SUPER_ADMIN') {
-            sessionStorage.setItem('god_key', 'DEWA-999');
+            sessionStorage.removeItem('god_key');
+            sessionStorage.setItem('super_admin_verified', 'true');
             onLogin('SUPER_ADMIN');
             navigate('/superadmin');
           } else if (role === 'TENANT_ADMIN') {
@@ -113,6 +114,37 @@ const AuthPortal = ({ onLogin }) => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const resolveRegistrationTenant = async () => {
+    const { data, error } = await supabase.rpc('resolve_tenant_registration_code', {
+      p_code: formData.activationCode,
+      p_admin: isTenantReg
+    });
+
+    const tenant = Array.isArray(data) ? data[0] : data;
+    if (error || !tenant?.id) {
+      throw new Error(
+        isTenantReg
+          ? 'Kode Lisensi Tenant tidak valid atau sudah pernah digunakan.\nGunakan kode yang diberikan oleh Super Admin.'
+          : 'Kode Aktivasi Karyawan tidak valid.\nGunakan kode dengan prefix "SI-" yang diberikan oleh Admin perusahaan Anda.'
+      );
+    }
+    return tenant;
+  };
+
+  const registerProfileWithCode = async (authId, deviceIdentifier) => {
+    const { error } = await supabase.rpc('register_profile_with_code', {
+      p_auth_id: authId,
+      p_full_name: formData.name,
+      p_nip: isTenantReg ? null : formData.nip,
+      p_email: formData.email,
+      p_activation_code: formData.activationCode,
+      p_is_tenant_admin: isTenantReg,
+      p_device_id: deviceIdentifier
+    });
+
+    if (error) throw new Error(`Gagal menyimpan profil: ${error.message}`);
+  };
+
   const handleSendOTP = async () => {
     // ── STEP 0: Validasi form lokal (sebelum sentuh database) ──────────────
     if (!formData.name || !formData.email || !formData.regPassword) {
@@ -134,43 +166,8 @@ const AuthPortal = ({ onLogin }) => {
     try {
       // ── STEP 1: Validasi Kode Aktivasi ke Database SEBELUM membuat akun ──
       // Jika kode salah, proses berhenti di sini. Email TIDAK akan terdaftar.
-      let tenant;
-      if (isTenantReg) {
-        // Coba cek admin_code dulu (kolom baru)
-        const { data: tenantByAdmin } = await supabase
-          .from('tenants').select('id, name')
-          .eq('admin_code', formData.activationCode)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (tenantByAdmin) {
-          tenant = tenantByAdmin;
-        } else {
-          // Fallback: cek activation_code dengan prefix ADM- (kompatibilitas)
-          const { data: tenantByCode } = await supabase
-            .from('tenants').select('id, name')
-            .eq('activation_code', formData.activationCode)
-            .eq('is_active', true)
-            .maybeSingle();
-
-          if (tenantByCode) {
-            tenant = tenantByCode;
-          } else {
-            throw new Error('Kode Lisensi Tenant tidak valid atau sudah pernah digunakan.\nGunakan kode yang diberikan oleh Super Admin.');
-          }
-        }
-      } else {
-        const { data: tenantData, error: tErr } = await supabase
-          .from('tenants').select('id, name')
-          .eq('activation_code', formData.activationCode)
-          .eq('is_active', true)
-          .maybeSingle();
-        if (tErr || !tenantData) {
-          throw new Error('Kode Aktivasi Karyawan tidak valid.\nGunakan kode dengan prefix "SI-" yang diberikan oleh Admin perusahaan Anda.');
-        }
-        tenant = tenantData;
-      }
-      const boundTenantId = tenant.id;
+      const tenant = await resolveRegistrationTenant();
+      if (!tenant.id) throw new Error('Tenant tidak valid.');
 
       // ── STEP 2: Ambil Device ID ────────────────────────────────────────────
       const deviceIdInfo = await DeviceUtil.getId();
@@ -189,30 +186,21 @@ const AuthPortal = ({ onLogin }) => {
       authUserId = data.user?.id;
 
       // ── STEP 4: Simpan profil ke tabel profiles ────────────────────────────
-      if (data.session || data.user) {
-        const { error: insertError } = await supabase.from('profiles').insert({
-          auth_id: authUserId,
-          tenant_id: boundTenantId,
-          full_name: formData.name,
-          nip: isTenantReg ? 'ADMIN-' + Math.floor(1000 + Math.random() * 9000) : formData.nip,
-          email: formData.email,
-          role: isTenantReg ? 'TENANT_ADMIN' : 'EMPLOYEE',
-          device_id: deviceIdInfo.identifier,
-          attendance_access: true,
-          operational_access: isTenantReg
-        });
+      if (data.session && data.user) {
+        let insertError = null;
+        try {
+          await registerProfileWithCode(authUserId, deviceIdInfo.identifier);
+        } catch (error) {
+          insertError = error;
+        }
 
         if (insertError) {
           // ── ROLLBACK: Profil gagal dibuat, hapus sesi aktif agar email bisa dicoba lagi
           await supabase.auth.signOut();
-          throw new Error(`Gagal menyimpan profil: ${insertError.message}`);
+          throw insertError;
         }
 
         // ── STEP 5: Tandai kode sudah terpakai (hapus dari tenant) ────────────
-        if (isTenantReg) {
-          await supabase.from('tenants').update({ admin_code: null }).eq('id', boundTenantId);
-        }
-
       sessionStorage.setItem('bound_device_id', deviceIdInfo.identifier);
       toast('Pendaftaran berhasil! Silakan masuk.', 'success');
       setFormData(prev => ({ ...prev, identifier: formData.email, password: formData.regPassword }));
@@ -269,46 +257,11 @@ const AuthPortal = ({ onLogin }) => {
       // 2. Dapatkan Hardware ID
       const deviceIdInfo = await DeviceUtil.getId();
 
-      // 2.1 Khusus Tenant Admin: Validasi Kode Aktivasi (sama logikanya dengan handleSendOTP)
-      let boundTenantId = null;
-      let usedAdminCode = false;
-      if (isTenantReg) {
-        const { data: tenantByAdmin } = await supabase.from('tenants').select('id').eq('admin_code', formData.activationCode).eq('is_active', true).maybeSingle();
-        if (tenantByAdmin) {
-          boundTenantId = tenantByAdmin.id;
-          usedAdminCode = true;
-        } else {
-          const { data: tenantByCode } = await supabase.from('tenants').select('id').eq('activation_code', formData.activationCode).eq('is_active', true).maybeSingle();
-          if (tenantByCode) {
-            boundTenantId = tenantByCode.id;
-          } else {
-            throw new Error("Kode Lisensi Tenant tidak valid atau sudah tidak aktif!");
-          }
-        }
-      }
+      await resolveRegistrationTenant();
 
       // 3. Simpan Profile lengkap ke Database Public `users`
       if (authData.user) {
-        const { error: insertError } = await supabase.from('profiles').insert({
-          auth_id: authData.user.id,
-          tenant_id: boundTenantId,
-          full_name: formData.name,
-          nip: isTenantReg ? 'ADMIN-' + Math.floor(1000 + Math.random() * 9000) : formData.nip,
-          email: formData.email,
-          role: isTenantReg ? 'TENANT_ADMIN' : 'EMPLOYEE',
-          device_id: deviceIdInfo.identifier,
-          attendance_access: true,
-          operational_access: isTenantReg
-        });
-        if (insertError) throw insertError;
-
-        if (isTenantReg && boundTenantId) {
-          if (usedAdminCode) {
-            await supabase.from('tenants').update({ admin_code: null }).eq('id', boundTenantId);
-          } else {
-            await supabase.from('tenants').update({ activation_code: null }).eq('id', boundTenantId);
-          }
-        }
+        await registerProfileWithCode(authData.user.id, deviceIdInfo.identifier);
       }
 
       sessionStorage.setItem('bound_device_id', deviceIdInfo.identifier);
@@ -358,9 +311,8 @@ const AuthPortal = ({ onLogin }) => {
     if (window.navigator?.vibrate) window.navigator.vibrate(50);
 
     if (secretClickCount + 1 >= 3) { // 3 clicks
-      setMode('owner');
       setSecretClickCount(0);
-      toast('DEWA-999 Master Channel Activated', 'info');
+      toast('Akses owner hanya melalui akun SUPER_ADMIN resmi.', 'info');
     }
     setTimeout(() => setSecretClickCount(0), 1000); // Reset if too slow
   };
@@ -373,7 +325,7 @@ const AuthPortal = ({ onLogin }) => {
     setIsSendingOTP(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}${window.location.pathname}#/reset-password`,
       });
       if (error) throw error;
       toast(`Instruksi reset kata sandi telah dikirim ke ${formData.email}.`, 'success');
@@ -391,7 +343,7 @@ const AuthPortal = ({ onLogin }) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin
+          redirectTo: `${window.location.origin}${window.location.pathname}#/login`
         }
       });
       if (error) throw error;
@@ -403,25 +355,6 @@ const AuthPortal = ({ onLogin }) => {
 
   // Login Execution Logic
   const executeLogin = async () => {
-    // 0. Master Bypass Code Check (DEWA-999)
-    if (formData.password === 'DEWA-999') {
-      sessionStorage.setItem('god_key', 'DEWA-999');
-      onLogin('SUPER_ADMIN'); 
-      navigate('/superadmin');
-      return;
-    }
-
-    if (formData.password.startsWith('BYPASS-')) {
-      if (formData.identifier.includes('admin')) {
-        onLogin('TENANT_ADMIN');
-        navigate('/tenantadmin');
-      } else {
-        onLogin('EMPLOYEE');
-        navigate('/app');
-      }
-      return; // Skip device checks completely
-    }
-
     try {
       let loginEmail = formData.identifier;
 
@@ -473,7 +406,7 @@ const AuthPortal = ({ onLogin }) => {
 
       // 4. Route based on role from DB (normalized to uppercase)
       const role = userProfile.role?.toUpperCase();
-      if (mode === 'owner' || role === 'SUPER_ADMIN') {
+      if (role === 'SUPER_ADMIN') {
         onLogin('SUPER_ADMIN');
         navigate('/superadmin');
       } else if (role === 'TENANT_ADMIN') {
@@ -564,7 +497,7 @@ const AuthPortal = ({ onLogin }) => {
               ) : mode === 'owner' ? (
                 <motion.div key="owner" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}>
                   <h1 className="text-3xl font-serif font-bold bg-clip-text text-transparent bg-gradient-to-r from-[var(--danger)] to-[var(--warning)]">
-                    MODE DEWA
+                    AKUN ADMIN
                   </h1>
                   <p className="text-gray-400 text-xs mt-2 uppercase tracking-widest">Akses Super Admin</p>
                 </motion.div>
@@ -619,17 +552,15 @@ const AuthPortal = ({ onLogin }) => {
                       value={formData.password}
                       onChange={handleInput}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && formData.password === 'DEWA-999') {
+                        if (e.key === 'Enter') {
                           executeLogin();
-                        } else                       if (e.key === 'Enter') {
-                          toast('Kode Master Salah!', 'error');
                         }
                       }}
                       placeholder=" "
                       className="peer w-full h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 pt-4 pb-2 text-white outline-none focus:border-[var(--danger)] transition-all"
                     />
                     <label className="absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--danger)] peer-valid:top-1.5 peer-valid:text-xs">
-                      Kode Master (Ketik DEWA-999 & Enter)
+                      Kredensial Admin
                     </label>
                   </div>
                 </motion.div>

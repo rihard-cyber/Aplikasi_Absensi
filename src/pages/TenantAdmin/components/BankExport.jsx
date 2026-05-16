@@ -5,6 +5,7 @@ import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const monthName = (month) => MONTHS[Number(month) - 1] || '-';
 
 const BANK_FORMATS = {
   BCA: { name: 'Bank BCA (BDI)', desc: 'Format BCA Data Import' },
@@ -24,7 +25,7 @@ const BankExport = () => {
   useEffect(() => { fetchPeriods(); }, []);
 
   const fetchPeriods = async () => {
-    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
@@ -49,7 +50,9 @@ const BankExport = () => {
     setSelectedPeriod(p);
     if (!p) return;
 
-    const { data: s } = await supabase.from('payroll_summary').select('*, employee_hris_data!user_id(bank_name, bank_account_number, bank_account_name)').eq('period_id', periodId);
+    let summaryQuery = supabase.from('payroll_summary').select('*, employee_hris_data!user_id(bank_name, bank_account_number, bank_account_name)').eq('period_id', periodId);
+    if (p.tenant_id) summaryQuery = summaryQuery.eq('tenant_id', p.tenant_id);
+    const { data: s } = await summaryQuery;
     if (s) setSummaries(s);
   };
 
@@ -122,7 +125,7 @@ const BankExport = () => {
           <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Periode Payroll</label>
           <select value={selectedPeriod?.id || ''} onChange={e => loadPeriod(e.target.value)} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
             <option value="">Pilih periode</option>
-            {periods.map(p => <option key={p.id} value={p.id}>{MONTHS[p.period_month]} {p.period_year}</option>)}
+            {periods.map(p => <option key={p.id} value={p.id}>{monthName(p.period_month)} {p.period_year}</option>)}
           </select>
         </div>
         <div>

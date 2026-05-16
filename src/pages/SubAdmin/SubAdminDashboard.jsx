@@ -36,8 +36,8 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
   const [stats, setStats] = useState({ total: 0, present: 0, late: 0, leave: 0 });
 
   useEffect(() => {
-    const isG = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
-    const isI = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999' || false; } catch { return false; } })();
+    const isG = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
+    const isI = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true' || false; } catch { return false; } })();
     setIsGod(isG);
     setIsImpersonating(isI);
     fetchAuth();
@@ -45,21 +45,8 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
 
   useEffect(() => { if (isAuthorized && isChecking === false) { fetchToday(); fetchPending(); fetchEmployees(); fetchStats(); } }, [isAuthorized, isChecking]);
 
-  const checkAccess = () => {
-    try {
-      const userRole = (localStorage.getItem('user_role') || '').toUpperCase();
-      const godKey = sessionStorage.getItem('god_key');
-      const opAccess = sessionStorage.getItem('operational_access');
-      if (godKey === 'DEWA-999' || opAccess === 'MEMILIKI AKSES' || isEmbedded) return true;
-      if (['TENANT_ADMIN', 'SUB_ADMIN', 'SUPER_ADMIN'].includes(userRole)) return true;
-    } catch {}
-    return false;
-  };
-
   const fetchAuth = async () => {
     try {
-      const authOk = checkAccess();
-      if (!authOk) { setIsChecking(false); return; }
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setIsChecking(false); return; }
       const { data: prof } = await supabase.from('profiles')
@@ -67,7 +54,9 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
         .eq('auth_id', session.user.id)
         .maybeSingle();
       if (prof) {
-        if (prof.role === 'EMPLOYEE' && !prof.operational_access && !isGod) {
+        const role = prof.role?.toUpperCase();
+        const authOk = isEmbedded || ['SUPER_ADMIN', 'TENANT_ADMIN', 'SUB_ADMIN'].includes(role) || (role === 'EMPLOYEE' && prof.operational_access);
+        if (!authOk) {
           navigate('/');
           return;
         }

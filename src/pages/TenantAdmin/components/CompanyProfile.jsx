@@ -6,6 +6,15 @@ import LoadingSkeleton from '../../../components/LoadingSkeleton';
 import { useToast } from '../../../components/Toast';
 import { useConfirm } from '../../../components/ConfirmDialog';
 
+const randomCodeSegment = (length = 4) => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, byte => chars[byte % chars.length]).join('');
+};
+
+const makeActivationCode = (prefix) => `${prefix}-${randomCodeSegment()}-${randomCodeSegment()}`;
+
 const CompanyProfile = ({ onUpdate }) => {
   const [tenant, setTenant] = useState({
     name: '',
@@ -30,7 +39,7 @@ const CompanyProfile = ({ onUpdate }) => {
   const fetchTenantData = async () => {
     setIsLoading(true);
     try {
-      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+      const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       
@@ -79,7 +88,7 @@ const CompanyProfile = ({ onUpdate }) => {
     setIsUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${tenant.id}-${Math.random()}.${fileExt}`;
+      const fileName = `${tenant.id}-${crypto.randomUUID?.() || Date.now()}.${fileExt}`;
       const filePath = `logos/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -115,11 +124,7 @@ const CompanyProfile = ({ onUpdate }) => {
       if (!ok) return;
     }
     try {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let newCode = 'SI-';
-      for (let i = 0; i < 4; i++) newCode += chars.charAt(Math.floor(Math.random() * chars.length));
-      newCode += '-';
-      for (let i = 0; i < 4; i++) newCode += chars.charAt(Math.floor(Math.random() * chars.length));
+      const newCode = makeActivationCode('SI');
 
       const { error } = await supabase.from('tenants').update({ activation_code: newCode }).eq('id', tenant.id);
       if (error) throw new Error(`Gagal menyimpan kode (${error.code}): ${error.message}`);

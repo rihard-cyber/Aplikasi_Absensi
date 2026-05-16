@@ -28,7 +28,7 @@ const EmployeeProfileView = () => {
   useEffect(() => { fetchEmployees(); }, []);
 
   const fetchEmployees = async () => {
-    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
@@ -44,22 +44,34 @@ const EmployeeProfileView = () => {
   const selectEmployee = async (id) => {
     setSelectedId(id);
     setActiveTab('profile');
-    const { data: p } = await supabase.from('profiles').select('*, projects(name), divisions(name), employee_hris_data(*)').eq('id', id).single();
+    let profileQuery = supabase.from('profiles').select('*, projects(name), divisions(name), employee_hris_data(*)').eq('id', id);
+    if (tenantId) profileQuery = profileQuery.eq('tenant_id', tenantId);
+    const { data: p } = await profileQuery.single();
     if (p) setProfileData(p);
 
-    const { data: s } = await supabase.from('employee_salaries').select('amount, salary_components!inner(code, name, type)').eq('user_id', id);
+    let salaryQuery = supabase.from('employee_salaries').select('amount, salary_components!inner(code, name, type)').eq('user_id', id);
+    if (tenantId) salaryQuery = salaryQuery.eq('tenant_id', tenantId);
+    const { data: s } = await salaryQuery;
     if (s) setEmployeeSalaries(s || []);
 
-    const { data: a } = await supabase.from('attendance_logs').select('action, status, timestamp').eq('user_id', id).order('timestamp', { ascending: false }).limit(20);
+    let attendanceQuery = supabase.from('attendance_logs').select('action, status, timestamp').eq('user_id', id);
+    if (tenantId) attendanceQuery = attendanceQuery.eq('tenant_id', tenantId);
+    const { data: a } = await attendanceQuery.order('timestamp', { ascending: false }).limit(20);
     if (a) setAttendanceData(a || []);
 
-    const { data: as } = await supabase.from('company_assets').select('*').eq('assigned_to', id);
+    let assetQuery = supabase.from('company_assets').select('*').eq('assigned_to', id);
+    if (tenantId) assetQuery = assetQuery.eq('tenant_id', tenantId);
+    const { data: as } = await assetQuery;
     if (as) setAssetsData(as || []);
 
-    const { data: r } = await supabase.from('performance_reviews').select('*, reviewers!reviewer_id(full_name)').eq('user_id', id).order('created_at', { ascending: false });
+    let reviewQuery = supabase.from('performance_reviews').select('*, reviewers!reviewer_id(full_name)').eq('user_id', id);
+    if (tenantId) reviewQuery = reviewQuery.eq('tenant_id', tenantId);
+    const { data: r } = await reviewQuery.order('created_at', { ascending: false });
     if (r) setReviewsData(r || []);
 
-    const { data: o } = await supabase.from('onboarding_tasks').select('*').eq('user_id', id).order('created_at');
+    let onboardingQuery = supabase.from('onboarding_tasks').select('*').eq('user_id', id);
+    if (tenantId) onboardingQuery = onboardingQuery.eq('tenant_id', tenantId);
+    const { data: o } = await onboardingQuery.order('created_at');
     if (o) setOnboardingData(o || []);
   };
 

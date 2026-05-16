@@ -20,7 +20,7 @@ const PerformanceAppraisal = () => {
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
-    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('id, tenant_id').eq('auth_id', session.user.id).maybeSingle();

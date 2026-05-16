@@ -17,6 +17,26 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const CommandCenter = lazy(() => import('./pages/SuperAdmin/CommandCenter'));
 const TenantDashboard = lazy(() => import('./pages/TenantAdmin/TenantDashboard'));
 const SubAdminDashboard = lazy(() => import('./pages/SubAdmin/SubAdminDashboard'));
+const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
+const QRScanner = lazy(() => import('./pages/Employee/components/QRScanner'));
+
+const LoadingScreen = () => (
+  <div className="fixed inset-0 bg-[#0B0C10] z-[99999] flex items-center justify-center">
+    <div className="flex flex-col items-center gap-6">
+      <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] p-[2px] shadow-[0_0_40px_rgba(142,45,226,0.4)] animate-pulse">
+        <div className="w-full h-full bg-[#0B0C10] rounded-[22px] flex items-center justify-center font-serif font-bold text-white text-lg relative overflow-hidden">
+          <span className="relative z-10">SP</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1">
+        <div className="w-2 h-2 rounded-full bg-[var(--aurora-1)] animate-bounce" style={{ animationDelay: '0s' }} />
+        <div className="w-2 h-2 rounded-full bg-[var(--aurora-3)] animate-bounce" style={{ animationDelay: '0.15s' }} />
+        <div className="w-2 h-2 rounded-full bg-[var(--aurora-1)] animate-bounce" style={{ animationDelay: '0.3s' }} />
+      </div>
+      <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold">Memuat...</p>
+    </div>
+  </div>
+);
 
 // Komponen Pembungkus Transisi Halaman (Efek Blur & Scale yang mulus)
 const PageTransition = ({ children }) => (
@@ -38,7 +58,8 @@ const useSupabaseHealthCheck = () => {
     const controller = new AbortController();
     const check = async () => {
       try {
-        const url = import.meta.env.VITE_SUPABASE_URL || 'https://bhauqlobuiuavaoeoawc.supabase.co';
+        const url = import.meta.env.VITE_SUPABASE_URL;
+        if (!url) return;
         const res = await fetch(url, { method: 'HEAD', mode: 'no-cors', signal: controller.signal });
         if (res.type === 'error') {
           toast('Supabase tidak dapat dijangkau. Cek koneksi internet atau restore project di Supabase Dashboard.', 'error');
@@ -71,7 +92,7 @@ const RouteLoadingBar = () => {
 };
 
 // Komponen Rute Animasi agar `useLocation` dapat menangkap perubahan path
-const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handleImpersonate, handleGodModeReturn, handleLogout }) => {
+const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handleLogin, handleImpersonate, handleGodModeReturn, handleLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [navStack, setNavStack] = useState([]);
@@ -150,13 +171,14 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
   }, [onBackPressed]);
 
   const handleCycleRole = () => {
-    try { if (sessionStorage.getItem('god_key') !== 'DEWA-999') return; } catch { return; }
+    if (userRole !== 'SUPER_ADMIN' && originalRole !== 'SUPER_ADMIN') return;
     
     const roles = ['SUPER_ADMIN', 'TENANT_ADMIN', 'SUB_ADMIN', 'EMPLOYEE'];
     const currentIdx = roles.indexOf(userRole);
     const nextRole = roles[(currentIdx + 1) % roles.length];
     
-    handleLogin(nextRole);
+    if (nextRole === 'SUPER_ADMIN') handleGodModeReturn();
+    else handleImpersonate(nextRole);
     if (nextRole === 'SUPER_ADMIN') navigate('/superadmin');
     else if (nextRole === 'TENANT_ADMIN') navigate('/tenantadmin');
     else if (nextRole === 'SUB_ADMIN') navigate('/subadmin');
@@ -165,16 +187,18 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
     if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
   };
 
+  if (authLoading) return <LoadingScreen />;
+
   return (
     <>
-      {/* GOD MODE INDICATOR */}
-      {(() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })() && (
+      {/* SUPER ADMIN PREVIEW INDICATOR */}
+      {originalRole === 'SUPER_ADMIN' && (
         <div 
           onClick={handleCycleRole}
           className="fixed top-2 left-1/2 -translate-x-1/2 z-[9999] px-4 py-1 bg-[var(--danger)] text-white text-[10px] font-bold rounded-full shadow-[0_0_15px_rgba(255,0,85,0.5)] border border-white/20 animate-pulse cursor-pointer hover:bg-red-600 transition-colors active:scale-95 safe-top"
           title="Klik untuk Pindah Dasbor"
         >
-          GOD MODE ACTIVE (TAP TO SWITCH DASHBOARD)
+          SUPER ADMIN PREVIEW (TAP TO SWITCH DASHBOARD)
         </div>
       )}
 
@@ -210,23 +234,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
         )}
       </AnimatePresence>
 
-      <Suspense fallback={
-        <div className="fixed inset-0 bg-[#0B0C10] z-[99999] flex items-center justify-center">
-          <div className="flex flex-col items-center gap-6">
-            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] p-[2px] shadow-[0_0_40px_rgba(142,45,226,0.4)] animate-pulse">
-              <div className="w-full h-full bg-[#0B0C10] rounded-[22px] flex items-center justify-center font-serif font-bold text-white text-lg relative overflow-hidden">
-                <span className="relative z-10">SP</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-[var(--aurora-1)] animate-bounce" style={{ animationDelay: '0s' }} />
-              <div className="w-2 h-2 rounded-full bg-[var(--aurora-3)] animate-bounce" style={{ animationDelay: '0.15s' }} />
-              <div className="w-2 h-2 rounded-full bg-[var(--aurora-1)] animate-bounce" style={{ animationDelay: '0.3s' }} />
-            </div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold">Memuat...</p>
-          </div>
-        </div>
-      }>
+      <Suspense fallback={<LoadingScreen />}>
       <AnimatePresence>
         <Routes>
           {/* LANDING PAGE — company profile / marketing */}
@@ -243,10 +251,24 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
               : <Navigate to={userRole === 'SUPER_ADMIN' ? '/superadmin' : userRole === 'TENANT_ADMIN' ? '/tenantadmin' : userRole === 'SUB_ADMIN' ? '/subadmin' : '/app'} replace />
           } />
 
+          {/* RESET PASSWORD */}
+          <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+
           {/* EMPLOYEE DASHBOARD */}
           <Route path="/app" element={
               isAuthenticated && (userRole === 'EMPLOYEE' || userRole === 'TENANT_ADMIN' || userRole === 'SUB_ADMIN')
                 ? <AttendanceScreen onGodModeReturn={handleGodModeReturnWithNav} isImpersonating={originalRole === 'SUPER_ADMIN'} onCycleRole={handleCycleRole} />
+                : isAuthenticated && userRole === 'SUPER_ADMIN' ? <Navigate to="/superadmin" replace />
+                : <Navigate to="/login" replace />
+            }
+          />
+
+          {/* QR Attendance Route */}
+          <Route
+            path="/qr-attendance"
+            element={
+              isAuthenticated && (userRole === 'EMPLOYEE' || userRole === 'TENANT_ADMIN' || userRole === 'SUB_ADMIN')
+                ? <PageTransition><QRScanner onBack={() => navigate('/app')} /></PageTransition>
                 : isAuthenticated && userRole === 'SUPER_ADMIN' ? <Navigate to="/superadmin" replace />
                 : <Navigate to="/login" replace />
             }
@@ -278,7 +300,7 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
           <Route
             path="/subadmin"
             element={
-              isAuthenticated && (['SUB_ADMIN', 'TENANT_ADMIN', 'SUPER_ADMIN', 'EMPLOYEE'].includes(userRole))
+              isAuthenticated && (['SUB_ADMIN', 'TENANT_ADMIN', 'SUPER_ADMIN'].includes(userRole))
                 ? <SubAdminDashboard onCycleRole={handleCycleRole} />
                 : isAuthenticated ? <Navigate to="/" replace />
                 : <Navigate to="/login" replace />
@@ -317,29 +339,108 @@ const AppRoutes = ({ isAuthenticated, userRole, originalRole, handleLogin, handl
 };
 
 function App() {
-  // PERSISTENCE LOGIC: Load initial state from localStorage
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    try { return localStorage.getItem('is_authenticated') === 'true'; } catch { return false; }
-  });
-  const [userRole, setUserRole] = useState(() => {
-    try {
-      const stored = localStorage.getItem('user_role');
-      return stored ? stored.toUpperCase() : null;
-    } catch { return null; }
-  });
-  const [originalRole, setOriginalRole] = useState(() => {
-    try {
-      const stored = localStorage.getItem('original_role');
-      return stored ? stored.toUpperCase() : null;
-    } catch { return null; }
-  });
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [originalRole, setOriginalRole] = useState(null);
 
-  // Sync state to localStorage whenever it changes
+  const clearClientAuthCache = useCallback(() => {
+    try { sessionStorage.removeItem('god_key'); } catch {}
+    try { sessionStorage.removeItem('super_admin_verified'); } catch {}
+    try { sessionStorage.removeItem('operational_access'); } catch {}
+    try { sessionStorage.removeItem('attendance_access'); } catch {}
+    try { localStorage.removeItem('is_authenticated'); } catch {}
+    try { localStorage.removeItem('user_role'); } catch {}
+    try { localStorage.removeItem('original_role'); } catch {}
+  }, []);
+
+  const applyProfileSession = useCallback((profile) => {
+    const role = profile?.role?.toUpperCase();
+    if (!role) {
+      setIsAuthenticated(false);
+      setUserRole(null);
+      setOriginalRole(null);
+      clearClientAuthCache();
+      return;
+    }
+
+    setIsAuthenticated(true);
+    setUserRole(role);
+    setOriginalRole(null);
+
+    try {
+      sessionStorage.removeItem('god_key');
+      if (role === 'SUPER_ADMIN') sessionStorage.setItem('super_admin_verified', 'true');
+      else sessionStorage.removeItem('super_admin_verified');
+      sessionStorage.setItem('attendance_access', profile?.attendance_access ? 'YA' : 'TIDAK');
+      sessionStorage.setItem('operational_access', profile?.operational_access || role !== 'EMPLOYEE' ? 'MEMILIKI AKSES' : 'TIDAK');
+    } catch {}
+  }, [clearClientAuthCache]);
+
+  const resolveSession = useCallback(async (session) => {
+    if (!session?.user?.id) {
+      setIsAuthenticated(false);
+      setUserRole(null);
+      setOriginalRole(null);
+      clearClientAuthCache();
+      return;
+    }
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('id, role, tenant_id, operational_access, attendance_access')
+      .eq('auth_id', session.user.id)
+      .maybeSingle();
+
+    if (error || !profile) {
+      setIsAuthenticated(false);
+      setUserRole(null);
+      setOriginalRole(null);
+      clearClientAuthCache();
+      return;
+    }
+
+    applyProfileSession(profile);
+  }, [applyProfileSession, clearClientAuthCache]);
+
   useEffect(() => {
-    try { localStorage.setItem('is_authenticated', isAuthenticated); } catch {}
+    let isMounted = true;
+
+    const bootstrap = async () => {
+      setAuthLoading(true);
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (isMounted) await resolveSession(data?.session);
+      } catch {
+        if (isMounted) {
+          setIsAuthenticated(false);
+          setUserRole(null);
+          setOriginalRole(null);
+          clearClientAuthCache();
+        }
+      } finally {
+        if (isMounted) setAuthLoading(false);
+      }
+    };
+
+    bootstrap();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      resolveSession(session).finally(() => {
+        if (isMounted) setAuthLoading(false);
+      });
+    });
+
+    return () => {
+      isMounted = false;
+      subscription?.unsubscribe();
+    };
+  }, [clearClientAuthCache, resolveSession]);
+
+  // Simpan hanya cache UI non-otoritatif; otorisasi tetap bersumber dari Supabase session + profile.
+  useEffect(() => {
     try { if (userRole) localStorage.setItem('user_role', userRole); else localStorage.removeItem('user_role'); } catch {}
     try { if (originalRole) localStorage.setItem('original_role', originalRole); else localStorage.removeItem('original_role'); } catch {}
-  }, [isAuthenticated, userRole, originalRole]);
+  }, [userRole, originalRole]);
 
   const handleLogin = (role) => {
     setUserRole(role?.toUpperCase());
@@ -348,7 +449,7 @@ function App() {
   };
 
   const handleImpersonate = (role) => {
-    if (userRole === 'SUPER_ADMIN') {
+    if (userRole === 'SUPER_ADMIN' || originalRole === 'SUPER_ADMIN') {
       setOriginalRole('SUPER_ADMIN');
       setUserRole(role?.toUpperCase());
     }
@@ -367,9 +468,7 @@ function App() {
     setOriginalRole(null);
     try { sessionStorage.clear(); } catch {}
     try { await supabase.auth.signOut(); } catch (e) { /* ignore */ }
-    try { localStorage.removeItem('is_authenticated'); } catch {}
-    try { localStorage.removeItem('user_role'); } catch {}
-    try { localStorage.removeItem('original_role'); } catch {}
+    clearClientAuthCache();
   };
 
   // Session Heartbeat
@@ -396,6 +495,7 @@ function App() {
             <NotificationProvider>
             <AppRoutes
               isAuthenticated={isAuthenticated}
+              authLoading={authLoading}
               userRole={userRole}
               originalRole={originalRole}
               handleLogin={handleLogin}

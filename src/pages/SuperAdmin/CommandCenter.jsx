@@ -1,11 +1,10 @@
 import React, { useState, useRef, useCallback, Suspense } from 'react';
-import { ShieldAlert, Globe, Activity, Settings, Key, Search, Users, Zap, BarChart3, ShieldCheck, MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, LogOut, Loader2 } from 'lucide-react';
+import { ShieldAlert, Globe, Activity, Settings, Search, Users, Zap, BarChart3, ShieldCheck, MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, LogOut, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../utils/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import HRISExportWrapper from '../../components/HRISExportWrapper';
 import { useSFX } from '../../utils/useSFX';
-import { generatePin } from '../../utils/pinUtil';
 import { useConfirm } from '../../components/ConfirmDialog';
 
 const GlobalMap = React.lazy(() => import('./components/GlobalMap'));
@@ -23,7 +22,6 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
   const [activeTab, setActiveTab] = useState(() => {
     try { return sessionStorage.getItem('god_active_tab') || 'infrastructure'; } catch { return 'infrastructure'; }
   }); // infrastructure, operations
-  const [bypassCode, setBypassCode] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [showGodMenu, setShowGodMenu] = useState(false);
@@ -42,26 +40,9 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
     return () => { document.body.style.overflow = 'unset'; };
   }, [showGodMenu]);
 
-  const [tenants, setTenants] = useState([]);
-  const [selectedTenantBypass, setSelectedTenantBypass] = useState('all');
-
   React.useEffect(() => {
     try { sessionStorage.setItem('god_active_tab', activeTab); } catch {}
   }, [activeTab]);
-
-  React.useEffect(() => {
-    const fetchTenants = async () => {
-      const { data } = await supabase.from('tenants').select('id, name');
-      if (data) setTenants(data);
-    };
-    fetchTenants();
-  }, []);
-
-  const generateBypassCode = () => {
-    const code = generatePin(selectedTenantBypass);
-    setBypassCode(code);
-    playConfirm();
-  };
 
   const handleLogout = async () => {
     const ok = await confirm('Apakah Anda yakin ingin keluar dari God Mode?', 'Keluar');
@@ -333,21 +314,10 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
             </div>
             <div className="lg:col-span-4 flex flex-col gap-4">
               <section className="glass-panel p-4 border border-[var(--warning)]/30 bg-[var(--warning)]/[0.02]">
-                <h2 className="font-serif text-lg tracking-wide mb-4 flex items-center gap-3 text-[var(--warning)]"><Key size={20} /> Master Bypass Console</h2>
-                <div className="flex flex-col gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">Target Entitas (Tenant)</label>
-                    <select value={selectedTenantBypass} onChange={(e) => { setSelectedTenantBypass(e.target.value); setBypassCode(''); }} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-xs text-white outline-none focus:border-[var(--warning)]">
-                      <option value="all" className="bg-[#0B0C10]">GLOBAL (Master PIN)</option>
-                      {tenants.map(t => (<option key={t.id} value={t.id} className="bg-[#0B0C10]">{t.name}</option>))}
-                    </select>
-                  </div>
-                  <div className="flex items-center justify-between bg-black/40 p-4 rounded-xl border border-white/5">
-                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Active PIN</span>
-                    <span className="text-xl font-mono font-bold text-[var(--warning)] tracking-widest">{bypassCode || '------'}</span>
-                  </div>
-                  <button onClick={generateBypassCode} className="w-full py-3 rounded-xl bg-[var(--warning)]/10 text-[var(--warning)] text-[10px] font-black uppercase tracking-widest border border-[var(--warning)]/20 hover:bg-[var(--warning)] hover:text-black transition-all">GENERATE PIN</button>
-                </div>
+                <h2 className="font-serif text-lg tracking-wide mb-4 flex items-center gap-3 text-[var(--warning)]"><ShieldCheck size={20} /> Otorisasi Export</h2>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Export HRIS memakai role profil Supabase dan RLS database. PIN deterministik dan master bypass sudah dinonaktifkan untuk mode rilis.
+                </p>
               </section>
               <section className="glass-panel p-4 flex-1 flex flex-col overflow-visible min-h-[350px]">
                 <LSusp><SaaSManagement onImpersonate={onImpersonate} searchQuery={searchQuery} /></LSusp>

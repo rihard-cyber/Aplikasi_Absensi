@@ -192,7 +192,7 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
         end_time: formData.endTime || null,
         reason: formData.reason, 
         file_url: fileUrl, 
-        status: 'MENUNGGU',
+        status: 'PENDING',
         is_shift_swap: category === 'shift',
         target_user_id: category === 'shift' ? shiftSwapData.target_user_id || null : null,
         target_date: category === 'shift' ? shiftSwapData.target_date || null : null
@@ -246,8 +246,8 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
           >
             <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
               <StatusChip label="Semua" active={filterStatus === 'ALL'} count={history.length} onClick={() => setFilterStatus('ALL')} />
-              <StatusChip label="Menunggu" color="var(--warning)" active={filterStatus === 'MENUNGGU'} count={history.filter(h => h.status === 'MENUNGGU').length} onClick={() => setFilterStatus('MENUNGGU')} />
-              <StatusChip label="Disetujui" color="var(--success)" active={filterStatus === 'DISETUJUI'} count={history.filter(h => h.status === 'DISETUJUI').length} onClick={() => setFilterStatus('DISETUJUI')} />
+              <StatusChip label="Menunggu" color="var(--warning)" active={filterStatus === 'PENDING'} count={history.filter(h => h.status === 'PENDING').length} onClick={() => setFilterStatus('PENDING')} />
+              <StatusChip label="Disetujui" color="var(--success)" active={filterStatus === 'APPROVED'} count={history.filter(h => h.status === 'APPROVED').length} onClick={() => setFilterStatus('APPROVED')} />
             </div>
 
             {history.length === 0 ? (
@@ -446,10 +446,11 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
 };
 
 const StatusBadge = ({ status }) => {
-  const colors = { 'MENUNGGU': 'var(--warning)', 'DISETUJUI': 'var(--success)', 'DITOLAK': 'var(--danger)' };
+  const colors = { PENDING: 'var(--warning)', APPROVED: 'var(--success)', REJECTED: 'var(--danger)' };
+  const labels = { PENDING: 'MENUNGGU', APPROVED: 'DISETUJUI', REJECTED: 'DITOLAK' };
   return (
     <span className="text-[8px] font-black px-2 py-1 rounded bg-black/40 uppercase tracking-tighter" style={{ color: colors[status] || 'white' }}>
-      {status}
+      {labels[status] || status}
     </span>
   );
 };

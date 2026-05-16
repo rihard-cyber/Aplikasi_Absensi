@@ -62,7 +62,7 @@ const EmployeeProfile = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const isGodMode = sessionStorage.getItem('god_key') === 'DEWA-999';
+      const isGodMode = sessionStorage.getItem('super_admin_verified') === 'true';
 
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -95,10 +95,10 @@ const EmployeeProfile = () => {
         }
       }
 
-      // If God Mode, force all access
+      // If SUPER ADMIN PREVIEW, force all access
       if (isGodMode) {
         setUser(prev => ({
-          ...prev, attendance_access: true, operational_access: true, role: 'SUPER_ADMIN', position: 'GOD MODE'
+          ...prev, attendance_access: true, operational_access: true, role: 'SUPER_ADMIN', position: 'SUPER ADMIN PREVIEW'
         }));
         sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
         setHasSubAdminAccess(true);

@@ -16,18 +16,6 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
                           (propDivisionId && propDivisionId !== 'all');
 
   useEffect(() => {
-    if (hasManualFilter) {
-      const finalDiv = propDivisionId && propDivisionId !== 'all' ? propDivisionId : null;
-      const finalProj = propProjectId && propProjectId !== 'all' ? propProjectId : null;
-      const finalTenant = propTenantId && propTenantId !== 'all' ? propTenantId : null;
-      const scope = finalDiv ? 'division' : finalProj ? 'project' : 'tenant';
-      const scopeId = finalDiv || finalProj || finalTenant;
-      const role = (() => { try { return localStorage.getItem('user_role') || 'SUB_ADMIN'; } catch { return 'SUB_ADMIN'; } })();
-      setAuthInfo({ role, scope, scopeId, label: scope ? 'Filter Manual' : 'Tenant' });
-      fetchData(scope, scopeId);
-      setLoading(false);
-      return;
-    }
     resolveAuth();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propTenantId, propProjectId, propDivisionId]);
@@ -35,50 +23,73 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
   const resolveAuth = async () => {
     setLoading(true);
     try {
-      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        setAuthInfo({ role: 'EMPLOYEE', scope: 'employee', scopeId: null, label: 'Tidak ada akses' });
+        setData([]);
+        return;
+      }
 
-      if (isGod || session?.user?.id) {
-        if (isGod) {
-          const { data: profile } = await supabase
-            .from('profiles').select('role').eq('auth_id', session?.user?.id).maybeSingle();
-          if (profile?.role === 'SUPER_ADMIN' || isGod) {
-            setAuthInfo({ role: 'SUPER_ADMIN', scope: 'superadmin', scopeId: null, label: 'Semua Tenant' });
-            await fetchData('superadmin', null);
-            setLoading(false);
-            return;
-          }
+      const { data: profile } = await supabase
+        .from('profiles').select('id, role, tenant_id, project_id, division_id, tenants:tenant_id(name)')
+        .eq('auth_id', session.user.id).maybeSingle();
+
+      if (!profile) {
+        setAuthInfo({ role: 'EMPLOYEE', scope: 'employee', scopeId: null, label: 'Tidak ada akses' });
+        setData([]);
+        return;
+      }
+
+      const role = profile.role?.toUpperCase();
+      const finalDiv = propDivisionId && propDivisionId !== 'all' ? propDivisionId : null;
+      const finalProj = propProjectId && propProjectId !== 'all' ? propProjectId : null;
+      const finalTenant = propTenantId && propTenantId !== 'all' ? propTenantId : null;
+
+      if (role === 'SUPER_ADMIN') {
+        const scope = finalDiv ? 'division' : finalProj ? 'project' : finalTenant ? 'tenant' : 'superadmin';
+        const scopeId = finalDiv || finalProj || finalTenant || null;
+        setAuthInfo({ role, scope, scopeId, label: hasManualFilter ? 'Filter Manual' : 'Semua Tenant' });
+        await fetchData(scope, scopeId);
+      } else if (role === 'TENANT_ADMIN') {
+        if (finalTenant && finalTenant !== profile.tenant_id) throw new Error('Scope tenant tidak sesuai profil admin.');
+        let scope = 'tenant';
+        let scopeId = profile.tenant_id;
+        if (finalProj) {
+          const { data: project } = await supabase.from('projects').select('id').eq('id', finalProj).eq('tenant_id', profile.tenant_id).maybeSingle();
+          if (!project) throw new Error('Project berada di luar tenant Anda.');
+          scope = 'project';
+          scopeId = finalProj;
         }
-
-        const { data: profile } = await supabase
-          .from('profiles').select('id, role, tenant_id, project_id, division_id, tenants:tenant_id(name)')
-          .eq('auth_id', session.user.id).maybeSingle();
-
-        if (!profile) { setLoading(false); return; }
-
-        const role = profile.role;
-
-        if (role === 'SUPER_ADMIN') {
-          setAuthInfo({ role: 'SUPER_ADMIN', scope: 'superadmin', scopeId: null, label: 'Semua Tenant' });
-          await fetchData('superadmin', null);
-        } else if (role === 'TENANT_ADMIN') {
-          setAuthInfo({ role: 'TENANT_ADMIN', scope: 'tenant', scopeId: profile.tenant_id, label: profile.tenants?.name || 'Tenant' });
-          await fetchData('tenant', profile.tenant_id);
-        } else if (role === 'SUB_ADMIN' && profile.project_id) {
-          const { data: proj } = await supabase.from('projects').select('name').eq('id', profile.project_id).maybeSingle();
-          setAuthInfo({ role: 'SUB_ADMIN', scope: 'project', scopeId: profile.project_id, label: proj?.name || 'Project' });
-          await fetchData('project', profile.project_id);
-        } else if (profile.division_id) {
-          const { data: div } = await supabase.from('divisions').select('name').eq('id', profile.division_id).maybeSingle();
-          setAuthInfo({ role: 'EMPLOYEE', scope: 'division', scopeId: profile.division_id, label: div?.name || 'Divisi' });
-          await fetchData('division', profile.division_id);
-        } else {
-          setAuthInfo({ role: 'EMPLOYEE', scope: 'employee', scopeId: null, label: 'Tidak ada akses' });
-          setData([]);
+        if (finalDiv) {
+          const { data: division } = await supabase.from('divisions').select('id').eq('id', finalDiv).eq('tenant_id', profile.tenant_id).maybeSingle();
+          if (!division) throw new Error('Divisi berada di luar tenant Anda.');
+          scope = 'division';
+          scopeId = finalDiv;
         }
+        setAuthInfo({ role, scope, scopeId, label: profile.tenants?.name || 'Tenant' });
+        await fetchData(scope, scopeId);
+      } else if (role === 'SUB_ADMIN' && profile.project_id) {
+        if (finalTenant && finalTenant !== profile.tenant_id) throw new Error('Scope tenant tidak sesuai profil sub-admin.');
+        if (finalProj && finalProj !== profile.project_id) throw new Error('Project berada di luar otoritas Anda.');
+        let scope = 'project';
+        let scopeId = profile.project_id;
+        if (finalDiv) {
+          const { data: division } = await supabase.from('divisions').select('id').eq('id', finalDiv).eq('project_id', profile.project_id).maybeSingle();
+          if (!division) throw new Error('Divisi berada di luar project Anda.');
+          scope = 'division';
+          scopeId = finalDiv;
+        }
+        const { data: proj } = await supabase.from('projects').select('name').eq('id', profile.project_id).maybeSingle();
+        setAuthInfo({ role, scope, scopeId, label: proj?.name || 'Project' });
+        await fetchData(scope, scopeId);
+      } else {
+        setAuthInfo({ role: role || 'EMPLOYEE', scope: 'employee', scopeId: null, label: 'Tidak ada akses' });
+        setData([]);
       }
     } catch (e) {
       console.error('Auth resolve error:', e);
+      setAuthInfo({ role: 'EMPLOYEE', scope: 'employee', scopeId: null, label: 'Tidak ada akses' });
+      setData([]);
     } finally {
       setLoading(false);
     }
@@ -179,6 +190,8 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
         className={className}
         scope={authInfo.scope}
         scopeId={authInfo.scopeId}
+        canExport={['SUPER_ADMIN', 'TENANT_ADMIN', 'SUB_ADMIN'].includes(authInfo.role)}
+        role={authInfo.role}
       />
       {!data.length && (
         <p className="text-[8px] text-gray-600 mt-1 italic">Belum ada data pegawai untuk diunduh. Isi data pegawai terlebih dahulu.</p>

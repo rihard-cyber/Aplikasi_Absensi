@@ -18,7 +18,7 @@ const BannerManager = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
     const userRole = (() => { try { return localStorage.getItem('user_role'); } catch { return null; } })();
 
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
@@ -36,7 +36,7 @@ const BannerManager = () => {
             tid = cachedTid;
             setTenantName('Tersimpan (cache)');
           } else {
-            toast('GOD MODE: Tidak bisa akses data tenant. Gunakan cache.', 'info');
+            toast('SUPER ADMIN PREVIEW: Tidak bisa akses data tenant. Gunakan cache.', 'info');
           }
         }
       } else {
@@ -102,7 +102,7 @@ const BannerManager = () => {
       setBanners(newBanners);
       const { error: saveErr } = await supabase.from('tenant_settings').upsert({ tenant_id: tenantId, banners: newBanners }, { onConflict: 'tenant_id' });
       if (saveErr) throw saveErr;
-      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+      const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
       if (isGod) persistCache(newBanners);
       persistStorageFallback(newBanners);
       toast('Banner berhasil diupload!', 'success');
@@ -115,7 +115,7 @@ const BannerManager = () => {
     setBanners(newBanners);
     const { error } = await supabase.from('tenant_settings').upsert({ tenant_id: tenantId, banners: newBanners }, { onConflict: 'tenant_id' });
     if (error) { toast('Gagal simpan: ' + error.message, 'error'); return; }
-    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
     if (isGod) persistCache(newBanners);
     persistStorageFallback(newBanners);
   };
@@ -125,7 +125,7 @@ const BannerManager = () => {
     try {
       const { error } = await supabase.from('tenant_settings').upsert({ tenant_id: tenantId, banners }, { onConflict: 'tenant_id' });
       if (error) throw error;
-      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+      const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
       if (isGod) persistCache(banners);
       persistStorageFallback(banners);
       toast('Banner berhasil disimpan!', 'success');
@@ -141,7 +141,7 @@ const BannerManager = () => {
     setBanners(newBanners);
     const { error } = await supabase.from('tenant_settings').upsert({ tenant_id: tenantId, banners: newBanners }, { onConflict: 'tenant_id' });
     if (error) { toast('Gagal simpan: ' + error.message, 'error'); return; }
-    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
     if (isGod) persistCache(newBanners);
     persistStorageFallback(newBanners);
   };

@@ -31,7 +31,7 @@ const PermissionManager = () => {
   const fetchInitialData = async () => {
     setIsLoading(true);
     try {
-      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+      const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
@@ -191,7 +191,7 @@ const PermissionManager = () => {
               {isLoading ? (
                 <tr><td colSpan="5" className="p-10"><div className="w-full glass-panel p-6 border border-white/5 animate-pulse space-y-4"><div className="h-4 bg-white/10 rounded w-1/4" /><div className="h-3 bg-white/5 rounded w-1/3" /><div className="h-3 bg-white/5 rounded w-1/2" /></div></td></tr>
               ) : filteredAdmins.length === 0 ? (
-                <tr><td colSpan="5" className="p-10 text-center text-gray-500 italic">{(() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })() ? 'GOD MODE — Tidak ada tenant terpilih. Silakan pilih tenant untuk mengelola otoritas.' : 'Tidak ada Sub-Admin ditemukan.'}</td></tr>
+                <tr><td colSpan="5" className="p-10 text-center text-gray-500 italic">{(() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })() ? 'SUPER ADMIN PREVIEW — Tidak ada tenant terpilih. Silakan pilih tenant untuk mengelola otoritas.' : 'Tidak ada Sub-Admin ditemukan.'}</td></tr>
               ) : filteredAdmins.map((admin) => (
                 <tr key={admin.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
                   <td className="p-6">

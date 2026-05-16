@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, TrendingUp, CheckCircle2, XCircle, Plus, Save, User, Loader2, DollarSign, Calendar } from 'lucide-react';
+import { Search, TrendingUp, CheckCircle2, XCircle, Plus, Save, User, Loader2, DollarSign, Calendar, X } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
@@ -19,7 +19,7 @@ const SalaryRevision = () => {
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
-    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('id, tenant_id').eq('auth_id', session.user.id).maybeSingle();

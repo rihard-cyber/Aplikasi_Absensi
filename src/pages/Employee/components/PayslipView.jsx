@@ -5,6 +5,13 @@ import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const monthName = (month) => MONTHS[Number(month) - 1] || '-';
+const escapeHtml = (value) => String(value ?? '-')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
 
 const PayslipView = ({ onBack }) => {
   const [periods, setPeriods] = useState([]);
@@ -52,7 +59,7 @@ const PayslipView = ({ onBack }) => {
     if (!summary || !selectedPeriod || !profile) return;
     const lines = [
       `SLIP GAJI ${profile.full_name}`,
-      `Periode: ${MONTHS[selectedPeriod.period_month-1]} ${selectedPeriod.period_year}`,
+      `Periode: ${monthName(selectedPeriod.period_month)} ${selectedPeriod.period_year}`,
       `NIP: ${profile.nip} | ${profile.position || '-'}`,
       `Project: ${profile.projects?.name || '-'} | Divisi: ${profile.divisions?.name || '-'}`,
       '',
@@ -85,8 +92,11 @@ const PayslipView = ({ onBack }) => {
     const w = window.open('', '_blank');
     const allowances = details.filter(d => d.component_type === 'ALLOWANCE');
     const deductions = details.filter(d => d.component_type === 'DEDUCTION');
+    const periodLabel = `${monthName(selectedPeriod.period_month)} ${selectedPeriod.period_year}`;
+    const allowanceRows = allowances.map(d => `<tr><td><span class="badge">${escapeHtml(d.component_code)}</span></td><td>${escapeHtml(d.component_name)}</td><td class="amount">Rp ${Number(d.amount).toLocaleString()}</td></tr>`).join('');
+    const deductionRows = deductions.map(d => `<tr><td><span class="badge">${escapeHtml(d.component_code)}</span></td><td>${escapeHtml(d.component_name)}</td><td class="amount">Rp ${Number(d.amount).toLocaleString()}</td></tr>`).join('');
     w.document.write(`
-      <html><head><title>Slip Gaji ${profile.nip} ${MONTHS[selectedPeriod.period_month-1]} ${selectedPeriod.period_year}</title>
+      <html><head><title>Slip Gaji ${escapeHtml(profile.nip)} ${periodLabel}</title>
       <style>
         @page { margin: 15mm; size: A4 portrait; }
         body { font-family: 'Segoe UI', Arial, sans-serif; color: #222; padding: 20px; }
@@ -111,21 +121,21 @@ const PayslipView = ({ onBack }) => {
       </style></head><body>
       <div class="header">
         <h1>Slip Gaji</h1>
-        <p>${MONTHS[selectedPeriod.period_month-1]} ${selectedPeriod.period_year}</p>
+        <p>${periodLabel}</p>
       </div>
       <div class="info">
-        <div><label>Nama:</label> ${profile.full_name}</div>
-        <div><label>NIP:</label> ${profile.nip}</div>
-        <div><label>Posisi:</label> ${profile.position || '-'}</div>
-        <div><label>Project:</label> ${profile.projects?.name || '-'}</div>
+        <div><label>Nama:</label> ${escapeHtml(profile.full_name)}</div>
+        <div><label>NIP:</label> ${escapeHtml(profile.nip)}</div>
+        <div><label>Posisi:</label> ${escapeHtml(profile.position || '-')}</div>
+        <div><label>Project:</label> ${escapeHtml(profile.projects?.name || '-')}</div>
       </div>
       <table>
         <tr><th>Kode</th><th>Komponen</th><th class="amount">Jumlah</th></tr>
-        ${allowances.map(d => `<tr><td><span class="badge">${d.component_code}</span></td><td>${d.component_name}</td><td class="amount">Rp ${Number(d.amount).toLocaleString()}</td></tr>`).join('')}
+        ${allowanceRows}
       </table>
       <table>
         <tr><th>Kode</th><th>Potongan</th><th class="amount">Jumlah</th></tr>
-        ${deductions.map(d => `<tr><td><span class="badge">${d.component_code}</span></td><td>${d.component_name}</td><td class="amount">Rp ${Number(d.amount).toLocaleString()}</td></tr>`).join('')}
+        ${deductionRows}
       </table>
       <table>
         <tr><td><strong>Total Tunjangan</strong></td><td class="amount">Rp ${Number(summary.total_allowance).toLocaleString()}</td></tr>
@@ -177,7 +187,7 @@ const PayslipView = ({ onBack }) => {
         <select value={selectedPeriod?.id} onChange={e => handlePeriodChange(periods.find(p => p.id === e.target.value))}
           className="mt-4 bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)] w-full">
           {periods.map(p => (
-            <option key={p.id} value={p.id}>{MONTHS[p.period_month]} {p.period_year} — {p.status}</option>
+            <option key={p.id} value={p.id}>{monthName(p.period_month)} {p.period_year} — {p.status}</option>
           ))}
         </select>
       </div>

@@ -26,7 +26,7 @@ const PayrollRun = () => {
   useEffect(() => { init(); }, []);
 
   const init = async () => {
-    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
@@ -96,6 +96,7 @@ const PayrollRun = () => {
 
       const { data: attendanceLogs } = await supabase.from('attendance_logs')
         .select('user_id, action, status, timestamp')
+        .eq('tenant_id', tenantId)
         .gte('timestamp', period.start_date + 'T00:00:00Z')
         .lte('timestamp', period.end_date + 'T23:59:59Z');
       const attendanceByUser = {};
@@ -218,13 +219,13 @@ const PayrollRun = () => {
         });
       }
 
-      await supabase.from('payroll_results').delete().eq('period_id', period.id);
-      await supabase.from('payroll_summary').delete().eq('period_id', period.id);
+      await supabase.from('payroll_results').delete().eq('period_id', period.id).eq('tenant_id', tenantId);
+      await supabase.from('payroll_summary').delete().eq('period_id', period.id).eq('tenant_id', tenantId);
 
       if (allResults.length) await supabase.from('payroll_results').insert(allResults);
       if (allSummaries.length) await supabase.from('payroll_summary').insert(allSummaries);
 
-      await supabase.from('payroll_periods').update({ status: 'LOCKED', processed_at: new Date().toISOString() }).eq('id', period.id);
+      await supabase.from('payroll_periods').update({ status: 'LOCKED', processed_at: new Date().toISOString() }).eq('id', period.id).eq('tenant_id', tenantId);
 
       logAudit('PROCESS_PAYROLL', { period: `${MONTHS[period.period_month-1]} ${period.period_year}`, employees: profiles.length, total_thp: allSummaries.reduce((s,r) => s+Number(r.take_home_pay), 0) });
 
@@ -240,14 +241,14 @@ const PayrollRun = () => {
 
   const viewPayroll = async (period) => {
     setViewResult(period);
-    const { data: res } = await supabase.from('payroll_results').select('*').eq('period_id', period.id).order('user_id');
+    const { data: res } = await supabase.from('payroll_results').select('*').eq('period_id', period.id).eq('tenant_id', tenantId).order('user_id');
     setResults(res || []);
-    const { data: sum } = await supabase.from('payroll_summary').select('*, profiles!inner(full_name, nip)').eq('period_id', period.id).order('take_home_pay', { ascending: false });
+    const { data: sum } = await supabase.from('payroll_summary').select('*, profiles!inner(full_name, nip)').eq('period_id', period.id).eq('tenant_id', tenantId).order('take_home_pay', { ascending: false });
     setSummaries(sum || []);
   };
 
   const markPaid = async (period) => {
-    await supabase.from('payroll_periods').update({ status: 'PAID' }).eq('id', period.id);
+    await supabase.from('payroll_periods').update({ status: 'PAID' }).eq('id', period.id).eq('tenant_id', tenantId);
     logAudit('PAY_PAYROLL', { period: `${MONTHS[period.period_month-1]} ${period.period_year}` });
     toast('Payroll ditandai sebagai LUNAS', 'success');
     setViewResult(null);
@@ -304,9 +305,9 @@ const PayrollRun = () => {
         {periods.map(p => (
           <div key={p.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-5 bg-white/5 rounded-2xl border border-white/10 hover:border-white/20 transition-all">
             <div className="flex items-center gap-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center text-white font-bold">{MONTHS[p.period_month].slice(0,3)}</div>
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center text-white font-bold">{MONTHS[p.period_month - 1]?.slice(0,3)}</div>
               <div>
-                <h4 className="text-white font-bold">{MONTHS[p.period_month]} {p.period_year}</h4>
+                <h4 className="text-white font-bold">{MONTHS[p.period_month - 1]} {p.period_year}</h4>
                 <p className="text-[10px] text-gray-500">{p.start_date} s.d {p.end_date} • {getStatusBadge(p.status)}</p>
               </div>
             </div>

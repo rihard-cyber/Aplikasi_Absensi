@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QrCode, CheckCircle2, XCircle, Camera, ArrowLeft, Loader2, Smartphone } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
@@ -9,6 +10,8 @@ const QRScanner = ({ onBack }) => {
   const [manualCode, setManualCode] = useState('');
   const [status, setStatus] = useState('idle');
   const [profile, setProfile] = useState(null);
+  const autoSubmitRef = useRef(false);
+  const location = useLocation();
   const toast = useToast();
 
   useEffect(() => {
@@ -21,11 +24,18 @@ const QRScanner = ({ onBack }) => {
     fetchProfile();
   }, []);
 
-  const handleManualSubmit = async () => {
-    if (!manualCode.trim()) { toast('Masukkan kode QR', 'error'); return; }
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    if (token) setManualCode(token);
+  }, [location.search]);
+
+  const handleManualSubmit = async (codeOverride) => {
+    const rawCode = typeof codeOverride === 'string' ? codeOverride : manualCode;
+    if (!rawCode.trim()) { toast('Masukkan kode QR', 'error'); return; }
     setStatus('scanning');
     try {
-      const token = manualCode.trim().split('token=').pop()?.split('&')[0] || manualCode.trim();
+      const token = rawCode.trim().split('token=').pop()?.split('&')[0] || rawCode.trim();
       const { data: qrToken, error } = await supabase.from('qr_attendance_tokens')
         .select('id, project_id, is_active, tenant_id, expires_at')
         .eq('token', token)
@@ -54,6 +64,13 @@ const QRScanner = ({ onBack }) => {
       toast('Gagal: ' + e.message, 'error');
     }
   };
+
+  useEffect(() => {
+    if (profile && manualCode && !autoSubmitRef.current) {
+      autoSubmitRef.current = true;
+      handleManualSubmit(manualCode);
+    }
+  }, [profile, manualCode]);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6 pb-8">

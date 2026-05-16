@@ -23,7 +23,7 @@ const ScheduleCalendar = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setLoading(false); return; }
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
@@ -38,6 +38,7 @@ const ScheduleCalendar = () => {
     let q2 = supabase.from('master_shifts').select('*');
     if (p?.tenant_id) q2 = q2.eq('tenant_id', p.tenant_id);
     q2 = q2.eq('is_active', true);
+    const { data: sh } = await q2;
     setShifts(sh || []);
 
     const monthStart = `${year}-${String(month + 1).padStart(2, '0')}-01`;

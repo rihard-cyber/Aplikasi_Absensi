@@ -130,16 +130,16 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
               )}
             </div>
             <h2 
-              className={`font-serif text-[14px] leading-tight tracking-wide bg-clip-text text-transparent bg-gradient-to-r ${(() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999' || isImpersonating; } catch { return isImpersonating; } })() ? 'from-[var(--danger)] to-[var(--warning)] cursor-pointer active:scale-95' : 'from-white to-gray-400'}`}
+              className={`font-serif text-[14px] leading-tight tracking-wide bg-clip-text text-transparent bg-gradient-to-r ${(() => { try { return sessionStorage.getItem('super_admin_verified') === 'true' || isImpersonating; } catch { return isImpersonating; } })() ? 'from-[var(--danger)] to-[var(--warning)] cursor-pointer active:scale-95' : 'from-white to-gray-400'}`}
               onClick={() => {
                 try {
-                  if (sessionStorage.getItem('god_key') === 'DEWA-999' && onCycleRole) onCycleRole();
+                  if (sessionStorage.getItem('super_admin_verified') === 'true' && onCycleRole) onCycleRole();
                   else if (isImpersonating && onGodModeReturn) onGodModeReturn();
                 } catch {}
               }}
               title={(isImpersonating) ? "Klik untuk Pindah Dasbor" : ""}
             >
-              {tenantData.name} {(() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999' || isImpersonating; } catch { return isImpersonating; } })() && <span className="text-[10px] ml-1 block text-[var(--danger)] font-black opacity-80">(God Mode)</span>}
+              {tenantData.name} {(() => { try { return sessionStorage.getItem('super_admin_verified') === 'true' || isImpersonating; } catch { return isImpersonating; } })() && <span className="text-[10px] ml-1 block text-[var(--danger)] font-black opacity-80">(SUPER ADMIN PREVIEW)</span>}
             </h2>
           </div>
 
@@ -159,7 +159,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             </button>
 
             <button
-              onClick={() => { setIsSidebarOpen(false); navigate('/'); }}
+              onClick={() => { setIsSidebarOpen(false); navigate('/app'); }}
               className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-400 hover:bg-[var(--success)]/10 hover:text-[var(--success)] border border-dashed border-white/5 hover:border-[var(--success)]/30"
             >
               <Fingerprint size={20} /> <span className="font-medium tracking-wide text-sm">Absensi Saya</span>

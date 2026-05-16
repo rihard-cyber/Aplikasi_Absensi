@@ -30,7 +30,7 @@ const StructureManagement = () => {
   const fetchStructure = async () => {
     setIsLoading(true);
     try {
-      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+      const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       
@@ -166,7 +166,7 @@ const StructureManagement = () => {
                 <input required value={newProject.name} onChange={e => {
                   const name = e.target.value;
                   // Auto-generate code from name jika masih kosong atau belum diedit manual
-                  const words = name.split(/[\s\-\.]+/).filter(Boolean);
+                  const words = name.split(/[\s.-]+/).filter(Boolean);
                   const autoCode = words.map(w => w[0]).join('').toUpperCase().slice(0, 4);
                   setNewProject(prev => ({
                     ...prev,

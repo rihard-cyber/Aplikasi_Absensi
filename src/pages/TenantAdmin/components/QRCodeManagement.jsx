@@ -16,7 +16,7 @@ const QRCodeManagement = () => {
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
-    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
@@ -37,7 +37,9 @@ const QRCodeManagement = () => {
 
   const generateToken = async () => {
     if (!newToken.project_id) { toast('Pilih lokasi terlebih dahulu', 'error'); return; }
-    const token = Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + Date.now().toString(36).toUpperCase();
+    const randomBytes = new Uint8Array(12);
+    crypto.getRandomValues(randomBytes);
+    const token = Array.from(randomBytes, b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
     const project = projects.find(p => p.id === newToken.project_id);
     const { error } = await supabase.from('qr_attendance_tokens').insert({
       tenant_id: tenantId, project_id: newToken.project_id, token,
@@ -51,7 +53,9 @@ const QRCodeManagement = () => {
   };
 
   const toggleActive = async (id, current) => {
-    await supabase.from('qr_attendance_tokens').update({ is_active: !current }).eq('id', id);
+    let q = supabase.from('qr_attendance_tokens').update({ is_active: !current }).eq('id', id);
+    if (tenantId) q = q.eq('tenant_id', tenantId);
+    await q;
     fetchData();
   };
 

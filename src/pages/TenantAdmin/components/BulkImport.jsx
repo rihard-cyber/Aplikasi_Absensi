@@ -1,18 +1,43 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Download, CheckCircle2, XCircle, Loader2, AlertCircle, FileSpreadsheet, Users } from 'lucide-react';
+import { Upload, Download, CheckCircle2, XCircle, Loader2, FileSpreadsheet } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
-const TEMPLATE_HEADERS = ['NIP', 'Nama Lengkap', 'Email', 'Password', 'Posisi', 'Role', 'Project Code', 'Division Name'];
+const TEMPLATE_HEADERS = ['NIP', 'Nama Lengkap', 'Email', 'Posisi', 'Role', 'Project Code', 'Division Name'];
+const IMPORTABLE_ROLES = ['EMPLOYEE', 'SUB_ADMIN'];
+
+const parseCSVLine = (line) => {
+  const values = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    const next = line[i + 1];
+    if (char === '"' && next === '"') {
+      current += '"';
+      i += 1;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      values.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  values.push(current.trim());
+  return values.map(v => v.replace(/^"+|"+$/g, ''));
+};
 
 const BulkImport = () => {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState([]);
+  const [rows, setRows] = useState([]);
   const [importing, setImporting] = useState(false);
   const [results, setResults] = useState([]);
-  const [tenantId, setTenantId] = useState(null);
-  const [adminId, setAdminId] = useState(null);
   const fileRef = useRef(null);
   const toast = useToast();
 
@@ -26,30 +51,29 @@ const BulkImport = () => {
       const text = evt.target.result;
       const lines = text.split('\n').filter(l => l.trim());
       if (lines.length < 2) { toast('File kosong atau hanya header', 'error'); return; }
-      const headers = lines[0].split(',').map(h => h.trim().replace(/^"+|"+$/g, ''));
+      const headers = parseCSVLine(lines[0]);
       const rows = lines.slice(1).map(line => {
-        const vals = line.split(',').map(v => v.trim().replace(/^"+|"+$/g, ''));
+        const vals = parseCSVLine(line);
         const row = {};
         headers.forEach((h, i) => row[h] = vals[i] || '');
         return row;
       });
+      setRows(rows);
       setPreview(rows.slice(0, 20));
     };
     reader.readAsText(f);
   };
 
   const startImport = async () => {
-    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('id, tenant_id').eq('auth_id', session.user.id).maybeSingle();
     if (!p?.tenant_id && !isGod) return;
-    if (p?.tenant_id) setTenantId(p.tenant_id);
-    if (p?.id) setAdminId(p.id);
     setImporting(true);
 
     const results = [];
-    for (const row of preview) {
+    for (const row of rows) {
       try {
         if (!row['NIP'] || !row['Nama Lengkap']) {
           results.push({ nip: row['NIP'] || '-', name: row['Nama Lengkap'] || '-', status: 'error', message: 'NIP & Nama wajib' });
@@ -68,6 +92,9 @@ const BulkImport = () => {
           if (div) divisionId = div.id;
         }
 
+        const requestedRole = String(row['Role'] || 'EMPLOYEE').toUpperCase();
+        const safeRole = IMPORTABLE_ROLES.includes(requestedRole) ? requestedRole : 'EMPLOYEE';
+
         const { data: existing } = p?.tenant_id
           ? await supabase.from('profiles').select('id').eq('nip', row['NIP']).eq('tenant_id', p.tenant_id).maybeSingle()
           : { data: null };
@@ -81,7 +108,7 @@ const BulkImport = () => {
         } else {
           await supabase.from('profiles').insert({
             tenant_id: p.tenant_id, nip: row['NIP'], full_name: row['Nama Lengkap'],
-            position: row['Posisi'] || null, role: row['Role'] || 'EMPLOYEE',
+            position: row['Posisi'] || null, role: safeRole,
             project_id: projectId, division_id: divisionId,
             email: row['Email'] || null, attendance_access: true
           });
@@ -98,7 +125,7 @@ const BulkImport = () => {
   };
 
   const downloadTemplate = () => {
-    const csv = TEMPLATE_HEADERS.join(',') + '\n' + 'EMP001,John Doe,john@email.com,password123,Staff,EMPLOYEE,KMC,IT Division\nEMP002,Jane Smith,jane@email.com,password456,Supervisor,SUB_ADMIN,BKP,HRD';
+    const csv = TEMPLATE_HEADERS.join(',') + '\n' + 'EMP001,John Doe,john@email.com,Staff,EMPLOYEE,KMC,IT Division\nEMP002,Jane Smith,jane@email.com,Supervisor,SUB_ADMIN,BKP,HRD';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -159,9 +186,9 @@ const BulkImport = () => {
           </div>
           <div className="flex gap-3 mt-4">
             <button onClick={startImport} disabled={importing} className="px-8 py-3 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 disabled:opacity-50">
-              {importing ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Import {preview.length} Karyawan
+              {importing ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Import {rows.length} Karyawan
             </button>
-            <button onClick={() => { setFile(null); setPreview([]); setResults([]); }} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">Batal</button>
+            <button onClick={() => { setFile(null); setRows([]); setPreview([]); setResults([]); }} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">Batal</button>
           </div>
         </div>
       )}

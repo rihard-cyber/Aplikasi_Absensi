@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Phone, Mail, MapPin, Briefcase, Users, Filter, ChevronRight, MessageSquare } from 'lucide-react';
+import { Search, Phone, Mail, MapPin, ChevronRight } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
-import { useConfirm } from '../../../components/ConfirmDialog';
 
 const EmployeeDirectory = () => {
   const [employees, setEmployees] = useState([]);
@@ -18,7 +17,7 @@ const EmployeeDirectory = () => {
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
-    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
     const { data: { session } } = await supabase.auth.getSession();
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session?.user?.id).single();
     if (!p?.tenant_id && !isGod) return;
@@ -37,6 +36,11 @@ const EmployeeDirectory = () => {
       .select('*, projects(name, code), divisions(name), employee_hris_data!left(mobile_phone, ktp_address, emergency_contact_name, emergency_contact_number)');
     if (p?.tenant_id) q3 = q3.eq('tenant_id', p.tenant_id);
     q3 = q3.in('role', ['EMPLOYEE', 'SUB_ADMIN', 'TENANT_ADMIN']).order('full_name');
+    const { data: emps, error: employeeError } = await q3;
+    if (employeeError) {
+      toast('Gagal memuat direktori karyawan: ' + employeeError.message, 'error');
+      return;
+    }
     if (emps) setEmployees(emps);
   };
 

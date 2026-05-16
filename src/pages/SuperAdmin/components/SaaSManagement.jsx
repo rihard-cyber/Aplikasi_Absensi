@@ -14,6 +14,15 @@ const tenantsData = [
   { id: 5, name: 'CV. Maju Jaya', tier: 'Silver', users: 89, maxUsers: 200, daysLeft: 60, active: true },
 ];
 
+const randomCodeSegment = (length = 4) => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, byte => chars[byte % chars.length]).join('');
+};
+
+const makeActivationCode = (prefix) => `${prefix}-${randomCodeSegment()}-${randomCodeSegment()}`;
+
 const HealthBar = ({ value, max, colorClass }) => {
   const pct = Math.min(100, Math.round((value / max) * 100));
   return (
@@ -66,20 +75,8 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
   }, []);
 
   const generateCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    // Kode Karyawan: prefix SI-
-    let empCode = 'SI-';
-    for (let i = 0; i < 4; i++) empCode += chars.charAt(Math.floor(Math.random() * chars.length));
-    empCode += '-';
-    for (let i = 0; i < 4; i++) empCode += chars.charAt(Math.floor(Math.random() * chars.length));
-    setGeneratedCode(empCode);
-
-    // Kode Admin Tenant: prefix ADM-
-    let adminCode = 'ADM-';
-    for (let i = 0; i < 4; i++) adminCode += chars.charAt(Math.floor(Math.random() * chars.length));
-    adminCode += '-';
-    for (let i = 0; i < 4; i++) adminCode += chars.charAt(Math.floor(Math.random() * chars.length));
-    setGeneratedAdminCode(adminCode);
+    setGeneratedCode(makeActivationCode('SI'));
+    setGeneratedAdminCode(makeActivationCode('ADM'));
     playConfirm();
   };
 
@@ -151,7 +148,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
           id: t.id, 
           name: t.name, 
           tier: t.tier || 'Standard',
-          users: Math.floor(Math.random() * (t.max_users || 50)),
+          users: t.current_users || 0,
           maxUsers: t.max_users || 100, 
           daysLeft: t.days_left || 365, 
           active: t.is_active ?? true,
@@ -239,11 +236,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
     const ok = await confirm(`Reset keamanan ${name}? Ini akan membuat kode lisensi lama menjadi hangus.`, 'Reset Keamanan');
     if (!ok) return;
     try {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let newEmpCode = 'SI-';
-      for (let i = 0; i < 4; i++) newEmpCode += chars.charAt(Math.floor(Math.random() * chars.length));
-      newEmpCode += '-';
-      for (let i = 0; i < 4; i++) newEmpCode += chars.charAt(Math.floor(Math.random() * chars.length));
+      const newEmpCode = makeActivationCode('SI');
       await supabase.from('tenants').update({ activation_code: newEmpCode }).eq('id', id);
       setTenants(prev => prev.map(t => t.id === id ? { ...t, activationCode: newEmpCode } : t));
       alert(`Keamanan direset! Kode Karyawan baru untuk ${name} adalah:\n${newEmpCode}`);
@@ -256,11 +249,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
 
   const handleGenerateLicenseCode = async (id, name) => {
     try {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let newLicCode = 'ADM-';
-      for (let i = 0; i < 4; i++) newLicCode += chars.charAt(Math.floor(Math.random() * chars.length));
-      newLicCode += '-';
-      for (let i = 0; i < 4; i++) newLicCode += chars.charAt(Math.floor(Math.random() * chars.length));
+      const newLicCode = makeActivationCode('ADM');
 
       // Coba simpan ke admin_code (kolom baru) dulu
       const { error: adminCodeErr } = await supabase.from('tenants').update({ admin_code: newLicCode }).eq('id', id);

@@ -5,6 +5,7 @@ import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const monthName = (month) => MONTHS[Number(month) - 1] || '-';
 
 const PayrollReports = () => {
   const [periods, setPeriods] = useState([]);
@@ -17,7 +18,7 @@ const PayrollReports = () => {
   useEffect(() => { fetchPeriods(); }, []);
 
   const fetchPeriods = async () => {
-    const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+    const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
@@ -36,10 +37,14 @@ const PayrollReports = () => {
     setSelectedPeriod(p);
     if (!p) { setLoading(false); return; }
 
-    const { data: sum } = await supabase.from('payroll_summary').select('*, profiles!inner(full_name, nip, position)').eq('period_id', periodId);
+    let summaryQuery = supabase.from('payroll_summary').select('*, profiles!inner(full_name, nip, position)').eq('period_id', periodId);
+    if (p.tenant_id) summaryQuery = summaryQuery.eq('tenant_id', p.tenant_id);
+    const { data: sum } = await summaryQuery;
     setSummaries(sum || []);
 
-    const { data: res } = await supabase.from('payroll_results').select('*').eq('period_id', periodId);
+    let resultQuery = supabase.from('payroll_results').select('*').eq('period_id', periodId);
+    if (p.tenant_id) resultQuery = resultQuery.eq('tenant_id', p.tenant_id);
+    const { data: res } = await resultQuery;
     setResults(res || []);
     setLoading(false);
   };
@@ -84,7 +89,7 @@ const PayrollReports = () => {
         <div className="flex flex-wrap gap-3">
           <select value={selectedPeriod?.id || ''} onChange={e => loadPeriod(e.target.value)} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none w-full sm:w-auto">
             <option value="">Pilih periode</option>
-            {periods.map(p => <option key={p.id} value={p.id}>{MONTHS[p.period_month]} {p.period_year}</option>)}
+            {periods.map(p => <option key={p.id} value={p.id}>{monthName(p.period_month)} {p.period_year}</option>)}
           </select>
           {summaries.length > 0 && (
             <button onClick={handleDownloadCSV} className="px-5 py-3 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Download size={14} /> CSV</button>

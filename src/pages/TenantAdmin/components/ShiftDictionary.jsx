@@ -31,7 +31,7 @@ const ShiftDictionary = () => {
     setIsLoading(true);
     setProjectsLoading(true);
     try {
-      const isGod = (() => { try { return sessionStorage.getItem('god_key') === 'DEWA-999'; } catch { return false; } })();
+      const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data: profile } = await supabase.from('profiles')
