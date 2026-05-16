@@ -69,13 +69,13 @@ const EmployeeProfile = () => {
         .select('*, divisions(name)')
         .eq('auth_id', session.user.id)
         .maybeSingle();
-      
+
       if (profile) {
         const isSubAdmin = profile.role === 'SUB_ADMIN' || profile.role === 'TENANT_ADMIN';
         const divisionName = profile.divisions?.name || 'All Division';
-        
+
         setUser(prev => ({
-          ...prev, 
+          ...prev,
           ...profile,
           full_name: profile.full_name || 'Karyawan',
           position: profile.position || (isSubAdmin ? 'Supervisor' : 'Staff'),
@@ -86,7 +86,7 @@ const EmployeeProfile = () => {
         setEditData(profile);
         const hasAccess = isSubAdmin || profile.operational_access === true;
         setHasSubAdminAccess(hasAccess);
-        
+
         // SYNC: Ensure App knows about this authority for the session
         if (hasAccess) {
           sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
@@ -168,7 +168,7 @@ const EmployeeProfile = () => {
     const { error } = await supabase.from('profiles').update({ device_id: device.identifier }).eq('id', user.id);
     if (error) { alert('Gagal mengikat perangkat'); return; }
 
-    try { sessionStorage.setItem('bound_device_id', device.identifier); } catch {}
+    try { sessionStorage.setItem('bound_device_id', device.identifier); } catch { }
     setIsBound(true);
     alert('Perangkat berhasil diikat!');
   };
@@ -182,8 +182,8 @@ const EmployeeProfile = () => {
         console.error("Logout error:", e);
       }
 
-      try { sessionStorage.clear(); } catch {}
-      try { localStorage.clear(); } catch {}
+      try { sessionStorage.clear(); } catch { }
+      try { localStorage.clear(); } catch { }
       navigate('/login');
     }
   };
@@ -446,14 +446,14 @@ const EmployeeProfile = () => {
                   <button onClick={() => setIsEditing(false)} className="text-gray-500 hover:text-white"><X size={24} /></button>
                 </div>
 
-                <HRISDataForm 
-                  user={user} 
-                  onCancel={() => setIsEditing(false)} 
+                <HRISDataForm
+                  user={user}
+                  onCancel={() => setIsEditing(false)}
                   onSave={(updatedUser) => {
                     setUser(updatedUser);
                     setIsEditing(false);
                     alert('Data HRIS berhasil diperbarui!');
-                  }} 
+                  }}
                 />
               </motion.div>
             </motion.div>
