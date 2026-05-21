@@ -38,6 +38,9 @@ const LoadingScreen = () => (
   </div>
 );
 
+// Landing page toggle - set VITE_INCLUDE_LANDING=false untuk build Android
+const includeLanding = import.meta.env.VITE_INCLUDE_LANDING !== 'false';
+
 // Komponen Pembungkus Transisi Halaman (Efek Blur & Scale yang mulus)
 const PageTransition = ({ children }) => (
   <motion.div
@@ -241,7 +244,9 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
           <Route path="/" element={
             isAuthenticated 
               ? <Navigate to={userRole === 'SUPER_ADMIN' ? '/superadmin' : userRole === 'TENANT_ADMIN' ? '/tenantadmin' : userRole === 'SUB_ADMIN' ? '/subadmin' : '/app'} replace />
-              : <PageTransition><LandingPage /></PageTransition>
+              : includeLanding 
+                ? <PageTransition><LandingPage /></PageTransition>
+                : <Navigate to="/login" replace />
           } />
 
           {/* LOGIN */}

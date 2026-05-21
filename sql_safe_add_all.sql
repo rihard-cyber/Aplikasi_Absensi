@@ -518,9 +518,11 @@ CREATE POLICY "Employee Leave Balance Own" ON public.leave_balances FOR SELECT
 CREATE OR REPLACE FUNCTION public.handle_annual_leave_balance()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.leave_balances (tenant_id, user_id, year, total_days)
-  VALUES (NEW.tenant_id, NEW.id, EXTRACT(YEAR FROM CURRENT_DATE), 12)
-  ON CONFLICT (user_id, year) DO NOTHING;
+  IF NEW.tenant_id IS NOT NULL THEN
+    INSERT INTO public.leave_balances (tenant_id, user_id, year, total_days)
+    VALUES (NEW.tenant_id, NEW.id, EXTRACT(YEAR FROM CURRENT_DATE), 12)
+    ON CONFLICT (user_id, year) DO NOTHING;
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

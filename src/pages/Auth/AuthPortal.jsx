@@ -431,7 +431,13 @@ const AuthPortal = ({ onLogin }) => {
       if (isConnectionError) {
         toast(`Koneksi ke server terputus. Periksa koneksi internet atau database mungkin sedang tidur (restore di Supabase Dashboard).`, 'error');
       } else {
-        toast(`Login Gagal: Periksa kembali kredensial Anda.`, 'error');
+        let friendlyMsg = error.message;
+        if (error.message === 'Invalid login credentials') {
+          friendlyMsg = 'Periksa kembali kredensial Anda (email atau kata sandi salah).';
+        } else if (error.message === 'Email not confirmed') {
+          friendlyMsg = 'Email belum dikonfirmasi. Silakan periksa kotak masuk email Anda.';
+        }
+        toast(`Login Gagal: ${friendlyMsg}`, 'error');
       }
     }
   };
