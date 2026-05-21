@@ -312,7 +312,8 @@ const AuthPortal = ({ onLogin }) => {
 
     if (secretClickCount + 1 >= 3) { // 3 clicks
       setSecretClickCount(0);
-      toast('Akses owner hanya melalui akun SUPER_ADMIN resmi.', 'info');
+      setMode('owner');
+      toast('Akses owner/SUPER_ADMIN diaktifkan.', 'info');
     }
     setTimeout(() => setSecretClickCount(0), 1000); // Reset if too slow
   };
@@ -358,8 +359,9 @@ const AuthPortal = ({ onLogin }) => {
     try {
       let loginEmail = formData.identifier;
 
-      // Jika user mengetikkan NIP (tidak ada karakter '@'), cari emailnya via RPC Supabase
-      if (!loginEmail.includes('@')) {
+      if (mode === 'owner') {
+        loginEmail = 'richardpl.meha@gmail.com';
+      } else if (!loginEmail.includes('@')) {
         const { data: emailData, error: rpcError } = await supabase.rpc('get_email_by_nip', { p_nip: loginEmail });
         if (rpcError || !emailData) {
           throw new Error("ID Karyawan (NIP) tidak terdaftar di sistem.");
@@ -595,6 +597,17 @@ const AuthPortal = ({ onLogin }) => {
 
                   <Fingerprint size={48} className={biometricScan > 0 ? "text-[var(--warning)]" : "text-gray-500 group-hover:text-gray-300"} />
                   <span className="text-[10px] mt-3 uppercase tracking-widest text-gray-500 group-hover:text-gray-400">Tahan untuk Pindai</span>
+                </motion.button>
+
+                <motion.button
+                  variants={itemVariants}
+                  onClick={() => {
+                    setMode('login');
+                    setFormData(prev => ({ ...prev, password: '' }));
+                  }}
+                  className="mt-6 text-sm text-gray-500 hover:text-white transition-colors"
+                >
+                  Kembali ke Login Biasa
                 </motion.button>
               </motion.div>
             )}
