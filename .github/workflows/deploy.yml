@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - uses: actions/setup-node@a15b564177d59858348981e557297217335d105c # v4.2.0
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
@@ -38,6 +38,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           publish_branch: gh-pages
-          enable_github_pages: true
+
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
