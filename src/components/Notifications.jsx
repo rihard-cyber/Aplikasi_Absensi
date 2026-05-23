@@ -23,7 +23,8 @@ export const NotificationProvider = ({ children }) => {
 
       const results = [];
 
-      if (profile.role === 'TENANT_ADMIN' || profile.role === 'SUPER_ADMIN') {
+      // Query berbasis tenant hanya jika user memiliki tenant_id (bukan SUPER_ADMIN)
+      if ((profile.role === 'TENANT_ADMIN') && profile.tenant_id) {
         const { count: pendingLoans } = await supabase.from('loans').select('*', { count: 'exact', head: true }).eq('tenant_id', profile.tenant_id).eq('status', 'PENDING');
         if (pendingLoans) results.push({ id: 'loans', type: 'approval', icon: <DollarSign size={16} />, message: `${pendingLoans} pengajuan pinjaman menunggu`, time: new Date().toISOString() });
 
@@ -34,7 +35,7 @@ export const NotificationProvider = ({ children }) => {
         if (draftPeriods) results.push({ id: 'payroll-draft', type: 'info', icon: <ShieldCheck size={16} />, message: `${draftPeriods} periode payroll siap diproses`, time: new Date().toISOString() });
       }
 
-      if (profile.role === 'EMPLOYEE' || profile.role === 'SUB_ADMIN' || profile.role === 'SUPER_ADMIN') {
+      if ((profile.role === 'EMPLOYEE' || profile.role === 'SUB_ADMIN') && profile.id) {
         const { count: empLoans } = await supabase.from('loans').select('*', { count: 'exact', head: true }).eq('user_id', profile.id).eq('status', 'ACTIVE');
         if (empLoans) results.push({ id: 'emp-loans', type: 'info', icon: <DollarSign size={16} />, message: `${empLoans} pinjaman aktif berjalan`, time: new Date().toISOString() });
 
