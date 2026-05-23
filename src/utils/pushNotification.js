@@ -22,7 +22,9 @@
 import { supabase } from './supabaseClient';
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || null;
-const SW_PATH = '/firebase-messaging-sw.js';
+// Gunakan BASE_URL dari Vite agar berfungsi di localhost maupun GitHub Pages subpath
+const SW_PATH = import.meta.env.BASE_URL + 'firebase-messaging-sw.js';
+const SW_SCOPE = import.meta.env.BASE_URL;
 
 /**
  * Convert a base64url VAPID key to Uint8Array for PushManager.
@@ -80,7 +82,7 @@ export const subscribeUser = async () => {
     // Step 1: Register Service Worker
     let registration;
     try {
-      registration = await navigator.serviceWorker.register(SW_PATH, { scope: '/' });
+      registration = await navigator.serviceWorker.register(SW_PATH, { scope: SW_SCOPE });
       await navigator.serviceWorker.ready;
     } catch (swErr) {
       return { success: false, message: 'Gagal mendaftarkan service worker: ' + swErr.message };
@@ -217,7 +219,7 @@ export const initPushNotifications = async () => {
   if (!isPushSupported()) return;
   try {
     // Register service worker regardless of subscription status
-    await navigator.serviceWorker.register(SW_PATH, { scope: '/' });
+    await navigator.serviceWorker.register(SW_PATH, { scope: SW_SCOPE });
   } catch (err) {
     console.warn('SW registration failed:', err.message);
   }
