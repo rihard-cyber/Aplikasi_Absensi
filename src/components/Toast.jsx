@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, AlertCircle, X, Info } from 'lucide-react';
@@ -38,21 +39,23 @@ export const ToastProvider = ({ children }) => {
       {children}
       <div className="fixed top-4 right-4 z-[99999] flex flex-col gap-3 max-w-sm w-full pointer-events-none">
         <AnimatePresence>
-          {toasts.map(t => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, x: 80, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 80, scale: 0.95 }}
-              className={`pointer-events-auto glass-panel px-5 py-4 rounded-2xl border flex items-start gap-3 shadow-lg ${colors[t.type] || colors.info}`}
-            >
-              <span className="shrink-0 mt-0.5">{icons[t.type] || icons.info}</span>
-              <p className="text-xs font-medium flex-1 leading-relaxed">{t.message}</p>
+          {toasts.map(t => {
+            const safeType = typeof t.type === 'string' && Object.prototype.hasOwnProperty.call(colors, t.type) ? t.type : 'info';
+            return (
+              <motion.div
+                key={t.id}
+                initial={{ opacity: 0, x: 80, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 80, scale: 0.95 }}
+                className={`pointer-events-auto glass-panel px-5 py-4 rounded-2xl border flex items-start gap-3 shadow-lg ${colors[safeType]}`}
+              >
+                <span className="shrink-0 mt-0.5">{icons[safeType]}</span>
+                <p className="text-xs font-medium flex-1 leading-relaxed">{t.message}</p>
               <button onClick={() => removeToast(t.id)} className="shrink-0 opacity-60 hover:opacity-100 transition-opacity">
                 <X size={14} />
               </button>
             </motion.div>
-          ))}
+          );})}
         </AnimatePresence>
       </div>
     </ToastContext.Provider>

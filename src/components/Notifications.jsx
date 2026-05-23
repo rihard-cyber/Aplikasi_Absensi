@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CheckCircle2, DollarSign, FileText, X, ShieldCheck, AlertTriangle } from 'lucide-react';

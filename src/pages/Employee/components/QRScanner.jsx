@@ -1,15 +1,19 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QrCode, CheckCircle2, XCircle, Camera, ArrowLeft, Loader2, Smartphone } from 'lucide-react';
+import { QrCode, CheckCircle2, XCircle, Camera, ArrowLeft, Loader2, Smartphone, ShieldCheck } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
+import FaceVerificationModal from '../../../components/FaceVerificationModal';
 
 const QRScanner = ({ onBack }) => {
   const [mode, setMode] = useState('scan');
   const [manualCode, setManualCode] = useState('');
   const [status, setStatus] = useState('idle');
   const [profile, setProfile] = useState(null);
+  const [showFaceVerif, setShowFaceVerif] = useState(false);
+  const [pendingToken, setPendingToken] = useState(null);
   const autoSubmitRef = useRef(false);
   const location = useLocation();
   const toast = useToast();
@@ -46,18 +50,63 @@ const QRScanner = ({ onBack }) => {
       if (qrToken.tenant_id !== profile?.tenant_id) { setStatus('failed'); toast('Kode QR bukan untuk perusahaan Anda!', 'error'); return; }
       if (qrToken.expires_at && new Date(qrToken.expires_at) < new Date()) { setStatus('failed'); toast('Kode QR sudah kadaluarsa!', 'error'); return; }
 
+      // QR valid — trigger face verification before recording attendance
+      setStatus('idle');
+      setPendingToken(qrToken);
+      setShowFaceVerif(true);
+    } catch (e) {
+      setStatus('failed');
+      toast('Gagal: ' + e.message, 'error');
+    }
+  };
+
+  /** Called by FaceVerificationModal when face is verified successfully */
+  const handleFaceVerified = async ({ confidence }) => {
+    setShowFaceVerif(false);
+    if (!pendingToken) return;
+    setStatus('scanning');
+    try {
       await supabase.from('attendance_logs').insert({
         tenant_id: profile.tenant_id, user_id: profile.id,
-        action: 'CLOCK_IN', status: 'ONTIME', timestamp: new Date().toISOString()
+        action: 'CLOCK_IN', status: 'ONTIME', timestamp: new Date().toISOString(),
+        face_confidence: confidence,
       });
 
       await supabase.from('qr_attendance_logs').insert({
         tenant_id: profile.tenant_id, user_id: profile.id,
-        token_id: qrToken.id, action: 'CLOCK_IN', timestamp: new Date().toISOString()
+        token_id: pendingToken.id, action: 'CLOCK_IN', timestamp: new Date().toISOString()
       });
 
+      setPendingToken(null);
       setStatus('success');
       toast('Absensi via QR berhasil!', 'success');
+      setTimeout(() => onBack(), 2000);
+    } catch (e) {
+      setStatus('failed');
+      toast('Gagal: ' + e.message, 'error');
+    }
+  };
+
+  /** Called when user skips/cancels face verification */
+  const handleFaceSkipped = async () => {
+    setShowFaceVerif(false);
+    if (!pendingToken) return;
+    setStatus('scanning');
+    try {
+      await supabase.from('attendance_logs').insert({
+        tenant_id: profile.tenant_id, user_id: profile.id,
+        action: 'CLOCK_IN', status: 'ONTIME', timestamp: new Date().toISOString(),
+        face_confidence: null,
+      });
+
+      await supabase.from('qr_attendance_logs').insert({
+        tenant_id: profile.tenant_id, user_id: profile.id,
+        token_id: pendingToken.id, action: 'CLOCK_IN', timestamp: new Date().toISOString()
+      });
+
+      setPendingToken(null);
+      setStatus('success');
+      toast('Absensi berhasil (tanpa verifikasi wajah).', 'success');
       setTimeout(() => onBack(), 2000);
     } catch (e) {
       setStatus('failed');
@@ -75,6 +124,14 @@ const QRScanner = ({ onBack }) => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6 pb-8">
       <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors w-fit"><ArrowLeft size={18} /> Kembali</button>
+
+      {/* Face Verification Modal */}
+      <FaceVerificationModal
+        isOpen={showFaceVerif}
+        onSuccess={handleFaceVerified}
+        onCancel={handleFaceSkipped}
+        maxRetries={3}
+      />
 
       <div className="glass-panel p-8 text-center relative overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--aurora-3)]/5 rounded-full blur-3xl" />
@@ -101,6 +158,16 @@ const QRScanner = ({ onBack }) => {
           </div>
 
           <div className="border-t border-white/10 pt-6">
+            {/* Face Verification Security Badge */}
+            <div className="flex items-center gap-3 bg-[var(--aurora-1)]/5 border border-[var(--aurora-1)]/20 rounded-2xl p-4 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[var(--aurora-1)]/10 text-[var(--aurora-1)] flex items-center justify-center flex-shrink-0">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white">Verifikasi Wajah Aktif</p>
+                <p className="text-[9px] text-gray-500 mt-0.5">Setelah QR terverifikasi, sistem akan meminta konfirmasi wajah Anda untuk keamanan tambahan.</p>
+              </div>
+            </div>
             <div className="bg-white/5 rounded-2xl p-6 border border-dashed border-white/10">
               <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
                 <Camera size={28} className="text-gray-500" />

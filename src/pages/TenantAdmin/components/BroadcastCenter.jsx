@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { Megaphone, Send, Trash2, Clock, Globe, Building } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';

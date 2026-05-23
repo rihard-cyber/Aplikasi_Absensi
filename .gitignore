@@ -1,7 +1,11 @@
 /supabase_schema.sql
-node_modules
+node_modules/
 .env
 dist/
 .vite/
 scratch/
 *.csv
+android/
+ios/
+build/
+www/

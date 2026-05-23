@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadCloud, FileSpreadsheet, CheckCircle, AlertTriangle, Play, Database, Download, XCircle, Building2, Network } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';

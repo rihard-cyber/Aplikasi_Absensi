@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef } from 'react';
 import { Clock, CalendarDays, AlertTriangle, ShieldCheck, Database, Save, Loader2, DollarSign, Sun } from 'lucide-react';
 import { motion } from 'framer-motion';

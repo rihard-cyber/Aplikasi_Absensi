@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Phone, Calendar, MapPin, Briefcase, Heart, CreditCard, Shield, Activity, GraduationCap, Building2, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';

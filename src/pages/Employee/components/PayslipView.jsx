@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Download, ChevronDown, ChevronUp, DollarSign, Percent, FileText, Printer, ArrowLeft } from 'lucide-react';
@@ -90,67 +91,153 @@ const PayslipView = ({ onBack }) => {
   const handlePrint = () => {
     if (!summary || !selectedPeriod || !profile) return;
     const w = window.open('', '_blank');
+    if (!w) {
+      toast('Gagal membuka jendela cetak. Pastikan pop-up diizinkan.', 'error');
+      return;
+    }
     const allowances = details.filter(d => d.component_type === 'ALLOWANCE');
     const deductions = details.filter(d => d.component_type === 'DEDUCTION');
     const periodLabel = `${monthName(selectedPeriod.period_month)} ${selectedPeriod.period_year}`;
-    const allowanceRows = allowances.map(d => `<tr><td><span class="badge">${escapeHtml(d.component_code)}</span></td><td>${escapeHtml(d.component_name)}</td><td class="amount">Rp ${Number(d.amount).toLocaleString()}</td></tr>`).join('');
-    const deductionRows = deductions.map(d => `<tr><td><span class="badge">${escapeHtml(d.component_code)}</span></td><td>${escapeHtml(d.component_name)}</td><td class="amount">Rp ${Number(d.amount).toLocaleString()}</td></tr>`).join('');
+
     w.document.write(`
-      <html><head><title>Slip Gaji ${escapeHtml(profile.nip)} ${periodLabel}</title>
-      <style>
-        @page { margin: 15mm; size: A4 portrait; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; color: #222; padding: 20px; }
-        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
-        .header h1 { margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 2px; }
-        .header p { margin: 3px 0; color: #666; font-size: 11px; }
-        .info { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 12px; }
-        .info div { flex: 1; }
-        .info label { color: #888; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px; }
-        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #f5f5f5; font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
-        .amount { text-align: right; font-family: 'Courier New', monospace; }
-        .total-row { font-weight: bold; border-top: 2px solid #333; }
-        .total-row td { padding-top: 10px; }
-        .grand-total { text-align: center; margin-top: 25px; padding: 15px; background: #f8f8f8; border-radius: 8px; }
-        .grand-total h2 { margin: 0; font-size: 24px; color: #1a73e8; }
-        .grand-total p { margin: 3px 0; color: #666; font-size: 11px; }
-        .footer { text-align: center; margin-top: 30px; font-size: 9px; color: #aaa; border-top: 1px solid #eee; padding-top: 10px; }
-        .badge { display: inline-block; background: #e8f0fe; color: #1a73e8; padding: 2px 8px; border-radius: 3px; font-size: 9px; }
-        @media print { body { padding: 0; } }
-      </style></head><body>
-      <div class="header">
-        <h1>Slip Gaji</h1>
-        <p>${periodLabel}</p>
-      </div>
-      <div class="info">
-        <div><label>Nama:</label> ${escapeHtml(profile.full_name)}</div>
-        <div><label>NIP:</label> ${escapeHtml(profile.nip)}</div>
-        <div><label>Posisi:</label> ${escapeHtml(profile.position || '-')}</div>
-        <div><label>Project:</label> ${escapeHtml(profile.projects?.name || '-')}</div>
-      </div>
-      <table>
-        <tr><th>Kode</th><th>Komponen</th><th class="amount">Jumlah</th></tr>
-        ${allowanceRows}
-      </table>
-      <table>
-        <tr><th>Kode</th><th>Potongan</th><th class="amount">Jumlah</th></tr>
-        ${deductionRows}
-      </table>
-      <table>
-        <tr><td><strong>Total Tunjangan</strong></td><td class="amount">Rp ${Number(summary.total_allowance).toLocaleString()}</td></tr>
-        <tr><td><strong>Total Potongan</strong></td><td class="amount">Rp ${Number(summary.total_deduction).toLocaleString()}</td></tr>
-        <tr class="total-row"><td><strong>TAKE HOME PAY</strong></td><td class="amount" style="color:#1a73e8;font-size:16px;">Rp ${Number(summary.take_home_pay).toLocaleString()}</td></tr>
-      </table>
-      <div class="grand-total">
-        <p>Take Home Pay</p>
-        <h2>Rp ${Number(summary.take_home_pay).toLocaleString()}</h2>
-        <p>Kehadiran: ${summary.total_days_worked} hari • Lembur: ${summary.total_overtime_hours} jam • Terlambat: ${summary.total_late_minutes} menit</p>
-      </div>
-      <div class="footer">SI PRESENSI PRO MAX — Dokumen ini digenerate secara otomatis pada ${new Date().toLocaleDateString('id-ID')}</div>
-      <script>window.onload = function() { window.print(); window.close(); }</script>
-      </body></html>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Slip Gaji</title>
+        <style>
+          @page { margin: 15mm; size: A4 portrait; }
+          body { font-family: 'Segoe UI', Arial, sans-serif; color: #222; padding: 20px; }
+          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+          .header h1 { margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 2px; }
+          .header p { margin: 3px 0; color: #666; font-size: 11px; }
+          .info { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 12px; }
+          .info div { flex: 1; }
+          .info label { color: #888; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px; }
+          th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #ddd; }
+          th { background: #f5f5f5; font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
+          .amount { text-align: right; font-family: 'Courier New', monospace; }
+          .total-row { font-weight: bold; border-top: 2px solid #333; }
+          .total-row td { padding-top: 10px; }
+          .grand-total { text-align: center; margin-top: 25px; padding: 15px; background: #f8f8f8; border-radius: 8px; }
+          .grand-total h2 { margin: 0; font-size: 24px; color: #1a73e8; }
+          .grand-total p { margin: 3px 0; color: #666; font-size: 11px; }
+          .footer { text-align: center; margin-top: 30px; font-size: 9px; color: #aaa; border-top: 1px solid #eee; padding-top: 10px; }
+          .badge { display: inline-block; background: #e8f0fe; color: #1a73e8; padding: 2px 8px; border-radius: 3px; font-size: 9px; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Slip Gaji</h1>
+          <p id="period-label"></p>
+        </div>
+        <div class="info">
+          <div><label>Nama:</label> <span id="info-nama"></span></div>
+          <div><label>NIP:</label> <span id="info-nip"></span></div>
+          <div><label>Posisi:</label> <span id="info-posisi"></span></div>
+          <div><label>Project:</label> <span id="info-project"></span></div>
+        </div>
+        <table id="allowances-table">
+          <thead>
+            <tr><th>Kode</th><th>Komponen</th><th class="amount">Jumlah</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <table id="deductions-table">
+          <thead>
+            <tr><th>Kode</th><th>Potongan</th><th class="amount">Jumlah</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <table>
+          <tbody>
+            <tr>
+              <td><strong>Total Tunjangan</strong></td>
+              <td class="amount" id="total-allowance"></td>
+            </tr>
+            <tr>
+              <td><strong>Total Potongan</strong></td>
+              <td class="amount" id="total-deduction"></td>
+            </tr>
+            <tr class="total-row">
+              <td><strong>TAKE HOME PAY</strong></td>
+              <td class="amount" style="color:#1a73e8;font-size:16px;" id="take-home-pay"></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="grand-total">
+          <p>Take Home Pay</p>
+          <h2 id="grand-take-home-pay"></h2>
+          <p id="grand-summary"></p>
+        </div>
+        <div class="footer" id="footer-text"></div>
+      </body>
+      </html>
     `);
+
+    w.document.title = `Slip Gaji ${profile.nip} ${periodLabel}`;
+    w.document.getElementById('period-label').textContent = periodLabel;
+    w.document.getElementById('info-nama').textContent = profile.full_name;
+    w.document.getElementById('info-nip').textContent = profile.nip;
+    w.document.getElementById('info-posisi').textContent = profile.position || '-';
+    w.document.getElementById('info-project').textContent = profile.projects?.name || '-';
+
+    const allowancesBody = w.document.querySelector('#allowances-table tbody');
+    allowances.forEach(d => {
+      const tr = w.document.createElement('tr');
+      const tdBadge = w.document.createElement('td');
+      const badge = w.document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = d.component_code;
+      tdBadge.appendChild(badge);
+
+      const tdName = w.document.createElement('td');
+      tdName.textContent = d.component_name;
+
+      const tdAmount = w.document.createElement('td');
+      tdAmount.className = 'amount';
+      tdAmount.textContent = `Rp ${Number(d.amount).toLocaleString()}`;
+
+      tr.appendChild(tdBadge);
+      tr.appendChild(tdName);
+      tr.appendChild(tdAmount);
+      allowancesBody.appendChild(tr);
+    });
+
+    const deductionsBody = w.document.querySelector('#deductions-table tbody');
+    deductions.forEach(d => {
+      const tr = w.document.createElement('tr');
+      const tdBadge = w.document.createElement('td');
+      const badge = w.document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = d.component_code;
+      tdBadge.appendChild(badge);
+
+      const tdName = w.document.createElement('td');
+      tdName.textContent = d.component_name;
+
+      const tdAmount = w.document.createElement('td');
+      tdAmount.className = 'amount';
+      tdAmount.textContent = `Rp ${Number(d.amount).toLocaleString()}`;
+
+      tr.appendChild(tdBadge);
+      tr.appendChild(tdName);
+      tr.appendChild(tdAmount);
+      deductionsBody.appendChild(tr);
+    });
+
+    w.document.getElementById('total-allowance').textContent = `Rp ${Number(summary.total_allowance).toLocaleString()}`;
+    w.document.getElementById('total-deduction').textContent = `Rp ${Number(summary.total_deduction).toLocaleString()}`;
+    w.document.getElementById('take-home-pay').textContent = `Rp ${Number(summary.take_home_pay).toLocaleString()}`;
+    w.document.getElementById('grand-take-home-pay').textContent = `Rp ${Number(summary.take_home_pay).toLocaleString()}`;
+    w.document.getElementById('grand-summary').textContent = `Kehadiran: ${summary.total_days_worked} hari • Lembur: ${summary.total_overtime_hours} jam • Terlambat: ${summary.total_late_minutes} menit`;
+    w.document.getElementById('footer-text').textContent = `SI PRESENSI PRO MAX — Dokumen ini digenerate secara otomatis pada ${new Date().toLocaleDateString('id-ID')}`;
+
+    const script = w.document.createElement('script');
+    script.textContent = "window.onload = function() { window.print(); window.close(); }";
+    w.document.body.appendChild(script);
+
     w.document.close();
   };
 

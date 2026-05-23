@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CalendarDays, Plus, Save, X, Edit3, Trash2, MapPin, Clock, Users, Loader2 } from 'lucide-react';

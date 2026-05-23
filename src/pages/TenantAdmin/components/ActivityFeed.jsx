@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, DollarSign, FileText, Users, ShieldCheck, AlertCircle, CheckCircle2, XCircle, Loader2, RefreshCw } from 'lucide-react';
@@ -48,7 +49,8 @@ const ActivityFeed = () => {
     const { data: logs } = await q;
     if (logs) {
       const mapped = logs.map(l => {
-        const cfg = ACTION_ICONS[l.action] || defaultIcon;
+        const safeAction = typeof l.action === 'string' && Object.prototype.hasOwnProperty.call(ACTION_ICONS, l.action) ? l.action : null;
+        const cfg = safeAction ? ACTION_ICONS[safeAction] : defaultIcon;
         let details = '';
         if (l.details) {
           try {
@@ -82,7 +84,8 @@ const ActivityFeed = () => {
       TENANT_DEACTIVATED: 'Menonaktifkan Tenant',
       CREATE_TENANT: 'Mendaftarkan Tenant Baru',
     };
-    return map[action] || action.replace(/_/g, ' ');
+    const safeAct = typeof action === 'string' && Object.prototype.hasOwnProperty.call(map, action) ? action : null;
+    return safeAct ? map[safeAct] : (typeof action === 'string' ? action.replace(/_/g, ' ') : '');
   };
 
   if (loading) return <div className="p-20 text-center"><Loader2 size={24} className="animate-spin mx-auto text-[var(--aurora-3)]" /></div>;

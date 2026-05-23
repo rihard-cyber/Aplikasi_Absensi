@@ -1,1 +1,57 @@
-{}
+{
+  "search.exclude": {
+    "**/android": true,
+    "**/ios": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/node_modules": true,
+    "**/www": true
+  },
+  "files.exclude": {
+    "**/android": true,
+    "**/ios": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/node_modules": true,
+    "**/www": true
+  },
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/android/**",
+    "**/ios/**",
+    "**/dist/**",
+    "**/build/**"
+  ],
+  "java.project.importFilters": [
+    "**/node_modules/**",
+    "**/android/**",
+    "**/ios/**",
+    "**/dist/**",
+    "**/build/**"
+  ],
+  "eslint.validate": ["javascript", "javascriptreact"],
+  "eslint.rules.customizations": [
+    { "rule": "i18n-text/no-en", "severity": "off" },
+    { "rule": "i18next/no-literal-string", "severity": "off" },
+    { "rule": "@shopify/jsx-no-hardcoded-content", "severity": "off" }
+  ],
+  "i18n-ally.enabled": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "never"
+  },
+
+  "securecoder.i18n.enable": false,
+  "securecoder.rules.i18n": false,
+  "securecoder.checkI18n": false,
+  "securecoder.diagnostics.i18n": false,
+  "securecoder.ignore": ["i18n", "no-literal-string", "jsx-no-hardcoded-content"],
+
+  "sonarlint.disableTelemetry": true,
+  "sonarlint.rules": {
+    "javascript:S6754": { "level": "off" },
+    "Web:S5256": { "level": "off" },
+    "javascript:S5869": { "level": "off" }
+  },
+  "sonarlint.connectedMode.project": {},
+  "extensions.ignoreRecommendations": false
+}

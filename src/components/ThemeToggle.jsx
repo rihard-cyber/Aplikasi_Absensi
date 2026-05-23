@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React from 'react';
 import { Sun, Moon, Zap, Activity } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';

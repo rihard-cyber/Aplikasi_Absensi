@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { Building2, MapPin, Search, Plus, Trash2, Edit3, Network, Building, AlertCircle } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';

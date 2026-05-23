@@ -1,8 +1,10 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, CheckCircle2, XCircle, DollarSign, Filter, Eye, Loader2 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
+import { sanitizeUrl } from '../../../utils/urlSanitizer';
 
 const CATEGORIES = { MEDICAL: 'Kesehatan', TRANSPORT: 'Transportasi', MEAL: 'Makan', TRAINING: 'Pelatihan', SUPPLIES: 'Perlengkapan', ENTERTAINMENT: 'Representasi', OTHER: 'Lainnya' };
 
@@ -80,7 +82,7 @@ const ReimbursementManagement = () => {
             <div className="mt-3 flex items-center justify-between">
               <p className="text-xs text-gray-500 italic">"{c.description}"</p>
               <div className="flex gap-2">
-                {c.receipt_url && <a href={c.receipt_url} target="_blank" className="p-2 hover:bg-white/10 rounded-lg text-[var(--aurora-3)]"><Eye size={14} /></a>}
+                {c.receipt_url && <a href={sanitizeUrl(c.receipt_url)} target="_blank" className="p-2 hover:bg-white/10 rounded-lg text-[var(--aurora-3)]"><Eye size={14} /></a>}
                 {c.status === 'PENDING' && <>
                   <button onClick={() => handleAction(c.id, 'APPROVED')} className="px-4 py-2 rounded-xl bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/30 text-[10px] font-bold"><CheckCircle2 size={12} /> Setujui</button>
                   <button onClick={() => handleAction(c.id, 'REJECTED')} className="px-4 py-2 rounded-xl bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/30 text-[10px] font-bold"><XCircle size={12} /> Tolak</button>

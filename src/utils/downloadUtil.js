@@ -6,7 +6,11 @@ export const downloadCSV = (data, filename) => {
   const headers = Object.keys(data[0]);
   const csv = [
     headers.join(','),
-    ...data.map(r => headers.map(h => `"${String(r[h] || '').replace(/"/g, '""')}"`).join(','))
+    ...data.map(r => headers.map(h => {
+    const safeKey = typeof h === 'string' && !['__proto__', 'constructor', 'prototype'].includes(h) && Object.prototype.hasOwnProperty.call(r, h) ? h : null;
+    const val = safeKey ? Reflect.get(r, safeKey) : '';
+    return `"${String(val ?? '').replace(/"/g, '""')}"`;
+    }).join(','))
   ].join('\n');
   const bom = '\uFEFF';
   const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });

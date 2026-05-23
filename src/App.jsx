@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -104,7 +105,7 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
   // Track navigation history
   useEffect(() => {
     setNavStack(prev => {
-      if (prev.length === 0 || prev[prev.length - 1] !== location.pathname) {
+      if (prev.length === 0 || prev.at(-1) !== location.pathname) {
         return [...prev, location.pathname].slice(-10);
       }
       return prev;
@@ -113,7 +114,7 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
 
   const handleGoBack = useCallback(() => {
     if (navStack.length >= 2) {
-      navigate(navStack[navStack.length - 2]);
+      navigate(navStack.at(-2));
     } else if (location.pathname === '/login') {
       return;
     } else {
@@ -178,7 +179,7 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
     
     const roles = ['SUPER_ADMIN', 'TENANT_ADMIN', 'SUB_ADMIN', 'EMPLOYEE'];
     const currentIdx = roles.indexOf(userRole);
-    const nextRole = roles[(currentIdx + 1) % roles.length];
+    const nextRole = roles.at((currentIdx + 1) % roles.length);
     
     if (nextRole === 'SUPER_ADMIN') handleGodModeReturn();
     else handleImpersonate(nextRole);

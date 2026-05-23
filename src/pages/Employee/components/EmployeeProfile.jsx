@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,7 +11,9 @@ import { supabase } from '../../../utils/supabaseClient';
 import { DeviceUtil } from '../../../utils/deviceUtil';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../../components/ConfirmDialog';
+import { useToast } from '../../../components/Toast';
 import HRISDataForm from './HRISDataForm';
+import NotificationSettings from '../../../components/NotificationSettings';
 
 const EmployeeProfile = () => {
   const navigate = useNavigate();
@@ -34,13 +37,13 @@ const EmployeeProfile = () => {
   const [showPinModal, setShowPinModal] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const [notifications, setNotifications] = useState(true);
   const [biometric, setBiometric] = useState(false);
   const [isBound, setIsBound] = useState(false);
   const [hasSubAdminAccess, setHasSubAdminAccess] = useState(true); // Simulated check
   const [pin, setPin] = useState(['', '', '', '', '', '']);
   const [activeItem, setActiveItem] = useState(null);
   const confirm = useConfirm();
+  const toast = useToast();
   const [editData, setEditData] = useState({ ...user });
 
   useEffect(() => {
@@ -310,16 +313,11 @@ const EmployeeProfile = () => {
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] px-2 flex items-center gap-2">
             <Settings size={14} className="text-[var(--aurora-3)]" /> Pengaturan & Sinkronisasi
           </h3>
+
+          {/* Real Push Notification Settings */}
+          <NotificationSettings />
+
           <div className="glass-panel rounded-3xl overflow-hidden border border-white/5">
-            <MenuItem
-              icon={<Bell size={20} />}
-              title="Notifikasi"
-              subtitle="Aktifkan push notification"
-              color="var(--aurora-3)"
-              toggle={true}
-              toggleState={notifications}
-              onToggle={() => setNotifications(!notifications)}
-            />
             <MenuItem
               id="sync"
               activeItem={activeItem}
@@ -337,7 +335,7 @@ const EmployeeProfile = () => {
               title="Tema"
               subtitle="Dark Luxury (Default)"
               color="var(--aurora-1)"
-              onClick={() => handleItemClick('theme', () => alert('Tema Dark Luxury adalah standar perusahaan.'))}
+              onClick={() => handleItemClick('theme', () => toast('Tema Dark Luxury adalah standar perusahaan.', 'info'))}
             />
           </div>
         </div>

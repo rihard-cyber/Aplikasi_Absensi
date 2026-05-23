@@ -1,7 +1,9 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import { initPushNotifications } from './utils/pushNotification.js'
 import './index.css'
 
 // Hilangkan loading splash screen saat React siap
@@ -24,3 +26,6 @@ root.render(
 
 // Panggil segera setelah render pertama
 requestAnimationFrame(removeLoader);
+
+// Inisialisasi Push Notification Service Worker
+initPushNotifications().catch(() => {/* silent fail if SW not supported */});

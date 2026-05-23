@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, ShieldAlert, Megaphone, Building2, Zap } from 'lucide-react';
@@ -19,6 +20,8 @@ import ProfileEditor from './components/ProfileEditor';
 import BannerCarousel from './components/BannerCarousel';
 import { supabase } from '../../utils/supabaseClient';
 import { analyzePosition, logFakeGpsAttempt } from '../../utils/antiFakeGps';
+import { enqueueAttendance, registerOnlineSyncListener, getQueueCount } from '../../utils/offlineSync';
+import { showLocalNotification } from '../../utils/pushNotification';
 import { useToast } from '../../components/Toast';
 
   // --- Extracted Clock In UI ---
@@ -156,7 +159,8 @@ const ClockInTab = () => {
             await logFakeGpsAttempt(session.user.id, profile?.tenant_id, {
               reason: gpsAnalysis.reason,
               coords: position.coords,
-              flags: gpsAnalysis.flags
+              flags: gpsAnalysis.flags,
+              riskScore: gpsAnalysis.riskScore
             });
           }
         } catch {}
@@ -184,22 +188,9 @@ const ClockInTab = () => {
   useEffect(() => {
     checkLocation();
 
-    // Fitur: Offline Sync Auto-Sender
-    const handleOnline = async () => {
-        let queue = []; try { queue = JSON.parse(localStorage.getItem('offline_attendance') || '[]'); } catch {}
-        if (queue.length > 0) {
-          const { error } = await supabase.from('attendance_logs').insert(queue);
-          if (!error) {
-            try { localStorage.removeItem('offline_attendance'); } catch {}
-            if (window.navigator?.vibrate) window.navigator.vibrate([50, 100, 50]);
-            toast(`Sinyal kembali! ${queue.length} data absen offline berhasil disinkronisasi.`, 'success');
-          } else {
-            console.error("Gagal sinkronisasi offline:", error);
-          }
-        }
-    };
-    window.addEventListener('online', handleOnline);
-    return () => window.removeEventListener('online', handleOnline);
+    // Robust Offline Sync via offlineSync utility
+    const cleanup = registerOnlineSyncListener(toast);
+    return cleanup;
   }, []);
 
   useEffect(() => {
@@ -274,16 +265,23 @@ const ClockInTab = () => {
       };
 
       if (!navigator.onLine) {
-        let queue = []; try { queue = JSON.parse(localStorage.getItem('offline_attendance') || '[]'); } catch {}
-        queue.push(logData);
-        try { localStorage.setItem('offline_attendance', JSON.stringify(queue)); } catch {}
-        toast('Internet terputus. Data disimpan & dikirim saat online.', 'info');
+        enqueueAttendance(logData);
+        const qCount = getQueueCount();
+        toast(`Internet terputus. Data disimpan (${qCount} antrian) & dikirim saat online.`, 'info');
       } else {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
             logData.user_id = profile.id;
             await supabase.from('attendance_logs').insert([logData]);
+            // Push notification konfirmasi absensi
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            showLocalNotification('SI PRESENSI — Absensi Tercatat ✅', {
+              body: `${isClockOut ? 'Absen Keluar' : 'Absen Masuk'} berhasil dicatat pukul ${timeStr}`,
+              tag: `attendance-${logData.action}-${Date.now()}`,
+              data: { url: '/attendance' },
+            });
           }
         } catch (e) {
           console.error("Save error", e);

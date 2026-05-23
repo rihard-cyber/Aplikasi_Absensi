@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,6 +9,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
+import { sanitizeUrl } from '../../../utils/urlSanitizer';
+import { compressImage } from '../../../utils/imageCompressor';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -88,7 +91,8 @@ const DocumentVault = () => {
         // Update category completion
         setCategories(prev => prev.map(cat => {
           const catLabels = { ktp: 'ktp', kk: 'kk', education: 'pendidikan', cert: 'sertifikat', bpjs: 'bpjs', bank: 'bank', other: 'lain' };
-          const keyword = catLabels[cat.id] || cat.id;
+          const safeCatId = typeof cat.id === 'string' && Object.prototype.hasOwnProperty.call(catLabels, cat.id) ? cat.id : null;
+          const keyword = safeCatId ? catLabels[safeCatId] : cat.id;
           const catDocs = docs.filter(d => d.doc_type?.toLowerCase().includes(keyword));
           return { ...cat, complete: catDocs.some(d => d.verification_status === 'VERIFIED') };
         }));
@@ -124,10 +128,11 @@ const DocumentVault = () => {
         .select('id, tenant_id').eq('auth_id', session.user.id).maybeSingle();
       if (!prof) throw new Error('Profil tidak ditemukan.');
 
-      // Upload file
-      const ext = formData.file.name.split('.').pop();
+      // Upload file (compress images client-side first)
+      const fileToUpload = await compressImage(formData.file, 1, 1920);
+      const ext = fileToUpload.name.split('.').pop();
       const path = `${session.user.id}/${activeCategory}_${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('documents').upload(path, formData.file, { upsert: true });
+      const { error: upErr } = await supabase.storage.from('documents').upload(path, fileToUpload, { upsert: true });
       if (upErr) throw upErr;
       const { data: { publicUrl } } = supabase.storage.from('documents').getPublicUrl(path);
 
@@ -250,7 +255,7 @@ const DocumentVault = () => {
               <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">Jumlah Anak</label>
               <select name="children_count" value={formData.children_count} onChange={handleInputChange}
                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]">
-                {[0, 1, 2, 3].map(n => <option key={n} value={n} className="bg-[#0B0C10]">{n} {n > 0 ? 'Anak' : 'Anak'}</option>)}
+                {[0, 1, 2, 3].map(n => <option key={n} value={n} className="bg-[#0B0C10]">{n} Anak</option>)}
               </select>
             </div>
           </div>
@@ -460,7 +465,7 @@ akan ditandai centang hijau.
                     </div>
                     <div className="flex items-center gap-3">
                       {sub.file_url && (
-                        <a href={sub.file_url} target="_blank" rel="noopener noreferrer" className="text-[var(--aurora-3)] hover:underline text-[10px]">Lihat</a>
+                        <a href={sanitizeUrl(sub.file_url)} target="_blank" rel="noopener noreferrer" className="text-[var(--aurora-3)] hover:underline text-[10px]">Lihat</a>
                       )}
                       <span className={`text-[8px] font-black uppercase tracking-tighter px-2 py-0.5 rounded ${
                         isVerified ? 'bg-[var(--success)]/10 text-[var(--success)]' :
@@ -479,10 +484,16 @@ akan ditandai centang hijau.
   );
 };
 
-const SmartInput = ({ label, ...props }) => (
+const SmartInput = ({ label, type = 'text', name, value, onChange, placeholder, maxLength }) => (
   <div className="space-y-1.5">
     <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">{label}</label>
-    <input {...props}
+    <input
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      maxLength={maxLength}
       className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)] placeholder:text-gray-700 transition-all shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]" />
   </div>
 );

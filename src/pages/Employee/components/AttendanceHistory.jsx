@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Clock, CalendarCheck, AlertTriangle, Filter, Search, ChevronRight, CheckCircle2, ShieldCheck } from 'lucide-react';
@@ -181,7 +182,8 @@ const StatusBadge = ({ status }) => {
     'ABSENT': { label: 'Mangkir', color: 'var(--danger)' },
     'OUT_OF_RANGE': { label: 'Luar Radius', color: 'var(--danger)' }
   };
-  const { label, color } = config[status] || config.ONTIME;
+  const safeStatus = typeof status === 'string' && Object.prototype.hasOwnProperty.call(config, status) ? status : 'ONTIME';
+  const { label, color } = config[safeStatus];
   return (
     <span className="text-[8px] font-black px-2.5 py-1 rounded-lg bg-black/40 uppercase tracking-widest border border-white/5" style={{ color }}>
       {label}

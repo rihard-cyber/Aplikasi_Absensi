@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Download, FileText, Calculator, Loader2, DollarSign, Users, CalendarDays } from 'lucide-react';

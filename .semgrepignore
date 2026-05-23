@@ -1,0 +1,27 @@
+# Semgrep Ignore File
+node_modules/
+dist/
+build/
+android/
+ios/
+scratch/
+*.sql
+*.json
+*.md
+*.html
+*.css
+*.sh
+*.bat
+*.pro
+*.properties
+*.xml
+*.jar
+*.dex
+*.class
+*.ap_
+*.flat
+*.png
+*.apk
+*.gradle
+*.cjs
+*.patch

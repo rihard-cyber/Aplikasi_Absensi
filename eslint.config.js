@@ -73,6 +73,11 @@ export default [
       'no-console': 'off',
       'no-empty': 'warn',
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      // App ini berbahasa Indonesia (monolingual) — i18n rules tidak relevan
+      'i18n-text/no-en': 'off',
+      'i18next/no-literal-string': 'off',
+      '@shopify/jsx-no-hardcoded-content': 'off',
+      'react-intl/string-is-marked-for-extraction': 'off',
     },
   },
 ];
