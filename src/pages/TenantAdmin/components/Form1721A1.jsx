@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText, Download, Search, User, ChevronDown, RefreshCw,
-  Printer, CheckCircle2, AlertCircle, Loader2, Building2, Calendar
+  Printer, CheckCircle2, AlertCircle, Loader2, Building2, Calendar, Calculator
 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 
