@@ -1,7 +1,7 @@
 /* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, ShieldAlert, Megaphone, Building2, Zap } from 'lucide-react';
+import { MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, ShieldAlert, Megaphone, Building2, Zap, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../components/ConfirmDialog';
 import { Geolocation } from '@capacitor/geolocation';
@@ -18,6 +18,7 @@ import PayslipView from './components/PayslipView';
 import QRScanner from './components/QRScanner';
 import ProfileEditor from './components/ProfileEditor';
 import BannerCarousel from './components/BannerCarousel';
+import HRChatbot from '../TenantAdmin/components/HRChatbot';
 import { supabase } from '../../utils/supabaseClient';
 import { analyzePosition, logFakeGpsAttempt } from '../../utils/antiFakeGps';
 import { enqueueAttendance, registerOnlineSyncListener, getQueueCount } from '../../utils/offlineSync';
@@ -738,6 +739,21 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
               key="edit-profile"
               onBack={() => setActiveSubView(null)}
             />
+          ) : activeSubView === 'chatbot' ? (
+            <div className="w-full flex-1 relative z-10 flex flex-col pb-24">
+              <div className="flex items-center gap-4 mb-6">
+                <button onClick={() => setActiveSubView(null)} className="p-3 bg-white/5 border border-white/10 rounded-2xl text-gray-400 hover:text-white transition-colors">
+                  <ArrowLeft size={20} />
+                </button>
+                <div>
+                  <h2 className="text-xl font-serif font-bold text-white">Tanya AI</h2>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">Asisten Kebijakan HR</p>
+                </div>
+              </div>
+              <div className="glass-panel p-6 rounded-[32px] border border-white/5 bg-white/[0.02] flex-1 flex flex-col overflow-hidden">
+                <HRChatbot />
+              </div>
+            </div>
           ) : activeTab === 'home' ? (
             <EmployeeHome 
               key="home" 

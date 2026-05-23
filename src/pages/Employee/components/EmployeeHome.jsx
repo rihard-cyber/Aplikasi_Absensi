@@ -1,6 +1,6 @@
 /* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
-import { Clock, Calendar, Wallet, TrendingUp, Zap, RefreshCcw, CheckCircle2, FileText, Megaphone, Sun, QrCode, DollarSign, Receipt, Edit3 } from 'lucide-react';
+import { Clock, Calendar, Wallet, TrendingUp, Zap, RefreshCcw, CheckCircle2, FileText, Megaphone, Sun, QrCode, DollarSign, Receipt, Edit3, Bot } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../../utils/supabaseClient';
 
@@ -142,6 +142,7 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
         <ActionButton icon={<Receipt />} label="Klaim Biaya" color="var(--success)" onClick={() => onAction('reimbursement')} />
         <ActionButton icon={<Edit3 />} label="Edit Profil" color="var(--aurora-1)" onClick={() => onAction('edit-profile')} />
         <ActionButton icon={<FileText />} label="PKWT / Kontrak" color="var(--aurora-3)" onClick={() => onAction('contract')} />
+        <ActionButton icon={<Bot />} label="Tanya AI" color="var(--aurora-2)" onClick={() => onAction('chatbot')} />
       </div>
 
       {/* ANNOUNCEMENTS SECTION */}

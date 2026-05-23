@@ -9,9 +9,9 @@ let _webDeviceId = null;
 function getOrCreateWebDeviceId() {
   if (_webDeviceId) return _webDeviceId;
 
-  // Check sessionStorage first
+  // Check localStorage first
   try {
-    const stored = sessionStorage.getItem('__web_device_id');
+    const stored = localStorage.getItem('__web_device_id');
     if (stored) {
       _webDeviceId = stored;
       return _webDeviceId;
@@ -25,7 +25,7 @@ function getOrCreateWebDeviceId() {
       (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
     );
 
-  try { sessionStorage.setItem('__web_device_id', uuid); } catch {};
+  try { localStorage.setItem('__web_device_id', uuid); } catch {};
   _webDeviceId = uuid;
   return _webDeviceId;
 }
