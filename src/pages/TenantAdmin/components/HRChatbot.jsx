@@ -1,7 +1,7 @@
 /* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Send, X, RefreshCw, User, Sparkles, BookOpen, Clock, ChevronDown } from 'lucide-react';
+import { Bot, Send, X, RefreshCw, User, Sparkles, BookOpen, Clock, ChevronDown, Loader2 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 
 /**
