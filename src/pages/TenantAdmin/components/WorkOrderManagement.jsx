@@ -159,7 +159,7 @@ const WorkOrderManagement = () => {
 
       {showForm && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowForm(false)}>
-          <div className="w-full max-w-lg glass-panel p-8" onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-lg glass-panel p-8 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-serif font-bold text-white">{editingId ? 'Edit' : 'Buat'} Work Order</h3>
               <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>

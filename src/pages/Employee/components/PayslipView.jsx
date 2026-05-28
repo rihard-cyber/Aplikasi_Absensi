@@ -28,27 +28,31 @@ const PayslipView = ({ onBack }) => {
   }, []);
 
   const fetchData = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    const { data: prof } = await supabase.from('profiles').select('*, projects(name), divisions(name)').eq('auth_id', session.user.id).maybeSingle();
-    if (prof) setProfile(prof);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data: prof } = await supabase.from('profiles').select('*, projects(name), divisions(name)').eq('auth_id', session.user.id).maybeSingle();
+      if (prof) setProfile(prof);
 
-    const { data: pers } = await supabase.from('payroll_periods').select('*').in('status', ['LOCKED', 'PAID']).eq('tenant_id', prof?.tenant_id).order('period_year', { ascending: false }).order('period_month', { ascending: false });
-    if (pers) setPeriods(pers);
+      const { data: pers } = await supabase.from('payroll_periods').select('*').in('status', ['LOCKED', 'PAID']).eq('tenant_id', prof?.tenant_id).order('period_year', { ascending: false }).order('period_month', { ascending: false });
+      if (pers) setPeriods(pers);
 
-    if (pers?.length) {
-      setSelectedPeriod(pers[0]);
-      fetchPayslip(pers[0], prof?.id);
-    }
+      if (pers?.length) {
+        setSelectedPeriod(pers[0]);
+        fetchPayslip(pers[0], prof?.id);
+      }
+    } catch (e) { console.error('Fetch error:', e); }
   };
 
   const fetchPayslip = async (period, userId) => {
-    if (!userId) return;
-    const { data: sum } = await supabase.from('payroll_summary').select('*').eq('period_id', period.id).eq('user_id', userId).maybeSingle();
-    if (sum) setSummary(sum);
+    try {
+      if (!userId) return;
+      const { data: sum } = await supabase.from('payroll_summary').select('*').eq('period_id', period.id).eq('user_id', userId).maybeSingle();
+      if (sum) setSummary(sum);
 
-    const { data: res } = await supabase.from('payroll_results').select('*').eq('period_id', period.id).eq('user_id', userId).order('component_type');
-    if (res) setDetails(res);
+      const { data: res } = await supabase.from('payroll_results').select('*').eq('period_id', period.id).eq('user_id', userId).order('component_type');
+      if (res) setDetails(res);
+    } catch (e) { console.error('Payslip fetch error:', e); }
   };
 
   const handlePeriodChange = (period) => {

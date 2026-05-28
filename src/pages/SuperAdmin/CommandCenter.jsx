@@ -114,7 +114,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
               transition={{ type: 'spring', stiffness: 450, damping: 30 }}
               className="relative z-[10000] w-full max-w-sm"
             >
-              <div className="glass-panel p-6 sm:p-8 border border-[var(--warning)]/40 shadow-[0_0_80px_rgba(255,215,0,0.3)]">
+              <div className="glass-panel p-6 sm:p-8 border border-[var(--warning)]/40 shadow-[0_0_80px_rgba(255,215,0,0.3)] max-h-[85vh] overflow-y-auto">
                 <div className="text-center mb-8">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--warning)]/10 border border-[var(--warning)]/30 mb-4">
                     <Zap size={14} className="text-[var(--warning)] animate-pulse" />

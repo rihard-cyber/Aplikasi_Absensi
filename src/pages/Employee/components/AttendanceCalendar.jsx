@@ -37,7 +37,8 @@ const AttendanceCalendar = ({ onBack }) => {
       if (!profile) return;
 
       const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-      const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
       const [logData, schedData] = await Promise.all([
         supabase.from('attendance_logs')

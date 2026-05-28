@@ -91,22 +91,20 @@ const FaceVerificationModal = ({ isOpen, onSuccess, onCancel, maxRetries = 3 }) 
 
   // Auto-start countdown when ready
   useEffect(() => {
-    if (phase === 'ready' && retries === 0) {
-      let c = 3;
-      setCountdown(c);
-      const iv = setInterval(() => {
-        c--;
-        if (c > 0) {
-          setCountdown(c);
-        } else {
-          clearInterval(iv);
-          setCountdown(null);
-          runVerification();
-        }
-      }, 1000);
-      return () => clearInterval(iv);
-    }
-  }, [phase === 'ready' && retries === 0]); // only on first mount in ready state
+    if (phase !== 'ready' || retries !== 0) return;
+    let count = 3;
+    setCountdown(count);
+    const iv = setInterval(() => {
+      count--;
+      setCountdown(count);
+      if (count <= 0) {
+        clearInterval(iv);
+        setPhase('verifying');
+        runVerification();
+      }
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [phase, retries]);
 
   useEffect(() => {
     if (isOpen) {

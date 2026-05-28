@@ -21,6 +21,9 @@ const PayrollRun = () => {
   const [results, setResults] = useState([]);
   const [summaries, setSummaries] = useState([]);
   const [viewResult, setViewResult] = useState(null);
+  const [showNewPeriod, setShowNewPeriod] = useState(false);
+  const [newPeriod, setNewPeriod] = useState({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), period_type: 'monthly', start_date: '', end_date: '', label: '' });
+  const [holidays, setHolidays] = useState([]);
   const toast = useToast();
 
   useEffect(() => { init(); }, []);

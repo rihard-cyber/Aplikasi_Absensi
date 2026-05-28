@@ -256,7 +256,7 @@ const PermissionManager = () => {
             />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-md glass-panel p-8 rounded-[40px] border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+              className="relative w-full max-w-md glass-panel p-8 rounded-[40px] border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] max-h-[85vh] overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-xl font-serif font-bold text-white">Delegasi Otoritas</h3>

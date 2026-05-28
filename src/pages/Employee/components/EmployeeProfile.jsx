@@ -47,10 +47,10 @@ const EmployeeProfile = () => {
   const [editData, setEditData] = useState({ ...user });
 
   useEffect(() => {
-    fetchUserData();
-    checkDeviceBinding();
-
-    // Cache Pre-fetching: Prefetch other data if needed
+    (async () => {
+      await fetchUserData();
+      checkDeviceBinding();
+    })();
   }, []);
 
   // Haptic Feedback Simulation (Replace with actual Capacitor Haptics if available)
@@ -495,8 +495,17 @@ const EmployeeProfile = () => {
 
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => {
-                    alert('PIN Berhasil Disimpan!');
+                  onClick={async () => {
+                    const pinStr = pin.join('');
+                    if (pinStr.length < 6) { toast('PIN harus 6 digit', 'error'); return; }
+                    try {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (session?.user) {
+                        await supabase.from('profiles').update({ pin_code: pinStr }).eq('auth_id', session.user.id);
+                        sessionStorage.setItem('pin_verified', 'true');
+                      }
+                    } catch (e) { console.error('PIN save error:', e); }
+                    toast('PIN Berhasil Disimpan!', 'success');
                     setShowPinModal(false);
                   }}
                   className="w-full py-4 rounded-xl bg-[var(--warning)] text-black font-bold uppercase tracking-widest"

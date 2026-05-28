@@ -352,7 +352,7 @@ const DocumentVault = () => {
             <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">Secure Document Sync</p>
           </div>
         </div>
-        <button onClick={() => setView(v => v === 'history' ? 'categories' : 'history')}
+        <button onClick={() => { setView(v => v === 'history' ? 'categories' : 'history'); if (view !== 'history') setActiveCategory(null); }}
           className={`p-3 rounded-xl border transition-all ${view === 'history' ? 'bg-[var(--aurora-3)] text-black border-[var(--aurora-3)]' : 'bg-white/5 border-white/10 text-gray-400'}`}>
           {view === 'history' ? <XCircle size={20} /> : <History size={20} />}
         </button>

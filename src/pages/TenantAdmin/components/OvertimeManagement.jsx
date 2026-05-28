@@ -267,7 +267,7 @@ const OvertimeManagement = () => {
       <AnimatePresence>{renderDetailModal()}</AnimatePresence>
       <AnimatePresence>{sigModal && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSigModal(null)}>
-          <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
+          <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-md w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 className="text-lg font-bold text-white">Upload Tanda Tangan</h3>

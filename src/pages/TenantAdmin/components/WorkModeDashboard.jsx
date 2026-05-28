@@ -40,7 +40,7 @@ const WorkModeDashboard = () => {
       const { data: profile } = await supabase.from('profiles')
         .select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
       const tid = profile?.tenant_id;
-      if (!tid) return;
+      if (!tid) { setLoading(false); return; }
 
       // Fetch all employees
       const { data: emps } = await supabase.from('profiles')

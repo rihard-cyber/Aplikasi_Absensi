@@ -29,12 +29,12 @@ const GlobalAudit = () => {
     const { data: t } = await supabase.from('tenants').select('id, name, tier').order('name');
     if (t) setTenants(t);
 
-    const query = supabase.from('audit_logs')
+    let query = supabase.from('audit_logs')
       .select('*, profiles!user_id(email, full_name), tenants!tenant_id(name, tier)')
       .order('created_at', { ascending: false })
       .limit(200);
     
-    if (filterTenant !== 'all') query.eq('tenant_id', filterTenant);
+    if (filterTenant !== 'all') query = query.eq('tenant_id', filterTenant);
 
     const { data: l } = await query;
     if (l) setLogs(l);

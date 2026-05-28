@@ -38,7 +38,7 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
 
   useEffect(() => {
     const isG = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
-    const isI = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true' || false; } catch { return false; } })();
+    const isI = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true' || localStorage.getItem('original_role') !== null; } catch { return false; } })();
     setIsGod(isG);
     setIsImpersonating(isI);
     fetchAuth();

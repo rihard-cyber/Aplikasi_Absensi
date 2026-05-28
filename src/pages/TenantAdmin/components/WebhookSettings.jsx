@@ -95,7 +95,7 @@ const WebhookSettings = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-      if (!profile?.tenant_id) return;
+      if (!profile?.tenant_id) { setLoading(false); return; }
       setTenantId(profile.tenant_id);
 
       const { data: wh } = await supabase.from('tenant_webhooks')

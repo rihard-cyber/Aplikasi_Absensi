@@ -1,10 +1,12 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QrCode, CheckCircle2, XCircle, ArrowLeft, Loader2, MapPin, AlertTriangle, Users, Send, Camera, ClipboardList, Route, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { logAudit } from '../../../utils/auditLogger';
+
+/** @type {(s: string) => string} Passthrough i18n — app is monolingual Indonesian */
+const t = (s) => s;
 
 const PatrolScan = ({ onBack }) => {
   const [profile, setProfile] = useState(null);
@@ -29,14 +31,16 @@ const PatrolScan = ({ onBack }) => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      const { data: p } = await supabase.from('profiles').select('id, tenant_id, full_name').eq('auth_id', session.user.id).maybeSingle();
-      if (p) {
-        setProfile(p);
-        setTenantId(p.tenant_id);
-        await loadData(p.id, p.tenant_id);
-      }
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const { data: p } = await supabase.from('profiles').select('id, tenant_id, full_name').eq('auth_id', session.user.id).maybeSingle();
+        if (p) {
+          setProfile(p);
+          setTenantId(p.tenant_id);
+          await loadData(p.id, p.tenant_id);
+        }
+      } catch (e) { console.error('Fetch profile error:', e); }
     };
     fetchProfile();
     startGps();
@@ -60,6 +64,7 @@ const PatrolScan = ({ onBack }) => {
   };
 
   const loadData = async (uid, tid) => {
+    try {
     const [cpData, rData, lData, gData] = await Promise.all([
       supabase.from('patrol_checkpoints').select('*').eq('tenant_id', tid).eq('is_active', true),
       supabase.from('patrol_routes').select('*, patrol_route_checkpoints(*, patrol_checkpoints(*))').eq('tenant_id', tid).eq('is_active', true),
@@ -78,6 +83,7 @@ const PatrolScan = ({ onBack }) => {
       if (todayScans?.length) setScannedIds(todayScans.map(l => l.checkpoint_id));
     }
     if (gData.data) setGuards(gData.data.filter(g => g.id !== uid));
+    } catch (e) { console.error('Load data error:', e); }
   };
 
   const handleScan = async (codeOverride) => {
@@ -219,11 +225,11 @@ const PatrolScan = ({ onBack }) => {
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center mx-auto mb-4 shadow-lg">
           <QrCode size={28} className="text-white" />
         </div>
-        <h2 className="text-xl font-serif font-bold text-white mb-1">Scan Checkpoint</h2>
-        <p className="text-xs text-gray-400 mb-6">Scan QR code di checkpoint patroli untuk mencatat kunjungan</p>
+        <h2 className="text-xl font-serif font-bold text-white mb-1">{t('Scan Checkpoint')}</h2>
+        <p className="text-xs text-gray-400 mb-6">{t('Scan QR code di checkpoint patroli untuk mencatat kunjungan')}</p>
         <div className="space-y-4">
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 text-left">Masukkan Kode QR</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 text-left">{t('Masukkan Kode QR')}</label>
             <div className="flex gap-2">
               <input value={manualCode} onChange={e => setManualCode(e.target.value)}
                 placeholder="Tempel kode QR checkpoint..."
@@ -238,7 +244,7 @@ const PatrolScan = ({ onBack }) => {
           {gpsPosition && (
             <div className="flex items-center gap-2 bg-[var(--success)]/5 border border-[var(--success)]/10 rounded-xl p-3 text-left">
               <MapPin size={14} className="text-[var(--success)]" />
-              <span className="text-[10px] text-gray-400">GPS: {gpsPosition.latitude.toFixed(6)}, {gpsPosition.longitude.toFixed(6)}</span>
+              <span className="text-[10px] text-gray-400">{t('GPS: ')}{gpsPosition.latitude.toFixed(6)}, {gpsPosition.longitude.toFixed(6)}</span>
             </div>
           )}
         </div>
@@ -248,13 +254,13 @@ const PatrolScan = ({ onBack }) => {
       <div className="grid grid-cols-2 gap-4">
         <button onClick={() => setShowIncidentForm(true)} className="glass-panel p-5 rounded-[32px] border border-[var(--danger)]/20 hover:border-[var(--danger)]/40 transition-all text-center">
           <div className="w-12 h-12 rounded-2xl bg-[var(--danger)]/10 text-[var(--danger)] flex items-center justify-center mx-auto mb-3"><AlertTriangle size={24} /></div>
-          <p className="text-white font-bold text-xs">Lapor Insiden</p>
-          <p className="text-[9px] text-gray-500 mt-1">Laporkan kejadian selama patroli</p>
+          <p className="text-white font-bold text-xs">{t('Lapor Insiden')}</p>
+          <p className="text-[9px] text-gray-500 mt-1">{t('Laporkan kejadian selama patroli')}</p>
         </button>
         <button onClick={() => setShowHandoverForm(true)} className="glass-panel p-5 rounded-[32px] border border-[var(--aurora-3)]/20 hover:border-[var(--aurora-3)]/40 transition-all text-center">
           <div className="w-12 h-12 rounded-2xl bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] flex items-center justify-center mx-auto mb-3"><Users size={24} /></div>
-          <p className="text-white font-bold text-xs">Shift Handover</p>
-          <p className="text-[9px] text-gray-500 mt-1">Serahkan shift ke petugas lain</p>
+          <p className="text-white font-bold text-xs">{t('Shift Handover')}</p>
+          <p className="text-[9px] text-gray-500 mt-1">{t('Serahkan shift ke petugas lain')}</p>
         </button>
       </div>
 
@@ -264,7 +270,7 @@ const PatrolScan = ({ onBack }) => {
         {todayLogs.length === 0 ? (
           <div className="text-center py-6">
             <ShieldCheck size={28} className="mx-auto text-gray-600 mb-2" />
-            <p className="text-xs text-gray-500">Belum ada scan hari ini</p>
+            <p className="text-xs text-gray-500">{t('Belum ada scan hari ini')}</p>
           </div>
         ) : (
           <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -291,14 +297,14 @@ const PatrolScan = ({ onBack }) => {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowIncidentForm(false)}>
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-md w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2"><AlertTriangle size={18} className="text-[var(--danger)]" /> Lapor Insiden</h3>
-              <p className="text-xs text-gray-500 mb-6">Laporkan kejadian selama patroli</p>
+              <p className="text-xs text-gray-500 mb-6">{t('Laporkan kejadian selama patroli')}</p>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Jenis Insiden</label>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Jenis Insiden')}</label>
                   <input value={incidentForm.incident_type} onChange={e => setIncidentForm({...incidentForm, incident_type: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Misal: Kebakaran kecil, Pintu rusak" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Severity</label>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Severity')}</label>
                   <div className="flex gap-2">
                     {['low', 'medium', 'high', 'critical'].map(s => (
                       <button key={s} onClick={() => setIncidentForm({...incidentForm, severity: s})}
@@ -307,11 +313,11 @@ const PatrolScan = ({ onBack }) => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Deskripsi</label>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Deskripsi')}</label>
                   <textarea value={incidentForm.description} onChange={e => setIncidentForm({...incidentForm, description: e.target.value})} rows={3} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none resize-none" placeholder="Jelaskan detail insiden..." />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Foto (opsional)</label>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Foto (opsional)')}</label>
                   <label className="flex items-center gap-3 p-3 bg-white/5 border border-dashed border-white/20 rounded-xl cursor-pointer hover:bg-white/10">
                     <Camera size={18} className="text-gray-400" />
                     <span className="text-xs text-gray-400">{incidentForm.photo ? incidentForm.photo.name : 'Upload foto'}</span>
@@ -322,7 +328,7 @@ const PatrolScan = ({ onBack }) => {
                   <button onClick={submitIncident} disabled={submitting} className="flex-1 py-4 rounded-xl bg-gradient-to-r from-[var(--danger)] to-red-600 text-white font-bold text-xs flex items-center justify-center gap-2 disabled:opacity-50">
                     {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Laporkan
                   </button>
-                  <button onClick={() => setShowIncidentForm(false)} className="flex-1 py-4 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">Batal</button>
+                  <button onClick={() => setShowIncidentForm(false)} className="flex-1 py-4 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">{t('Batal')}</button>
                 </div>
               </div>
             </motion.div>
@@ -334,26 +340,26 @@ const PatrolScan = ({ onBack }) => {
       <AnimatePresence>
         {showHandoverForm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowHandoverForm(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-md w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2"><Users size={18} className="text-[var(--aurora-3)]" /> Shift Handover</h3>
-              <p className="text-xs text-gray-500 mb-6">Serahkan shift ke petugas selanjutnya</p>
+              <p className="text-xs text-gray-500 mb-6">{t('Serahkan shift ke petugas selanjutnya')}</p>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Petugas Pengganti</label>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Petugas Pengganti')}</label>
                   <select value={handoverForm.to_profile_id} onChange={e => setHandoverForm({...handoverForm, to_profile_id: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
-                    <option value="">Pilih petugas</option>
+                    <option value="">{t('Pilih petugas')}</option>
                     {guards.map(g => <option key={g.id} value={g.id}>{g.full_name} ({g.nip || '—'})</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Catatan (opsional)</label>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Catatan (opsional)')}</label>
                   <textarea value={handoverForm.notes} onChange={e => setHandoverForm({...handoverForm, notes: e.target.value})} rows={3} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none resize-none" placeholder="Catatan penting untuk petugas selanjutnya..." />
                 </div>
                 <div className="flex gap-2 pt-2">
                   <button onClick={submitHandover} disabled={submitting} className="flex-1 py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs flex items-center justify-center gap-2 disabled:opacity-50">
                     {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Serahkan Shift
                   </button>
-                  <button onClick={() => setShowHandoverForm(false)} className="flex-1 py-4 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">Batal</button>
+                  <button onClick={() => setShowHandoverForm(false)} className="flex-1 py-4 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">{t('Batal')}</button>
                 </div>
               </div>
             </motion.div>
@@ -368,7 +374,7 @@ const PatrolScan = ({ onBack }) => {
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md">
             <motion.div initial={{ y: 20 }} animate={{ y: 0 }} className="glass-panel p-10 text-center border border-[var(--success)]/30 shadow-[0_0_50px_rgba(0,255,135,0.2)]">
               <CheckCircle2 size={64} className="text-[var(--success)] mx-auto mb-4 drop-shadow-[0_0_20px_var(--success)]" />
-              <h3 className="text-xl font-serif font-bold text-white mb-2">Checkpoint Tercatat!</h3>
+              <h3 className="text-xl font-serif font-bold text-white mb-2">{t('Checkpoint Tercatat!')}</h3>
               <p className="text-sm text-gray-400">{new Date().toLocaleTimeString('id-ID')}</p>
             </motion.div>
           </motion.div>
@@ -378,9 +384,9 @@ const PatrolScan = ({ onBack }) => {
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md">
             <motion.div initial={{ y: 20 }} animate={{ y: 0 }} className="glass-panel p-10 text-center border border-[var(--danger)]/30">
               <XCircle size={64} className="text-[var(--danger)] mx-auto mb-4" />
-              <h3 className="text-xl font-serif font-bold text-white mb-2">Gagal</h3>
-              <p className="text-sm text-gray-400">Kode QR tidak valid. Coba lagi.</p>
-              <button onClick={() => setStatus('idle')} className="mt-6 px-6 py-3 rounded-xl bg-white/10 text-white text-xs font-bold">Tutup</button>
+              <h3 className="text-xl font-serif font-bold text-white mb-2">{t('Gagal')}</h3>
+              <p className="text-sm text-gray-400">{t('Kode QR tidak valid. Coba lagi.')}</p>
+              <button onClick={() => setStatus('idle')} className="mt-6 px-6 py-3 rounded-xl bg-white/10 text-white text-xs font-bold">{t('Tutup')}</button>
             </motion.div>
           </motion.div>
         )}

@@ -30,23 +30,27 @@ const OvertimeRequest = ({ onBack }) => {
   useEffect(() => { init(); }, []);
 
   const init = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    const { data: prof } = await supabase.from('profiles').select('id, tenant_id').eq('auth_id', session.user.id).maybeSingle();
-    if (!prof) { setLoading(false); return; }
-    setMyId(prof.id);
-    setTenantId(prof.tenant_id);
-    await fetchRequests(prof.id, prof.tenant_id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data: prof } = await supabase.from('profiles').select('id, tenant_id').eq('auth_id', session.user.id).maybeSingle();
+      if (!prof) { setLoading(false); return; }
+      setMyId(prof.id);
+      setTenantId(prof.tenant_id);
+      await fetchRequests(prof.id, prof.tenant_id);
+    } catch (e) { console.error('Init error:', e); setLoading(false); }
   };
 
   const fetchRequests = async (uid, tid) => {
     setLoading(true);
-    const { data } = await supabase.from('overtime_requests')
-      .select('*')
-      .eq('profile_id', uid)
-      .eq('tenant_id', tid)
-      .order('created_at', { ascending: false });
-    if (data) setRequests(data);
+    try {
+      const { data } = await supabase.from('overtime_requests')
+        .select('*')
+        .eq('profile_id', uid)
+        .eq('tenant_id', tid)
+        .order('created_at', { ascending: false });
+      if (data) setRequests(data);
+    } catch (e) { console.error('Fetch error:', e); }
     setLoading(false);
   };
 
@@ -64,22 +68,24 @@ const OvertimeRequest = ({ onBack }) => {
     if (hours <= 0) { toast('Jam selesai harus setelah jam mulai!', 'error'); return; }
 
     setSubmitting(true);
-    const { error } = await supabase.from('overtime_requests').insert({
-      tenant_id: tenantId,
-      profile_id: myId,
-      date: form.date,
-      overtime_type: form.overtime_type,
-      start_time: form.start_time,
-      end_time: form.end_time,
-      total_hours: Math.round(hours * 100) / 100,
-      description: form.description || null,
-      status: 'pending',
-    });
+    try {
+      const { error } = await supabase.from('overtime_requests').insert({
+        tenant_id: tenantId,
+        profile_id: myId,
+        date: form.date,
+        overtime_type: form.overtime_type,
+        start_time: form.start_time,
+        end_time: form.end_time,
+        total_hours: Math.round(hours * 100) / 100,
+        description: form.description || null,
+        status: 'pending',
+      });
+      if (error) throw error;
+      toast('Permintaan lembur dikirim!', 'success');
+      setForm({ date: new Date().toISOString().split('T')[0], overtime_type: 'voluntary', start_time: '17:00', end_time: '20:00', description: '' });
+      await fetchRequests(myId, tenantId);
+    } catch (e) { toast('Gagal: ' + e.message, 'error'); }
     setSubmitting(false);
-    if (error) { toast('Gagal: ' + error.message, 'error'); return; }
-    toast('Permintaan lembur dikirim!', 'success');
-    setForm({ date: new Date().toISOString().split('T')[0], overtime_type: 'voluntary', start_time: '17:00', end_time: '20:00', description: '' });
-    await fetchRequests(myId, tenantId);
   };
 
   const getStatusBadge = (status) => {
