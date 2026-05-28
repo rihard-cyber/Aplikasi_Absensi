@@ -24,6 +24,7 @@ const FEATURE_CATEGORIES = [
     tagline: 'Lacak kehadiran real-time dengan akurasi 99.9% anti-curang.',
     icon: <Camera size={22} />,
     color: '#00C9FF',
+    image: publicAsset('/feature_absensi.png'),
     features: [
       { icon: <Camera size={20} />, name: 'Face Camera Check-in', desc: 'Selfie real-time dengan face recognition + liveness detection. Anti-fake photo!' },
       { icon: <MapPin size={20} />, name: 'GPS Geofencing Cerdas', desc: 'Radius presisi per unit/proyek. Hanya bisa absen jika berada dalam area kerja.' },
@@ -39,6 +40,7 @@ const FEATURE_CATEGORIES = [
     tagline: 'Proses penggajian bulanan 100+ karyawan selesai dalam 15 menit.',
     icon: <Calculator size={22} />,
     color: '#00FF87',
+    image: publicAsset('/feature_payroll.png'),
     features: [
       { icon: <Calculator size={20} />, name: 'Kalkulator Gaji 1-Klik', desc: 'Hitung otomatis gaji pokok, potongan absen, klaim, hingga kasbon tanpa spreadsheet.' },
       { icon: <DollarSign size={20} />, name: 'Lembur Multi-Tarif', desc: 'Penghitungan otomatis lembur hari kerja, akhir pekan, & hari libur sesuai UU.' },
@@ -54,6 +56,7 @@ const FEATURE_CATEGORIES = [
     tagline: 'Optimalkan operasional gedung, aset, dan keluhan tenant/karyawan.',
     icon: <Headphones size={22} />,
     color: '#FFD700',
+    image: publicAsset('/feature_helpdesk.png'),
     features: [
       { icon: <MessageSquare size={20} />, name: 'Ticketing Multi-Kategori', desc: 'Keluhan AC, listrik, kebersihan, IT dengan foto, tingkat urgensi, dan tracking status.' },
       { icon: <Building2 size={20} />, name: 'Booking Fasilitas Kantor', desc: 'Reservasi ruang rapat, kendaraan operasional, inventaris dengan kalender real-time.' },
@@ -67,6 +70,7 @@ const FEATURE_CATEGORIES = [
     tagline: 'Pantau kinerja satpam secara real-time dengan jaminan rute patroli lengkap.',
     icon: <Route size={22} />,
     color: '#FF6B6B',
+    image: publicAsset('/feature_patroli.png'),
     features: [
       { icon: <QrCode size={20} />, name: 'QR Code Checkpoint', desc: 'Tempel barcode tangguh di titik krusial. Satpam wajib scan untuk verifikasi kedatangan.' },
       { icon: <MapPin size={20} />, name: 'Rute GPS Guard Tracking', desc: 'Visualisasikan rute pergerakan satpam di peta digital secara live selama jam patroli.' },
@@ -80,6 +84,7 @@ const FEATURE_CATEGORIES = [
     tagline: 'Manajemen kerja fleksibel, jadwalkan shift rumit seefisien mungkin.',
     icon: <Shuffle size={22} />,
     color: '#8E2DE2',
+    image: publicAsset('/feature_wfh.png'),
     features: [
       { icon: <Home size={20} />, name: 'Hybrid Work Mode', desc: 'Pisahkan absen WFH (verifikasi alamat rumah), WFO (WiFi zone), & WFA (GPS bebas).' },
       { icon: <RefreshCw size={20} />, name: 'Shift Swap Peer-to-Peer', desc: 'Karyawan bisa ajukan tukar shift mandiri lewat aplikasi dengan persetujuan atasan.' },
@@ -113,6 +118,7 @@ const LandingPage = () => {
   const [annualBilling, setAnnualBilling] = useState(false);
   const [activeTab, setActiveTab] = useState('absensi');
   const [roiEmployees, setRoiEmployees] = useState(45);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -120,6 +126,21 @@ const LandingPage = () => {
     document.title = 'SI PRESENSI PRO MAX — Sistem Absensi, Payroll & Manajemen Operasional Gedung No. 1 Indonesia';
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Fitur Auto-Play Tab: Berganti otomatis setiap 5 detik
+  useEffect(() => {
+    let timer;
+    if (!isHovered) { // Pause otomatis jika kursor user sedang berada di atas elemen
+      timer = setInterval(() => {
+        setActiveTab((prev) => {
+          const currentIndex = FEATURE_CATEGORIES.findIndex(cat => cat.id === prev);
+          const nextIndex = (currentIndex + 1) % FEATURE_CATEGORIES.length;
+          return FEATURE_CATEGORIES[nextIndex].id;
+        });
+      }, 5000); // 5000ms = 5 detik
+    }
+    return () => clearInterval(timer);
+  }, [activeTab, isHovered]);
 
   const scrollTo = useCallback((id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -355,7 +376,11 @@ const LandingPage = () => {
 
       {/* PRODUCT SCREENSHOT SHOWCASE & INTEREST SECTION */}
       <section id="fitur" className="py-24 border-t border-white/5 bg-[#0B0C10]/80 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div 
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           
           <motion.div 
             initial={fadeIn.initial} 
@@ -400,32 +425,61 @@ const LandingPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.5 }}
-                className="max-w-5xl mx-auto"
+                className="max-w-6xl mx-auto"
               >
-                
-                <div className="text-center mb-10">
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: cat.color }}>{i18n("Modul Utama")}</span>
-                  <h3 className="text-2xl sm:text-3xl font-serif font-bold text-white mt-2 mb-3">{cat.title}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed max-w-2xl mx-auto">{cat.tagline}</p>
-                </div>
-                
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5 lg:gap-6">
-                  {cat.features.map((f, fi) => (
-                    <div key={fi} className="p-6 rounded-2xl bg-white/[0.01] border border-white/5 hover:border-white/10 transition-all hover:bg-white/[0.02]">
-                      <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4" style={{ color: cat.color }}>
-                        {f.icon}
-                      </div>
-                      <h4 className="text-sm font-bold text-white mb-2">{f.name}</h4>
-                      <p className="text-xs text-gray-500 leading-relaxed">{f.desc}</p>
+                <div className="grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+                  {/* Bagian Kiri: Teks & Fitur */}
+                  <div className="lg:col-span-6 space-y-8">
+                    <div>
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: cat.color }}>{i18n("Modul Utama")}</span>
+                      <h3 className="text-3xl sm:text-4xl font-serif font-bold text-white mt-3 mb-4">{cat.title}</h3>
+                      <p className="text-sm text-gray-400 leading-relaxed">{cat.tagline}</p>
                     </div>
-                  ))}
-                </div>
+                    
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {cat.features.map((f, fi) => (
+                        <div key={fi} className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 hover:border-white/10 transition-all">
+                          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center mb-3" style={{ color: cat.color }}>
+                            {f.icon}
+                          </div>
+                          <h4 className="text-xs font-bold text-white mb-1.5">{f.name}</h4>
+                          <p className="text-[10px] text-gray-500 leading-relaxed">{f.desc}</p>
+                        </div>
+                      ))}
+                    </div>
 
-                <div className="pt-10 text-center">
-                  <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-wider text-white hover:bg-white/10 hover:border-white/20 transition-all group">
-                    <span>{i18n("Coba demo modul ")}{cat.title.split(' ')[0]}</span>
-                    <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                  </button>
+                    <div className="pt-2">
+                      <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-wider text-white hover:bg-white/10 hover:border-white/20 transition-all group">
+                        <span>{i18n("Coba demo modul ")}{cat.title.split(' ')[0]}</span>
+                        <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Bagian Kanan: Gambar/Screenshot */}
+                  <div className="lg:col-span-6 relative">
+                    <div className="absolute inset-0 bg-gradient-to-tr rounded-3xl blur-[50px] opacity-20 pointer-events-none" style={{ backgroundImage: `linear-gradient(to top right, ${cat.color}40, transparent, ${cat.color}80)` }} />
+                    <div className="glass-panel p-2.5 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden bg-black/40">
+                      <div className="relative overflow-hidden rounded-2xl bg-[#090A0F]">
+                        <img 
+                          src={cat.image} 
+                          alt={`${cat.title} Screenshot - SI PRESENSI Pro Max`} 
+                          className="w-full h-auto object-cover transform hover:scale-102 transition-transform duration-700" 
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextElementSibling.style.display = 'flex';
+                          }}
+                        />
+                        {/* Fallback Jika Gambar Tidak Ditemukan */}
+                        <div className="w-full aspect-[4/3] bg-gradient-to-br from-gray-900 to-black hidden flex-col items-center justify-center border-t border-white/5 text-center p-6">
+                          <Sparkles size={32} className="text-gray-600 mb-3" />
+                          <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">{i18n("ILUSTRASI MODUL")}</span>
+                          <span className="text-gray-500 text-[10px] mt-2 max-w-[250px]">{i18n("Gambar ")} <code className="text-gray-400">{cat.image.split('/').pop()}</code> {i18n(" sedang diproses.")}</span>
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -762,7 +816,7 @@ const LandingPage = () => {
           </div>
 
           {/* Pricing cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6 items-stretch w-full pt-6 lg:pt-8 pb-4 lg:pb-8">
             {[
               { 
                 name: 'Bronze', 
@@ -846,12 +900,12 @@ const LandingPage = () => {
                   whileInView={{ opacity: 1, y: 0 }} 
                   viewport={{ once: true }} 
                   transition={{ delay: i * 0.1 }}
-                  className={`glass-panel p-6.5 relative flex flex-col justify-between bg-black/40 ${
-                    p.popular ? 'border-[var(--aurora-3)]/50 shadow-[0_0_40px_rgba(0,201,255,0.15)] ring-1 ring-[var(--aurora-3)]/30 scale-102 z-10' : 'border-white/5'
+                  className={`glass-panel p-6 lg:p-7 relative flex flex-col justify-between bg-black/40 ${
+                    p.popular ? 'border-[var(--aurora-3)]/50 shadow-[0_0_40px_rgba(0,201,255,0.15)] ring-1 ring-[var(--aurora-3)]/30 lg:scale-105 z-10' : 'border-white/5'
                   }`}
                 >
                   {p.popular && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4.5 py-1.5 rounded-full bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[8px] font-extrabold uppercase tracking-widest whitespace-nowrap shadow-lg shadow-purple-500/25">{i18n("⭐ PALING BANYAK DIPILIH ")}</div>
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[8px] sm:text-[9px] font-extrabold uppercase tracking-widest whitespace-nowrap shadow-lg shadow-purple-500/25 z-20">{i18n("⭐ PALING BANYAK DIPILIH ")}</div>
                   )}
 
                   <div>
@@ -860,8 +914,8 @@ const LandingPage = () => {
                     <p className="text-[9px] text-gray-500 mb-5 leading-tight">{p.users}</p>
                     
                     <div className="mb-6">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-bold text-white font-mono">{displayPrice}</span>
+                      <div className="flex items-baseline gap-1 flex-wrap">
+                        <span className="text-2xl xl:text-3xl font-bold text-white font-mono">{displayPrice}</span>
                         <span className="text-[10px] text-gray-500 font-bold">{periodLabel}</span>
                       </div>
                       
@@ -890,7 +944,7 @@ const LandingPage = () => {
                         setShowModal(true);
                       }
                     }} 
-                    className={`w-full py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all hover:scale-103 active:scale-97 ${
+                    className={`w-full py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all hover:scale-105 active:scale-95 ${
                       p.popular 
                         ? 'bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white hover:shadow-xl' 
                         : 'border border-white/10 hover:border-white/30 text-white bg-white/[0.01] hover:bg-white/5'
