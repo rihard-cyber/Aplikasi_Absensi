@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, ShieldAlert, Megaphone, Building2, Zap, ArrowLeft } from 'lucide-react';

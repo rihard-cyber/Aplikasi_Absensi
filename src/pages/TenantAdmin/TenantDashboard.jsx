@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content, i18n-text/no-en, react-intl/string-is-marked-for-extraction */
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Settings, FileText, CheckCircle, Activity, Calculator, BarChart3, ShieldCheck, Building2, Megaphone, CalendarDays, LogOut, XCircle, Upload, Fingerprint, Users, DollarSign, TrendingUp, Sun, Calendar, Star, Briefcase, Gift, ScrollText, PartyPopper, ClipboardList, QrCode, Activity as ActivityIcon, LineChart, UserCircle, Wallet, Layers, GitBranch, Landmark, ClipboardCheck, Image, Wrench, Zap, Wifi, Bot, ScanLine, Webhook, Headphones, Route, DoorOpen, UserCheck, Hammer, Truck, Package, AlertTriangle, Repeat, Home, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

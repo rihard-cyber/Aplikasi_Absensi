@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, Download, AlertCircle, CheckCircle2, Loader2, CalendarDays, FileSpreadsheet, Users, X, Briefcase, UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';

@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();

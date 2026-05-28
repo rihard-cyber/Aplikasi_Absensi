@@ -123,7 +123,7 @@ self.addEventListener('notificationclick', (event) => {
 // =============================================
 // SERVICE WORKER LIFECYCLE
 // =============================================
-self.addEventListener('install', (event) => {
+self.addEventListener('install', (_event) => {
   self.skipWaiting(); // Activate new SW immediately
 });
 

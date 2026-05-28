@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { Fingerprint, Smartphone, AlertCircle, CheckCircle2, ChevronRight, Loader2, Eye, EyeOff, MessageCircle } from 'lucide-react';

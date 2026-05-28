@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Clock, CalendarCheck, AlertTriangle, Filter, Search, ChevronRight, CheckCircle2, ShieldCheck } from 'lucide-react';

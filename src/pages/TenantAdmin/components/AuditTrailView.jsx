@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';

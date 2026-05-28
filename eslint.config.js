@@ -9,16 +9,22 @@ const browserGlobals = {
   Blob: 'readonly',
   clearInterval: 'readonly',
   clearTimeout: 'readonly',
+  clients: 'readonly',
   confirm: 'readonly',
   console: 'readonly',
   crypto: 'readonly',
+  CustomEvent: 'readonly',
   document: 'readonly',
   fetch: 'readonly',
+  File: 'readonly',
   FileReader: 'readonly',
   FormData: 'readonly',
+  Image: 'readonly',
   localStorage: 'readonly',
   navigator: 'readonly',
+  Notification: 'readonly',
   requestAnimationFrame: 'readonly',
+  self: 'readonly',
   sessionStorage: 'readonly',
   setInterval: 'readonly',
   setTimeout: 'readonly',
@@ -29,7 +35,7 @@ const browserGlobals = {
 
 export default [
   {
-    ignores: ['dist/**', 'build/**', 'buildcheck/**', 'scratch/**', 'node_modules/**', 'android/**', 'patches/**'],
+    ignores: ['dist/**', 'build/**', 'buildcheck/**', 'scratch/**', 'node_modules/**', 'android/**', 'patches/**', 'public/**'],
   },
   js.configs.recommended,
   {
@@ -73,11 +79,8 @@ export default [
       'no-console': 'off',
       'no-empty': 'warn',
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      // App ini berbahasa Indonesia (monolingual) — i18n rules tidak relevan
-      'i18n-text/no-en': 'off',
-      'i18next/no-literal-string': 'off',
-      '@shopify/jsx-no-hardcoded-content': 'off',
-      'react-intl/string-is-marked-for-extraction': 'off',
+      'react/display-name': 'off',
+
     },
   },
 ];

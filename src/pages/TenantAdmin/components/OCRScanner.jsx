@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScanLine, Upload, Eye, Copy, CheckCircle2, Loader2, X, FileText, CreditCard, Receipt } from 'lucide-react';

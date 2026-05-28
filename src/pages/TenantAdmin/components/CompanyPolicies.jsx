@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, FileText, Search, Download, Eye, Edit3, Trash2, Save, X, Loader2, Upload, BookOpen } from 'lucide-react';

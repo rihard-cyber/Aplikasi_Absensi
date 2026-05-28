@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Plus, Save, X, User, LogIn, LogOut, Ban, Printer, QrCode, Calendar, Loader2, Users, Shield, Phone, Car, Building2 } from 'lucide-react';

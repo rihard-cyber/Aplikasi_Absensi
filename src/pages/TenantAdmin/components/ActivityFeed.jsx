@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, DollarSign, FileText, Users, ShieldCheck, AlertCircle, CheckCircle2, XCircle, Loader2, RefreshCw } from 'lucide-react';

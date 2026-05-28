@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, CheckCircle2, XCircle, Loader2, AlertTriangle, ShieldCheck, X, RefreshCw } from 'lucide-react';

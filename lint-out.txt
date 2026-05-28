@@ -1,0 +1,629 @@
+
+> si-presensi@0.0.0 lint
+> eslint .
+
+
+E:\Aplikasi_Absensi\public\firebase-messaging-sw.js
+  126:35  error  'event' is defined but never used  no-unused-vars
+
+E:\Aplikasi_Absensi\src\App.jsx
+    1:1    error    Definition for rule 'i18next/no-literal-string' was not found                                             i18next/no-literal-string
+    1:1    error    Definition for rule '@shopify/jsx-no-hardcoded-content' was not found                                     @shopify/jsx-no-hardcoded-content
+   28:23   error    Component definition is missing display name                                                              react/display-name
+   80:6    warning  React Hook useEffect has a missing dependency: 'toast'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   83:25   error    Component definition is missing display name                                                              react/display-name
+  114:10   warning  'backCount' is assigned a value but never used. Allowed unused vars must match /^_/u                      no-unused-vars
+  413:57   warning  Empty block statement                                                                                     no-empty
+  414:70   warning  Empty block statement                                                                                     no-empty
+  415:68   warning  Empty block statement                                                                                     no-empty
+  416:67   warning  Empty block statement                                                                                     no-empty
+  417:64   warning  Empty block statement                                                                                     no-empty
+  418:57   warning  Empty block statement                                                                                     no-empty
+  419:61   warning  Empty block statement                                                                                     no-empty
+  440:13   warning  Empty block statement                                                                                     no-empty
+  497:121  warning  Empty block statement                                                                                     no-empty
+  498:137  warning  Empty block statement                                                                                     no-empty
+  525:43   warning  Empty block statement                                                                                     no-empty
+  526:50   warning  Empty block statement                                                                                     no-empty
+  539:15   warning  Empty block statement                                                                                     no-empty
+
+E:\Aplikasi_Absensi\src\components\ConfirmDialog.jsx
+  7:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+E:\Aplikasi_Absensi\src\components\ErrorBoundary.jsx
+  21:43  warning  Empty block statement                                                                   no-empty
+  32:13  warning  'isAuthError' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\components\FaceVerificationModal.jsx
+  106:6  warning  React Hook useEffect has a missing dependency: 'runVerification'. Either include it or remove the dependency array                 react-hooks/exhaustive-deps
+  119:6  warning  React Hook useEffect has missing dependencies: 'startCamera' and 'stopCamera'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\components\HRISExportWrapper.jsx
+  6:7  warning  'SCOPE_LABEL' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\components\NotificationSettings.jsx
+  4:35  warning  'X' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\components\Notifications.jsx
+   3:30  warning  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u                                                    no-unused-vars
+   5:30  warning  'getUnreadCount' is defined but never used. Allowed unused vars must match /^_/u                                                no-unused-vars
+  10:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+E:\Aplikasi_Absensi\src\components\Toast.jsx
+  7:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+E:\Aplikasi_Absensi\src\context\ThemeContext.jsx
+   1:1   error    Definition for rule 'i18next/no-literal-string' was not found                                                                   i18next/no-literal-string
+   1:1   error    Definition for rule '@shopify/jsx-no-hardcoded-content' was not found                                                           @shopify/jsx-no-hardcoded-content
+  12:61  warning  Empty block statement                                                                                                           no-empty
+  29:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+E:\Aplikasi_Absensi\src\main.jsx
+   1:1  error    Definition for rule 'i18next/no-literal-string' was not found                              i18next/no-literal-string
+   1:1  error    Definition for rule '@shopify/jsx-no-hardcoded-content' was not found                      @shopify/jsx-no-hardcoded-content
+  37:7  warning  'isKeyboardOpen' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\Auth\AuthPortal.jsx
+  169:6   warning  React Hook useEffect has a missing dependency: 'toast'. Either include it or remove the dependency array         react-hooks/exhaustive-deps
+  587:6   warning  React Hook useEffect has a missing dependency: 'executeLogin'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  590:73  warning  'onBlur' is defined but never used. Allowed unused args must match /^_/u                                         no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\Employee\AttendanceScreen.jsx
+    3:109  warning  'Zap' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                               no-unused-vars
+   45:10   warning  'fraudBlocked' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                             no-unused-vars
+   47:10   warning  'workModeLabel' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                            no-unused-vars
+  167:6    warning  React Hook useEffect has a missing dependency: 'checkLocation'. Either include it or remove the dependency array                                                                                                                                                                                    react-hooks/exhaustive-deps
+  218:17   warning  Empty block statement                                                                                                                                                                                                                                                                               no-empty
+  222:36   warning  'accuracy' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                                 no-unused-vars
+  246:6    warning  React Hook useEffect has missing dependencies: 'checkLocation' and 'toast'. Either include them or remove the dependency array                                                                                                                                                                      react-hooks/exhaustive-deps
+  275:6    warning  React Hook useEffect has missing dependencies: 'isGodMode', 'locationState', and 'runVerificationSequence'. Either include them or remove the dependency array. You can also replace multiple useState variables with useReducer if 'setChargeProgress' needs the current value of 'locationState'  react-hooks/exhaustive-deps
+  599:65   warning  'canGoBack' is defined but never used. Allowed unused args must match /^_/u                                                                                                                                                                                                                         no-unused-vars
+  622:6    warning  React Hook useEffect has a missing dependency: 'confirm'. Either include it or remove the dependency array                                                                                                                                                                                          react-hooks/exhaustive-deps
+  746:6    warning  React Hook useEffect has a missing dependency: 'isGodMode'. Either include it or remove the dependency array                                                                                                                                                                                        react-hooks/exhaustive-deps
+  748:9    warning  'handleLogoClick' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                                                                                                                          no-unused-vars
+  786:38   warning  'i' is defined but never used. Allowed unused args must match /^_/u                                                                                                                                                                                                                                 no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\AttendanceCalendar.jsx
+  29:6  warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\AttendanceHistory.jsx
+  3:25  warning  'CalendarCheck' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:40  warning  'AlertTriangle' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:63  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  3:85  warning  'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  9:10  warning  'isLoading' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\BannerCarousel.jsx
+  20:6   warning  React Hook useEffect has a missing dependency: 'fetchBanners'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  64:15  warning  Empty block statement                                                                                            no-empty
+  79:17  warning  Empty block statement                                                                                            no-empty
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\BookingRequest.jsx
+   3:46  warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u                                          no-unused-vars
+  31:40  warning  React Hook useEffect has a missing dependency: 'fetchInitial'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\DailyTaskPlan.jsx
+   35:6   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  291:74  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                               react/no-unescaped-entities
+  291:87  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                               react/no-unescaped-entities
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\DocumentVault.jsx
+   7:3   warning  'MapPin' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  23:10  warning  'hrisData' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  24:10  warning  'profile' is assigned a value but never used. Allowed unused vars must match /^_/u   no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\EmployeeHome.jsx
+  2:52  warning  'RefreshCcw' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\EmployeeProfile.jsx
+    6:3   warning  'Bell' is defined but never used. Allowed unused vars must match /^_/u                                                 no-unused-vars
+    6:35  warning  'Mail' is defined but never used. Allowed unused vars must match /^_/u                                                 no-unused-vars
+    6:41  warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u                                             no-unused-vars
+    6:51  warning  'Phone' is defined but never used. Allowed unused vars must match /^_/u                                                no-unused-vars
+    6:58  warning  'MapPin' is defined but never used. Allowed unused vars must match /^_/u                                               no-unused-vars
+    7:9   warning  'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+    7:23  warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u                                          no-unused-vars
+   46:10  warning  'editData' is assigned a value but never used. Allowed unused vars must match /^_/u                                    no-unused-vars
+   53:6   warning  React Hook useEffect has a missing dependency: 'checkDeviceBinding'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   69:30  warning  'error' is assigned a value but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+  118:9   warning  'handleUpdateProfile' is assigned a value but never used. Allowed unused vars must match /^_/u                         no-unused-vars
+  173:81  warning  Empty block statement                                                                                                  no-empty
+  187:45  warning  Empty block statement                                                                                                  no-empty
+  188:43  warning  Empty block statement                                                                                                  no-empty
+  204:9   warning  'itemVariants' is assigned a value but never used. Allowed unused vars must match /^_/u                                no-unused-vars
+  563:7   warning  'EditField' is assigned a value but never used. Allowed unused vars must match /^_/u                                   no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\HRISDataForm.jsx
+   3:16   warning  'Mail' is defined but never used. Allowed unused vars must match /^_/u                                            no-unused-vars
+   3:22   warning  'Phone' is defined but never used. Allowed unused vars must match /^_/u                                           no-unused-vars
+   3:29   warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u                                        no-unused-vars
+   3:95   warning  'GraduationCap' is defined but never used. Allowed unused vars must match /^_/u                                   no-unused-vars
+   3:110  warning  'Building2' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+  37:6    warning  React Hook useEffect has a missing dependency: 'fetchHRISData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  41:21   warning  'error' is assigned a value but never used. Allowed unused vars must match /^_/u                                  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\HelpdeskRequest.jsx
+   2:18   warning  'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u                        no-unused-vars
+   3:82   warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u                            no-unused-vars
+   3:104  warning  'ImageIcon' is defined but never used. Allowed unused vars must match /^_/u                              no-unused-vars
+  42:32   warning  React Hook useEffect has a missing dependency: 'init'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\HomeAddressRegistration.jsx
+  5:37  warning  'ShieldCheck' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  5:50  warning  'Radius' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\LeaveRequest.jsx
+    4:36   warning  'ChevronRight' is defined but never used. Allowed unused vars must match /^_/u                                                                                                               no-unused-vars
+    5:17   warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                no-unused-vars
+    5:30   warning  'XCircle' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                    no-unused-vars
+    6:29   warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                     no-unused-vars
+   76:33   warning  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?   react-hooks/rules-of-hooks
+   77:43   warning  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?   react-hooks/rules-of-hooks
+   78:39   warning  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?   react-hooks/rules-of-hooks
+   80:35   warning  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?   react-hooks/rules-of-hooks
+   90:45   warning  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?   react-hooks/rules-of-hooks
+   91:39   warning  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?   react-hooks/rules-of-hooks
+   93:3    warning  React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+  100:6    warning  React Hook useEffect has missing dependencies: 'category' and 'fetchHistory'. Either include them or remove the dependency array                                                             react-hooks/exhaustive-deps
+  109:15   warning  'docTypeFilter' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                     no-unused-vars
+  300:121  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                              react/no-unescaped-entities
+  300:135  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                              react/no-unescaped-entities
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\LoanRequest.jsx
+  3:28  warning  'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:42  warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\OvertimeRequest.jsx
+   2:18  warning  'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u                        no-unused-vars
+  29:32  warning  React Hook useEffect has a missing dependency: 'init'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\PatrolScan.jsx
+  14:10  warning  'mode' is assigned a value but never used. Allowed unused vars must match /^_/u                                no-unused-vars
+  14:16  warning  'setMode' is assigned a value but never used. Allowed unused vars must match /^_/u                             no-unused-vars
+  54:6   warning  React Hook useEffect has a missing dependency: 'handleScan'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\PayslipView.jsx
+   3:56  warning  'Percent' is defined but never used. Allowed unused vars must match /^_/u                                     no-unused-vars
+   9:7   warning  'escapeHtml' is assigned a value but never used. Allowed unused vars must match /^_/u                         no-unused-vars
+  27:6   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\ProfileEditor.jsx
+  3:40  warning  'Mail' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\QRScanner.jsx
+   10:10  warning  'mode' is assigned a value but never used. Allowed unused vars must match /^_/u                                        no-unused-vars
+   10:16  warning  'setMode' is assigned a value but never used. Allowed unused vars must match /^_/u                                     no-unused-vars
+  121:6   warning  React Hook useEffect has a missing dependency: 'handleManualSubmit'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\ReimbursementRequest.jsx
+  3:56  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  3:66  warning  'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:80  warning  'XCircle' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\Employee\components\ShiftSwapRequest.jsx
+  25:32  warning  React Hook useEffect has a missing dependency: 'init'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\LandingPage.jsx
+    4:180  warning  'BarChart3' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+    4:202  warning  'Award' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+    4:209  warning  'Download' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+    4:298  warning  'Activity' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+    4:320  warning  'UserCheck' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+    4:342  warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+    4:352  warning  'PieChart' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+    4:465  warning  'Eye' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  586:82   warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`              react/no-unescaped-entities
+  586:91   warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`              react/no-unescaped-entities
+
+E:\Aplikasi_Absensi\src\pages\SubAdmin\SubAdminDashboard.jsx
+   3:20   warning  'Camera' is defined but never used. Allowed unused vars must match /^_/u                                                                                             no-unused-vars
+   3:28   warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u                                                                                           no-unused-vars
+   3:48   warning  'Upload' is defined but never used. Allowed unused vars must match /^_/u                                                                                             no-unused-vars
+   4:11   warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u                                                                                             no-unused-vars
+   4:42   warning  'ChevronLeft' is defined but never used. Allowed unused vars must match /^_/u                                                                                        no-unused-vars
+   5:3    warning  'MoreVertical' is defined but never used. Allowed unused vars must match /^_/u                                                                                       no-unused-vars
+   5:17   warning  'ArrowLeftRight' is defined but never used. Allowed unused vars must match /^_/u                                                                                     no-unused-vars
+   5:33   warning  'ShieldAlert' is defined but never used. Allowed unused vars must match /^_/u                                                                                        no-unused-vars
+   5:46   warning  'Zap' is defined but never used. Allowed unused vars must match /^_/u                                                                                                no-unused-vars
+   6:14   warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u                                                                                              no-unused-vars
+   6:21   warning  'AlertTriangle' is defined but never used. Allowed unused vars must match /^_/u                                                                                      no-unused-vars
+   7:16   warning  'CheckSquare' is defined but never used. Allowed unused vars must match /^_/u                                                                                        no-unused-vars
+   7:29   warning  'Eye' is defined but never used. Allowed unused vars must match /^_/u                                                                                                no-unused-vars
+   7:34   warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u                                                                                             no-unused-vars
+   7:42   warning  'Network' is defined but never used. Allowed unused vars must match /^_/u                                                                                            no-unused-vars
+   7:51   warning  'Building2' is defined but never used. Allowed unused vars must match /^_/u                                                                                          no-unused-vars
+   8:12   warning  'LogOut' is defined but never used. Allowed unused vars must match /^_/u                                                                                             no-unused-vars
+   8:26   warning  'UserCheck' is defined but never used. Allowed unused vars must match /^_/u                                                                                          no-unused-vars
+   8:37   warning  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u                                                                                         no-unused-vars
+   8:49   warning  'ClipboardList' is defined but never used. Allowed unused vars must match /^_/u                                                                                      no-unused-vars
+  17:87   warning  'onGodModeReturn' is defined but never used. Allowed unused args must match /^_/u                                                                                    no-unused-vars
+  25:10   warning  'isImpersonating' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                           no-unused-vars
+  44:6    warning  React Hook useEffect has a missing dependency: 'fetchAuth'. Either include it or remove the dependency array                                                         react-hooks/exhaustive-deps
+  46:132  warning  React Hook useEffect has missing dependencies: 'fetchEmployees', 'fetchPending', 'fetchStats', and 'fetchToday'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\SubAdmin\components\BulkScheduleUpload.jsx
+   2:10   warning  'UploadCloud' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+   2:103  warning  'Building2' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+   2:114  warning  'Network' is defined but never used. Allowed unused vars must match /^_/u                                           no-unused-vars
+  18:43   warning  React Hook useEffect has a missing dependency: 'fetchReferences'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\SuperAdmin\CommandCenter.jsx
+    2:70   warning  'BarChart3' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+    2:94   warning  'MapPin' is defined but never used. Allowed unused vars must match /^_/u                   no-unused-vars
+    2:102  warning  'Home' is defined but never used. Allowed unused vars must match /^_/u                     no-unused-vars
+    2:108  warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u                    no-unused-vars
+    2:115  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+    2:125  warning  'User' is defined but never used. Allowed unused vars must match /^_/u                     no-unused-vars
+    2:131  warning  'Fingerprint' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+    2:144  warning  'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+   26:10   warning  'logoClickCount' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   44:72   warning  Empty block statement                                                                      no-empty
+  276:64   warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                            react/no-unescaped-entities
+  276:78   warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                            react/no-unescaped-entities
+
+E:\Aplikasi_Absensi\src\pages\SuperAdmin\components\GlobalAudit.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u                                      no-unused-vars
+   3:31  warning  'Building2' is defined but never used. Allowed unused vars must match /^_/u                                   no-unused-vars
+   3:49  warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+   3:56  warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u                                      no-unused-vars
+  24:37  warning  React Hook useEffect has a missing dependency: 'fetchLogs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\SuperAdmin\components\GlobalFinance.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  3:52  warning  'CalendarDays' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  9:10  warning  'tenants' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\SuperAdmin\components\SaaSManagement.jsx
+    2:108  warning  'UserPlus' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+    2:118  warning  'Phone' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+    2:125  warning  'MapPin' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+    2:148  warning  'Star' is defined but never used. Allowed unused vars must match /^_/u                  no-unused-vars
+    9:7    warning  'tenantsData' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   55:27   warning  'onImpersonate' is defined but never used. Allowed unused args must match /^_/u         no-unused-vars
+  275:88   warning  Empty block statement                                                                   no-empty
+  339:21   warning  'userPct' is assigned a value but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  340:21   warning  'daysPct' is assigned a value but never used. Allowed unused vars must match /^_/u      no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\TenantDashboard.jsx
+    2:30   warning  'CheckCircle' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+    5:8    warning  'ThemeToggle' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+   82:10   warning  'clickCount' is assigned a value but never used. Allowed unused vars must match /^_/u     no-unused-vars
+   82:22   warning  'setClickCount' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   89:75   warning  Empty block statement                                                                     no-empty
+  142:203  warning  Empty block statement                                                                     no-empty
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\AnalyticsDashboard.jsx
+  8:38  warning  'height' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\AssetManagement.jsx
+  3:96  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\AutoShift.jsx
+    4:29  warning  'RefreshCw' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+    4:57  warning  'ChevronDown' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+   70:13  warning  'isGod' is assigned a value but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  191:9   warning  'skipped' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  212:26  warning  'data' is assigned a value but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  516:63  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                     react/no-unescaped-entities
+  516:79  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                     react/no-unescaped-entities
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\BPJSCalculator.jsx
+    2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u                                          no-unused-vars
+    2:18  warning  'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u                                 no-unused-vars
+    5:30  warning  'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u                                    no-unused-vars
+    5:51  warning  'Building2' is defined but never used. Allowed unused vars must match /^_/u                                       no-unused-vars
+  110:6   warning  React Hook useEffect has a missing dependency: 'loadEmployees'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\BankExport.jsx
+    2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+    3:51  warning  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+   66:13  warning  'bankName' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  111:11  warning  'emp' is assigned a value but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  134:54  warning  'val' is defined but never used. Allowed unused args must match /^_/u                no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\BannerManager.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u                                         no-unused-vars
+   2:18  warning  'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u                                no-unused-vars
+   3:21  warning  'Image' is defined but never used. Allowed unused vars must match /^_/u                                          no-unused-vars
+   3:63  warning  'Star' is defined but never used. Allowed unused vars must match /^_/u                                           no-unused-vars
+  15:40  warning  React Hook useEffect has a missing dependency: 'fetchBanners'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  78:13  warning  Empty block statement                                                                                            no-empty
+  88:13  warning  Empty block statement                                                                                            no-empty
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\BroadcastCenter.jsx
+  2:27  warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\CompanyEvents.jsx
+  3:69  warning  'Users' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  3:76  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\CompanyPolicies.jsx
+    3:16  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u                                                                                                             no-unused-vars
+    3:44  warning  'Eye' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                  no-unused-vars
+    3:73  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u                                                                                                              no-unused-vars
+    3:90  warning  'BookOpen' is defined but never used. Allowed unused vars must match /^_/u                                                                                                             no-unused-vars
+    6:10  warning  'useConfirm' is defined but never used. Allowed unused vars must match /^_/u                                                                                                           no-unused-vars
+  202:23  warning  Using target="_blank" without rel="noreferrer" (which implies rel="noopener") is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations  react/jsx-no-target-blank
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\DashboardHome.jsx
+   3:77  warning  'Megaphone' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  12:9   warning  'navigate' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\EmployeeDirectory.jsx
+  17:37  warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\EmployeeProfileView.jsx
+  3:64   warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  3:118  warning  'ChevronRight' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:132  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\EmployeeSalary.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  3:24  warning  'Edit3' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:31  warning  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:49  warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\FacilityBooking.jsx
+    3:40   warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+    3:126  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+    3:174  warning  'Image' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+    6:28   warning  'notifyAdminsInTenant' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   29:10   warning  'employees' is assigned a value but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  296:93   warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                         react/no-unescaped-entities
+  296:105  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                         react/no-unescaped-entities
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\FinanceDashboard.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:55  warning  'CalendarDays' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\FleetManagement.jsx
+    3:100  warning  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+    3:127  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  396:71   warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`               react/no-unescaped-entities
+  396:83   warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`               react/no-unescaped-entities
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\Form1721A1.jsx
+    2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+    2:18  warning  'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+    4:13  warning  'Download' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+    4:37  warning  'ChevronDown' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+    4:50  warning  'RefreshCw' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+    5:26  warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+    5:48  warning  'Building2' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+   93:7   warning  'MONTHS_ID' is assigned a value but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  107:10  warning  'showPreview' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\GeneralSettings.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\HRChatbot.jsx
+    3:21  warning  'X' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+    3:41  warning  'Sparkles' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+    3:51  warning  'BookOpen' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+    3:61  warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+    3:68  warning  'ChevronDown' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  149:15  warning  Empty block statement                                                          no-empty
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\HelpdeskTicketing.jsx
+   7:10  warning  'notifyAdminsInTenant' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+  35:10  warning  'tenantId' is assigned a value but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  71:9   warning  'generateTicketNumber' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\HolidayManagement.jsx
+  3:24  warning  'Sun' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  3:29  warning  'Moon' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\HybridWorkSettings.jsx
+  4:9   warning  'MapPin' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  4:17  warning  'ClipboardCheck' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  5:18  warning  'ToggleLeft' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\IncidentReporting.jsx
+  250:35  warning  Using target="_blank" without rel="noreferrer" (which implies rel="noopener") is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations  react/jsx-no-target-blank
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\InventoryManagement.jsx
+  3:105  warning  'Box' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  3:123  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\LoanManagement.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+   3:41  warning  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+   3:53  warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u                no-unused-vars
+   3:61  warning  'User' is defined but never used. Allowed unused vars must match /^_/u                  no-unused-vars
+   3:67  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+  10:10  warning  'profiles' is assigned a value but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  10:20  warning  'setProfiles' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  11:10  warning  'tenantId' is assigned a value but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  87:73  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                         react/no-unescaped-entities
+  87:88  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                         react/no-unescaped-entities
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\OCRScanner.jsx
+    2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+    2:18  warning  'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  133:10  warning  'image' is assigned a value but never used. Allowed unused vars must match /^_/u      no-unused-vars
+  142:9   warning  'cameraRef' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\OnboardingChecklist.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+   3:10  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+   3:46  warning  'CalendarDays' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+   3:67  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+   3:76  warning  'RefreshCw' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+  10:10  warning  'tenantId' is assigned a value but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  11:10  warning  'adminId' is assigned a value but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  12:10  warning  'search' is assigned a value but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  12:18  warning  'setSearch' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\OvertimeManagement.jsx
+    3:67  warning  'Download' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+   12:10  warning  'tenantId' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  217:82  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                      react/no-unescaped-entities
+  217:91  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                      react/no-unescaped-entities
+  282:36  warning  'color' is defined but never used. Allowed unused args must match /^_/u              no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\PatrolManagement.jsx
+   2:18   warning  'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+   3:99   warning  'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+   3:113  warning  'XCircle' is defined but never used. Allowed unused vars must match /^_/u            no-unused-vars
+   3:134  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+   3:142  warning  'Save' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+   3:156  warning  'ToggleLeft' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+   3:168  warning  'ToggleRight' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  25:10   warning  'profiles' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\PayrollReports.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:20  warning  'BarChart3' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  3:50  warning  'CalendarDays' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:64  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\PayrollRun.jsx
+    3:36  warning  'Lock' is defined but never used. Allowed unused vars must match /^_/u                  no-unused-vars
+    3:42  warning  'Download' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+    3:57  warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u           no-unused-vars
+    3:99  warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+  436:27  warning  'userResults' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\PayrollSettings.jsx
+  2:42  warning  'Sun' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\PerformanceAppraisal.jsx
+    3:18   warning  'Star' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+    3:24   warning  'MessageSquare' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+    3:39   warning  'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+    3:74   warning  'TrendingUp' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+    3:86   warning  'User' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+    7:7    warning  'MONTHS' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  171:114  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+  171:133  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                    react/no-unescaped-entities
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\QRCodeManagement.jsx
+  3:30  warning  'Trash2' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  3:52  warning  'XCircle' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:61  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\ReimbursementManagement.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u                                                                                                               no-unused-vars
+   3:41  warning  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u                                                                                                           no-unused-vars
+   3:53  warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u                                                                                                               no-unused-vars
+   3:66  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u                                                                                                              no-unused-vars
+  12:10  warning  'tenantId' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                                    no-unused-vars
+  82:59  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                        react/no-unescaped-entities
+  82:75  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                        react/no-unescaped-entities
+  84:35  warning  Using target="_blank" without rel="noreferrer" (which implies rel="noopener") is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations  react/jsx-no-target-blank
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\SalaryComponents.jsx
+  3:61  warning  'AlertCircle' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\SalaryRevision.jsx
+  2:18  warning  'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  3:18  warning  'TrendingUp' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:30  warning  'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  3:44  warning  'XCircle' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  3:65  warning  'User' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+  3:71  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  3:80  warning  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u       no-unused-vars
+  3:92  warning  'Calendar' is defined but never used. Allowed unused vars must match /^_/u         no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\ScheduleCalendar.jsx
+   3:58  warning  'User' is defined but never used. Allowed unused vars must match /^_/u                                        no-unused-vars
+   3:64  warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u                                     no-unused-vars
+  13:10  warning  'shifts' is assigned a value but never used. Allowed unused vars must match /^_/u                             no-unused-vars
+  14:10  warning  'loading' is assigned a value but never used. Allowed unused vars must match /^_/u                            no-unused-vars
+  22:37  warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\ScheduleUpload.jsx
+  2:105  warning  'Briefcase' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\ShiftDictionary.jsx
+  2:51  warning  'Sun' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\ShiftSwapManagement.jsx
+    2:10   warning  'motion' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+    3:41   warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  122:88   warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`           react/no-unescaped-entities
+  122:102  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`           react/no-unescaped-entities
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\StructureManagement.jsx
+   2:29  warning  'Search' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   2:51  warning  'Edit3' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+  27:78  warning  Empty block statement                                                     no-empty
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\SystemConfig.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u                                                                                                               no-unused-vars
+   3:68  warning  'Link' is defined but never used. Allowed unused vars must match /^_/u                                                                                                                 no-unused-vars
+  90:15  warning  Using target="_blank" without rel="noreferrer" (which implies rel="noopener") is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations  react/jsx-no-target-blank
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\THRCalculation.jsx
+    2:10   warning  'motion' is defined but never used. Allowed unused vars must match /^_/u      no-unused-vars
+    3:32   warning  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+    3:44   warning  'FileText' is defined but never used. Allowed unused vars must match /^_/u    no-unused-vars
+  167:103  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`               react/no-unescaped-entities
+  167:114  warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`               react/no-unescaped-entities
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\TaxReports.jsx
+    2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u                     no-unused-vars
+    3:51  warning  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+    3:63  warning  'Users' is defined but never used. Allowed unused vars must match /^_/u                      no-unused-vars
+    3:70  warning  'CalendarDays' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+    7:7   warning  'MONTHS' is assigned a value but never used. Allowed unused vars must match /^_/u            no-unused-vars
+   12:10  warning  'tenantId' is assigned a value but never used. Allowed unused vars must match /^_/u          no-unused-vars
+  103:11  warning  'totalBpjsCompany' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\TimesheetView.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+  3:45  warning  'CheckCircle2' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\VisitorManagement.jsx
+    3:86   warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+    3:95   warning  'Users' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+    3:102  warning  'Shield' is defined but never used. Allowed unused vars must match /^_/u              no-unused-vars
+   11:10   warning  'search' is assigned a value but never used. Allowed unused vars must match /^_/u     no-unused-vars
+   11:18   warning  'setSearch' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  212:87   warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                       react/no-unescaped-entities
+  212:99   warning  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                       react/no-unescaped-entities
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\WebhookSettings.jsx
+   2:18  warning  'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u          no-unused-vars
+   4:46  warning  'XCircle' is defined but never used. Allowed unused vars must match /^_/u                  no-unused-vars
+   5:12  warning  'Copy' is defined but never used. Allowed unused vars must match /^_/u                     no-unused-vars
+   5:42  warning  'Zap' is defined but never used. Allowed unused vars must match /^_/u                      no-unused-vars
+  59:7   warning  'SLACK_TEMPLATE' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\WifiGeofenceSettings.jsx
+  2:18  warning  'AnimatePresence' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\WorkModeDashboard.jsx
+    4:31  warning  'Clock' is defined but never used. Allowed unused vars must match /^_/u                     no-unused-vars
+    5:16  warning  'ChevronUp' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+    5:58  warning  'AlertTriangle' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+   19:9   warning  'toast' is assigned a value but never used. Allowed unused vars must match /^_/u            no-unused-vars
+  107:9   warning  'getEmployeeName' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\pages\TenantAdmin\components\WorkOrderManagement.jsx
+   3:54   warning  'Loader2' is defined but never used. Allowed unused vars must match /^_/u                 no-unused-vars
+   3:127  warning  'Filter' is defined but never used. Allowed unused vars must match /^_/u                  no-unused-vars
+   3:135  warning  'ChevronDown' is defined but never used. Allowed unused vars must match /^_/u             no-unused-vars
+   3:148  warning  'ChevronUp' is defined but never used. Allowed unused vars must match /^_/u               no-unused-vars
+  22:10   warning  'expandedId' is assigned a value but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  22:22   warning  'setExpandedId' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\utils\clipboardUtil.js
+  19:13  warning  Empty block statement  no-empty
+  61:13  warning  Empty block statement  no-empty
+
+E:\Aplikasi_Absensi\src\utils\deviceUtil.js
+  19:11  warning  Empty block statement  no-empty
+  28:64  warning  Empty block statement  no-empty
+
+E:\Aplikasi_Absensi\src\utils\offlineSync.js
+  17:7  warning  'BASE_RETRY_DELAY_MS' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+E:\Aplikasi_Absensi\src\utils\wifiGeofence.js
+   75:11   warning  Empty block statement  no-empty
+   96:104  warning  Empty block statement  no-empty
+  106:55   warning  Empty block statement  no-empty
+
+Γ£û 429 problems (9 errors, 420 warnings)
+  0 errors and 4 warnings potentially fixable with the `--fix` option.
+

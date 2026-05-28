@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Plus, Save, X, Edit3, Package, AlertTriangle, Barcode, DollarSign, MapPin, TrendingUp, Box, ArrowUpDown, Loader2 } from 'lucide-react';

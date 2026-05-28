@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef } from 'react';
 import { Building, MapPin, Phone, Globe, Upload, Save, Loader2, CheckCircle2, Key, Copy, RefreshCcw } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';

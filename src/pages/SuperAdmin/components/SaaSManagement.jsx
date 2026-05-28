@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef } from 'react';
 import { Power, Crown, Building, Eye, ArrowUp, ChevronDown, ChevronUp, RefreshCcw, Shield, Plus, X, Globe, UserPlus, Phone, MapPin, Loader2, Copy, Star, CheckCircle2, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

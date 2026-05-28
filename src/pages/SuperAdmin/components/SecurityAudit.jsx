@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AlertTriangle, MapPin, Smartphone, Radio, ArrowUp, Shield, Users, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

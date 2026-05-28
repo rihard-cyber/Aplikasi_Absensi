@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home } from 'lucide-react';

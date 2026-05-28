@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Star, MessageSquare, CheckCircle2, Loader2, Plus, Save, TrendingUp, User } from 'lucide-react';

@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Ticket, Send, ArrowLeft, Loader2, Upload, Clock, CheckCircle2, XCircle, AlertCircle, Image as ImageIcon, Star } from 'lucide-react';
