@@ -449,6 +449,7 @@ GRANT ALL ON public.patrol_route_checkpoints TO authenticated;
 
 -- RLS: employee_home_addresses, daily_task_plans — user isolation (bukan tenant isolation)
 DROP POLICY IF EXISTS "tenant_isolation_employee_home_addresses" ON public.employee_home_addresses;
+DROP POLICY IF EXISTS "user_own_address" ON public.employee_home_addresses;
 CREATE POLICY "user_own_address" ON public.employee_home_addresses FOR ALL USING (
   user_id IN (SELECT id FROM profiles WHERE auth_id = auth.uid())
   OR get_my_role() = 'TENANT_ADMIN'
@@ -456,6 +457,7 @@ CREATE POLICY "user_own_address" ON public.employee_home_addresses FOR ALL USING
 );
 
 DROP POLICY IF EXISTS "tenant_isolation_daily_task_plans" ON public.daily_task_plans;
+DROP POLICY IF EXISTS "user_own_tasks" ON public.daily_task_plans;
 CREATE POLICY "user_own_tasks" ON public.daily_task_plans FOR ALL USING (
   user_id IN (SELECT id FROM profiles WHERE auth_id = auth.uid())
   OR get_my_role() = 'TENANT_ADMIN'
@@ -487,10 +489,13 @@ CREATE INDEX IF NOT EXISTS idx_notifications_tenant ON public.notifications(tena
 CREATE INDEX IF NOT EXISTS idx_notifications_created ON public.notifications(created_at DESC);
 
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can read own notifications" ON public.notifications;
 CREATE POLICY "Users can read own notifications" ON public.notifications
   FOR SELECT USING (user_id IN (SELECT id FROM profiles WHERE auth_id = auth.uid()));
+DROP POLICY IF EXISTS "Users can update own notifications" ON public.notifications;
 CREATE POLICY "Users can update own notifications" ON public.notifications
   FOR UPDATE USING (user_id IN (SELECT id FROM profiles WHERE auth_id = auth.uid()));
+DROP POLICY IF EXISTS "Service role can insert notifications" ON public.notifications;
 CREATE POLICY "Service role can insert notifications" ON public.notifications
   FOR INSERT WITH CHECK (auth.role() = 'service_role' OR auth.uid() IS NOT NULL);
 GRANT ALL ON public.notifications TO authenticated;
@@ -506,10 +511,12 @@ INSERT INTO storage.buckets (id, name, public) VALUES ('documents', 'documents',
 ON CONFLICT (id) DO NOTHING;
 
 -- Policy: authenticated users can upload to documents bucket
+DROP POLICY IF EXISTS "Authenticated users can upload documents" ON storage.objects;
 CREATE POLICY "Authenticated users can upload documents"
 ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (bucket_id = 'documents' AND auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Anyone can read documents" ON storage.objects;
 CREATE POLICY "Anyone can read documents"
 ON storage.objects FOR SELECT TO public
 USING (bucket_id = 'documents');
