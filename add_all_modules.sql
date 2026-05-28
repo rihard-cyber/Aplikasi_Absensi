@@ -367,12 +367,16 @@ ALTER TABLE public.employee_home_addresses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.daily_task_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.verification_checks ENABLE ROW LEVEL SECURITY;
 
--- Helper function
+-- Helper functions — SECURITY DEFINER wajib agar tidak infinite recursion RLS
 CREATE OR REPLACE FUNCTION public.get_my_tenant() RETURNS UUID
-  LANGUAGE SQL STABLE AS $$ SELECT tenant_id FROM profiles WHERE auth_id = auth.uid() $$;
+  LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT tenant_id FROM profiles WHERE auth_id = auth.uid()
+$$;
 
 CREATE OR REPLACE FUNCTION public.get_my_role() RETURNS TEXT
-  LANGUAGE SQL STABLE AS $$ SELECT role FROM profiles WHERE auth_id = auth.uid() $$;
+  LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT role FROM profiles WHERE auth_id = auth.uid()
+$$;
 
 -- Tenant isolation policies
 DO $$ DECLARE tbl TEXT; BEGIN

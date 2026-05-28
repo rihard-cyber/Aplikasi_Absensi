@@ -76,9 +76,15 @@ COMMIT;
 -- Sumber: add_all_modules.sql
 BEGIN;
 
--- Helper functions (dibutuhkan untuk RLS)
-CREATE OR REPLACE FUNCTION public.get_my_tenant() RETURNS UUID LANGUAGE SQL STABLE AS $$ SELECT tenant_id FROM profiles WHERE auth_id = auth.uid() $$;
-CREATE OR REPLACE FUNCTION public.get_my_role() RETURNS TEXT LANGUAGE SQL STABLE AS $$ SELECT role FROM profiles WHERE auth_id = auth.uid() $$;
+-- Helper functions (dibutuhkan untuk RLS) — SECURITY DEFINER wajib agar tidak infinite recursion
+CREATE OR REPLACE FUNCTION public.get_my_tenant()
+RETURNS UUID LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT tenant_id FROM profiles WHERE auth_id = auth.uid()
+$$;
+CREATE OR REPLACE FUNCTION public.get_my_role()
+RETURNS TEXT LANGUAGE SQL STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT role FROM profiles WHERE auth_id = auth.uid()
+$$;
 
 -- 1. HELPDESK
 CREATE TABLE IF NOT EXISTS public.helpdesk_tickets (
