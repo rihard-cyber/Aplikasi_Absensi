@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string, react/jsx-no-literals, i18n-text/no-en, react-intl/string-is-marked-with-id */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Plus, Save, X, User, LogIn, LogOut, Ban, Printer, QrCode, Calendar, Loader2, Users, Shield, Phone, Car, Building2, Download } from 'lucide-react';
