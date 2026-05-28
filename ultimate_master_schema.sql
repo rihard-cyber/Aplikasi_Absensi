@@ -290,6 +290,271 @@ CREATE TABLE public.audit_logs (
 );
 
 -- ==============================================================================
+-- TABEL FITUR TAMBAHAN (PAYROLL, HELPDESK, PATROLI, DLL)
+-- ==============================================================================
+
+-- [L] PAYROLL (PERIODS, SUMMARY, RESULTS)
+CREATE TABLE public.payroll_periods (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  period_month INTEGER NOT NULL,
+  period_year INTEGER NOT NULL,
+  status VARCHAR(50) DEFAULT 'DRAFT',
+  processed_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE public.payroll_summary (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  period_id UUID REFERENCES public.payroll_periods(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  take_home_pay NUMERIC DEFAULT 0,
+  total_allowance NUMERIC DEFAULT 0,
+  total_deduction NUMERIC DEFAULT 0,
+  total_days_worked INTEGER DEFAULT 0,
+  total_overtime_hours NUMERIC DEFAULT 0,
+  total_late_minutes INTEGER DEFAULT 0,
+  total_absence_days INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE public.payroll_results (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  period_id UUID REFERENCES public.payroll_periods(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  component_type VARCHAR(50), -- ALLOWANCE, DEDUCTION
+  component_code VARCHAR(50),
+  component_name VARCHAR(100),
+  amount NUMERIC DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- [M] LOANS & REIMBURSEMENTS
+CREATE TABLE public.loans (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  amount NUMERIC NOT NULL,
+  installment_count INTEGER NOT NULL,
+  monthly_deduction NUMERIC NOT NULL,
+  remaining NUMERIC NOT NULL,
+  purpose TEXT,
+  status VARCHAR(50) DEFAULT 'PENDING',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE public.reimbursements (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  category VARCHAR(50) NOT NULL,
+  amount NUMERIC NOT NULL,
+  description TEXT,
+  receipt_url TEXT,
+  status VARCHAR(50) DEFAULT 'PENDING',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- [N] HELPDESK TICKETS
+CREATE TABLE public.helpdesk_tickets (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  submitter_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  ticket_number VARCHAR(50) NOT NULL,
+  category VARCHAR(50) NOT NULL,
+  priority VARCHAR(50) NOT NULL,
+  subject VARCHAR(255) NOT NULL,
+  description TEXT,
+  photo_urls TEXT[],
+  status VARCHAR(50) DEFAULT 'open',
+  resolved_at TIMESTAMP WITH TIME ZONE,
+  resolution_notes TEXT,
+  rating INTEGER,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- [O] OVERTIME & SHIFT SWAPS
+CREATE TABLE public.overtime_requests (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  profile_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  date DATE NOT NULL,
+  overtime_type VARCHAR(50) NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  total_hours NUMERIC NOT NULL,
+  description TEXT,
+  status VARCHAR(50) DEFAULT 'pending',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE public.shift_swaps (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  from_employee UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  to_employee UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  swap_date DATE NOT NULL,
+  reason TEXT,
+  status VARCHAR(50) DEFAULT 'pending',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- [P] DAILY TASK PLANS
+CREATE TABLE public.daily_task_plans (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  profile_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  date DATE NOT NULL,
+  tasks JSONB NOT NULL,
+  status VARCHAR(50) DEFAULT 'pending',
+  submitted_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  UNIQUE(profile_id, date)
+);
+
+-- [Q] PATROL MANAGEMENT
+CREATE TABLE public.patrol_checkpoints (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  qr_code VARCHAR(255) UNIQUE NOT NULL,
+  latitude NUMERIC,
+  longitude NUMERIC,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE public.patrol_routes (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE public.patrol_route_checkpoints (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  route_id UUID REFERENCES public.patrol_routes(id) ON DELETE CASCADE NOT NULL,
+  checkpoint_id UUID REFERENCES public.patrol_checkpoints(id) ON DELETE CASCADE NOT NULL,
+  order_index INTEGER NOT NULL,
+  UNIQUE(route_id, checkpoint_id)
+);
+
+CREATE TABLE public.patrol_logs (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  profile_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  checkpoint_id UUID REFERENCES public.patrol_checkpoints(id) ON DELETE CASCADE NOT NULL,
+  scan_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  latitude NUMERIC,
+  longitude NUMERIC,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE public.patrol_incidents (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  patrol_log_id UUID REFERENCES public.patrol_logs(id) ON DELETE SET NULL,
+  incident_type VARCHAR(100) NOT NULL,
+  description TEXT NOT NULL,
+  severity VARCHAR(50) NOT NULL,
+  photo_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE public.patrol_shift_handovers (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  from_profile_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  to_profile_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  handover_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- [R] EMPLOYEE HOME ADDRESS (FOR WFH)
+CREATE TABLE public.employee_home_addresses (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  profile_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  address TEXT NOT NULL,
+  latitude NUMERIC NOT NULL,
+  longitude NUMERIC NOT NULL,
+  radius_meters INTEGER DEFAULT 50,
+  is_verified BOOLEAN DEFAULT false,
+  verified_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  verified_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- [S] FACILITIES & BOOKINGS
+CREATE TABLE public.facilities (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  capacity INTEGER,
+  location VARCHAR(255),
+  facilities TEXT[],
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE public.booking_requests (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  facility_id UUID REFERENCES public.facilities(id) ON DELETE CASCADE NOT NULL,
+  booking_date DATE NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  purpose TEXT,
+  status VARCHAR(50) DEFAULT 'PENDING',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- [T] COMPANY HOLIDAYS & LEAVE BALANCES
+CREATE TABLE public.company_holidays (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  date DATE NOT NULL,
+  type VARCHAR(50) DEFAULT 'NATIONAL',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE public.leave_balances (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  year INTEGER NOT NULL,
+  total_days INTEGER DEFAULT 12,
+  used_days INTEGER DEFAULT 0,
+  pending_days INTEGER DEFAULT 0,
+  UNIQUE(user_id, year),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- [U] QR ATTENDANCE
+CREATE TABLE public.qr_attendance_tokens (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
+  token VARCHAR(255) UNIQUE NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE public.qr_attendance_logs (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  token_id UUID REFERENCES public.qr_attendance_tokens(id) ON DELETE CASCADE NOT NULL,
+  action VARCHAR(50) NOT NULL,
+  timestamp TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- ==============================================================================
 -- TAHAP 3: STORAGE BUCKETS (FILE UPLOADS)
 -- ==============================================================================
 

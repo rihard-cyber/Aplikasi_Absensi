@@ -5,6 +5,7 @@ import { useSFX } from '../../../utils/useSFX';
 import { supabase } from '../../../utils/supabaseClient';
 import { copyToClipboard } from '../../../utils/clipboardUtil';
 import { useConfirm } from '../../../components/ConfirmDialog';
+import { useToast } from '../../../components/Toast';
 
 const tenantsData = [
   { id: 1, name: 'Tenant Company Alpha', tier: 'Enterprise', users: 1250, maxUsers: 2000, daysLeft: 280, active: true },
@@ -16,9 +17,20 @@ const tenantsData = [
 
 const randomCodeSegment = (length = 4) => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  const bytes = new Uint8Array(length);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, byte => chars[byte % chars.length]).join('');
+  const charLen = chars.length;
+  let result = '';
+  const bytes = new Uint8Array(1);
+  
+  while (result.length < length) {
+    window.crypto.getRandomValues(bytes);
+    // 252 adalah kelipatan terbesar dari 36 yang di bawah 256.
+    // Ini menghilangkan 'modulo bias' agar peluang setiap huruf 100% merata.
+    if (bytes[0] < 252) {
+      const randomIndex = bytes[0] % charLen;
+      result += chars.charAt(randomIndex);
+    }
+  }
+  return result;
 };
 
 const makeActivationCode = (prefix) => `${prefix}-${randomCodeSegment()}-${randomCodeSegment()}`;
@@ -53,6 +65,7 @@ const SkeletonRow = () => (
 );
 
 const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
+  const t = (s) => s;
   const [tenants, setTenants] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
@@ -69,6 +82,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
   const scrollRef = useRef(null);
   const { playClick, playAlert, playConfirm } = useSFX();
   const confirm = useConfirm();
+  const toast = useToast();
 
   useEffect(() => {
     fetchTenants();
@@ -82,7 +96,10 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
 
   const handleCreateTenant = async (e) => {
     e.preventDefault();
-    if (!generatedCode || !generatedAdminCode) { alert("Generate kode aktivasi dulu beb!"); return; }
+    if (!generatedCode || !generatedAdminCode) { 
+      toast("Generate kode aktivasi dulu beb!", 'warning'); 
+      return; 
+    }
     setIsCreating(true);
     try {
       const { data, error } = await supabase.from('tenants').insert([{
@@ -113,17 +130,13 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
       setNewTenant({ name: '', tier: 'Bronze', maxUsers: 100, daysLeft: 365 });
       setGeneratedCode('');
       setGeneratedAdminCode('');
-      alert(`Sukses Beb! Tenant ${newTenant.name} aktif.\n\nKode Admin Tenant: ${generatedAdminCode}\nKode Karyawan: ${generatedCode}`);
+      toast(`Sukses! Tenant ${newTenant.name} aktif.`, 'success');
     } catch (err) {
       console.error("HandleCreate Error:", err);
       if (err.message === 'Failed to fetch') {
-        alert("Gagal aktifkan tenant: Koneksi ke database terputus.\n\n" +
-              "Penyebab: Supabase project sedang sleep/tidur.\n" +
-              "Solusi: Buka https://supabase.com/dashboard,\n" +
-              "klik project 'bhauqlobuiuavaoeoawc', lalu klik RESTORE.\n\n" +
-              "Atau pastikan koneksi internet kamu aktif.");
+        toast("Gagal: Koneksi database terputus. Pastikan internet aktif atau Supabase project tidak sleep.", 'error');
       } else {
-        alert("Gagal aktifkan tenant: " + (err.message || "Masalah koneksi database"));
+        toast("Gagal aktifkan tenant: " + (err.message || "Masalah koneksi database"), 'error');
       }
     } finally {
       setIsCreating(false);
@@ -203,7 +216,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
         setTenants(prev => prev.map(t => t.id === id ? { ...t, active: newStatus } : t));
       } catch (e) {
         console.error("Gagal mengubah status tenant", e);
-        alert("Terjadi kesalahan jaringan.");
+        toast("Terjadi kesalahan jaringan.", 'error');
       }
     }
     setKillConfirm(null);
@@ -224,11 +237,11 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
         });
       }
       setTenants(prev => prev.map(t => t.id === id ? { ...t, daysLeft: newDays } : t));
-      alert(`Sukses! Lisensi ${name} berhasil diperpanjang 1 tahun.`);
+      toast(`Sukses! Lisensi ${name} berhasil diperpanjang 1 tahun.`, 'success');
       playConfirm();
     } catch (e) {
       console.error("Gagal perpanjang lisensi", e);
-      alert("Terjadi kesalahan jaringan.");
+      toast("Terjadi kesalahan jaringan.", 'error');
     }
   };
 
@@ -239,11 +252,11 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
       const newEmpCode = makeActivationCode('SI');
       await supabase.from('tenants').update({ activation_code: newEmpCode }).eq('id', id);
       setTenants(prev => prev.map(t => t.id === id ? { ...t, activationCode: newEmpCode } : t));
-      alert(`Keamanan direset! Kode Karyawan baru untuk ${name} adalah:\n${newEmpCode}`);
+      toast(`Keamanan direset! Kode baru telah dibuat.`, 'success');
       playConfirm();
     } catch (e) {
       console.error("Gagal reset keamanan", e);
-      alert("Terjadi kesalahan jaringan.");
+      toast("Terjadi kesalahan jaringan.", 'error');
     }
   };
 
@@ -263,17 +276,17 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
 
       setTenants(prev => prev.map(t => t.id === id ? { ...t, adminCode: newLicCode, activationCode: adminCodeErr ? newLicCode : t.activationCode } : t));
       copyToClipboard(newLicCode);
-      alert(`✅ Kode Lisensi berhasil di-generate untuk ${name}:\n\n${newLicCode}\n\n(Kode sudah disalin ke clipboard)\n\nBerikan kode ini ke Admin Tenant untuk mendaftar.`);
+      toast(`Kode Lisensi di-generate dan disalin ke clipboard!`, 'success');
       playConfirm();
     } catch (e) {
       console.error("Gagal generate kode lisensi", e);
-      alert("Terjadi kesalahan: " + e.message);
+      toast("Terjadi kesalahan: " + e.message, 'error');
     }
   };
 
   const handleImpersonate = (tenant) => {
     try { localStorage.setItem('impersonated_tenant', JSON.stringify(tenant)); } catch {}
-    alert(`[GOD MODE: ON]\nSedang mengambil alih panel admin ${tenant.name}...`);
+    toast(`[GOD MODE: ON] Mengambil alih panel admin ${tenant.name}...`, 'success');
     playClick();
   };
 
@@ -315,13 +328,13 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
           <h2 className="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
             <Building size={16} className="text-[var(--aurora-1)]" /> Manajemen Unit SaaS
           </h2>
-          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">{filteredTenants.length} Entitas Terdeteksi</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">{filteredTenants.length} {t('Entitas Terdeteksi')}</p>
         </div>
         <button 
           onClick={() => { setShowCreateModal(true); playClick(); }}
           className="flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[10px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(142,45,226,0.4)] hover:scale-105 transition-all active:scale-95"
         >
-          <Plus size={14} strokeWidth={3} /> TAMBAH TENANT
+          <Plus size={14} strokeWidth={3} /> {t('TAMBAH TENANT')}
         </button>
       </div>
 
@@ -363,14 +376,14 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                         <Building size={18} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-serif font-bold text-[14px] text-white tracking-wide truncate">{tenant.name}</h3>
+                        <h3 className="font-serif font-bold text-[14px] text-white tracking-wide break-words">{tenant.name}</h3>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 text-[var(--warning)]">
                             <Crown size={10} /> {tenant.tier}
                           </span>
-                          <span className="text-[10px] text-gray-500">• {tenant.users.toLocaleString()}/{tenant.maxUsers.toLocaleString()} usr</span>
+                          <span className="text-[10px] text-gray-500">• {tenant.users.toLocaleString()}/{tenant.maxUsers.toLocaleString()} {t('usr')}</span>
                           <span className={`text-[10px] font-bold ${tenant.daysLeft <= 14 ? 'text-[var(--danger)]' : tenant.daysLeft <= 60 ? 'text-[var(--warning)]' : 'text-gray-500'}`}>
-                            • {tenant.daysLeft}h lagi
+                            • {tenant.daysLeft} {t('h lagi')}
                           </span>
                         </div>
                         {/* Health Bars */}
@@ -382,53 +395,6 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 ml-2">
-                      {/* Dual Code Display - Desktop only */}
-                      <div className="hidden md:flex flex-col gap-1 px-2 sm:px-3 border-l border-white/5 mr-1 sm:mr-2">
-                        {/* Admin / Lisensi Code */}
-                        <div className="flex flex-col items-end gap-0.5">
-                          <span className="text-[7px] sm:text-[8px] text-[var(--warning)] font-black uppercase tracking-widest">Lisensi</span>
-                          {tenant.adminCode ? (
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                copyToClipboard(tenant.adminCode || '');
-                                setCopiedId('adm-' + tenant.id);
-                                setTimeout(() => setCopiedId(null), 2000);
-                              }}
-              className={`text-[8px] sm:text-[10px] font-mono px-2 sm:px-3 py-1.5 sm:py-2 rounded transition-all flex items-center gap-1 ${
-                                 copiedId === 'adm-' + tenant.id 
-                                   ? 'bg-[var(--success)]/20 text-[var(--success)] border border-[var(--success)]/30' 
-                                   : 'text-[var(--warning)] bg-[var(--warning)]/[0.05] border border-[var(--warning)]/20 hover:bg-[var(--warning)]/20'
-                               }`}
-                            >
-                              {copiedId === 'adm-' + tenant.id ? 'OK!' : tenant.adminCode}
-                              {copiedId === 'adm-' + tenant.id ? <CheckCircle2 size={8} /> : <Copy size={8} className="text-gray-600" />}
-                            </button>
-                          ) : (
-                            <span className="text-[8px] font-mono text-gray-600 italic">-</span>
-                          )}
-                        </div>
-                        {/* Employee Code */}
-                        <div className="flex flex-col items-end gap-0.5">
-                          <span className="text-[7px] sm:text-[8px] text-gray-600 font-black uppercase tracking-widest">Karyawan</span>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              copyToClipboard(tenant.activationCode || '');
-                              setCopiedId('emp-' + tenant.id);
-                              setTimeout(() => setCopiedId(null), 2000);
-                            }}
-              className={`text-[8px] sm:text-[10px] font-mono px-2 sm:px-3 py-1.5 sm:py-2 rounded transition-all flex items-center gap-1 ${
-                                 copiedId === 'emp-' + tenant.id 
-                                   ? 'bg-[var(--success)]/20 text-[var(--success)] border border-[var(--success)]/30' 
-                                   : 'text-[var(--aurora-3)] bg-[var(--aurora-3)]/[0.05] border border-[var(--aurora-3)]/20 hover:bg-[var(--aurora-3)]/20'
-                               }`}
-                          >
-                            {copiedId === 'emp-' + tenant.id ? 'OK!' : (tenant.activationCode || '----')}
-                            {copiedId === 'emp-' + tenant.id ? <CheckCircle2 size={8} /> : <Copy size={8} className="text-gray-600" />}
-                          </button>
-                        </div>
-                      </div>
                       {isExpanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
                     </div>
                   </div>
@@ -443,36 +409,81 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                         transition={{ duration: 0.25 }}
                         className="border-t border-white/5 overflow-hidden"
                       >
+                        {/* Codes Section */}
+                        <div className="px-4 py-3 bg-white/[0.02] border-b border-white/5 flex flex-col sm:flex-row gap-3 justify-between">
+                          {/* Admin Code */}
+                          <div className="flex-1 flex items-center justify-between bg-black/30 px-3 py-2 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                            <div className="flex flex-col">
+                              <span className="text-[8px] text-[var(--warning)] font-black uppercase tracking-widest">{t('Lisensi Admin')}</span>
+                              <span className="text-xs font-mono font-bold text-white mt-0.5">{tenant.adminCode || '-'}</span>
+                            </div>
+                            {tenant.adminCode && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyToClipboard(tenant.adminCode || '');
+                                  setCopiedId('adm-' + tenant.id);
+                                  setTimeout(() => setCopiedId(null), 2000);
+                                }}
+                                className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
+                              >
+                                {copiedId === 'adm-' + tenant.id ? <CheckCircle2 size={14} className="text-[var(--success)]" /> : <Copy size={14} />}
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Employee Code */}
+                          <div className="flex-1 flex items-center justify-between bg-black/30 px-3 py-2 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                            <div className="flex flex-col">
+                              <span className="text-[8px] text-[var(--aurora-3)] font-black uppercase tracking-widest">{t('Kode Karyawan')}</span>
+                              <span className="text-xs font-mono font-bold text-white mt-0.5">{tenant.activationCode || '-'}</span>
+                            </div>
+                            {tenant.activationCode && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyToClipboard(tenant.activationCode || '');
+                                  setCopiedId('emp-' + tenant.id);
+                                  setTimeout(() => setCopiedId(null), 2000);
+                                }}
+                                className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
+                              >
+                                {copiedId === 'emp-' + tenant.id ? <CheckCircle2 size={14} className="text-[var(--success)]" /> : <Copy size={14} />}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
                         <div className="p-4 flex flex-wrap gap-2">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleImpersonate(tenant); }}
                             className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--aurora-1)]/10 text-[var(--aurora-1)] border border-[var(--aurora-1)]/30 hover:bg-[var(--aurora-1)]/20 text-xs font-bold tracking-wide transition-all"
                           >
-                            <Eye size={14} /> Impersonate
+                            <Eye size={14} /> {t('Impersonate')}
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleExtendLicense(tenant.id, tenant.daysLeft, tenant.name); }}
                             className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/30 hover:bg-[var(--success)]/20 text-xs font-bold tracking-wide transition-all"
                           >
-                            <RefreshCcw size={14} /> Perpanjang Lisensi
+                            <RefreshCcw size={14} /> {t('Perpanjang Lisensi')}
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleGenerateLicenseCode(tenant.id, tenant.name); }}
                             className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--warning)]/10 text-[var(--warning)] border border-[var(--warning)]/30 hover:bg-[var(--warning)]/20 text-xs font-bold tracking-wide transition-all"
                           >
-                            <Key size={14} /> {tenant.adminCode ? 'Reset Kode Lisensi' : 'Generate Kode Lisensi'}
+                            <Key size={14} /> {tenant.adminCode ? t('Reset Kode Lisensi') : t('Generate Kode Lisensi')}
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleResetSecurity(tenant.id, tenant.name); }}
                             className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] border border-[var(--aurora-3)]/30 hover:bg-[var(--aurora-3)]/20 text-xs font-bold tracking-wide transition-all"
                           >
-                            <Shield size={14} /> Reset Kode Karyawan
+                            <Shield size={14} /> {t('Reset Kode Karyawan')}
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); initiateKill(tenant.id); }}
                             className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/30 hover:bg-[var(--danger)] hover:text-white text-xs font-bold tracking-wide transition-all ml-auto"
                           >
-                            <Power size={14} /> {tenant.active ? 'Matikan Akses' : 'Aktifkan'}
+                            <Power size={14} /> {tenant.active ? t('Matikan Akses') : t('Aktifkan')}
                           </button>
                         </div>
                       </motion.div>
@@ -489,15 +500,15 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                       >
                         <div className="flex items-center gap-3">
                           <div className="flex-1">
-                            <p className="text-[var(--danger)] font-bold text-sm tracking-wide">⚠ KONFIRMASI TINDAKAN BERBAHAYA</p>
-                            <p className="text-gray-400 text-xs mt-0.5">Ini akan {tenant.active ? 'menonaktifkan' : 'mengaktifkan'} akses <span className="text-white font-bold">{tenant.name}</span>.</p>
+                            <p className="text-[var(--danger)] font-bold text-sm tracking-wide">⚠ {t('KONFIRMASI TINDAKAN BERBAHAYA')}</p>
+                            <p className="text-gray-400 text-xs mt-0.5">{t('Ini akan')} {tenant.active ? t('menonaktifkan') : t('mengaktifkan')} {t('akses')} <span className="text-white font-bold">{tenant.name}</span>.</p>
                           </div>
                           <div className="flex gap-2 flex-shrink-0">
                             <button
                               onClick={cancelKill}
                               className="px-3 py-2 rounded-xl bg-white/10 text-gray-300 hover:bg-white/20 text-xs font-bold transition-all"
                             >
-                              Batal
+                              {t('Batal')}
                             </button>
                             <button
                               onClick={() => confirmKill(tenant.id)}
@@ -508,7 +519,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                                 }`}
                             >
                               <Power size={12} />
-                              {killCountdown > 0 ? `Tunggu (${killCountdown}s)` : 'YA, LANJUTKAN'}
+                              {killCountdown > 0 ? `${t('Tunggu')} (${killCountdown}s)` : t('YA, LANJUTKAN')}
                             </button>
                           </div>
                         </div>
@@ -523,7 +534,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
 
         {!isLoading && filteredTenants.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-sm">{fetchError ? `Gagal memuat data (${fetchError}). Cek koneksi database.` : 'Belum ada tenant. Klik "Tambah Tenant" untuk memulai.'}</p>
+            <p className="text-gray-500 text-sm">{fetchError ? `${t('Gagal memuat data')} (${fetchError}). ${t('Cek koneksi database.')}` : t('Belum ada tenant. Klik "Tambah Tenant" untuk memulai.')}</p>
           </div>
         )}
       </div>
@@ -558,30 +569,30 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                   <Globe size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-xl font-serif font-bold text-white leading-tight">Onboarding Perusahaan Baru</h3>
-                  <p className="text-[8px] sm:text-[10px] text-[var(--aurora-3)] uppercase tracking-[0.2em] sm:tracking-[0.3em] font-black mt-0.5 sm:mt-1">Strategic SaaS Expansion</p>
+                  <h3 className="text-base sm:text-xl font-serif font-bold text-white leading-tight">{t('Onboarding Perusahaan Baru')}</h3>
+                  <p className="text-[8px] sm:text-[10px] text-[var(--aurora-3)] uppercase tracking-[0.2em] sm:tracking-[0.3em] font-black mt-0.5 sm:mt-1">{t('Strategic SaaS Expansion')}</p>
                 </div>
               </div>
 
               <form onSubmit={handleCreateTenant} className="space-y-4">
                 <div>
-                  <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">Nama Resmi Entitas</label>
+                  <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Nama Resmi Entitas')}</label>
                   <input required value={newTenant.name} onChange={e => setNewTenant({...newTenant, name: e.target.value})} type="text" 
                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--aurora-1)] transition-all placeholder:text-gray-700" 
-                    placeholder="Masukkan Nama Perusahaan..." />
+                    placeholder={t("Masukkan Nama Perusahaan...")} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">Tier Subscription</label>
+                    <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Tier Subscription')}</label>
                     <select value={newTenant.tier} onChange={e => setNewTenant({...newTenant, tier: e.target.value})} 
                       className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--aurora-1)] transition-all appearance-none">
-                      <option value="Bronze">Bronze (Trial)</option><option value="Silver">Silver</option>
-                      <option value="Gold">Gold</option><option value="Enterprise">Enterprise</option>
+                      <option value="Bronze">{t('Bronze (Trial)')}</option><option value="Silver">{t('Silver')}</option>
+                      <option value="Gold">{t('Gold')}</option><option value="Enterprise">{t('Enterprise')}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">Limit User</label>
+                    <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Limit User')}</label>
                     <input type="number" value={newTenant.maxUsers} onChange={e => setNewTenant({...newTenant, maxUsers: e.target.value})} 
                       className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--aurora-1)] transition-all" />
                   </div>
@@ -589,29 +600,33 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
 
                 <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[8px] text-gray-500 font-black uppercase tracking-[0.15em]">Kode Aktivasi</span>
-                    <button type="button" onClick={generateCode} className="text-[8px] text-[var(--aurora-3)] font-black hover:underline tracking-wider">GENERATE</button>
+                    <span className="text-[8px] text-gray-500 font-black uppercase tracking-[0.15em]">{t('Kode Aktivasi')}</span>
+                    <button type="button" onClick={generateCode} className="text-[8px] text-[var(--aurora-3)] font-black hover:underline tracking-wider">{t('GENERATE')}</button>
                   </div>
 
                   {generatedAdminCode ? (
                     <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-3 bg-black/60 rounded-xl border border-[var(--warning)]/40">
-                      <span className="text-xs text-[var(--warning)] font-black uppercase tracking-wider mb-1 block">Kode Admin Tenant</span>
+                      <span className="text-xs text-[var(--warning)] font-black uppercase tracking-wider mb-1 block">{t('Kode Admin Tenant')}</span>
                       <span className="text-lg font-mono font-black text-[var(--warning)] tracking-[0.2em]">{generatedAdminCode}</span>
                     </motion.div>
                   ) : null}
                   {generatedCode ? (
                     <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-3 bg-black/60 rounded-xl border border-[var(--aurora-3)]/40">
-                      <span className="text-xs text-[var(--aurora-3)] font-black uppercase tracking-wider mb-1 block">Kode Karyawan</span>
+                      <span className="text-xs text-[var(--aurora-3)] font-black uppercase tracking-wider mb-1 block">{t('Kode Karyawan')}</span>
                       <span className="text-lg font-mono font-black text-[var(--aurora-3)] tracking-[0.2em]">{generatedCode}</span>
                     </motion.div>
                   ) : (
-                    <div className="w-full py-3 bg-white/5 rounded-xl text-center text-[9px] text-gray-600 font-black uppercase tracking-[0.15em] border border-dashed border-white/10">Klik Generate untuk membuat kode</div>
+                    <div className="w-full py-3 bg-white/5 rounded-xl text-center text-[9px] text-gray-600 font-black uppercase tracking-[0.15em] border border-dashed border-white/10">{t('Klik Generate untuk membuat kode')}</div>
                   )}
                 </div>
 
                 <button disabled={isCreating} type="submit" 
                   className="w-full py-5 rounded-2xl bg-gradient-to-r from-[var(--aurora-1)] to-[#00C9FF] text-white font-black tracking-[0.2em] uppercase shadow-[0_15px_35px_rgba(142,45,226,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-xs mt-4">
-                  {isCreating ? <><Loader2 size={16} className="animate-spin" /> MEMPROSES...</> : 'AKTIFKAN ENTITAS BARU'}
+                  {isCreating ? (
+                    <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> {t('MEMPROSES...')}</span>
+                  ) : (
+                    t('AKTIFKAN ENTITAS BARU')
+                  )}
                 </button>
               </form>
             </motion.div>

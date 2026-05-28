@@ -20,9 +20,11 @@ const TenantDashboard = lazy(() => import('./pages/TenantAdmin/TenantDashboard')
 const SubAdminDashboard = lazy(() => import('./pages/SubAdmin/SubAdminDashboard'));
 const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
 const QRScanner = lazy(() => import('./pages/Employee/components/QRScanner'));
+const PublicServicePortal = lazy(() => import('./pages/PublicPortal/PublicServicePortal'));
 
 const DASHBOARD_ROUTES = ['/app', '/tenantadmin', '/superadmin', '/subadmin'];
 const EXIT_ROUTES = ['/', '/login'];
+const t = (s) => s;
 
 const LoadingScreen = React.memo(() => (
   <div className="fixed inset-0 bg-[#0B0C10] z-[99999] flex items-center justify-center">
@@ -37,7 +39,7 @@ const LoadingScreen = React.memo(() => (
         <div className="w-2 h-2 rounded-full bg-[var(--aurora-3)] animate-bounce" style={{ animationDelay: '0.15s' }} />
         <div className="w-2 h-2 rounded-full bg-[var(--aurora-1)] animate-bounce" style={{ animationDelay: '0.3s' }} />
       </div>
-      <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold">Memuat...</p>
+      <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold">{t('Memuat...')}</p>
     </div>
   </div>
 ));
@@ -250,9 +252,9 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
       {originalRole === 'SUPER_ADMIN' && (
         <div onClick={handleCycleRole}
           className="fixed top-2 left-1/2 -translate-x-1/2 z-[9999] px-4 py-1 bg-[var(--danger)] text-white text-[10px] font-bold rounded-full shadow-[0_0_15px_rgba(255,0,85,0.5)] border border-white/20 animate-pulse cursor-pointer hover:bg-red-600 transition-colors active:scale-95 safe-top"
-          title="Klik untuk Pindah Dasbor"
+          title={t("Klik untuk Pindah Dasbor")}
         >
-          SUPER ADMIN PREVIEW (TAP TO SWITCH)
+          {t('SUPER ADMIN PREVIEW (TAP TO SWITCH)')}
         </div>
       )}
 
@@ -266,7 +268,7 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
             className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl"
           >
             <p className="text-xs text-white font-bold flex items-center gap-2 whitespace-nowrap">
-              <ChevronLeft size={14} /> Tekan 2x untuk keluar aplikasi
+              <ChevronLeft size={14} /> {t('Tekan 2x untuk keluar aplikasi')}
             </p>
           </motion.div>
         )}
@@ -286,20 +288,20 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
               <div className="w-16 h-16 rounded-2xl bg-[var(--danger)]/20 flex items-center justify-center mx-auto mb-4">
                 <LogOut size={28} className="text-[var(--danger)]" />
               </div>
-              <h3 className="text-xl font-serif font-bold text-white mb-2">Yakin ingin keluar?</h3>
-              <p className="text-sm text-gray-400 mb-8">Anda akan logout dan kembali ke halaman login. Dari halaman login, tekan back 2x untuk menutup aplikasi.</p>
+              <h3 className="text-xl font-serif font-bold text-white mb-2">{t('Yakin ingin keluar?')}</h3>
+              <p className="text-sm text-gray-400 mb-8">{t('Anda akan logout dan kembali ke halaman login. Dari halaman login, tekan back 2x untuk menutup aplikasi.')}</p>
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => { setShowExitModal(false); handleLogout(); }}
                   className="w-full py-4 rounded-xl bg-[var(--danger)] text-white font-bold uppercase tracking-widest text-xs"
                 >
-                  Ya, Logout
+                  {t('Ya, Logout')}
                 </button>
                 <button
                   onClick={() => { setShowExitModal(false); setBackCount(0); }}
                   className="w-full py-4 rounded-xl bg-white/5 text-gray-400 font-bold uppercase tracking-widest text-xs border border-white/5"
                 >
-                  Batal
+                  {t('Batal')}
                 </button>
               </div>
             </motion.div>
@@ -328,6 +330,9 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
 
           {/* RESET PASSWORD */}
           <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+
+          {/* PUBLIC SERVICE PORTAL */}
+          <Route path="/public-service" element={<PageTransition><PublicServicePortal /></PageTransition>} />
 
           {/* EMPLOYEE DASHBOARD */}
           <Route path="/app" element={

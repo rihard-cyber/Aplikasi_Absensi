@@ -563,13 +563,31 @@ const ClockInTab = () => {
 
 const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('home');
-  const [activeSubView, setActiveSubView] = useState(null); // 'leave', etc.
+  const [activeTab, setActiveTab] = useState(() => {
+    try { return sessionStorage.getItem('employee_active_tab') || 'home'; } catch { return 'home'; }
+  });
+  const [activeSubView, setActiveSubView] = useState(() => {
+    try { return sessionStorage.getItem('employee_active_subview') || null; } catch { return null; }
+  });
   const [clickCount, setClickCount] = useState(0);
   const [tenantName, setTenantName] = useState('Memuat...');
   const [structureName, setStructureName] = useState('PORTAL KARYAWAN');
   const [announcements, setAnnouncements] = useState([]);
   const [todayShift, setTodayShift] = useState(null); // null = follow Pengaturan Umum
+
+  useEffect(() => {
+    try { sessionStorage.setItem('employee_active_tab', activeTab); } catch {}
+  }, [activeTab]);
+
+  useEffect(() => {
+    try {
+      if (activeSubView) {
+        sessionStorage.setItem('employee_active_subview', activeSubView);
+      } else {
+        sessionStorage.removeItem('employee_active_subview');
+      }
+    } catch {}
+  }, [activeSubView]);
   
   // NEW DYNAMIC STATES
   const confirm = useConfirm();

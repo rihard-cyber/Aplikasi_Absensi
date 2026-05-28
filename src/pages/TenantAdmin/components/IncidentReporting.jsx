@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Plus, Save, X, AlertTriangle, Flame, Shield, Lock, Eye, Loader2, MapPin, Camera, User } from 'lucide-react';
+import { Search, Plus, Save, X, AlertTriangle, Flame, Shield, Lock, Eye, Loader2, MapPin, Camera, User, ArrowLeft } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { logAudit } from '../../../utils/auditLogger';
+
+const t = (s) => s;
 
 const INCIDENT_TYPES = [
   { value: 'kebakaran', label: 'Kebakaran', icon: <Flame size={14} /> },
@@ -14,21 +16,21 @@ const INCIDENT_TYPES = [
   { value: 'lainnya', label: 'Lainnya', icon: <AlertTriangle size={14} /> },
 ];
 
-const SEVERITY_STYLES = {
-  low: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
-  medium: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
-  high: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
-  critical: 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/30',
-};
+const SEVERITY_STYLES = new Map([
+  ['low', 'bg-gray-500/10 text-gray-400 border-gray-500/30'],
+  ['medium', 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'],
+  ['high', 'bg-orange-500/10 text-orange-400 border-orange-500/30'],
+  ['critical', 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/30']
+]);
 
-const STATUS_STYLES = {
-  Reported: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
-  Investigating: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
-  Resolved: 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30',
-  Closed: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-};
+const STATUS_STYLES = new Map([
+  ['Reported', 'bg-gray-500/10 text-gray-400 border-gray-500/30'],
+  ['Investigating', 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'],
+  ['Resolved', 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30'],
+  ['Closed', 'bg-blue-500/10 text-blue-400 border-blue-500/30']
+]);
 
-const IncidentReporting = () => {
+const IncidentReporting = ({ onBack }) => {
   const [incidents, setIncidents] = useState([]);
   const [tenantId, setTenantId] = useState(null);
   const [profileId, setProfileId] = useState(null);
@@ -115,7 +117,12 @@ const IncidentReporting = () => {
     finally { setUploading(false); }
   };
 
-  const nextStatus = { Reported: 'Investigating', Investigating: 'Resolved', Resolved: 'Closed', Closed: null };
+  const nextStatus = new Map([
+    ['Reported', 'Investigating'],
+    ['Investigating', 'Resolved'],
+    ['Resolved', 'Closed'],
+    ['Closed', null]
+  ]);
 
   const filtered = incidents.filter(i => {
     if (filterStatus !== 'ALL' && i.status !== filterStatus) return false;
@@ -125,23 +132,37 @@ const IncidentReporting = () => {
       i.profiles?.full_name?.toLowerCase().includes(search.toLowerCase());
   });
 
-  const statsByType = {};
+  const statsByType = new Map();
   incidents.forEach(i => {
-    statsByType[i.incident_type] = (statsByType[i.incident_type] || 0) + 1;
+    statsByType.set(i.incident_type, (statsByType.get(i.incident_type) || 0) + 1);
   });
   const openIncidents = incidents.filter(i => i.status === 'Reported' || i.status === 'Investigating').length;
 
   return (
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
+      {onBack && (
+        <div className="flex items-center gap-4 mb-6">
+          <button onClick={onBack} className="p-3 bg-white/5 border border-white/10 rounded-2xl text-gray-400 hover:text-white transition-colors">
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-xl font-serif font-bold text-white">{t('Incident Reporting')}</h2>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5 font-sans font-bold">{t('Lapor insiden & keselamatan kerja')}</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-8">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Incident & Safety Reporting</h2>
-          <p className="text-sm text-gray-400 mt-1">{incidents.length} laporan • {openIncidents} open • {Object.keys(statsByType).length} jenis</p>
+          {!onBack && (
+            <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('Incident & Safety Reporting')}</h2>
+          )}
+          <p className="text-sm text-gray-400 mt-1">{incidents.length} {t('laporan')} • {openIncidents} {t('open')} • {statsByType.size} {t('jenis')}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mb-6">
-        {Object.entries(statsByType).map(([type, count]) => (
+        {Array.from(statsByType.entries()).map(([type, count]) => (
           <div key={type} className="p-3 bg-white/5 rounded-xl border border-white/10 text-center">
             <p className="text-lg font-bold text-white font-mono">{count}</p>
             <p className="text-[8px] text-gray-500 uppercase tracking-widest">{type.replace(/_/g, ' ')}</p>
@@ -152,24 +173,24 @@ const IncidentReporting = () => {
       <div className="flex flex-wrap gap-2 mb-6">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari..." className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('Cari...')} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
         </div>
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-2 text-white text-xs outline-none">
-          <option value="ALL">Semua Status</option>
-          {Object.keys(STATUS_STYLES).map(s => <option key={s} value={s}>{s}</option>)}
+          <option value="ALL">{t('Semua Status')}</option>
+          {Array.from(STATUS_STYLES.keys()).map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <select value={filterSeverity} onChange={e => setFilterSeverity(e.target.value)} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-2 text-white text-xs outline-none">
-          <option value="ALL">Semua Severity</option>
-          {Object.keys(SEVERITY_STYLES).map(s => <option key={s} value={s}>{s}</option>)}
+          <option value="ALL">{t('Semua Severity')}</option>
+          {Array.from(SEVERITY_STYLES.keys()).map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <button onClick={() => setShowForm(true)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2"><Plus size={16} /> Lapor Insiden</button>
+        <button onClick={() => setShowForm(true)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2"><Plus size={16} /> {t('Lapor Insiden')}</button>
       </div>
 
       {showForm && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-6 bg-white/5 rounded-2xl border border-white/10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Jenis Insiden</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Jenis Insiden')}</label>
               <div className="grid grid-cols-3 gap-2">
                 {INCIDENT_TYPES.map(t => (
                   <button key={t.value} onClick={() => setForm({...form, incident_type: t.value})}
@@ -180,39 +201,39 @@ const IncidentReporting = () => {
               </div>
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Severity</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Severity')}</label>
               <div className="grid grid-cols-4 gap-2">
-                {Object.keys(SEVERITY_STYLES).map(s => (
+                {Array.from(SEVERITY_STYLES.keys()).map(s => (
                   <button key={s} onClick={() => setForm({...form, severity: s})}
-                    className={`p-2 rounded-xl border text-[9px] font-bold uppercase tracking-widest transition-all ${form.severity === s ? SEVERITY_STYLES[s] + ' bg-white/10' : 'bg-white/5 border-white/10 text-gray-500'}`}>
+                    className={`p-2 rounded-xl border text-[9px] font-bold uppercase tracking-widest transition-all ${form.severity === s ? SEVERITY_STYLES.get(s) + ' bg-white/10' : 'bg-white/5 border-white/10 text-gray-500'}`}>
                     {s}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Lokasi</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Lokasi')}</label>
               <div className="relative">
                 <MapPin size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-                <input value={form.location} onChange={e => setForm({...form, location: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none" placeholder="Gedung A Lantai 3" />
+                <input value={form.location} onChange={e => setForm({...form, location: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none" placeholder={t('Gedung A Lantai 3')} />
               </div>
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Foto (opsional)</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Foto (opsional)')}</label>
               <label className="flex items-center gap-3 p-3 bg-white/5 border border-dashed border-white/20 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
                 {uploading ? <Loader2 size={16} className="animate-spin text-gray-400" /> : <Camera size={16} className="text-gray-400" />}
-                <span className="text-[10px] text-gray-400">{form.photo_url ? 'Tergambar' : 'Upload foto'}</span>
+                <span className="text-[10px] text-gray-400">{form.photo_url ? t('Tergambar') : t('Upload foto')}</span>
                 <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
               </label>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Deskripsi</label>
-              <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none resize-none" placeholder="Jelaskan kronologi insiden..." />
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Deskripsi')}</label>
+              <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none resize-none" placeholder={t('Jelaskan kronologi insiden...')} />
             </div>
           </div>
           <div className="flex gap-3">
-            <button onClick={handleSubmit} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold flex items-center gap-2"><Save size={14} /> Kirim Laporan</button>
-            <button onClick={() => setShowForm(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold"><X size={14} /> Batal</button>
+            <button onClick={handleSubmit} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold flex items-center gap-2"><Save size={14} /> {t('Kirim Laporan')}</button>
+            <button onClick={() => setShowForm(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold"><X size={14} /> {t('Batal')}</button>
           </div>
         </motion.div>
       )}
@@ -222,14 +243,14 @@ const IncidentReporting = () => {
           <div key={inc.id} className="p-5 bg-white/5 rounded-2xl border border-white/10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4 flex-1">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${SEVERITY_STYLES[inc.severity]}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${SEVERITY_STYLES.get(inc.severity) || ''}`}>
                   {INCIDENT_TYPES.find(t => t.value === inc.incident_type)?.icon || <AlertTriangle size={18} />}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-bold text-white">{inc.incident_type?.replace(/_/g, ' ')}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest border ${SEVERITY_STYLES[inc.severity]}`}>{inc.severity}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest border ${STATUS_STYLES[inc.status]}`}>{inc.status}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest border ${SEVERITY_STYLES.get(inc.severity) || ''}`}>{inc.severity}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest border ${STATUS_STYLES.get(inc.status) || ''}`}>{inc.status}</span>
                   </div>
                   <div className="flex items-center gap-3 text-[9px] text-gray-500 mt-0.5">
                     <span className="flex items-center gap-1"><MapPin size={10} /> {inc.location}</span>
@@ -239,25 +260,25 @@ const IncidentReporting = () => {
                   {inc.description && <p className="text-xs text-gray-400 mt-2">{inc.description}</p>}
                   {inc.corrective_action && (
                     <div className="mt-2 p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl">
-                      <p className="text-[9px] text-blue-400 uppercase tracking-widest font-bold mb-1">Tindakan Korektif</p>
+                      <p className="text-[9px] text-blue-400 uppercase tracking-widest font-bold mb-1">{t('Tindakan Korektif')}</p>
                       <p className="text-xs text-gray-300">{inc.corrective_action}</p>
-                      {inc.action_pic && <p className="text-[9px] text-gray-500 mt-1">PIC: {inc.action_pic} {inc.action_deadline ? `• Deadline: ${inc.action_deadline}` : ''}</p>}
+                      {inc.action_pic && <p className="text-[9px] text-gray-500 mt-1">{t('PIC: ')}{inc.action_pic} {inc.action_deadline ? `${t('• Deadline: ')}${inc.action_deadline}` : ''}</p>}
                     </div>
                   )}
                 </div>
               </div>
               <div className="flex items-center gap-2 ml-4">
                 {inc.photo_url && <a href={inc.photo_url} target="_blank" className="p-2 hover:bg-white/10 rounded-lg text-[var(--aurora-3)]"><Eye size={14} /></a>}
-                {nextStatus[inc.status] && (
-                  <button onClick={() => handleStatusUpdate(inc.id, nextStatus[inc.status])}
+                {nextStatus.get(inc.status) && (
+                  <button onClick={() => handleStatusUpdate(inc.id, nextStatus.get(inc.status))}
                     className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[9px] font-bold text-gray-400 hover:text-white">
-                    → {nextStatus[inc.status]}
+                    → {nextStatus.get(inc.status)}
                   </button>
                 )}
                 {inc.status !== 'Closed' && inc.status !== 'Resolved' && (
                   <button onClick={() => { setShowAction(showAction === inc.id ? null : inc.id); setActionForm({ action_pic: inc.action_pic || '', action_deadline: inc.action_deadline || '', corrective_action: inc.corrective_action || '' }); }}
                     className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[9px] font-bold text-gray-400 hover:text-white">
-                    Assign Action
+                    {t('Assign Action')}
                   </button>
                 )}
               </div>
@@ -266,27 +287,27 @@ const IncidentReporting = () => {
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 pt-4 border-t border-white/10">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                   <div>
-                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">PIC</label>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('PIC')}</label>
                     <select value={actionForm.action_pic} onChange={e => setActionForm({...actionForm, action_pic: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-2 text-white text-sm outline-none">
-                      <option value="">— Pilih —</option>
+                      <option value="">— {t('Pilih')} —</option>
                       {profiles.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Deadline</label>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Deadline')}</label>
                     <input type="date" value={actionForm.action_deadline} onChange={e => setActionForm({...actionForm, action_deadline: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-2 text-white text-sm outline-none" />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tindakan</label>
-                    <input value={actionForm.corrective_action} onChange={e => setActionForm({...actionForm, corrective_action: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-2 text-white text-sm outline-none" placeholder="Tindakan..." />
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tindakan')}</label>
+                    <input value={actionForm.corrective_action} onChange={e => setActionForm({...actionForm, corrective_action: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-2 text-white text-sm outline-none" placeholder={t('Tindakan...')} />
                   </div>
                 </div>
-                <button onClick={() => handleActionSubmit(inc.id)} className="px-4 py-2 rounded-xl bg-blue-500 text-white text-[10px] font-bold">Simpan Tindakan</button>
+                <button onClick={() => handleActionSubmit(inc.id)} className="px-4 py-2 rounded-xl bg-blue-500 text-white text-[10px] font-bold">{t('Simpan Tindakan')}</button>
               </motion.div>
             )}
           </div>
         ))}
-        {!filtered.length && <p className="text-center text-gray-500 py-8 text-sm">Tidak ada laporan insiden</p>}
+        {!filtered.length && <p className="text-center text-gray-500 py-8 text-sm">{t('Tidak ada laporan insiden')}</p>}
       </div>
     </div>
   );

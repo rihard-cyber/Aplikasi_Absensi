@@ -295,7 +295,7 @@ const PatrolScan = ({ onBack }) => {
       <AnimatePresence>
         {showIncidentForm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowIncidentForm(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-md w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2"><AlertTriangle size={18} className="text-[var(--danger)]" /> Lapor Insiden</h3>
               <p className="text-xs text-gray-500 mb-6">{t('Laporkan kejadian selama patroli')}</p>
               <div className="space-y-4">
@@ -340,7 +340,7 @@ const PatrolScan = ({ onBack }) => {
       <AnimatePresence>
         {showHandoverForm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowHandoverForm(false)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-md w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={e => e.stopPropagation()}>
               <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2"><Users size={18} className="text-[var(--aurora-3)]" /> Shift Handover</h3>
               <p className="text-xs text-gray-500 mb-6">{t('Serahkan shift ke petugas selanjutnya')}</p>
               <div className="space-y-4">

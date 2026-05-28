@@ -13,6 +13,8 @@ import { useToast } from '../../../components/Toast';
 import HRISDataForm from './HRISDataForm';
 import NotificationSettings from '../../../components/NotificationSettings';
 
+const t = (s) => s;
+
 const EmployeeProfile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState({
@@ -250,9 +252,9 @@ const EmployeeProfile = () => {
             )}
           </div>
           <div className="flex items-center justify-center gap-2 mt-3">
-            <p className="text-xs text-gray-500 font-medium relative z-10">NIP: {user.nip}</p>
+            <p className="text-xs text-gray-500 font-medium relative z-10">{t('NIP: ')}{user.nip}</p>
             <span className="w-1 h-1 bg-gray-600 rounded-full"></span>
-            <p className="text-xs text-gray-500 font-medium relative z-10">{isBound ? 'Device Bound' : 'Device Not Bound'}</p>
+            <p className="text-xs text-gray-500 font-medium relative z-10">{user.device_id ? t('Device Bound') : t('Device Not Bound')}</p>
           </div>
         </div>
       </div>
@@ -355,26 +357,26 @@ const EmployeeProfile = () => {
               onClick={() => handleItemClick('edit', () => setIsEditing(true))}
             />
             <div className="p-5 bg-white/5 border-t border-white/5">
-              <h4 className="text-[10px] text-gray-500 uppercase tracking-widest mb-3">Akses & Identitas (Read Only)</h4>
+              <h4 className="text-[10px] text-gray-500 uppercase tracking-widest mb-3">{t('Akses & Identitas (Read Only)')}</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1">
-                  <p className="text-[10px] text-gray-400">Employee ID / Username</p>
+                  <p className="text-[10px] text-gray-400">{t('Employee ID / Username')}</p>
                   <p className="text-xs font-bold text-white">{user.nip}</p>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-[10px] text-gray-400">Current Role</p>
+                  <p className="text-[10px] text-gray-400">{t('Current Role')}</p>
                   <p className="text-xs font-bold text-[var(--aurora-1)] uppercase tracking-tighter">{user.position}</p>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-[10px] text-gray-400">Attendance Access</p>
+                  <p className="text-[10px] text-gray-400">{t('Attendance Access')}</p>
                   <p className={`text-xs font-bold ${user.attendance_access ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
-                    {user.attendance_access ? 'MEMILIKI AKSES' : 'TIDAK ADA AKSES'}
+                    {user.attendance_access ? t('MEMILIKI AKSES') : t('TIDAK ADA AKSES')}
                   </p>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-[10px] text-gray-400">Operational Access</p>
+                  <p className="text-[10px] text-gray-400">{t('Operational Access')}</p>
                   <p className={`text-xs font-bold ${user.operational_access ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
-                    {user.operational_access ? 'MEMILIKI AKSES' : 'TIDAK ADA AKSES'}
+                    {user.operational_access ? t('MEMILIKI AKSES') : t('TIDAK ADA AKSES')}
                   </p>
                 </div>
               </div>
@@ -401,8 +403,8 @@ const EmployeeProfile = () => {
                 <Settings size={24} />
               </div>
               <div className="text-left flex-1">
-                <h4 className="text-white font-bold">Switch to Admin View</h4>
-                <p className="text-xs text-gray-500">Kelola operasional devisi Anda</p>
+                <h4 className="text-white font-bold">{t('Switch to Admin View')}</h4>
+                <p className="text-xs text-gray-500">{t('Kelola operasional devisi Anda')}</p>
               </div>
               <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors">
                 <ChevronRight size={18} />
@@ -422,7 +424,7 @@ const EmployeeProfile = () => {
       </button>
 
       <div className="text-center mt-4">
-        <p className="text-[10px] text-gray-600 tracking-widest uppercase">SI PRESENSI PRO MAX V1.0.0</p>
+        <p className="text-[10px] text-gray-600 tracking-widest uppercase">{t('SI PRESENSI PRO MAX V1.0.0')}</p>
       </div>
 
       {/* EDIT PROFILE MODAL */}
@@ -436,10 +438,10 @@ const EmployeeProfile = () => {
               <motion.div
                 initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="w-full max-w-md glass-panel rounded-t-[40px] rounded-b-none p-8 pb-12 flex flex-col gap-6 max-h-[95vh] overflow-y-auto custom-scrollbar"
+                className="w-full max-w-md glass-panel rounded-t-[40px] rounded-b-none p-6 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] flex flex-col gap-4 max-h-[95dvh] overflow-hidden"
               >
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-serif font-bold text-white">Edit Data Pribadi</h3>
+                  <h3 className="text-xl font-serif font-bold text-white">{t('Edit Data Pribadi')}</h3>
                   <button onClick={() => setIsEditing(false)} className="text-gray-500 hover:text-white"><X size={24} /></button>
                 </div>
 
@@ -473,8 +475,8 @@ const EmployeeProfile = () => {
               <div className="w-16 h-16 bg-[var(--warning)]/20 rounded-2xl flex items-center justify-center text-[var(--warning)] mx-auto mb-6">
                 <Lock size={32} />
               </div>
-              <h3 className="text-xl font-serif font-bold text-white mb-2">Set 6-Digit PIN</h3>
-              <p className="text-sm text-gray-400 mb-8">PIN ini akan digunakan untuk akses dokumen sensitif seperti slip gaji.</p>
+              <h3 className="text-xl font-serif font-bold text-white mb-2">{t('Set 6-Digit PIN')}</h3>
+              <p className="text-sm text-gray-400 mb-8">{t('PIN ini akan digunakan untuk akses dokumen sensitif seperti slip gaji.')}</p>
 
               <div className="flex justify-between gap-2 mb-8">
                 {pin.map((digit, i) => (
@@ -485,7 +487,7 @@ const EmployeeProfile = () => {
                     onChange={(e) => {
                       const newPin = pin.map((d, idx) => idx === i ? e.target.value : d);
                       setPin(newPin);
-                      if (e.target.value && i < 5) {
+                      if (e.target.value && 5 > i) {
                         const nextEl = document.getElementById(`pin-${i + 1}`);
                         if (nextEl) nextEl.focus();
                       }
@@ -513,7 +515,7 @@ const EmployeeProfile = () => {
                 >
                   Konfirmasi PIN
                 </button>
-                <button onClick={() => setShowPinModal(false)} className="text-gray-500 text-sm hover:text-white transition-colors">Batal</button>
+                <button onClick={() => setShowPinModal(false)} className="text-gray-500 text-sm hover:text-white transition-colors">{t('Batal')}</button>
               </div>
             </motion.div>
           </motion.div>

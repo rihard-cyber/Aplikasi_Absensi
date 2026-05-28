@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, Truck, Wrench, Calendar, Send, CheckCircle2, Loader2, ArrowLeft, FileText, StepBack } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
@@ -31,10 +31,15 @@ const BookingRequest = ({ onBack }) => {
   const [form, setForm] = useState({ booking_date: '', start_time: '', end_time: '', purpose: '' });
   const toast = useToast();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchInitial(); }, []);
+  const fetchMyBookings = useCallback(async (uid, tid) => {
+    let q = supabase.from('booking_requests').select('*, facilities(name, type, location)').eq('user_id', uid);
+    if (tid) q = q.eq('tenant_id', tid);
+    q = q.order('booking_date', { ascending: false });
+    const { data } = await q;
+    if (data) setMyBookings(data);
+  }, []);
 
-  const fetchInitial = async () => {
+  const fetchInitial = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('id, tenant_id').eq('auth_id', session.user.id).maybeSingle();
@@ -42,15 +47,11 @@ const BookingRequest = ({ onBack }) => {
     setTenantId(p.tenant_id);
     setUserId(p.id);
     fetchMyBookings(p.id, p.tenant_id);
-  };
+  }, [fetchMyBookings]);
 
-  const fetchMyBookings = async (uid, tid) => {
-    let q = supabase.from('booking_requests').select('*, facilities(name, type, location)').eq('user_id', uid);
-    if (tid) q = q.eq('tenant_id', tid);
-    q = q.order('booking_date', { ascending: false });
-    const { data } = await q;
-    if (data) setMyBookings(data);
-  };
+  useEffect(() => {
+    fetchInitial();
+  }, [fetchInitial]);
 
   const selectType = async (type) => {
     setFacilityType(type);

@@ -49,7 +49,7 @@ const QRScanner = ({ onBack }) => {
       if (error || !qrToken) { setStatus('failed'); toast('Kode QR tidak valid!', 'error'); return; }
       if (!qrToken.is_active) { setStatus('failed'); toast('Kode QR sudah tidak aktif!', 'error'); return; }
       if (qrToken.tenant_id !== profile?.tenant_id) { setStatus('failed'); toast('Kode QR bukan untuk perusahaan Anda!', 'error'); return; }
-      if (qrToken.expires_at && new Date(qrToken.expires_at) < new Date()) { setStatus('failed'); toast('Kode QR sudah kadaluarsa!', 'error'); return; }
+      if (qrToken.expires_at && new Date() > new Date(qrToken.expires_at)) { setStatus('failed'); toast('Kode QR sudah kadaluarsa!', 'error'); return; }
 
       // QR valid — trigger face verification before recording attendance
       setStatus('idle');
@@ -61,26 +61,31 @@ const QRScanner = ({ onBack }) => {
     }
   };
 
-  /** Called by FaceVerificationModal when face is verified successfully */
-  const handleFaceVerified = async ({ confidence }) => {
-    setShowFaceVerif(false);
-    if (!pendingToken) return;
+  const recordAttendance = async (confidence, toastMessage) => {
+    if (!pendingToken || !profile) return;
     setStatus('scanning');
     try {
+      const timestamp = new Date().toISOString();
       await supabase.from('attendance_logs').insert({
-        tenant_id: profile.tenant_id, user_id: profile.id,
-        action: 'CLOCK_IN', status: 'ONTIME', timestamp: new Date().toISOString(),
+        tenant_id: profile.tenant_id,
+        user_id: profile.id,
+        action: 'CLOCK_IN',
+        status: 'ONTIME',
+        timestamp,
         face_confidence: confidence,
       });
 
       await supabase.from('qr_attendance_logs').insert({
-        tenant_id: profile.tenant_id, user_id: profile.id,
-        token_id: pendingToken.id, action: 'CLOCK_IN', timestamp: new Date().toISOString()
+        tenant_id: profile.tenant_id,
+        user_id: profile.id,
+        token_id: pendingToken.id,
+        action: 'CLOCK_IN',
+        timestamp,
       });
 
       setPendingToken(null);
       setStatus('success');
-      toast('Absensi via QR berhasil!', 'success');
+      toast(toastMessage, 'success');
       setTimeout(() => onBack(), 2000);
     } catch (e) {
       setStatus('failed');
@@ -88,31 +93,16 @@ const QRScanner = ({ onBack }) => {
     }
   };
 
+  /** Called by FaceVerificationModal when face is verified successfully */
+  const handleFaceVerified = async ({ confidence }) => {
+    setShowFaceVerif(false);
+    await recordAttendance(confidence, 'Absensi via QR berhasil!');
+  };
+
   /** Called when user skips/cancels face verification */
   const handleFaceSkipped = async () => {
     setShowFaceVerif(false);
-    if (!pendingToken) return;
-    setStatus('scanning');
-    try {
-      await supabase.from('attendance_logs').insert({
-        tenant_id: profile.tenant_id, user_id: profile.id,
-        action: 'CLOCK_IN', status: 'ONTIME', timestamp: new Date().toISOString(),
-        face_confidence: null,
-      });
-
-      await supabase.from('qr_attendance_logs').insert({
-        tenant_id: profile.tenant_id, user_id: profile.id,
-        token_id: pendingToken.id, action: 'CLOCK_IN', timestamp: new Date().toISOString()
-      });
-
-      setPendingToken(null);
-      setStatus('success');
-      toast('Absensi berhasil (tanpa verifikasi wajah).', 'success');
-      setTimeout(() => onBack(), 2000);
-    } catch (e) {
-      setStatus('failed');
-      toast('Gagal: ' + e.message, 'error');
-    }
+    await recordAttendance(null, 'Absensi berhasil (tanpa verifikasi wajah).');
   };
 
   useEffect(() => {

@@ -732,7 +732,7 @@ const DemoRequestModal = ({ onClose }) => {
   };
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-      <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} onClick={e => e.stopPropagation()} className="w-full max-w-md glass-panel p-6 sm:p-8 relative max-h-[85vh] overflow-y-auto">
+      <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} onClick={e => e.stopPropagation()} className="w-full max-w-md glass-panel p-6 sm:p-8 relative max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white"><X size={20} /></button>
         {sent ? (
           <div className="text-center py-8">
@@ -775,7 +775,11 @@ const DemoRequestModal = ({ onClose }) => {
                 <textarea value={form.message} onChange={e => setForm({...form, message: e.target.value})} rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--aurora-3)]" placeholder="Ceritakan kebutuhan perusahaan Anda..." />
               </div>
               <button type="submit" disabled={sending} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:shadow-xl hover:shadow-purple-500/30 transition-all disabled:opacity-50">
-                {sending ? <><Loader2 size={16} className="animate-spin" /> Mengirim...</> : <><Send size={16} /> Kirim & Jadwalkan Demo</>}
+                {sending ? (
+                  <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> Mengirim...</span>
+                ) : (
+                  <span className="flex items-center gap-2"><Send size={16} /> Kirim & Jadwalkan Demo</span>
+                )}
               </button>
               <p className="text-[8px] text-gray-600 text-center">Atau hubungi langsung <span className="text-[var(--success)]">0812-3456-7890 (WA)</span></p>
             </form>
@@ -804,7 +808,7 @@ const PartnerBookingModal = ({ onClose }) => {
   };
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-      <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} onClick={e => e.stopPropagation()} className="w-full max-w-md glass-panel p-6 sm:p-8 relative max-h-[85vh] overflow-y-auto">
+      <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} onClick={e => e.stopPropagation()} className="w-full max-w-md glass-panel p-6 sm:p-8 relative max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white"><X size={20} /></button>
         {sent ? (
           <div className="text-center py-8">
@@ -839,7 +843,11 @@ const PartnerBookingModal = ({ onClose }) => {
                 <textarea value={form.message} onChange={e => setForm({...form, message: e.target.value})} rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--aurora-3)]" placeholder="Ceritakan rencana kerjasama Anda..." />
               </div>
               <button type="submit" disabled={sending} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:shadow-xl hover:shadow-purple-500/30 transition-all disabled:opacity-50">
-                {sending ? <><Loader2 size={16} className="animate-spin" /> Mengirim...</> : <><Send size={16} /> Kirim Permintaan</>}
+                {sending ? (
+                  <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> Mengirim...</span>
+                ) : (
+                  <span className="flex items-center gap-2"><Send size={16} /> Kirim Permintaan</span>
+                )}
               </button>
             </form>
           </>

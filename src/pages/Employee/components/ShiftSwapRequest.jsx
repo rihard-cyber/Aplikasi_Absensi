@@ -32,21 +32,20 @@ const ShiftSwapRequest = ({ onBack }) => {
     setMyId(prof.id);
     setTenantId(prof.tenant_id);
     await Promise.all([
-      fetchSchedules(prof.id, prof.tenant_id),
+      fetchSchedules(prof.id),
       fetchColleagues(prof.id, prof.tenant_id),
       fetchRequests(prof.id),
     ]);
     setLoading(false);
   };
 
-  const fetchSchedules = async (uid, tid) => {
+  const fetchSchedules = async (uid) => {
     const { data } = await supabase.from('user_schedules')
       .select('*, master_shifts(shift_code, shift_name, time_in, time_out)')
-      .eq('profile_id', uid)
-      .eq('tenant_id', tid)
-      .gte('schedule_date', todayStr)
-      .lte('schedule_date', twoWeeksOut)
-      .order('schedule_date', { ascending: true });
+      .eq('user_id', uid)
+      .gte('date', todayStr)
+      .lte('date', twoWeeksOut)
+      .order('date', { ascending: true });
     if (data) setSchedules(data);
   };
 
@@ -78,9 +77,8 @@ const ShiftSwapRequest = ({ onBack }) => {
     if (selectedDate && colleagueId) {
       const { data } = await supabase.from('user_schedules')
         .select('*, master_shifts(shift_code, shift_name, time_in, time_out)')
-        .eq('profile_id', colleagueId)
-        .eq('tenant_id', tenantId)
-        .eq('schedule_date', selectedDate)
+        .eq('user_id', colleagueId)
+        .eq('date', selectedDate)
         .maybeSingle();
       setSelectedColleagueShift(data?.master_shifts?.shift_name || '—');
     }
@@ -116,7 +114,18 @@ const ShiftSwapRequest = ({ onBack }) => {
     return <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border ${styles.get(status) || styles.get('pending')}`}>{status}</span>;
   };
 
-  const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const getDayName = (dayIndex) => {
+    switch (dayIndex) {
+      case 0: return 'Minggu';
+      case 1: return 'Senin';
+      case 2: return 'Selasa';
+      case 3: return 'Rabu';
+      case 4: return 'Kamis';
+      case 5: return 'Jumat';
+      case 6: return 'Sabtu';
+      default: return '';
+    }
+  };
   const t = (s) => s;
 
   return (
@@ -138,12 +147,13 @@ const ShiftSwapRequest = ({ onBack }) => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2">
             {schedules.map(s => {
-              const dateObj = new Date(s.schedule_date + 'T00:00:00');
-              const isSelected = selectedDate === s.schedule_date;
+              const dateObj = new Date((s.date || s.schedule_date) + 'T00:00:00');
+              const dateKey = s.date || s.schedule_date;
+              const isSelected = selectedDate === dateKey;
               return (
-                <button key={s.id} onClick={() => handleDateSelect(s.schedule_date)}
+                <button key={s.id} onClick={() => handleDateSelect(dateKey)}
                   className={`p-3 rounded-xl border text-left transition-all ${isSelected ? 'bg-[var(--aurora-3)]/20 border-[var(--aurora-3)]' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
-                  <p className="text-[9px] text-gray-500">{dayNames[dateObj.getDay()]}</p>
+                  <p className="text-[9px] text-gray-500">{getDayName(dateObj.getDay())}</p>
                   <p className="text-sm font-bold text-white">{dateObj.getDate()}</p>
                   <p className="text-[9px] text-gray-400">{s.master_shifts?.shift_name || s.master_shifts?.shift_code || '—'}</p>
                   {s.master_shifts?.time_in && (
@@ -199,7 +209,7 @@ const ShiftSwapRequest = ({ onBack }) => {
       ) : (
         <div className="space-y-2">
           {requests.map(r => (
-            <div key={r.id} className="glass-panel p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+            <div key={r.id} className="glass-panel p-4 rounded-2xl border border-white/5 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
               <div className="flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${r.status === 'approved' ? 'bg-[var(--success)]/10 text-[var(--success)]' : r.status === 'rejected' ? 'bg-[var(--danger)]/10 text-[var(--danger)]' : 'bg-yellow-500/10 text-yellow-400'}`}>
                   {r.status === 'approved' ? <CheckCircle2 size={16} /> : r.status === 'rejected' ? <XCircle size={16} /> : <Clock size={16} />}

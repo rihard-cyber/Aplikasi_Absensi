@@ -4,6 +4,8 @@ import { User, MapPin, Briefcase, Heart, CreditCard, Shield, Activity, ChevronRi
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
+const t = (s) => s;
+
 const HRISDataForm = ({ user, onCancel, onSave }) => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -140,10 +142,10 @@ const HRISDataForm = ({ user, onCancel, onSave }) => {
   );
 
   return (
-    <div className="flex flex-col h-full max-h-[85vh]">
+    <div className="flex flex-col flex-1 min-h-0">
       {renderStepIndicators()}
       
-      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6 pb-6">
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4 pb-4">
         {step === 1 && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
             <h4 className="text-[var(--aurora-3)] font-bold text-sm uppercase tracking-widest flex items-center gap-2 mb-4"><User size={16}/> 1. Data Diri Utama</h4>
@@ -169,10 +171,10 @@ const HRISDataForm = ({ user, onCancel, onSave }) => {
               <SmartInput type="number" label="Jumlah Anak" name="children_count" value={formData.children_count} onChange={handleInputChange} />
             </div>
             <div className="p-3 bg-[var(--aurora-3)]/10 border border-[var(--aurora-3)]/30 rounded-xl">
-              <p className="text-[10px] text-gray-400">Estimasi Status PTKP Pajak: <span className="font-bold text-[var(--aurora-3)]">{formData.tax_status}</span></p>
+              <p className="text-[10px] text-gray-400">{t('Estimasi Status PTKP Pajak: ')}<span className="font-bold text-[var(--aurora-3)]">{formData.tax_status}</span></p>
             </div>
             
-            <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6 mb-2">Riwayat Pendidikan</h4>
+            <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6 mb-2">{t('Riwayat Pendidikan')}</h4>
             <SmartSelect label="Pendidikan Terakhir" name="education_level" value={formData.education_level} onChange={handleInputChange} options={[{val: 'SMA/SMK', label: 'SMA/SMK'}, {val: 'D3', label: 'D3'}, {val: 'S1', label: 'S1'}, {val: 'S2', label: 'S2'}]} />
             <SmartInput label="Jurusan" name="major" value={formData.major} onChange={handleInputChange} />
             <SmartInput label="Nama Sekolah / Universitas" name="school_name" value={formData.school_name} onChange={handleInputChange} />
@@ -183,10 +185,10 @@ const HRISDataForm = ({ user, onCancel, onSave }) => {
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
             <h4 className="text-[var(--aurora-3)] font-bold text-sm uppercase tracking-widest flex items-center gap-2 mb-4"><Briefcase size={16}/> 3. Informasi Pekerjaan</h4>
             <div className="p-4 bg-white/5 border border-white/10 rounded-2xl mb-4">
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Data Read-Only (HR)</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Data Read-Only (HR)')}</p>
               <div className="grid grid-cols-2 gap-4">
-                <div><p className="text-[9px] text-gray-400">NIP</p><p className="text-xs font-bold text-white">{formData.nip}</p></div>
-                <div><p className="text-[9px] text-gray-400">Jabatan & Divisi</p><p className="text-xs font-bold text-white">{user.position} - {user.division}</p></div>
+                <div><p className="text-[9px] text-gray-400">{t('NIP')}</p><p className="text-xs font-bold text-white">{formData.nip}</p></div>
+                <div><p className="text-[9px] text-gray-400">{t('Jabatan & Divisi')}</p><p className="text-xs font-bold text-white">{user.position} - {user.division}</p></div>
               </div>
             </div>
             
@@ -208,7 +210,7 @@ const HRISDataForm = ({ user, onCancel, onSave }) => {
               <SmartInput label="BPJS Kesehatan" name="bpjs_kes_number" value={formData.bpjs_kes_number} onChange={handleInputChange} />
             </div>
             
-            <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6 mb-2">Informasi Bank</h4>
+            <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6 mb-2">{t('Informasi Bank')}</h4>
             <div className="grid grid-cols-2 gap-4">
               <SmartInput label="Nama Bank" name="bank_name" value={formData.bank_name} onChange={handleInputChange} placeholder="BCA / Mandiri" />
               <SmartInput label="No. Rekening" name="bank_account_number" value={formData.bank_account_number} onChange={handleInputChange} />
@@ -228,14 +230,14 @@ const HRISDataForm = ({ user, onCancel, onSave }) => {
               <SmartInput label="Email Aktif" name="email" value={formData.email} onChange={handleInputChange} />
             </div>
             
-            <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6 mb-2">Kontak Darurat</h4>
+            <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6 mb-2">{t('Kontak Darurat')}</h4>
             <SmartInput label="Nama Kontak Darurat" name="emergency_contact_name" value={formData.emergency_contact_name} onChange={handleInputChange} />
             <div className="grid grid-cols-2 gap-4">
               <SmartInput label="Hubungan Keluarga" name="emergency_contact_relation" value={formData.emergency_contact_relation} onChange={handleInputChange} placeholder="Istri / Kakak / Ayah" />
               <SmartInput label="No. Telepon Darurat" name="emergency_contact_number" value={formData.emergency_contact_number} onChange={handleInputChange} />
             </div>
 
-            <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6 mb-2">Ukuran Seragam</h4>
+            <h4 className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6 mb-2">{t('Ukuran Seragam')}</h4>
             <div className="grid grid-cols-3 gap-4">
               <SmartInput label="Baju" name="shirt_size" value={formData.shirt_size} onChange={handleInputChange} placeholder="M / L" />
               <SmartInput label="Celana" name="pants_size" value={formData.pants_size} onChange={handleInputChange} placeholder="32" />
@@ -248,7 +250,7 @@ const HRISDataForm = ({ user, onCancel, onSave }) => {
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
             <h4 className="text-[var(--warning)] font-bold text-sm uppercase tracking-widest flex items-center gap-2 mb-4"><Shield size={16}/> 6. Data Spesifik Security</h4>
             <div className="p-4 bg-[var(--warning)]/10 border border-[var(--warning)]/30 rounded-2xl mb-4 text-xs text-gray-300">
-              Form ini hanya muncul karena divisi Anda adalah <strong>{user.division}</strong>. Lengkapi data legalitas Satpam Anda.
+              {t('Form ini hanya muncul karena divisi Anda adalah ')}<strong>{user.division}</strong>{t('. Lengkapi data legalitas Satpam Anda.')}
             </div>
             <SmartInput label="Nomor KTA" name="kta_number" value={formData.kta_number} onChange={handleInputChange} />
             <SmartInput label="Nomor Sertifikat" name="certificate_number" value={formData.certificate_number} onChange={handleInputChange} />
@@ -270,30 +272,47 @@ const HRISDataForm = ({ user, onCancel, onSave }) => {
           {step > 1 ? <ChevronLeft size={16} /> : 'Batal'}
         </button>
         <button 
-          onClick={() => step < (isSatpam ? 6 : 5) ? setStep(step + 1) : handleSubmit()}
+          onClick={() => (isSatpam ? 6 : 5) > step ? setStep(step + 1) : handleSubmit()}
           disabled={isSubmitting}
           className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(142,45,226,0.3)]"
         >
-          {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : step < (isSatpam ? 6 : 5) ? <>Lanjut <ChevronRight size={16} /></> : 'Simpan Data HRIS'}
+          {isSubmitting ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (isSatpam ? 6 : 5) > step ? (
+            <span className="flex items-center gap-1">{t('Lanjut ')}<ChevronRight size={16} /></span>
+          ) : (
+            t('Simpan Data HRIS')
+          )}
         </button>
       </div>
     </div>
   );
 };
 
-const SmartInput = ({ label, icon, isTextArea, ...props }) => (
+const SmartInput = ({ label, icon, isTextArea, name, value, onChange, placeholder, type = "text", disabled, maxLength }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">{label}</label>
     <div className="relative">
       {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">{icon}</div>}
       {isTextArea ? (
         <textarea
-          {...props}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          disabled={disabled}
+          maxLength={maxLength}
           className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)] transition-all min-h-[80px]"
         />
       ) : (
         <input
-          {...props}
+          type={type}
+          name={name}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          disabled={disabled}
+          maxLength={maxLength}
           className={`w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 ${icon ? 'pl-11 pr-4' : 'px-4'} text-xs text-white outline-none focus:border-[var(--aurora-3)] transition-all`}
         />
       )}
@@ -301,14 +320,17 @@ const SmartInput = ({ label, icon, isTextArea, ...props }) => (
   </div>
 );
 
-const SmartSelect = ({ label, options, ...props }) => (
+const SmartSelect = ({ label, options, name, value, onChange, disabled }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">{label}</label>
     <select
-      {...props}
+      name={name}
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
       className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)] transition-all"
     >
-      <option value="" disabled>Pilih...</option>
+      <option value="" disabled>{t('Pilih...')}</option>
       {options.map(opt => <option key={opt.val} value={opt.val} className="bg-[#0B0C10]">{opt.label}</option>)}
     </select>
   </div>

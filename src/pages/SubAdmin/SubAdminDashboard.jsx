@@ -17,7 +17,9 @@ const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustu
 const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycleRole, onGodModeReturn }) => {
   const navigate = useNavigate();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState(() => {
+    try { return sessionStorage.getItem('subadmin_active_tab') || initialTab; } catch { return initialTab; }
+  });
   const [isChecking, setIsChecking] = useState(true);
   const [myTenantId, setMyTenantId] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -34,6 +36,10 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
   const [empSearch, setEmpSearch] = useState('');
   const [empLoading, setEmpLoading] = useState(false);
   const [stats, setStats] = useState({ total: 0, present: 0, late: 0, leave: 0 });
+
+  useEffect(() => {
+    try { sessionStorage.setItem('subadmin_active_tab', activeTab); } catch {}
+  }, [activeTab]);
 
   useEffect(() => {
     const isG = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();

@@ -33,8 +33,8 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 menit
 // ─── CAPACITOR NETWORK (NATIVE) ─────────────────────────────────────────────
 const getNativeNetworkInfo = async () => {
   try {
-    // eslint-disable-next-line no-new-func
-    const mod = await new Function('u', 'return import(u)')('@capacitor/network');
+    // Menggunakan dynamic import standar yang aman dari CWE-94 (Code Injection)
+    const mod = await import('@capacitor/network');
     const { Network } = mod;
     const status = await Network.getStatus();
     if (!status.connected) return null;
