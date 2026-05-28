@@ -71,7 +71,17 @@ const IncidentReporting = ({ onBack }) => {
     if (activeTenantId) q = q.eq('tenant_id', activeTenantId);
     q = q.order('created_at', { ascending: false });
     const { data: r } = await q;
-    if (r) setIncidents(r);
+    if (r) {
+      const formatted = r.map(inc => {
+        const rawStatus = inc.status ? inc.status.toLowerCase() : 'reported';
+        const displayStatus = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1);
+        return {
+          ...inc,
+          status: displayStatus
+        };
+      });
+      setIncidents(formatted);
+    }
 
     let q2 = supabase.from('profiles').select('id, full_name, nip');
     if (activeTenantId) q2 = q2.eq('tenant_id', activeTenantId);
@@ -91,7 +101,7 @@ const IncidentReporting = ({ onBack }) => {
         photos: form.photo_url ? [form.photo_url] : [],
         tenant_id: tenantId,
         reporter_id: profileId,
-        status: 'Reported'
+        status: 'reported'
       };
       const { error } = await supabase.from('incident_reports').insert(insertData);
       if (error) throw error;
@@ -104,7 +114,7 @@ const IncidentReporting = ({ onBack }) => {
   };
 
   const handleStatusUpdate = async (id, newStatus) => {
-    await supabase.from('incident_reports').update({ status: newStatus }).eq('id', id);
+    await supabase.from('incident_reports').update({ status: newStatus.toLowerCase() }).eq('id', id);
     toast(`Status: ${newStatus}`, 'success');
     fetchData();
   };
@@ -239,11 +249,44 @@ const IncidentReporting = ({ onBack }) => {
             </div>
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Foto (opsional)')}</label>
-              <label className="flex items-center gap-3 p-3 bg-white/5 border border-dashed border-white/20 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                {uploading ? <Loader2 size={16} className="animate-spin text-gray-400" /> : <Camera size={16} className="text-gray-400" />}
-                <span className="text-[10px] text-gray-400">{form.photo_url ? t('Tergambar') : t('Upload foto')}</span>
-                <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-              </label>
+              {form.photo_url ? (
+                <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-white/20 shadow-md group">
+                  <img src={form.photo_url} alt="Incident Preview" className="w-full h-full object-cover" />
+                  <button 
+                    type="button"
+                    onClick={() => setForm({...form, photo_url: ''})}
+                    className="absolute top-1 right-1 p-1 rounded-full bg-black/80 hover:bg-black text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="flex flex-col items-center justify-center py-2.5 px-2 border border-dashed border-white/20 rounded-xl cursor-pointer hover:bg-white/5 transition-colors text-center">
+                    {uploading ? (
+                      <Loader2 size={14} className="animate-spin text-gray-400" />
+                    ) : (
+                      <>
+                        <Camera size={14} className="text-gray-400 mb-1" />
+                        <span className="text-[9px] text-white font-bold">{t('Kamera')}</span>
+                      </>
+                    )}
+                    <input type="file" accept="image/*" capture="environment" onChange={handlePhotoUpload} className="hidden" disabled={uploading} />
+                  </label>
+
+                  <label className="flex flex-col items-center justify-center py-2.5 px-2 border border-dashed border-white/20 rounded-xl cursor-pointer hover:bg-white/5 transition-colors text-center">
+                    {uploading ? (
+                      <Loader2 size={14} className="animate-spin text-gray-400" />
+                    ) : (
+                      <>
+                        <Plus size={14} className="text-gray-400 mb-1" />
+                        <span className="text-[9px] text-white font-bold">{t('Galeri')}</span>
+                      </>
+                    )}
+                    <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" disabled={uploading} />
+                  </label>
+                </div>
+              )}
             </div>
             <div className="md:col-span-2">
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Deskripsi')}</label>

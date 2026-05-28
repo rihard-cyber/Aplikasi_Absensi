@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Building, Phone, MapPin, AlertTriangle, Calendar, Wrench, Clock, 
   Send, CheckCircle2, Loader2, ArrowLeft, Plus, X, Copy, 
-  Sparkles, HelpCircle, User, ChevronRight, ChevronDown, Check, Search, Ticket, Info
+  Sparkles, HelpCircle, User, ChevronRight, ChevronDown, Check, Search, Ticket, Info, Camera
 } from 'lucide-react';
 import { supabase } from '../../utils/supabaseClient';
 import { useToast } from '../../components/Toast';
@@ -204,7 +204,7 @@ export default function PublicServicePortal() {
         description: fullDescription,
         severity: incidentForm.severity,
         photos: incidentForm.photo_url ? [incidentForm.photo_url] : [],
-        status: 'Reported'
+        status: 'reported'
       });
 
       if (error) throw error;
@@ -254,7 +254,7 @@ export default function PublicServicePortal() {
         start_time: bookingForm.start_time,
         end_time: bookingForm.end_time,
         purpose: fullPurpose,
-        status: 'PENDING'
+        status: 'pending'
       });
 
       if (error) throw error;
@@ -393,49 +393,59 @@ export default function PublicServicePortal() {
       }
 
       const combined = [
-        ...incs.map(i => ({
-          id: i.id,
-          type: 'Lapor Insiden',
-          title: INCIDENT_TYPES.find(it => it.value === i.incident_type)?.label || i.incident_type,
-          date: i.created_at ? i.created_at.split('T')[0] : '',
-          status: i.status || 'Reported',
-          details: i.description.split(']')[1] || i.description,
-          actionPic: i.action_pic || null,
-          correctiveAction: i.corrective_action || null,
-          colorClass: i.status === 'Resolved' || i.status === 'Closed' 
-            ? 'text-green-400 bg-green-500/10 border-green-500/20 shadow-[0_0_15px_rgba(46,213,115,0.08)]' 
-            : i.status === 'Investigating' 
-              ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' 
-              : 'text-gray-400 bg-white/5 border-white/10'
-        })),
-        ...bkgs.map(b => ({
-          id: b.id,
-          type: 'Booking Fasilitas',
-          title: b.facilities?.name || 'Fasilitas',
-          date: b.booking_date,
-          status: b.status || 'PENDING',
-          details: `${b.start_time.substring(0, 5)} - ${b.end_time.substring(0, 5)} (${b.purpose.split(']')[1] || b.purpose})`,
-          actionPic: null,
-          correctiveAction: null,
-          colorClass: b.status === 'APPROVED' || b.status === 'CHECKED_IN' || b.status === 'CHECKED_OUT' 
-            ? 'text-green-400 bg-green-500/10 border-green-500/20 shadow-[0_0_15px_rgba(46,213,115,0.08)]' 
-            : b.status === 'PENDING' 
-              ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' 
-              : 'text-red-400 bg-red-500/10 border-red-500/20'
-        })),
-        ...tkts.map(t => ({
-          id: t.id,
-          type: 'Helpdesk',
-          title: t.subject.replace('[EKSTERNAL] ', ''),
-          date: t.created_at ? t.created_at.split('T')[0] : '',
-          status: t.status || 'open',
-          details: t.description.split(']')[1] || t.description,
-          actionPic: null,
-          correctiveAction: t.resolution_notes || null,
-          colorClass: t.status === 'closed' 
-            ? 'text-green-400 bg-green-500/10 border-green-500/20 shadow-[0_0_15px_rgba(46,213,115,0.08)]' 
-            : 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20'
-        }))
+        ...incs.map(i => {
+          const rawStatus = i.status ? i.status.toLowerCase() : 'reported';
+          const displayStatus = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1);
+          return {
+            id: i.id,
+            type: 'Lapor Insiden',
+            title: INCIDENT_TYPES.find(it => it.value === i.incident_type)?.label || i.incident_type,
+            date: i.created_at ? i.created_at.split('T')[0] : '',
+            status: displayStatus,
+            details: i.description.split(']')[1] || i.description,
+            actionPic: i.action_pic || null,
+            correctiveAction: i.corrective_action || null,
+            colorClass: rawStatus === 'resolved' || rawStatus === 'closed' 
+              ? 'text-green-400 bg-green-500/10 border-green-500/20 shadow-[0_0_15px_rgba(46,213,115,0.08)]' 
+              : rawStatus === 'investigating' 
+                ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' 
+                : 'text-gray-400 bg-white/5 border-white/10'
+          };
+        }),
+        ...bkgs.map(b => {
+          const rawStatus = b.status ? b.status.toUpperCase() : 'PENDING';
+          return {
+            id: b.id,
+            type: 'Booking Fasilitas',
+            title: b.facilities?.name || 'Fasilitas',
+            date: b.booking_date,
+            status: rawStatus,
+            details: `${b.start_time.substring(0, 5)} - ${b.end_time.substring(0, 5)} (${b.purpose.split(']')[1] || b.purpose})`,
+            actionPic: null,
+            correctiveAction: null,
+            colorClass: rawStatus === 'APPROVED' || rawStatus === 'CHECKED_IN' || rawStatus === 'CHECKED_OUT' 
+              ? 'text-green-400 bg-green-500/10 border-green-500/20 shadow-[0_0_15px_rgba(46,213,115,0.08)]' 
+              : rawStatus === 'PENDING' 
+                ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' 
+                : 'text-red-400 bg-red-500/10 border-red-500/20'
+          };
+        }),
+        ...tkts.map(t => {
+          const rawStatus = t.status ? t.status.toLowerCase() : 'open';
+          return {
+            id: t.id,
+            type: 'Helpdesk',
+            title: t.subject.replace('[EKSTERNAL] ', ''),
+            date: t.created_at ? t.created_at.split('T')[0] : '',
+            status: rawStatus,
+            details: t.description.split(']')[1] || t.description,
+            actionPic: null,
+            correctiveAction: t.resolution_notes || null,
+            colorClass: rawStatus === 'closed' 
+              ? 'text-green-400 bg-green-500/10 border-green-500/20 shadow-[0_0_15px_rgba(46,213,115,0.08)]' 
+              : 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20'
+          };
+        })
       ];
 
       setProgressResults(combined);
@@ -797,23 +807,46 @@ export default function PublicServicePortal() {
                                   </button>
                                 </div>
                               ) : (
-                                <label className="flex-1 flex flex-col items-center justify-center py-6 px-4 border border-dashed border-white/15 rounded-xl cursor-pointer hover:bg-white/[0.02] hover:border-[var(--aurora-3)]/30 transition-all text-center">
-                                  {uploading ? (
-                                    <Loader2 size={20} className="animate-spin text-[var(--aurora-3)]" />
-                                  ) : (
-                                    <>
-                                      <Plus size={20} className="text-gray-500 mb-1" />
-                                      <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">{t('UNGGAH FOTO')}</span>
-                                    </>
-                                  )}
-                                  <input 
-                                    type="file" 
-                                    accept="image/*" 
-                                    onChange={e => handlePhotoUpload(e, 'incident')} 
-                                    className="hidden" 
-                                    disabled={uploading}
-                                  />
-                                </label>
+                                <div className="grid grid-cols-2 gap-3 w-full">
+                                  <label className="flex flex-col items-center justify-center py-5 px-3 border border-dashed border-white/15 rounded-xl cursor-pointer hover:bg-white/[0.02] hover:border-[var(--aurora-3)]/30 transition-all text-center">
+                                    {uploading ? (
+                                      <Loader2 size={18} className="animate-spin text-[var(--aurora-3)]" />
+                                    ) : (
+                                      <>
+                                        <Camera size={18} className="text-[var(--aurora-3)] mb-1" />
+                                        <span className="text-[9px] text-white font-bold uppercase tracking-wider">{t('KAMERA')}</span>
+                                        <span className="text-[7px] text-gray-500 mt-0.5">{t('Ambil foto')}</span>
+                                      </>
+                                    )}
+                                    <input 
+                                      type="file" 
+                                      accept="image/*" 
+                                      capture="environment"
+                                      onChange={e => handlePhotoUpload(e, 'incident')} 
+                                      className="hidden" 
+                                      disabled={uploading}
+                                    />
+                                  </label>
+
+                                  <label className="flex flex-col items-center justify-center py-5 px-3 border border-dashed border-white/15 rounded-xl cursor-pointer hover:bg-white/[0.02] hover:border-[var(--aurora-3)]/30 transition-all text-center">
+                                    {uploading ? (
+                                      <Loader2 size={18} className="animate-spin text-[var(--aurora-3)]" />
+                                    ) : (
+                                      <>
+                                        <Plus size={18} className="text-gray-500 mb-1" />
+                                        <span className="text-[9px] text-white font-bold uppercase tracking-wider">{t('GALERI')}</span>
+                                        <span className="text-[7px] text-gray-500 mt-0.5">{t('Pilih dari album')}</span>
+                                      </>
+                                    )}
+                                    <input 
+                                      type="file" 
+                                      accept="image/*" 
+                                      onChange={e => handlePhotoUpload(e, 'incident')} 
+                                      className="hidden" 
+                                      disabled={uploading}
+                                    />
+                                  </label>
+                                </div>
                               )}
                             </div>
                           </div>
@@ -997,23 +1030,46 @@ export default function PublicServicePortal() {
                                   </button>
                                 </div>
                               ) : (
-                                <label className="flex-1 flex flex-col items-center justify-center py-6 px-4 border border-dashed border-white/15 rounded-xl cursor-pointer hover:bg-white/[0.02] hover:border-[var(--aurora-3)]/30 transition-all text-center">
-                                  {uploading ? (
-                                    <Loader2 size={20} className="animate-spin text-[var(--aurora-3)]" />
-                                  ) : (
-                                    <>
-                                      <Plus size={20} className="text-gray-500 mb-1" />
-                                      <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">{t('UNGGAH FOTO')}</span>
-                                    </>
-                                  )}
-                                  <input 
-                                    type="file" 
-                                    accept="image/*" 
-                                    onChange={e => handlePhotoUpload(e, 'helpdesk')} 
-                                    className="hidden" 
-                                    disabled={uploading}
-                                  />
-                                </label>
+                                <div className="grid grid-cols-2 gap-3 w-full">
+                                  <label className="flex flex-col items-center justify-center py-5 px-3 border border-dashed border-white/15 rounded-xl cursor-pointer hover:bg-white/[0.02] hover:border-[var(--warning)]/30 transition-all text-center">
+                                    {uploading ? (
+                                      <Loader2 size={18} className="animate-spin text-[var(--warning)]" />
+                                    ) : (
+                                      <>
+                                        <Camera size={18} className="text-[var(--warning)] mb-1" />
+                                        <span className="text-[9px] text-white font-bold uppercase tracking-wider">{t('KAMERA')}</span>
+                                        <span className="text-[7px] text-gray-500 mt-0.5">{t('Ambil foto')}</span>
+                                      </>
+                                    )}
+                                    <input 
+                                      type="file" 
+                                      accept="image/*" 
+                                      capture="environment"
+                                      onChange={e => handlePhotoUpload(e, 'helpdesk')} 
+                                      className="hidden" 
+                                      disabled={uploading}
+                                    />
+                                  </label>
+
+                                  <label className="flex flex-col items-center justify-center py-5 px-3 border border-dashed border-white/15 rounded-xl cursor-pointer hover:bg-white/[0.02] hover:border-[var(--warning)]/30 transition-all text-center">
+                                    {uploading ? (
+                                      <Loader2 size={18} className="animate-spin text-[var(--warning)]" />
+                                    ) : (
+                                      <>
+                                        <Plus size={18} className="text-gray-500 mb-1" />
+                                        <span className="text-[9px] text-white font-bold uppercase tracking-wider">{t('GALERI')}</span>
+                                        <span className="text-[7px] text-gray-500 mt-0.5">{t('Pilih dari album')}</span>
+                                      </>
+                                    )}
+                                    <input 
+                                      type="file" 
+                                      accept="image/*" 
+                                      onChange={e => handlePhotoUpload(e, 'helpdesk')} 
+                                      className="hidden" 
+                                      disabled={uploading}
+                                    />
+                                  </label>
+                                </div>
                               )}
                             </div>
                           </div>
