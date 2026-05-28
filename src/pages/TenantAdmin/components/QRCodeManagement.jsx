@@ -73,12 +73,17 @@ const QRCodeManagement = () => {
     return `${base}?token=${token}`;
   };
 
+  const publicPortalUrl = (projectName) => {
+    const base = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '') + '/#/public-service';
+    return `${base}?tenant_id=${tenantId || ''}&location=${encodeURIComponent(projectName)}`;
+  };
+
   return (
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-8">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">QR Attendance</h2>
-          <p className="text-sm text-gray-400 mt-1">Generate QR code untuk absensi via scan di setiap lokasi</p>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">QR & Portal Management</h2>
+          <p className="text-sm text-gray-400 mt-1">Generate QR code untuk absensi karyawan dan salin link Portal Layanan Publik eksternal</p>
         </div>
         <button onClick={() => setShowForm(true)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> Generate QR</button>
       </div>
@@ -108,7 +113,7 @@ const QRCodeManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {tokens.map(t => (
           <div key={t.id} className={`p-5 rounded-2xl border transition-all ${t.is_active ? 'bg-white/5 border-white/10' : 'bg-white/[0.02] border-white/5 opacity-50'}`}>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center">
                   <QrCode size={20} className="text-white" />
@@ -122,14 +127,38 @@ const QRCodeManagement = () => {
                 <div className={`w-3 h-3 bg-white rounded-full transition-all ${t.is_active ? 'ml-4' : 'ml-1'}`} />
               </button>
             </div>
-            <div className="bg-black/30 rounded-xl p-3 font-mono text-[10px] text-green-400 break-all mb-3 border border-white/5">
-              {qrUrl(t.token)}
+            
+            <div className="space-y-3 mb-4">
+              <div>
+                <p className="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-bold">Link QR Absensi Karyawan</p>
+                <div className="flex items-center gap-2 bg-black/30 rounded-xl p-2.5 border border-white/5">
+                  <div className="font-mono text-[9px] text-green-400 break-all flex-1 select-all">
+                    {qrUrl(t.token)}
+                  </div>
+                  <button onClick={() => handleCopy(qrUrl(t.token), `att-${t.id}`)} className="p-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-colors">
+                    {copiedId === `att-${t.id}` ? <CheckCircle2 size={12} className="text-[var(--success)]" /> : <Copy size={12} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[9px] text-gray-500 uppercase tracking-wider mb-1 font-bold">Link Portal Publik (Layanan Eksternal)</p>
+                <div className="flex items-center gap-2 bg-black/30 rounded-xl p-2.5 border border-white/5">
+                  <div className="font-mono text-[9px] text-[var(--aurora-3)] break-all flex-1 select-all">
+                    {publicPortalUrl(t.projects?.name || '')}
+                  </div>
+                  <button onClick={() => handleCopy(publicPortalUrl(t.projects?.name || ''), `pub-${t.id}`)} className="p-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-colors">
+                    {copiedId === `pub-${t.id}` ? <CheckCircle2 size={12} className="text-[var(--success)]" /> : <Copy size={12} />}
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] font-mono text-gray-500">{t.token}</span>
-              <button onClick={() => handleCopy(qrUrl(t.token), t.id)} className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white text-[10px] font-bold flex items-center gap-1">
-                {copiedId === t.id ? <CheckCircle2 size={12} className="text-[var(--success)]" /> : <Copy size={12} />} Salin
-              </button>
+
+            <div className="flex items-center justify-between border-t border-white/5 pt-3">
+              <span className="text-[9px] font-mono text-gray-500">Token ID: {t.token}</span>
+              <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded ${t.is_active ? 'bg-[var(--success)]/10 text-[var(--success)]' : 'bg-red-500/10 text-red-400'}`}>
+                {t.is_active ? 'Aktif' : 'Nonaktif'}
+              </span>
             </div>
           </div>
         ))}
