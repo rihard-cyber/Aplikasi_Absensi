@@ -24,7 +24,6 @@ const FEATURE_CATEGORIES = [
     tagline: 'Lacak kehadiran real-time dengan akurasi 99.9% anti-curang.',
     icon: <Camera size={22} />,
     color: '#00C9FF',
-    image: publicAsset('/feature_absensi.png'),
     features: [
       { icon: <Camera size={20} />, name: 'Face Camera Check-in', desc: 'Selfie real-time dengan face recognition + liveness detection. Anti-fake photo!' },
       { icon: <MapPin size={20} />, name: 'GPS Geofencing Cerdas', desc: 'Radius presisi per unit/proyek. Hanya bisa absen jika berada dalam area kerja.' },
@@ -40,7 +39,6 @@ const FEATURE_CATEGORIES = [
     tagline: 'Proses penggajian bulanan 100+ karyawan selesai dalam 15 menit.',
     icon: <Calculator size={22} />,
     color: '#00FF87',
-    image: publicAsset('/feature_payroll.png'),
     features: [
       { icon: <Calculator size={20} />, name: 'Kalkulator Gaji 1-Klik', desc: 'Hitung otomatis gaji pokok, potongan absen, klaim, hingga kasbon tanpa spreadsheet.' },
       { icon: <DollarSign size={20} />, name: 'Lembur Multi-Tarif', desc: 'Penghitungan otomatis lembur hari kerja, akhir pekan, & hari libur sesuai UU.' },
@@ -56,7 +54,6 @@ const FEATURE_CATEGORIES = [
     tagline: 'Optimalkan operasional gedung, aset, dan keluhan tenant/karyawan.',
     icon: <Headphones size={22} />,
     color: '#FFD700',
-    image: publicAsset('/feature_helpdesk.png'),
     features: [
       { icon: <MessageSquare size={20} />, name: 'Ticketing Multi-Kategori', desc: 'Keluhan AC, listrik, kebersihan, IT dengan foto, tingkat urgensi, dan tracking status.' },
       { icon: <Building2 size={20} />, name: 'Booking Fasilitas Kantor', desc: 'Reservasi ruang rapat, kendaraan operasional, inventaris dengan kalender real-time.' },
@@ -70,7 +67,6 @@ const FEATURE_CATEGORIES = [
     tagline: 'Pantau kinerja satpam secara real-time dengan jaminan rute patroli lengkap.',
     icon: <Route size={22} />,
     color: '#FF6B6B',
-    image: publicAsset('/feature_patroli.png'),
     features: [
       { icon: <QrCode size={20} />, name: 'QR Code Checkpoint', desc: 'Tempel barcode tangguh di titik krusial. Satpam wajib scan untuk verifikasi kedatangan.' },
       { icon: <MapPin size={20} />, name: 'Rute GPS Guard Tracking', desc: 'Visualisasikan rute pergerakan satpam di peta digital secara live selama jam patroli.' },
@@ -84,7 +80,6 @@ const FEATURE_CATEGORIES = [
     tagline: 'Manajemen kerja fleksibel, jadwalkan shift rumit seefisien mungkin.',
     icon: <Shuffle size={22} />,
     color: '#8E2DE2',
-    image: publicAsset('/feature_wfh.png'),
     features: [
       { icon: <Home size={20} />, name: 'Hybrid Work Mode', desc: 'Pisahkan absen WFH (verifikasi alamat rumah), WFO (WiFi zone), & WFA (GPS bebas).' },
       { icon: <RefreshCw size={20} />, name: 'Shift Swap Peer-to-Peer', desc: 'Karyawan bisa ajukan tukar shift mandiri lewat aplikasi dengan persetujuan atasan.' },
@@ -291,7 +286,15 @@ const LandingPage = () => {
                       src={publicAsset('/hero_dashboard.png')} 
                       alt="SI PRESENSI Premium Dashboard Screenshot" 
                       className="w-full h-auto object-cover transform hover:scale-102 transition-transform duration-700" 
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextElementSibling.style.display = 'flex';
+                      }}
                     />
+                    <div className="w-full aspect-[16/10] bg-gradient-to-br from-gray-900 to-black hidden flex-col items-center justify-center border-t border-white/5">
+                      <Sparkles size={32} className="text-gray-600 mb-3" />
+                      <span className="text-gray-500 text-xs font-bold uppercase tracking-widest">{i18n("DASHBOARD PREVIEW")}</span>
+                    </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                     
                     {/* Live overlay badges */}
@@ -363,11 +366,11 @@ const LandingPage = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--aurora-3)]/10 border border-[var(--aurora-3)]/30 mb-4">
               <Eye size={14} className="text-[var(--aurora-3)]" />
-              <span className="text-[9px] text-[var(--aurora-3)] font-extrabold uppercase tracking-widest">{i18n("BUKTIKAN FITUR ASLINYA")}</span>
+              <span className="text-[9px] text-[var(--aurora-3)] font-extrabold uppercase tracking-widest">{i18n("MODUL KELAS ENTERPRISE")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4">{i18n("Eksplorasi Interface ")}<span className="text-[var(--aurora-3)]">{i18n("Aplikasi Asli")}</span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4">{i18n("Eksplorasi Modul ")}<span className="text-[var(--aurora-3)]">{i18n("Lebih Dalam")}</span>
             </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto text-sm">{i18n("Kami tidak menyembunyikan desain kami di balik gambar ilustrasi generic. Lihat langsung screenshot modul operasional kami di bawah ini. ")}</p>
+            <p className="text-gray-400 max-w-2xl mx-auto text-sm">{i18n("Pelajari seluruh fitur canggih yang kami rancang khusus untuk kemudahan operasional perusahaan Anda tanpa ribet.")}</p>
           </motion.div>
 
           {/* Interactive Feature Category Tabs */}
@@ -397,51 +400,33 @@ const LandingPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.5 }}
-                className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center"
+                className="max-w-5xl mx-auto"
               >
                 
-                {/* Feature highlights column */}
-                <div className="lg:col-span-5 space-y-6">
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: cat.color }}>{i18n("Modul Utama")}</span>
-                    <h3 className="text-2xl sm:text-3xl font-serif font-bold text-white mt-1.5 mb-3">{cat.title}</h3>
-                    <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">{cat.tagline}</p>
-                  </div>
-                  
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    {cat.features.map((f, fi) => (
-                      <div key={fi} className="p-4 rounded-xl bg-white/[0.01] border border-white/5 hover:border-white/10 transition-all">
-                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center mb-2.5" style={{ color: cat.color }}>
-                          {f.icon}
-                        </div>
-                        <h4 className="text-[11px] font-bold text-white mb-1">{f.name}</h4>
-                        <p className="text-[9px] text-gray-500 leading-normal">{f.desc}</p>
+                <div className="text-center mb-10">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: cat.color }}>{i18n("Modul Utama")}</span>
+                  <h3 className="text-2xl sm:text-3xl font-serif font-bold text-white mt-2 mb-3">{cat.title}</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed max-w-2xl mx-auto">{cat.tagline}</p>
+                </div>
+                
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5 lg:gap-6">
+                  {cat.features.map((f, fi) => (
+                    <div key={fi} className="p-6 rounded-2xl bg-white/[0.01] border border-white/5 hover:border-white/10 transition-all hover:bg-white/[0.02]">
+                      <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4" style={{ color: cat.color }}>
+                        {f.icon}
                       </div>
-                    ))}
-                  </div>
-
-                  <div className="pt-4">
-                    <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white hover:text-[var(--aurora-3)] transition-colors group">
-                      <span>{i18n("Coba demo modul ")}{cat.title.split(' ')[0]}{i18n(" ini")}</span>
-                      <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Actual image display column */}
-                <div className="lg:col-span-7">
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/10 to-cyan-500/10 rounded-2xl blur-2xl opacity-40" />
-                    <div className="glass-panel p-2 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden bg-black/30">
-                      <img 
-                        src={cat.image} 
-                        alt={`${cat.title} Screenshot - SI PRESENSI Pro Max`} 
-                        className="w-full h-auto rounded-xl object-cover hover:scale-101 transition-transform duration-500" 
-                      />
+                      <h4 className="text-sm font-bold text-white mb-2">{f.name}</h4>
+                      <p className="text-xs text-gray-500 leading-relaxed">{f.desc}</p>
                     </div>
-                  </div>
+                  ))}
                 </div>
 
+                <div className="pt-10 text-center">
+                  <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold uppercase tracking-wider text-white hover:bg-white/10 hover:border-white/20 transition-all group">
+                    <span>{i18n("Coba demo modul ")}{cat.title.split(' ')[0]}</span>
+                    <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>
