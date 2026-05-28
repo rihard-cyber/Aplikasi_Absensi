@@ -1,7 +1,7 @@
 /* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calculator, CheckCircle2, Lock, Download, Eye, AlertCircle, Loader2, Plus, ChevronRight, FileText } from 'lucide-react';
+import { Calculator, CheckCircle2, Lock, Download, Eye, AlertCircle, Loader2, Plus, ChevronRight, FileText, CalendarRange } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { logAudit } from '../../../utils/auditLogger';
@@ -16,9 +16,8 @@ const PayrollRun = () => {
   const [payrollSettings, setPayrollSettings] = useState(null);
   const [latePenaltyFee, setLatePenaltyFee] = useState(0);
   const [selectedPeriod, setSelectedPeriod] = useState(null);
+  const [expandedUser, setExpandedUser] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showNewPeriod, setShowNewPeriod] = useState(false);
-  const [newPeriod, setNewPeriod] = useState({ month: new Date().getMonth() + 1, year: new Date().getFullYear() });
   const [results, setResults] = useState([]);
   const [summaries, setSummaries] = useState([]);
   const [viewResult, setViewResult] = useState(null);
@@ -62,26 +61,70 @@ const PayrollRun = () => {
     q5 = q5.order('period_year', { ascending: false }).order('period_month', { ascending: false });
     const { data: pers } = await q5;
     if (pers) setPeriods(pers);
+
+    let q6 = supabase.from('company_holidays').select('date');
+    if (tid) q6 = q6.eq('tenant_id', tid);
+    const { data: hols } = await q6;
+    if (hols) setHolidays(hols.map(h => h.date));
+  };
+
+  const isHoliday = (dateStr) => holidays.includes(dateStr);
+  const isWeekend = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.getDay() === 0 || d.getDay() === 6;
+  };
+
+  const getOvertimeRate = (dateStr, baseRate) => {
+    if (isHoliday(dateStr)) return payrollSettings?.overtime_rate_holiday || 2;
+    if (isWeekend(dateStr)) return payrollSettings?.overtime_rate_weekend || 2;
+    return baseRate || 1.5;
   };
 
   const createPeriod = async () => {
     if (!tenantId) return;
-    const exists = periods.find(p => p.period_month === newPeriod.month && p.period_year === newPeriod.year);
-    if (exists) { toast('Periode sudah ada!', 'error'); return; }
-    const startDate = `${newPeriod.year}-${String(newPeriod.month).padStart(2,'0')}-01`;
-    const lastDay = new Date(newPeriod.year, newPeriod.month, 0).getDate();
-    const endDate = `${newPeriod.year}-${String(newPeriod.month).padStart(2,'0')}-${lastDay}`;
+    if (newPeriod.period_type === 'monthly') {
+      const exists = periods.find(p => p.period_month === newPeriod.month && p.period_year === newPeriod.year);
+      if (exists) { toast('Periode sudah ada!', 'error'); return; }
+    }
+    const startDate = newPeriod.period_type === 'custom' ? newPeriod.start_date : `${newPeriod.year}-${String(newPeriod.month).padStart(2,'0')}-01`;
+    const endDate = newPeriod.period_type === 'custom' ? newPeriod.end_date : `${newPeriod.year}-${String(newPeriod.month).padStart(2,'0')}-${new Date(newPeriod.year, newPeriod.month, 0).getDate()}`;
+
+    if (newPeriod.period_type === 'custom' && (!startDate || !endDate)) { toast('Isi tanggal mulai dan selesai!', 'error'); return; }
 
     const { data, error } = await supabase.from('payroll_periods').insert({
-      tenant_id: tenantId, period_month: newPeriod.month, period_year: newPeriod.year,
-      start_date: startDate, end_date: endDate, status: 'DRAFT'
+      tenant_id: tenantId,
+      period_month: newPeriod.period_type === 'monthly' ? newPeriod.month : new Date(startDate).getMonth() + 1,
+      period_year: newPeriod.period_type === 'monthly' ? newPeriod.year : new Date(startDate).getFullYear(),
+      start_date: startDate, end_date: endDate,
+      period_type: newPeriod.period_type,
+      label: newPeriod.label || null,
+      status: 'DRAFT'
     }).select().single();
 
     if (error) { toast('Gagal: ' + error.message, 'error'); return; }
-    logAudit('CREATE_PAYROLL_PERIOD', { period: `${MONTHS[newPeriod.month-1]} ${newPeriod.year}`, start_date: startDate, end_date: endDate });
+    const label = newPeriod.period_type === 'custom' ? (newPeriod.label || `${startDate} s.d ${endDate}`) : `${MONTHS[newPeriod.month-1]} ${newPeriod.year}`;
+    logAudit('CREATE_PAYROLL_PERIOD', { period: label, start_date: startDate, end_date: endDate, type: newPeriod.period_type });
     toast('Periode payroll dibuat', 'success');
     setShowNewPeriod(false);
     setPeriods(prev => [data, ...prev]);
+  };
+
+  const pairClockInOut = (logs) => {
+    const sorted = [...logs].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const pairs = [];
+    let pendingIn = null;
+    sorted.forEach(log => {
+      const date = log.timestamp?.split('T')[0];
+      if (log.action === 'CLOCK_IN') {
+        if (pendingIn) pairs.push({ clockIn: pendingIn, clockOut: null });
+        pendingIn = { ...log, date };
+      } else if (log.action === 'CLOCK_OUT' && pendingIn) {
+        pairs.push({ clockIn: pendingIn, clockOut: { ...log, date: pendingIn.date } });
+        pendingIn = null;
+      }
+    });
+    if (pendingIn) pairs.push({ clockIn: pendingIn, clockOut: null });
+    return pairs;
   };
 
   const runPayroll = async (period) => {
@@ -126,17 +169,17 @@ const PayrollRun = () => {
         let totalAllowance = 0, totalDeduction = 0;
         const empResults = [];
 
-        const uniqueDays = new Set();
+        const workedDates = new Set();
         let totalLateMinutes = 0;
-        let hasClockIn = false;
         logs.forEach(log => {
-          if (log.action === 'CLOCK_IN') {
-            uniqueDays.add(log.timestamp?.split('T')[0]);
-            hasClockIn = true;
-          }
+          if (log.action === 'CLOCK_IN') workedDates.add(log.timestamp?.split('T')[0]);
           if (log.status === 'LATE') totalLateMinutes += 15;
         });
-        const totalDaysWorked = uniqueDays.size;
+        const totalDaysWorked = workedDates.size;
+
+        const pairs = pairClockInOut(logs);
+        let totalOvertimeHours = 0;
+        let totalOvertimePay = 0;
 
         for (const comp of allowanceComponents) {
           const sal = empSals.find(s => s.component_id === comp.id);
@@ -144,20 +187,22 @@ const PayrollRun = () => {
 
           if (comp.code === 'LEMBUR' && logs.length > 0) {
             const shiftDuration = 8;
-            const clockIns = logs.filter(l => l.action === 'CLOCK_IN');
-            const clockOuts = logs.filter(l => l.action === 'CLOCK_OUT');
-            const pairs = Math.min(clockIns.length, clockOuts.length);
-            let totalOvertimeHours = 0;
-            for (let i = 0; i < pairs; i++) {
-              const start = new Date(clockIns[i].timestamp);
-              const end = new Date(clockOuts[i].timestamp);
+            const hourlyRate = Number(empSals.find(s => s.salary_components?.code === 'GP')?.amount || 0);
+            totalOvertimeHours = 0;
+            totalOvertimePay = 0;
+            for (const pair of pairs) {
+              if (!pair.clockIn || !pair.clockOut) continue;
+              const start = new Date(pair.clockIn.timestamp);
+              const end = new Date(pair.clockOut.timestamp);
               const hoursWorked = (end - start) / (1000 * 60 * 60);
               if (hoursWorked > shiftDuration) {
-                totalOvertimeHours += hoursWorked - shiftDuration;
+                const otHours = hoursWorked - shiftDuration;
+                totalOvertimeHours += otHours;
+                const otRate = getOvertimeRate(pair.clockIn.date, payrollSettings?.overtime_rate_weekday || 1.5);
+                totalOvertimePay += otHours * (hourlyRate / 173) * otRate;
               }
             }
-            const hourlyRate = empSals.find(s => s.salary_components?.code === 'GP')?.amount || 0;
-            amount = Math.round(totalOvertimeHours * (hourlyRate / 173) * (payrollSettings?.overtime_rate_weekday || 1.5));
+            amount = Math.round(totalOvertimePay);
           }
 
           totalAllowance += amount;
@@ -214,7 +259,7 @@ const PayrollRun = () => {
           total_deduction: totalDeduction,
           take_home_pay: totalAllowance - totalDeduction,
           total_days_worked: totalDaysWorked,
-          total_overtime_hours: 0,
+          total_overtime_hours: Math.round(totalOvertimeHours * 100) / 100,
           total_late_minutes: totalLateMinutes,
           total_absence_days: 0
         });
@@ -261,6 +306,11 @@ const PayrollRun = () => {
     return <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${styles[status] || styles.DRAFT}`}>{status}</span>;
   };
 
+  const getPeriodLabel = (p) => {
+    if (p.period_type === 'custom') return p.label || `${p.start_date} s.d ${p.end_date}`;
+    return `${MONTHS[p.period_month - 1]} ${p.period_year}`;
+  };
+
   const groupedResults = {};
   results.forEach(r => {
     if (!groupedResults[r.user_id]) groupedResults[r.user_id] = [];
@@ -274,7 +324,7 @@ const PayrollRun = () => {
           <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Proses Payroll</h2>
           <p className="text-sm text-gray-400 mt-1">Kalkulasi gaji otomatis dari data absensi & komponen gaji</p>
         </div>
-        <button onClick={() => setShowNewPeriod(true)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> Periode Baru</button>
+        <button onClick={() => { setShowNewPeriod(true); setNewPeriod({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), period_type: 'monthly', start_date: '', end_date: '', label: '' }); }} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> Periode Baru</button>
       </div>
 
       <AnimatePresence>
@@ -282,17 +332,43 @@ const PayrollRun = () => {
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="mb-8 p-6 bg-white/5 rounded-2xl border border-white/10">
             <div className="flex flex-wrap gap-4 items-end">
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Bulan</label>
-                <select value={newPeriod.month} onChange={e => setNewPeriod({...newPeriod, month: Number(e.target.value)})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
-                  {MONTHS.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
+                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tipe Periode</label>
+                <select value={newPeriod.period_type} onChange={e => setNewPeriod({...newPeriod, period_type: e.target.value})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+                  <option value="monthly">Bulanan</option>
+                  <option value="custom">Kustom (Tanggal)</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tahun</label>
-                <select value={newPeriod.year} onChange={e => setNewPeriod({...newPeriod, year: Number(e.target.value)})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
-                  {[2024,2025,2026,2027,2028].map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </div>
+              {newPeriod.period_type === 'monthly' ? (
+                <>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Bulan</label>
+                    <select value={newPeriod.month} onChange={e => setNewPeriod({...newPeriod, month: Number(e.target.value)})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+                      {MONTHS.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tahun</label>
+                    <select value={newPeriod.year} onChange={e => setNewPeriod({...newPeriod, year: Number(e.target.value)})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+                      {[2024,2025,2026,2027,2028].map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tanggal Mulai</label>
+                    <input type="date" value={newPeriod.start_date} onChange={e => setNewPeriod({...newPeriod, start_date: e.target.value})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tanggal Selesai</label>
+                    <input type="date" value={newPeriod.end_date} onChange={e => setNewPeriod({...newPeriod, end_date: e.target.value})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Label</label>
+                    <input type="text" value={newPeriod.label} onChange={e => setNewPeriod({...newPeriod, label: e.target.value})} placeholder="Contoh: Proyek A" className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none w-40" />
+                  </div>
+                </>
+              )}
               <div className="flex gap-2">
                 <button onClick={createPeriod} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold">Buat Periode</button>
                 <button onClick={() => setShowNewPeriod(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">Batal</button>
@@ -306,10 +382,12 @@ const PayrollRun = () => {
         {periods.map(p => (
           <div key={p.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-5 bg-white/5 rounded-2xl border border-white/10 hover:border-white/20 transition-all">
             <div className="flex items-center gap-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center text-white font-bold">{MONTHS[p.period_month - 1]?.slice(0,3)}</div>
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold ${p.period_type === 'custom' ? 'bg-gradient-to-br from-[var(--warning)] to-[var(--aurora-2)]' : 'bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)]'}`}>
+                {p.period_type === 'custom' ? <CalendarRange size={20} /> : MONTHS[p.period_month - 1]?.slice(0,3)}
+              </div>
               <div>
-                <h4 className="text-white font-bold">{MONTHS[p.period_month - 1]} {p.period_year}</h4>
-                <p className="text-[10px] text-gray-500">{p.start_date} s.d {p.end_date} • {getStatusBadge(p.status)}</p>
+                <h4 className="text-white font-bold">{getPeriodLabel(p)}</h4>
+                <p className="text-[10px] text-gray-500">{p.start_date} s.d {p.end_date} • {getStatusBadge(p.status)} {p.period_type === 'custom' && <span className="text-[var(--warning)]">• Kustom</span>}</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -331,7 +409,7 @@ const PayrollRun = () => {
         {viewResult && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="border-t border-white/10 pt-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-              <h3 className="text-xl font-serif font-bold text-white">Hasil Payroll • {MONTHS[viewResult.period_month-1]} {viewResult.period_year}</h3>
+              <h3 className="text-xl font-serif font-bold text-white">Hasil Payroll • {getPeriodLabel(viewResult)}</h3>
               <div className="flex flex-wrap gap-3">
                 {viewResult.status === 'LOCKED' && <button onClick={() => markPaid(viewResult)} className="px-5 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-bold flex items-center gap-2 whitespace-nowrap"><CheckCircle2 size={14} /> Tandai Lunas</button>}
                 <button onClick={() => setViewResult(null)} className="px-5 py-2.5 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-[10px] font-bold whitespace-nowrap">Tutup</button>
@@ -344,6 +422,7 @@ const PayrollRun = () => {
                   <tr>
                     <th className="p-4 font-bold">Karyawan</th>
                     <th className="p-4 font-bold">NIP</th>
+                    <th className="p-4 font-bold text-right">Jam Lembur</th>
                     <th className="p-4 font-bold text-right">Tunjangan</th>
                     <th className="p-4 font-bold text-right">Potongan</th>
                     <th className="p-4 font-bold text-right">Take Home Pay</th>
@@ -351,23 +430,58 @@ const PayrollRun = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {summaries.map(s => (
-                    <tr key={s.id} className="hover:bg-white/[0.02]">
-                      <td className="p-4 font-bold text-white">{s.profiles?.full_name}</td>
-                      <td className="p-4 text-gray-400">{s.profiles?.nip}</td>
-                      <td className="p-4 text-right text-[var(--success)] font-mono font-bold">Rp {Number(s.total_allowance).toLocaleString()}</td>
-                      <td className="p-4 text-right text-[var(--danger)] font-mono font-bold">Rp {Number(s.total_deduction).toLocaleString()}</td>
-                      <td className="p-4 text-right text-white font-mono font-bold">Rp {Number(s.take_home_pay).toLocaleString()}</td>
-                      <td className="p-4 text-center">
-                        <button onClick={() => setSelectedPeriod(selectedPeriod?.id === s.user_id ? null : { id: s.user_id })} className="text-[var(--aurora-3)] hover:text-white">
-                          <ChevronRight size={14} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {summaries.map(s => {
+                    const userResults = groupedResults[s.user_id] || [];
+                    const isExpanded = expandedUser === s.user_id;
+                    return (
+                      <tr key={s.id} className="hover:bg-white/[0.02]">
+                        <td className="p-4 font-bold text-white">{s.profiles?.full_name}</td>
+                        <td className="p-4 text-gray-400">{s.profiles?.nip}</td>
+                        <td className="p-4 text-right text-[var(--aurora-3)] font-mono font-bold">{Number(s.total_overtime_hours).toFixed(1)}</td>
+                        <td className="p-4 text-right text-[var(--success)] font-mono font-bold">Rp {Number(s.total_allowance).toLocaleString()}</td>
+                        <td className="p-4 text-right text-[var(--danger)] font-mono font-bold">Rp {Number(s.total_deduction).toLocaleString()}</td>
+                        <td className="p-4 text-right text-white font-mono font-bold">Rp {Number(s.take_home_pay).toLocaleString()}</td>
+                        <td className="p-4 text-center">
+                          <button onClick={() => setExpandedUser(isExpanded ? null : s.user_id)} className={`transition-all text-[var(--aurora-3)] hover:text-white ${isExpanded ? 'rotate-90' : ''}`}>
+                            <ChevronRight size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
+
+            {expandedUser && (
+              <div className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/10">
+                <h4 className="text-sm font-bold text-white mb-3">Rincian Komponen Gaji</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-white/5 text-gray-500 uppercase tracking-widest">
+                      <tr>
+                        <th className="p-3 font-bold">Komponen</th>
+                        <th className="p-3 font-bold">Tipe</th>
+                        <th className="p-3 font-bold text-right">Jumlah</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {(groupedResults[expandedUser] || []).map(r => (
+                        <tr key={r.id} className="hover:bg-white/[0.02]">
+                          <td className="p-3 text-white font-bold">{r.component_name}</td>
+                          <td className="p-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${r.component_type === 'ALLOWANCE' ? 'bg-[var(--success)]/10 text-[var(--success)]' : 'bg-[var(--danger)]/10 text-[var(--danger)]'}`}>
+                              {r.component_type === 'ALLOWANCE' ? 'Tunjangan' : 'Potongan'}
+                            </span>
+                          </td>
+                          <td className="p-3 text-right font-mono font-bold text-white">Rp {Number(r.amount).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

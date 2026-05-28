@@ -5,6 +5,7 @@ import { supabase } from '../../../utils/supabaseClient';
 import LoadingSkeleton from '../../../components/LoadingSkeleton';
 import { useToast } from '../../../components/Toast';
 import { useConfirm } from '../../../components/ConfirmDialog';
+import { notifyMultipleUsers, NOTIF_TYPES } from '../../../utils/notificationEngine';
 
 const BroadcastCenter = () => {
   const [announcements, setAnnouncements] = useState([]);
@@ -81,6 +82,27 @@ const BroadcastCenter = () => {
       setMessage('');
       setTargetProject('ALL');
       toast("Pengumuman berhasil disiarkan!", 'success');
+
+      // Send notifications to all employees
+      try {
+        let userQuery = supabase.from('profiles').select('id').eq('tenant_id', tenantId);
+        if (targetProject !== 'ALL') {
+          userQuery = userQuery.eq('project_id', targetProject);
+        }
+        const { data: users } = await userQuery;
+        if (users?.length) {
+          await notifyMultipleUsers({
+            userIds: users.map(u => u.id),
+            type: NOTIF_TYPES.INFO,
+            title,
+            body: message.length > 150 ? message.substring(0, 150) + '...' : message,
+            link: '/announcements',
+            metadata: { announcement_id: data[0].id },
+          });
+        }
+      } catch (notifErr) {
+        console.warn('Notif delivery error:', notifErr);
+      }
     } catch (e) {
       toast("Gagal menyiarkan pengumuman: " + e.message, 'error');
     } finally {

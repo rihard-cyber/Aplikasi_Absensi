@@ -1,6 +1,6 @@
 /* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content, i18n-text/no-en, react-intl/string-is-marked-for-extraction */
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Settings, FileText, CheckCircle, Activity, Calculator, BarChart3, ShieldCheck, Building2, Megaphone, CalendarDays, LogOut, XCircle, Upload, Fingerprint, Users, DollarSign, TrendingUp, Sun, Calendar, Star, Briefcase, Gift, ScrollText, PartyPopper, ClipboardList, QrCode, Activity as ActivityIcon, LineChart, UserCircle, Wallet, Layers, GitBranch, Landmark, ClipboardCheck, Image, Wrench, Zap, Wifi, Bot, ScanLine, Webhook } from 'lucide-react';
+import { Settings, FileText, CheckCircle, Activity, Calculator, BarChart3, ShieldCheck, Building2, Megaphone, CalendarDays, LogOut, XCircle, Upload, Fingerprint, Users, DollarSign, TrendingUp, Sun, Calendar, Star, Briefcase, Gift, ScrollText, PartyPopper, ClipboardList, QrCode, Activity as ActivityIcon, LineChart, UserCircle, Wallet, Layers, GitBranch, Landmark, ClipboardCheck, Image, Wrench, Zap, Wifi, Bot, ScanLine, Webhook, Headphones, Route, DoorOpen, UserCheck, Hammer, Truck, Package, AlertTriangle, Repeat, Home, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../components/ConfirmDialog';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -54,6 +54,19 @@ const OCRScanner = lazy(() => import('./components/OCRScanner'));
 const HRChatbot = lazy(() => import('./components/HRChatbot'));
 const WebhookSettings = lazy(() => import('./components/WebhookSettings'));
 
+const TimesheetView = lazy(() => import('./components/TimesheetView'));
+const OvertimeManagement = lazy(() => import('./components/OvertimeManagement'));
+const HelpdeskTicketing = lazy(() => import('./components/HelpdeskTicketing'));
+const PatrolManagement = lazy(() => import('./components/PatrolManagement'));
+const FacilityBooking = lazy(() => import('./components/FacilityBooking'));
+const VisitorManagement = lazy(() => import('./components/VisitorManagement'));
+const WorkOrderManagement = lazy(() => import('./components/WorkOrderManagement'));
+const FleetManagement = lazy(() => import('./components/FleetManagement'));
+const InventoryManagement = lazy(() => import('./components/InventoryManagement'));
+const IncidentReporting = lazy(() => import('./components/IncidentReporting'));
+const ShiftSwapManagement = lazy(() => import('./components/ShiftSwapManagement'));
+const HybridWorkSettings = lazy(() => import('./components/HybridWorkSettings'));
+const WorkModeDashboard = lazy(() => import('./components/WorkModeDashboard'));
 import HRISExportWrapper from '../../components/HRISExportWrapper';
 import { supabase } from '../../utils/supabaseClient';
 
@@ -147,6 +160,25 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             <button onClick={() => go('monitoring')} className={NAV_BTN(activeTab === 'monitoring')}><BarChart3 size={18} /><span className="text-sm">Monitoring Global</span></button>
             <button onClick={() => go('structure')} className={NAV_BTN(activeTab === 'structure')}><Building2 size={18} /><span className="text-sm">Manajemen Struktur</span></button>
 
+            {/* ─── Helpdesk & Operasional ─── */}
+            <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Helpdesk & Operasional</p>
+            <button onClick={() => go('helpdesk')} className={NAV_BTN(activeTab === 'helpdesk')}><Headphones size={18} /><span className="text-sm">Helpdesk Tiket</span></button>
+            <button onClick={() => go('work-order')} className={NAV_BTN(activeTab === 'work-order')}><Hammer size={18} /><span className="text-sm">Work Order Maintenance</span></button>
+            <button onClick={() => go('patrol')} className={NAV_BTN(activeTab === 'patrol')}><Route size={18} /><span className="text-sm">Patroli Satpam</span></button>
+            <button onClick={() => go('visitor')} className={NAV_BTN(activeTab === 'visitor')}><UserCheck size={18} /><span className="text-sm">Manajemen Tamu</span></button>
+            <button onClick={() => go('facility-booking')} className={NAV_BTN(activeTab === 'facility-booking')}><DoorOpen size={18} /><span className="text-sm">Booking Fasilitas</span></button>
+            <button onClick={() => go('incident')} className={NAV_BTN(activeTab === 'incident')}><AlertTriangle size={18} /><span className="text-sm">Laporan Insiden (K3)</span></button>
+
+            {/* ─── Logistik & Transport ─── */}
+            <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Logistik & Transport</p>
+            <button onClick={() => go('fleet')} className={NAV_BTN(activeTab === 'fleet')}><Truck size={18} /><span className="text-sm">Manajemen Kendaraan</span></button>
+            <button onClick={() => go('inventory')} className={NAV_BTN(activeTab === 'inventory')}><Package size={18} /><span className="text-sm">Inventaris & Stok</span></button>
+
+            {/* ─── Hybrid Work ─── */}
+            <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Hybrid Work</p>
+            <button onClick={() => go('work-mode-dashboard')} className={NAV_BTN(activeTab === 'work-mode-dashboard')}><Home size={18} /><span className="text-sm">Mode Kerja Hari Ini</span></button>
+            <button onClick={() => go('shift-swap')} className={NAV_BTN(activeTab === 'shift-swap')}><Repeat size={18} /><span className="text-sm">Tukar Shift</span></button>
+
             {/* ─── Inovasi ─── */}
             <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Inovasi</p>
             <button onClick={() => go('wifi-geofence')} className={NAV_BTN(activeTab === 'wifi-geofence')}><Wifi size={18} /><span className="text-sm">Geofencing Wi-Fi</span></button>
@@ -183,6 +215,8 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             <button onClick={() => go('salary-revision')} className={NAV_BTN(activeTab === 'salary-revision')}><GitBranch size={18} /><span className="text-sm">Revisi Gaji</span></button>
             <button onClick={() => go('employee-salary')} className={NAV_BTN(activeTab === 'employee-salary')}><Wallet size={18} /><span className="text-sm">Data Gaji Karyawan</span></button>
             <button onClick={() => go('payroll-run')} className={NAV_BTN(activeTab === 'payroll-run')}><DollarSign size={18} /><span className="text-sm">Proses Penggajian</span></button>
+            <button onClick={() => go('timesheet')} className={NAV_BTN(activeTab === 'timesheet')}><CalendarDays size={18} /><span className="text-sm">Timesheet</span></button>
+            <button onClick={() => go('overtime')} className={NAV_BTN(activeTab === 'overtime')}><Zap size={18} /><span className="text-sm">Manajemen Lembur</span></button>
             <button onClick={() => go('payroll-reports')} className={NAV_BTN(activeTab === 'payroll-reports')}><FileText size={18} /><span className="text-sm">Laporan Penggajian</span></button>
             <button onClick={() => go('tax-reports')} className={NAV_BTN(activeTab === 'tax-reports')}><Landmark size={18} /><span className="text-sm">Laporan Pajak</span></button>
             <button onClick={() => go('bank-export')} className={NAV_BTN(activeTab === 'bank-export')}><Landmark size={18} /><span className="text-sm">Ekspor Bank</span></button>
@@ -203,6 +237,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             <button onClick={() => go('qrcode')} className={NAV_BTN(activeTab === 'qrcode')}><QrCode size={18} /><span className="text-sm">Manajemen QR</span></button>
             <button onClick={() => go('workflow')} className={NAV_BTN(activeTab === 'workflow')}><GitBranch size={18} /><span className="text-sm">Workflow Persetujuan</span></button>
             <button onClick={() => go('system-config')} className={NAV_BTN(activeTab === 'system-config')}><Wrench size={18} /><span className="text-sm">Konfigurasi Sistem</span></button>
+            <button onClick={() => go('hybrid-work-settings')} className={NAV_BTN(activeTab === 'hybrid-work-settings')}><MapPin size={18} /><span className="text-sm">Aturan WFH/WFA</span></button>
           </div>
 
           {/* Bottom Actions */}
@@ -247,6 +282,8 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             {activeTab === 'policies' && <CompanyPolicies />}
             {activeTab === 'payroll' && <PayrollSettings />}
             {activeTab === 'payroll-run' && <PayrollRun />}
+            {activeTab === 'timesheet' && <TimesheetView />}
+            {activeTab === 'overtime' && <OvertimeManagement />}
             {activeTab === 'thr' && <THRCalculation />}
             {activeTab === 'bpjs-calculator' && <BPJSCalculator />}
             {activeTab === 'form-1721' && <Form1721A1 />}
@@ -270,6 +307,17 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             {activeTab === 'bulk-import' && <BulkImport />}
             {activeTab === 'qrcode' && <QRCodeManagement />}
             {activeTab === 'banners' && <BannerManager />}
+            {activeTab === 'helpdesk' && <HelpdeskTicketing />}
+            {activeTab === 'patrol' && <PatrolManagement />}
+            {activeTab === 'facility-booking' && <FacilityBooking />}
+            {activeTab === 'visitor' && <VisitorManagement />}
+            {activeTab === 'work-order' && <WorkOrderManagement />}
+            {activeTab === 'fleet' && <FleetManagement />}
+            {activeTab === 'inventory' && <InventoryManagement />}
+            {activeTab === 'incident' && <IncidentReporting />}
+            {activeTab === 'shift-swap' && <ShiftSwapManagement />}
+            {activeTab === 'work-mode-dashboard' && <WorkModeDashboard />}
+            {activeTab === 'hybrid-work-settings' && <HybridWorkSettings />}
             {activeTab === 'system-config' && <SystemConfig />}
             {activeTab === 'settings' && <GeneralSettings />}
             {activeTab === 'auto-shift' && <AutoShift />}

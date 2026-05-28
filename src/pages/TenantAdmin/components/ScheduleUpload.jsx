@@ -61,13 +61,13 @@ const ScheduleUpload = () => {
 
   const generateTemplate = () => {
     const totalDays = daysInMonth(selectedMonth, selectedYear);
-    const headers = ['NIK', 'Nama', 'Jabatan', 'Project', 'Divisi'];
+    const headers = ['NIK', 'Nama', 'Jabatan', 'Project', 'Divisi', 'Mode'];
     for (let i = 1; i <= totalDays; i++) headers.push(`Tgl_${i}`);
 
     const example = [
       headers.join(','),
-      ['701083', 'Budi Santoso', 'Security Guard', 'KEMENDAG-CIRACAS', 'Security', ...Array(totalDays).fill('OFF')].join(','),
-      ['701084', 'Siti Rahma', 'Staff', 'KEMENDAG-PUSAT', 'Administrasi', ...Array(totalDays).fill('OFF')].join(','),
+      ['701083', 'Budi Santoso', 'Security Guard', 'KEMENDAG-CIRACAS', 'Security', 'WFO', ...Array(totalDays).fill('OFF')].join(','),
+      ['701084', 'Siti Rahma', 'Staff', 'KEMENDAG-PUSAT', 'Administrasi', 'WFH', ...Array(totalDays).fill('OFF')].join(','),
     ];
 
     const csv = example.join('\n');
@@ -93,23 +93,27 @@ const ScheduleUpload = () => {
         if (lines.length < 2) { toast('CSV minimal 2 baris.', 'error'); return; }
 
         const headers = parseCSVLine(lines[0]);
-        // Expected format: NIK, Nama, Jabatan, Project, Divisi, Tgl_1, Tgl_2, ...
-        const dateLabels = headers.slice(5);
+        // Expected format: NIK, Nama, Jabatan, Project, Divisi, Mode, Tgl_1, Tgl_2, ...
+        const modeColIdx = 5;
+        const dateLabels = headers.slice(6);
 
         const rows = [];
         for (let i = 1; i < lines.length; i++) {
           const cells = parseCSVLine(lines[i]);
-          if (cells.length < 6) continue;
+          if (cells.length < 7) continue;
           const schedules = [];
-          for (let j = 5; j < cells.length && j - 5 < dateLabels.length; j++) {
-            if (cells[j]) schedules.push({ day: dateLabels[j - 5], code: cells[j].toUpperCase() });
+          for (let j = 6; j < cells.length && j - 6 < dateLabels.length; j++) {
+            if (cells[j]) schedules.push({ day: dateLabels[j - 6], code: cells[j].toUpperCase() });
           }
+          const rawMode = (cells[modeColIdx] || '').toUpperCase();
+          const validModes = ['WFO','WFH','WFA'];
           rows.push({
             nik: cells[0],
             nama: cells[1],
             jabatan: cells[2],
             projectName: cells[3] || '',
             divisionName: cells[4] || '',
+            workMode: validModes.includes(rawMode) ? rawMode : 'WFO',
             schedules
           });
         }
@@ -200,7 +204,7 @@ const ScheduleUpload = () => {
           if (!date) { stats.errors.push(`${row.nik}: format tanggal salah (${s.day})`); continue; }
           const shift = shiftByCode[s.code];
           if (!shift) { stats.errors.push(`${row.nik} - ${date}: kode shift "${s.code}" tidak dikenal`); continue; }
-          toUpsert.push({ tenant_id: tenantId, user_id: emp.id, shift_id: shift.id, date });
+          toUpsert.push({ tenant_id: tenantId, user_id: emp.id, shift_id: shift.id, date, work_mode: row.workMode });
         }
         if (toUpsert.length > 0) {
           for (let i = 0; i < toUpsert.length; i += 100) {
@@ -269,11 +273,10 @@ const ScheduleUpload = () => {
               <FileSpreadsheet size={16} className="text-[var(--success)]" /> Template CSV
             </h3>
             <p className="text-[10px] text-gray-400 mb-3">
-              Format: <code className="text-[var(--success)]">NIK, Nama, Jabatan, Tgl_1, Tgl_2, ...</code>
+              Format: <code className="text-[var(--success)]">NIK, Nama, Jabatan, Project, Divisi, Mode, Tgl_1, Tgl_2, ...</code>
             </p>
             <p className="text-[9px] text-gray-500 mb-3">
-              NIK baru <strong className="text-[var(--aurora-3)]">auto-create profile</strong> + jadwal langsung masuk.
-            </p>
+              NIK baru <strong className="text-[var(--aurora-3)]">auto-create profile</strong> + jadwal langsung masuk. Mode: WFO/WFH/WFA.</p>
             <button onClick={generateTemplate}
               className="w-full py-3 rounded-xl bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/30 hover:bg-[var(--success)] hover:text-black text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
               <Download size={14} /> Download Template
@@ -305,7 +308,7 @@ const ScheduleUpload = () => {
               <Upload size={48} className="mx-auto text-gray-600 mb-4" />
               <h3 className="text-lg font-bold text-white mb-2">Upload File CSV</h3>
               <p className="text-sm text-gray-400 mb-1">Drag & drop atau klik untuk pilih</p>
-              <p className="text-[10px] text-gray-600 mb-6">Format: NIK, Nama, Jabatan, Tgl_1, Tgl_2, ...</p>
+              <p className="text-[10px] text-gray-600 mb-6">Format: NIK, Nama, Jabatan, Project, Divisi, Mode, Tgl_1, Tgl_2, ...</p>
               <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="hidden" />
               <button onClick={() => fileRef.current?.click()}
                 className="px-8 py-4 rounded-2xl bg-gradient-to-r from-[var(--aurora-1)] to-[#1E90FF] text-white font-bold tracking-widest hover:opacity-90 transition-all">
@@ -343,6 +346,7 @@ const ScheduleUpload = () => {
                         <th className="p-3 font-semibold text-white">NIK</th>
                         <th className="p-3 font-semibold text-[var(--aurora-3)]">Nama</th>
                         <th className="p-3 font-semibold text-[var(--aurora-1)]">Jabatan</th>
+                        <th className="p-3 font-semibold">Mode</th>
                         <th className="p-3 font-semibold">Status</th>
                         {preview.headers.slice(0, 8).map(h => (
                           <th key={h} className="p-3 font-semibold whitespace-nowrap">{h}</th>
@@ -359,6 +363,13 @@ const ScheduleUpload = () => {
                             <td className="p-3 text-white font-medium">{row.nama}</td>
                             <td className="p-3">
                               <span className="px-2 py-0.5 rounded bg-[var(--aurora-1)]/10 text-[var(--aurora-1)] text-[10px]">{row.jabatan || '-'}</span>
+                            </td>
+                            <td className="p-3">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                row.workMode === 'WFH' ? 'bg-green-500/20 text-green-400' : 
+                                row.workMode === 'WFA' ? 'bg-yellow-500/20 text-yellow-400' : 
+                                'bg-blue-500/20 text-blue-400'
+                              }`}>{row.workMode}</span>
                             </td>
                             <td className="p-3">
                               {exists ? (

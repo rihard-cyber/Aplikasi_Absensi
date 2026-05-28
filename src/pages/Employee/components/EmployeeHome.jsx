@@ -1,6 +1,6 @@
 /* eslint-disable i18next/no-literal-string, @shopify/jsx-no-hardcoded-content */
 import React, { useState, useEffect } from 'react';
-import { Clock, Calendar, Wallet, TrendingUp, Zap, RefreshCcw, CheckCircle2, FileText, Megaphone, Sun, QrCode, DollarSign, Receipt, Edit3, Bot } from 'lucide-react';
+import { Clock, Calendar, Wallet, TrendingUp, Zap, RefreshCcw, CheckCircle2, FileText, Megaphone, Sun, QrCode, DollarSign, Receipt, Edit3, Bot, Headphones, DoorOpen, Route, Repeat, AlertTriangle, MapPin, ClipboardList, CalendarDays } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../../utils/supabaseClient';
 
@@ -135,7 +135,6 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
         <ActionButton icon={<Calendar />} label="Izin / Cuti" color="var(--aurora-3)" onClick={() => onAction('leave')} />
         <ActionButton icon={<Zap />} label="Lembur" color="var(--warning)" onClick={() => onAction('lembur')} />
         <ActionButton icon={<QrCode />} label="QR Absen" color="var(--aurora-3)" onClick={() => onAction('qr')} />
-        <ActionButton icon={<RefreshCcw />} label="Tukar Shift" color="var(--aurora-2)" onClick={() => onAction('shift')} />
         <ActionButton icon={<CheckCircle2 />} label="Req. Absen" color="var(--success)" onClick={() => onAction('req-absen')} />
         <ActionButton icon={<Wallet />} label="Slip Gaji" color="var(--aurora-1)" onClick={() => onAction('salary')} />
         <ActionButton icon={<DollarSign />} label="Pinjaman" color="var(--aurora-3)" onClick={() => onAction('loan')} />
@@ -143,6 +142,14 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
         <ActionButton icon={<Edit3 />} label="Edit Profil" color="var(--aurora-1)" onClick={() => onAction('edit-profile')} />
         <ActionButton icon={<FileText />} label="PKWT / Kontrak" color="var(--aurora-3)" onClick={() => onAction('contract')} />
         <ActionButton icon={<Bot />} label="Tanya AI" color="var(--aurora-2)" onClick={() => onAction('chatbot')} />
+        <ActionButton icon={<Headphones />} label="Helpdesk" color="var(--danger)" onClick={() => onAction('helpdesk')} />
+        <ActionButton icon={<DoorOpen />} label="Booking" color="var(--aurora-3)" onClick={() => onAction('booking')} />
+        <ActionButton icon={<Route />} label="Patroli" color="var(--warning)" onClick={() => onAction('patrol-scan')} />
+        <ActionButton icon={<Repeat />} label="Tukar Shift" color="var(--aurora-2)" onClick={() => onAction('shift-swap')} />
+        <ActionButton icon={<CalendarDays />} label="Riwayat Absen" color="var(--aurora-3)" onClick={() => onAction('attendance-calendar')} />
+        <ActionButton icon={<AlertTriangle />} label="Lapor Insiden" color="var(--danger)" onClick={() => onAction('incident-report')} />
+        <ActionButton icon={<MapPin />} label="Alamat Rumah" color="var(--success)" onClick={() => onAction('home-address')} />
+        <ActionButton icon={<ClipboardList />} label="Rencana Kerja" color="var(--aurora-1)" onClick={() => onAction('task-plan')} />
       </div>
 
       {/* ANNOUNCEMENTS SECTION */}

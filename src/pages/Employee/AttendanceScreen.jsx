@@ -18,12 +18,23 @@ import PayslipView from './components/PayslipView';
 import QRScanner from './components/QRScanner';
 import ProfileEditor from './components/ProfileEditor';
 import BannerCarousel from './components/BannerCarousel';
+import OvertimeRequest from './components/OvertimeRequest';
+import HelpdeskRequest from './components/HelpdeskRequest';
+import BookingRequest from './components/BookingRequest';
+import PatrolScan from './components/PatrolScan';
+import HomeAddressRegistration from './components/HomeAddressRegistration';
+import DailyTaskPlan from './components/DailyTaskPlan';
+import ShiftSwapRequest from './components/ShiftSwapRequest';
 import HRChatbot from '../TenantAdmin/components/HRChatbot';
+import IncidentReporting from '../TenantAdmin/components/IncidentReporting';
+import AttendanceCalendar from './components/AttendanceCalendar';
 import { supabase } from '../../utils/supabaseClient';
 import { analyzePosition, logFakeGpsAttempt } from '../../utils/antiFakeGps';
 import { enqueueAttendance, registerOnlineSyncListener, getQueueCount } from '../../utils/offlineSync';
 import { showLocalNotification } from '../../utils/pushNotification';
 import { useToast } from '../../components/Toast';
+import { verifyFace } from '../../utils/faceVerification';
+import { checkWifiGeofence } from '../../utils/wifiGeofence';
 
   // --- Extracted Clock In UI ---
 const ClockInTab = () => {
@@ -33,6 +44,8 @@ const ClockInTab = () => {
   const [status, setStatus] = useState('IDLE'); // IDLE, SCANNING, VERIFIED, FAILED
   const [isClockOut, setIsClockOut] = useState(false);
   const [fraudBlocked, setFraudBlocked] = useState(false);
+  const [workMode, setWorkMode] = useState('WFO');
+  const [workModeLabel, setWorkModeLabel] = useState('');
 
   // --- Geofencing & Location State ---
   const [locationState, setLocationState] = useState('CHECKING');
@@ -99,6 +112,34 @@ const ClockInTab = () => {
     fetchLocation();
   }, []);
 
+  // Hybrid Work: Fetch mode + home address
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const { data: profile } = await supabase.from('profiles').select('id').eq('auth_id', session.user.id).maybeSingle();
+        if (!profile?.id) return;
+        const today = new Date().toISOString().split('T')[0];
+        const { data: schedule } = await supabase.from('user_schedules')
+          .select('work_mode').eq('user_id', profile.id).eq('date', today).maybeSingle();
+        const mode = schedule?.work_mode || 'WFO';
+        setWorkMode(mode);
+        const labels = { WFO: 'Kerja di Kantor', WFH: 'Kerja dari Rumah', WFA: 'Kerja di Mana Saja' };
+        setWorkModeLabel(labels[mode] || '');
+
+        if (mode === 'WFH') {
+          const { data: home } = await supabase.from('employee_home_addresses')
+            .select('latitude, longitude, radius_meters, address')
+            .eq('profile_id', profile.id).eq('is_verified', true).maybeSingle();
+          if (home) {
+            setOfficeCoords({ latitude: home.latitude, longitude: home.longitude, radius: home.radius_meters || 50, name: '🏠 ' + (home.address || 'Rumah') });
+          }
+        }
+      } catch (e) { console.warn('Work mode fetch error:', e); }
+    })();
+  }, []);
+
   // Initialize Camera
   useEffect(() => {
     let stream = null;
@@ -121,6 +162,11 @@ const ClockInTab = () => {
     };
   }, []);
 
+  // Trigger location check after workMode is known
+  useEffect(() => {
+    if (workMode) checkLocation();
+  }, [workMode]);
+
   // Formula Haversine: Kalkulasi Akurat Jarak GPS
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371e3; // Radius bumi (meter)
@@ -134,6 +180,12 @@ const ClockInTab = () => {
   };
 
   const checkLocation = async () => {
+    // WFA: skip location check entirely
+    if (workMode === 'WFA') {
+      setLocationState('IN_RANGE');
+      setDistance(0);
+      return;
+    }
     setLocationState('CHECKING');
     try {
       if (sessionStorage.getItem('super_admin_verified') === 'true') {
@@ -209,9 +261,7 @@ const ClockInTab = () => {
               setIsPressing(false);
               return 100;
             }
-            setStatus('VERIFIED');
-            saveAttendanceLog();
-            if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
+            runVerificationSequence();
             setIsPressing(false);
             return 100;
           }
@@ -225,24 +275,66 @@ const ClockInTab = () => {
     return () => clearInterval(interval);
   }, [isPressing, status]);
 
-  const saveAttendanceLog = async () => {
+  const runVerificationSequence = async () => {
+    try {
+      // WFO: check wifi geofence (soft warning, not blocking)
+      if (workMode === 'WFO') {
+        const wifiResult = await checkWifiGeofence();
+        if (!wifiResult.allowed && wifiResult.method !== 'NO_ZONES_CONFIGURED') {
+          toast(wifiResult.message, 'warning');
+        }
+      }
+
+      // Face verification for all modes (liveness check)
+      let faceResult = { verified: true, confidence: 100, snapshot: null, message: '' };
+      if (videoRef.current?.srcObject) {
+        faceResult = await verifyFace(videoRef.current);
+        if (!faceResult.verified && workMode !== 'WFO') {
+          toast(faceResult.message, 'error');
+          setStatus('FAILED');
+          setTimeout(() => setStatus('IDLE'), 3000);
+          return;
+        }
+        if (faceResult.confidence < 55) {
+          toast(`Verifikasi wajah: ${faceResult.message}`, workMode === 'WFO' ? 'warning' : 'error');
+          if (workMode !== 'WFO') {
+            setStatus('FAILED');
+            setTimeout(() => setStatus('IDLE'), 3000);
+            return;
+          }
+        }
+      }
+
+      setStatus('VERIFIED');
+      await saveAttendanceLog(faceResult.snapshot);
+      if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
+    } catch (err) {
+      console.error('Verification error:', err);
+      toast('Gagal verifikasi: ' + err.message, 'error');
+      setStatus('FAILED');
+      setTimeout(() => setStatus('IDLE'), 3000);
+    }
+  };
+
+  const saveAttendanceLog = async (faceSnapshot = null) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data: profile } = await supabase.from('profiles').select('id, tenant_id').eq('auth_id', session.user.id).maybeSingle();
 
-      // Capture Photo
+      // Capture Photo (use face snapshot if available, else capture fresh frame)
       let capturedPhoto = null;
-      if (videoRef.current && canvasRef.current && videoRef.current.srcObject) {
+      const blobToUpload = faceSnapshot;
+      if (!blobToUpload && videoRef.current && canvasRef.current && videoRef.current.srcObject) {
         const video = videoRef.current;
         const canvas = canvasRef.current;
         canvas.width = video.videoWidth || 480;
         canvas.height = video.videoHeight || 640;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        if (navigator.onLine) {
-          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.75));
-          if (blob) {
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.75));
+        if (blob) {
+          if (navigator.onLine) {
             const filePath = `${session.user.id}/attendance_${Date.now()}.jpg`;
             const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, blob, {
               contentType: 'image/jpeg',
@@ -253,8 +345,18 @@ const ClockInTab = () => {
             }
           }
         }
+      } else if (blobToUpload && navigator.onLine) {
+        const filePath = `${session.user.id}/attendance_${Date.now()}.jpg`;
+        const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, blobToUpload, {
+          contentType: 'image/jpeg',
+          upsert: false
+        });
+        if (!uploadError) {
+          capturedPhoto = supabase.storage.from('documents').getPublicUrl(filePath).data.publicUrl;
+        }
       }
 
+      const verificationMethod = workMode === 'WFA' ? 'selfie' : workMode === 'WFH' ? 'gps_home' : 'gps';
       const logData = {
         user_id: profile?.id,
         tenant_id: profile?.tenant_id,
@@ -262,7 +364,9 @@ const ClockInTab = () => {
         distance_meters: distance,
         status: locationState === 'IN_RANGE' || isGodMode ? 'ONTIME' : 'OUT_OF_RANGE',
         photo_url: capturedPhoto,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        work_mode: workMode,
+        verification_method: verificationMethod,
       };
 
       if (!navigator.onLine) {
@@ -420,9 +524,16 @@ const ClockInTab = () => {
             <h3 className="font-bold text-sm tracking-wide text-white truncate">{locationState === 'CHECKING' ? 'Mencari Satelit GPS...' : `${officeCoords.name} • Jarak: ${distance !== null ? distance + 'm' : '...'}`}</h3>
             <div className="flex items-center gap-2 mt-1">
               <div className={`w-2 h-2 rounded-full shadow-[0_0_10px_currentColor] animate-pulse ${locationState === 'IN_RANGE' || isGodMode ? 'bg-[var(--success)] text-[var(--success)]' : 'bg-[var(--danger)] text-[var(--danger)]'}`} />
-              <p className={`text-[10px] font-black uppercase tracking-widest ${locationState === 'IN_RANGE' || isGodMode ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>{locationState === 'IN_RANGE' ? 'Dalam Radius Aman' : isGodMode ? 'SUPER ADMIN PREVIEW Bypass' : 'Di Luar Radius Aman'}</p>
+              <p className={`text-[10px] font-black uppercase tracking-widest ${locationState === 'IN_RANGE' || isGodMode ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>{locationState === 'IN_RANGE' ? 'Dalam Radius Aman' : isGodMode ? 'SUPER ADMIN PREVIEW' : 'Di Luar Radius Aman'}</p>
             </div>
           </div>
+          {workMode !== 'WFO' && (
+            <div className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider ${
+              workMode === 'WFH' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+            }`}>
+              {workMode === 'WFH' ? 'WFH' : 'WFA'}
+            </div>
+          )}
         </div>
 
         {/* Project Code Selector */}
@@ -708,7 +819,26 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
       {/* Dynamic Tab Content */}
       <div className="w-full flex-1 relative z-10 overflow-y-auto hide-scrollbar px-4">
         <AnimatePresence mode="wait">
-          {activeSubView === 'leave' || activeSubView === 'lembur' || activeSubView === 'req-absen' || activeSubView === 'shift' || activeSubView === 'contract' ? (
+          {activeSubView === 'helpdesk' ? (
+            <HelpdeskRequest key="helpdesk" onBack={() => setActiveSubView(null)} />
+          ) : activeSubView === 'booking' ? (
+            <BookingRequest key="booking" onBack={() => setActiveSubView(null)} />
+          ) : activeSubView === 'patrol-scan' ? (
+            <PatrolScan key="patrol-scan" onBack={() => setActiveSubView(null)} />
+          ) : activeSubView === 'home-address' ? (
+            <HomeAddressRegistration key="home-address" onBack={() => setActiveSubView(null)} />
+          ) : activeSubView === 'task-plan' ? (
+            <DailyTaskPlan key="task-plan" onBack={() => setActiveSubView(null)} />
+          ) : activeSubView === 'shift-swap' ? (
+            <ShiftSwapRequest key="shift-swap" onBack={() => setActiveSubView(null)} />
+          ) : activeSubView === 'incident-report' ? (
+            <IncidentReporting key="incident-report" onBack={() => setActiveSubView(null)} />
+          ) : activeSubView === 'lembur' ? (
+            <OvertimeRequest
+              key="lembur"
+              onBack={() => setActiveSubView(null)}
+            />
+          ) : activeSubView === 'leave' || activeSubView === 'req-absen' || activeSubView === 'shift' || activeSubView === 'contract' ? (
             <LeaveRequest
               key={activeSubView}
               onBack={() => setActiveSubView(null)}
@@ -737,6 +867,11 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
           ) : activeSubView === 'edit-profile' ? (
             <ProfileEditor
               key="edit-profile"
+              onBack={() => setActiveSubView(null)}
+            />
+          ) : activeSubView === 'attendance-calendar' ? (
+            <AttendanceCalendar
+              key="attendance-calendar"
               onBack={() => setActiveSubView(null)}
             />
           ) : activeSubView === 'chatbot' ? (

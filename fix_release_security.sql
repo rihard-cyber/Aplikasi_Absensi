@@ -144,7 +144,7 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.resolve_tenant_registration_code(text, boolean) TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.register_profile_with_code(uuid, text, text, text, text, boolean, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.register_profile_with_code(uuid, text, text, text, text, boolean, text, text) TO authenticated;
 
 DROP POLICY IF EXISTS "Semua Bisa Cek Ketersediaan Tenant" ON public.tenants;
 DROP POLICY IF EXISTS "tenant_select_scoped" ON public.tenants;

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronLeft, LogOut } from 'lucide-react';
 import { requestAppPermissions } from './utils/permissionInit';
 import { ToastProvider, useToast } from './components/Toast';
 import { ThemeProvider } from './context/ThemeContext';
@@ -21,7 +22,10 @@ const SubAdminDashboard = lazy(() => import('./pages/SubAdmin/SubAdminDashboard'
 const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
 const QRScanner = lazy(() => import('./pages/Employee/components/QRScanner'));
 
-const LoadingScreen = () => (
+const DASHBOARD_ROUTES = ['/app', '/tenantadmin', '/superadmin', '/subadmin'];
+const EXIT_ROUTES = ['/', '/login'];
+
+const LoadingScreen = React.memo(() => (
   <div className="fixed inset-0 bg-[#0B0C10] z-[99999] flex items-center justify-center">
     <div className="flex flex-col items-center gap-6">
       <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] p-[2px] shadow-[0_0_40px_rgba(142,45,226,0.4)] animate-pulse">
@@ -37,25 +41,22 @@ const LoadingScreen = () => (
       <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold">Memuat...</p>
     </div>
   </div>
-);
+));
 
-// Landing page toggle - set VITE_INCLUDE_LANDING=false untuk build Android
 const includeLanding = import.meta.env.VITE_INCLUDE_LANDING !== 'false';
 
-// Komponen Pembungkus Transisi Halaman (Efek Blur & Scale yang mulus)
 const PageTransition = ({ children }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.98 }}
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 1.02 }}
-    transition={{ duration: 0.4, ease: "easeInOut" }}
+    transition={{ duration: 0.25, ease: "easeInOut" }}
     className="w-full min-h-screen overflow-x-hidden"
   >
     {children}
   </motion.div>
 );
 
-// Health check: test Supabase connectivity via DNS (simple GET, no custom headers = no CORS preflight)
 const useSupabaseHealthCheck = () => {
   const toast = useToast();
   useEffect(() => {
@@ -66,11 +67,11 @@ const useSupabaseHealthCheck = () => {
         if (!url) return;
         const res = await fetch(url, { method: 'HEAD', mode: 'no-cors', signal: controller.signal });
         if (res.type === 'error') {
-          toast('Supabase tidak dapat dijangkau. Cek koneksi internet atau restore project di Supabase Dashboard.', 'error');
+          toast('Supabase tidak dapat dijangkau.', 'error');
         }
       } catch (e) {
         if (e.name !== 'AbortError') {
-          toast('Supabase tidak dapat dijangkau. Cek koneksi internet atau restore project.', 'error');
+          toast('Supabase tidak dapat dijangkau.', 'error');
         }
       }
     };
@@ -79,8 +80,7 @@ const useSupabaseHealthCheck = () => {
   }, []);
 };
 
-// Page loading bar
-const RouteLoadingBar = () => {
+const RouteLoadingBar = React.memo(() => {
   const [loading, setLoading] = useState(false);
   const location = useLocation();
   useEffect(() => {
@@ -89,47 +89,128 @@ const RouteLoadingBar = () => {
     return () => clearTimeout(timer);
   }, [location]);
   return (
-    <div className="fixed top-0 left-0 right-0 z-[99999] h-0.5">
-      <div className={`h-full bg-gradient-to-r from-[var(--aurora-1)] via-[var(--aurora-3)] to-[var(--aurora-1)] transition-all duration-300 ease-out ${loading ? 'w-full opacity-100' : 'w-0 opacity-0'}`} style={{ backgroundSize: '200% 100%', animation: 'running-light 2s linear infinite' }} />
+    <div className="fixed top-0 left-0 right-0 z-[99999] h-0.5 pointer-events-none">
+      <div className={`h-full bg-gradient-to-r from-[var(--aurora-1)] via-[var(--aurora-3)] to-[var(--aurora-1)] transition-all duration-300 ease-out ${loading ? 'w-full opacity-100' : 'w-0 opacity-0'}`} style={{ backgroundSize: '200% 100%', animation: loading ? 'running-light 2s linear infinite' : 'none' }} />
     </div>
   );
-};
+});
 
-// Komponen Rute Animasi agar `useLocation` dapat menangkap perubahan path
 const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handleLogin, handleImpersonate, handleGodModeReturn, handleLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [navStack, setNavStack] = useState([]);
+  const toast = useToast();
   useSupabaseHealthCheck();
 
-  // Track navigation history
+  const isDashboard = DASHBOARD_ROUTES.includes(location.pathname);
+  const isExitRoute = EXIT_ROUTES.includes(location.pathname);
+
+  // Track the latest dashboard path so we can restore it
+  const dashboardRef = useRef(null);
   useEffect(() => {
-    setNavStack(prev => {
-      if (prev.length === 0 || prev.at(-1) !== location.pathname) {
-        return [...prev, location.pathname].slice(-10);
+    if (isDashboard) dashboardRef.current = location.pathname;
+  }, [location.pathname, isDashboard]);
+
+  // ── Back-Button Exit Guard ──────────────────────────────────
+  const [backCount, setBackCount] = useState(0);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [showExitHint, setShowExitHint] = useState(false);
+  const backTimeoutRef = useRef(null);
+  const exitHintTimeoutRef = useRef(null);
+
+  // Store current hash to restore it when user presses back on a dashboard
+  const currentHashRef = useRef(window.location.hash);
+  useEffect(() => {
+    currentHashRef.current = window.location.hash;
+  }, [location]);
+
+  const showBackHint = useCallback(() => {
+    setShowExitHint(true);
+    if (exitHintTimeoutRef.current) clearTimeout(exitHintTimeoutRef.current);
+    exitHintTimeoutRef.current = setTimeout(() => setShowExitHint(false), 2000);
+  }, []);
+
+  const triggerExit = useCallback(() => {
+    setBackCount(0);
+    setShowExitModal(true);
+  }, []);
+
+  useEffect(() => {
+    const onPopState = () => {
+      // User pressed back on a dashboard → restore state, show hint
+      if (isDashboard && dashboardRef.current) {
+        window.history.pushState(null, '', currentHashRef.current);
+        showBackHint();
+        setBackCount(prev => {
+          const next = prev + 1;
+          if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
+          backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
+          if (next >= 2) {
+            triggerExit();
+            return 0;
+          }
+          return next;
+        });
+        return;
       }
-      return prev;
-    });
-  }, [location.pathname]);
 
-  const handleGoBack = useCallback(() => {
-    if (navStack.length >= 2) {
-      navigate(navStack.at(-2));
-    } else if (location.pathname === '/login') {
-      return;
-    } else {
-      navigate('/');
-    }
-  }, [navStack, navigate, location.pathname]);
+      // User pressed back on login / root → double-press to exit
+      if (isExitRoute) {
+        setBackCount(prev => {
+          const next = prev + 1;
+          if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
+          backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
+          if (next >= 2) {
+            triggerExit();
+            return 0;
+          }
+          return next;
+        });
+      }
+    };
 
-  // Add popstate listener for Android back button
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [isDashboard, isExitRoute, dashboardRef, currentHashRef, showBackHint, triggerExit]);
+
+  // Handle the Capacitor native back event
   useEffect(() => {
-    const handler = () => handleGoBack();
+    const handler = () => {
+      if (isDashboard && dashboardRef.current) {
+        window.history.pushState(null, '', currentHashRef.current);
+        showBackHint();
+        setBackCount(prev => {
+          const next = prev + 1;
+          if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
+          backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
+          if (next >= 2) {
+            triggerExit();
+            return 0;
+          }
+          return next;
+        });
+      } else if (isExitRoute) {
+        setBackCount(prev => {
+          const next = prev + 1;
+          if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
+          backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
+          if (next >= 2) {
+            triggerExit();
+            return 0;
+          }
+          return next;
+        });
+      }
+    };
     window.addEventListener('app-go-back', handler);
     return () => window.removeEventListener('app-go-back', handler);
-  }, [handleGoBack]);
+  }, [isDashboard, isExitRoute, dashboardRef, currentHashRef, showBackHint, triggerExit]);
 
-  // Wrapper that sets role AND navigates to correct path
+  // Clean up hint
+  useEffect(() => {
+    return () => { if (exitHintTimeoutRef.current) clearTimeout(exitHintTimeoutRef.current); };
+  }, []);
+
+  // ── Role / Impersonation ─────────────────────────────────────
   const handleImpersonateWithNav = (role) => {
     handleImpersonate(role);
     if (role === 'TENANT_ADMIN') navigate('/tenantadmin');
@@ -141,54 +222,25 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
     navigate('/superadmin');
   };
 
-  // Back-button Anti-Exit Logic (Android + Web)
-  const [backCount, setBackCount] = useState(0);
-  const [showExitModal, setShowExitModal] = useState(false);
-  const backTimeoutRef = useRef(null);
-
-  const isRootRoute = () => {
-    const hash = window.location.hash;
-    return !hash || hash === '#/' || hash === '#/login';
-  };
-
-  const onBackPressed = useCallback(() => {
-    if (isRootRoute()) {
-      setBackCount(prev => {
-        const next = prev + 1;
-        if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
-        backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
-        if (next >= 2) {
-          setShowExitModal(true);
-          return 0;
-        }
-        return next;
-      });
-      return true;
-    }
-    return false;
-  }, []);
-
-  useEffect(() => {
-    // Web fallback (local only, Capacitor handles back natively)
-    window.addEventListener('popstate', onBackPressed);
-    return () => window.removeEventListener('popstate', onBackPressed);
-  }, [onBackPressed]);
-
   const handleCycleRole = () => {
     if (userRole !== 'SUPER_ADMIN' && originalRole !== 'SUPER_ADMIN') return;
-    
     const roles = ['SUPER_ADMIN', 'TENANT_ADMIN', 'SUB_ADMIN', 'EMPLOYEE'];
     const currentIdx = roles.indexOf(userRole);
     const nextRole = roles.at((currentIdx + 1) % roles.length);
-    
     if (nextRole === 'SUPER_ADMIN') handleGodModeReturn();
     else handleImpersonate(nextRole);
     if (nextRole === 'SUPER_ADMIN') navigate('/superadmin');
     else if (nextRole === 'TENANT_ADMIN') navigate('/tenantadmin');
     else if (nextRole === 'SUB_ADMIN') navigate('/subadmin');
     else if (nextRole === 'EMPLOYEE') navigate('/app');
-    
     if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
+  };
+
+  const getDashboardRedirect = () => {
+    if (userRole === 'SUPER_ADMIN') return '/superadmin';
+    if (userRole === 'TENANT_ADMIN') return '/tenantadmin';
+    if (userRole === 'SUB_ADMIN') return '/subadmin';
+    return '/app';
   };
 
   if (authLoading) return <LoadingScreen />;
@@ -197,40 +249,58 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
     <>
       {/* SUPER ADMIN PREVIEW INDICATOR */}
       {originalRole === 'SUPER_ADMIN' && (
-        <div 
-          onClick={handleCycleRole}
+        <div onClick={handleCycleRole}
           className="fixed top-2 left-1/2 -translate-x-1/2 z-[9999] px-4 py-1 bg-[var(--danger)] text-white text-[10px] font-bold rounded-full shadow-[0_0_15px_rgba(255,0,85,0.5)] border border-white/20 animate-pulse cursor-pointer hover:bg-red-600 transition-colors active:scale-95 safe-top"
           title="Klik untuk Pindah Dasbor"
         >
-          SUPER ADMIN PREVIEW (TAP TO SWITCH DASHBOARD)
+          SUPER ADMIN PREVIEW (TAP TO SWITCH)
         </div>
       )}
+
+      {/* FLOATING BACK HINT */}
+      <AnimatePresence>
+        {showExitHint && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl"
+          >
+            <p className="text-xs text-white font-bold flex items-center gap-2 whitespace-nowrap">
+              <ChevronLeft size={14} /> Tekan 2x untuk keluar aplikasi
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* EXIT CONFIRMATION MODAL */}
       <AnimatePresence>
         {showExitModal && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-md p-6"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               className="w-full max-w-sm glass-panel p-8 text-center border border-white/10"
             >
+              <div className="w-16 h-16 rounded-2xl bg-[var(--danger)]/20 flex items-center justify-center mx-auto mb-4">
+                <LogOut size={28} className="text-[var(--danger)]" />
+              </div>
               <h3 className="text-xl font-serif font-bold text-white mb-2">Yakin ingin keluar?</h3>
-              <p className="text-sm text-gray-400 mb-8">Anda akan keluar dari aplikasi RichardMeha SI PRESENSI.</p>
+              <p className="text-sm text-gray-400 mb-8">Anda akan logout dan kembali ke halaman login. Dari halaman login, tekan back 2x untuk menutup aplikasi.</p>
               <div className="flex flex-col gap-3">
-                <button 
-                  onClick={handleLogout}
+                <button
+                  onClick={() => { setShowExitModal(false); handleLogout(); }}
                   className="w-full py-4 rounded-xl bg-[var(--danger)] text-white font-bold uppercase tracking-widest text-xs"
                 >
-                  Ya, Keluar Aplikasi
+                  Ya, Logout
                 </button>
-                <button 
-                  onClick={() => setShowExitModal(false)}
+                <button
+                  onClick={() => { setShowExitModal(false); setBackCount(0); }}
                   className="w-full py-4 rounded-xl bg-white/5 text-gray-400 font-bold uppercase tracking-widest text-xs border border-white/5"
                 >
-                  Tidak, Tetap di Sini
+                  Batal
                 </button>
               </div>
             </motion.div>
@@ -239,22 +309,22 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
       </AnimatePresence>
 
       <Suspense fallback={<LoadingScreen />}>
-      <AnimatePresence>
-        <Routes>
-          {/* LANDING PAGE — company profile / marketing */}
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          {/* LANDING PAGE */}
           <Route path="/" element={
-            isAuthenticated 
-              ? <Navigate to={userRole === 'SUPER_ADMIN' ? '/superadmin' : userRole === 'TENANT_ADMIN' ? '/tenantadmin' : userRole === 'SUB_ADMIN' ? '/subadmin' : '/app'} replace />
-              : includeLanding 
+            isAuthenticated
+              ? <Navigate to={getDashboardRedirect()} replace />
+              : includeLanding
                 ? <PageTransition><LandingPage /></PageTransition>
                 : <Navigate to="/login" replace />
           } />
 
           {/* LOGIN */}
           <Route path="/login" element={
-            !isAuthenticated 
-              ? <PageTransition><AuthPortal onLogin={handleLogin} /></PageTransition> 
-              : <Navigate to={userRole === 'SUPER_ADMIN' ? '/superadmin' : userRole === 'TENANT_ADMIN' ? '/tenantadmin' : userRole === 'SUB_ADMIN' ? '/subadmin' : '/app'} replace />
+            !isAuthenticated
+              ? <PageTransition><AuthPortal onLogin={handleLogin} /></PageTransition>
+              : <Navigate to={getDashboardRedirect()} replace />
           } />
 
           {/* RESET PASSWORD */}
@@ -269,10 +339,8 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
             }
           />
 
-          {/* QR Attendance Route */}
-          <Route
-            path="/qr-attendance"
-            element={
+          {/* QR ATTENDANCE */}
+          <Route path="/qr-attendance" element={
               isAuthenticated && (userRole === 'EMPLOYEE' || userRole === 'TENANT_ADMIN' || userRole === 'SUB_ADMIN')
                 ? <PageTransition><QRScanner onBack={() => navigate('/app')} /></PageTransition>
                 : isAuthenticated && userRole === 'SUPER_ADMIN' ? <Navigate to="/superadmin" replace />
@@ -280,32 +348,26 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
             }
           />
 
-          {/* Super Admin Route */}
-          <Route
-            path="/superadmin"
-            element={
-              isAuthenticated && userRole === 'SUPER_ADMIN' 
+          {/* SUPER ADMIN */}
+          <Route path="/superadmin" element={
+              isAuthenticated && userRole === 'SUPER_ADMIN'
                 ? <CommandCenter onImpersonate={handleImpersonateWithNav} onCycleRole={handleCycleRole} onLogout={handleLogout} />
                 : isAuthenticated ? <Navigate to="/" replace />
                 : <Navigate to="/login" replace />
             }
           />
 
-          {/* Tenant Admin Route */}
-          <Route
-            path="/tenantadmin"
-            element={
-              isAuthenticated && userRole === 'TENANT_ADMIN' 
+          {/* TENANT ADMIN */}
+          <Route path="/tenantadmin" element={
+              isAuthenticated && userRole === 'TENANT_ADMIN'
                 ? <TenantDashboard onGodModeReturn={handleGodModeReturnWithNav} isImpersonating={originalRole === 'SUPER_ADMIN'} onCycleRole={handleCycleRole} onLogout={handleLogout} />
                 : isAuthenticated ? <Navigate to="/" replace />
                 : <Navigate to="/login" replace />
             }
           />
 
-          {/* Sub Admin / Otoritas Tim Route */}
-          <Route
-            path="/subadmin"
-            element={
+          {/* SUB ADMIN */}
+          <Route path="/subadmin" element={
               isAuthenticated && (['SUB_ADMIN', 'TENANT_ADMIN', 'SUPER_ADMIN'].includes(userRole))
                 ? <SubAdminDashboard onCycleRole={handleCycleRole} />
                 : isAuthenticated ? <Navigate to="/" replace />
@@ -321,22 +383,19 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
       {/* ROUTE LOADING BAR */}
       <RouteLoadingBar />
 
-      {/* GLOBAL BACK BUTTON */}
-      {navStack.length > 1 && location.pathname !== '/login' && (
-        <button onClick={handleGoBack}
-          className="fixed bottom-24 left-4 z-[9999] w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-lg hover:bg-white/20 active:scale-90 transition-all safe-bottom">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
+      {/* GLOBAL BACK BUTTON — visible on dashboards, resets to home */}
+      {isDashboard && (
+        <button onClick={() => {
+          // Emit a custom event that dashboard components can listen for
+          window.dispatchEvent(new CustomEvent('go-dashboard-home'));
+          toast('Kembali ke menu utama', 'info');
+        }}
+          className="fixed top-4 left-4 z-[9999] px-3 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center gap-1.5 text-white text-[10px] font-bold hover:bg-white/20 active:scale-90 transition-all safe-top"
+          title="Kembali ke menu utama"
+        >
+          <ChevronLeft size={14} /> Menu
         </button>
       )}
-
-      {/* GLOBAL BRANDING FOOTER */}
-      <div className="fixed bottom-1 w-full text-center pointer-events-none z-40 safe-bottom">
-        <p className="text-[8px] text-gray-600 font-black tracking-[0.4em] uppercase opacity-40">
-          SI PRESENSI PRO MAX — BY RICHARD MEHA
-        </p>
-      </div>
 
       {/* OFFLINE INDICATOR */}
       <OfflineIndicator />
@@ -369,11 +428,9 @@ function App() {
       clearClientAuthCache();
       return;
     }
-
     setIsAuthenticated(true);
     setUserRole(role);
     setOriginalRole(null);
-
     try {
       sessionStorage.removeItem('god_key');
       if (role === 'SUPER_ADMIN') sessionStorage.setItem('super_admin_verified', 'true');
@@ -391,13 +448,11 @@ function App() {
       clearClientAuthCache();
       return;
     }
-
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('id, role, tenant_id, operational_access, attendance_access')
       .eq('auth_id', session.user.id)
       .maybeSingle();
-
     if (error || !profile) {
       setIsAuthenticated(false);
       setUserRole(null);
@@ -405,13 +460,11 @@ function App() {
       clearClientAuthCache();
       return;
     }
-
     applyProfileSession(profile);
   }, [applyProfileSession, clearClientAuthCache]);
 
   useEffect(() => {
     let isMounted = true;
-
     const bootstrap = async () => {
       setAuthLoading(true);
       try {
@@ -428,64 +481,65 @@ function App() {
         if (isMounted) setAuthLoading(false);
       }
     };
-
     bootstrap();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       resolveSession(session).finally(() => {
         if (isMounted) setAuthLoading(false);
       });
     });
-
     return () => {
       isMounted = false;
       subscription?.unsubscribe();
     };
   }, [clearClientAuthCache, resolveSession]);
 
-  // Simpan hanya cache UI non-otoritatif; otorisasi tetap bersumber dari Supabase session + profile.
   useEffect(() => {
     try { if (userRole) localStorage.setItem('user_role', userRole); else localStorage.removeItem('user_role'); } catch {}
     try { if (originalRole) localStorage.setItem('original_role', originalRole); else localStorage.removeItem('original_role'); } catch {}
   }, [userRole, originalRole]);
 
-  const handleLogin = (role) => {
+  const handleLogin = useCallback((role) => {
     setUserRole(role?.toUpperCase());
     setIsAuthenticated(true);
     setOriginalRole(null);
-  };
+  }, []);
 
-  const handleImpersonate = (role) => {
+  const handleImpersonate = useCallback((role) => {
     if (userRole === 'SUPER_ADMIN' || originalRole === 'SUPER_ADMIN') {
       setOriginalRole('SUPER_ADMIN');
       setUserRole(role?.toUpperCase());
     }
-  };
+  }, [userRole, originalRole]);
 
-  const handleGodModeReturn = () => {
+  const handleGodModeReturn = useCallback(() => {
     if (originalRole === 'SUPER_ADMIN') {
       setUserRole('SUPER_ADMIN');
       setOriginalRole(null);
     }
-  };
+  }, [originalRole]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     setIsAuthenticated(false);
     setUserRole(null);
     setOriginalRole(null);
     try { sessionStorage.clear(); } catch {}
-    try { await supabase.auth.signOut(); } catch (e) { /* ignore */ }
+    try { await supabase.auth.signOut(); } catch {}
     clearClientAuthCache();
-  };
+  }, [clearClientAuthCache]);
 
-  // Session Heartbeat
+  // Session Heartbeat (lightweight)
   useEffect(() => {
-    const heartbeat = setInterval(() => {
-        if (isAuthenticated) {
-        // Re-validate session with supabase if needed
-      }
-    }, 60000); // Every 1 minute
+    if (!isAuthenticated) return;
+    const heartbeat = setInterval(async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!data?.session) {
+          handleLogout();
+        }
+      } catch {}
+    }, 60000);
     return () => clearInterval(heartbeat);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, handleLogout]);
 
   // Request permissions at startup (Android)
   useEffect(() => {
