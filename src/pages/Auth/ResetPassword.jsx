@@ -5,6 +5,9 @@ import { CheckCircle2, Loader2, Lock, AlertCircle } from 'lucide-react';
 import { supabase } from '../../utils/supabaseClient';
 import { useToast } from '../../components/Toast';
 
+/** @type {(s: string) => string} Passthrough i18n - app is monolingual Indonesian */
+const t = (s) => s;
+
 const ResetPassword = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -49,15 +52,15 @@ const ResetPassword = () => {
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center mb-6">
           {done ? <CheckCircle2 size={26} /> : <Lock size={26} />}
         </div>
-        <h1 className="text-2xl font-serif font-bold mb-2">Reset Kata Sandi</h1>
-        <p className="text-sm text-gray-400 mb-6">Masukkan kata sandi baru untuk akun Anda.</p>
+        <h1 className="text-2xl font-serif font-bold mb-2">{t('Reset Kata Sandi')}</h1>
+        <p className="text-sm text-gray-400 mb-6">{t('Masukkan kata sandi baru untuk akun Anda.')}</p>
 
         <div className="space-y-4">
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Kata sandi baru"
+            placeholder={t('Kata sandi baru')}
             className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-sm outline-none focus:border-[var(--aurora-3)]"
             required
           />
@@ -65,7 +68,7 @@ const ResetPassword = () => {
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Ulangi kata sandi baru"
+            placeholder={t('Ulangi kata sandi baru')}
             className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-sm outline-none focus:border-[var(--aurora-3)]"
             required
           />
@@ -73,7 +76,7 @@ const ResetPassword = () => {
 
         <div className="mt-5 flex items-start gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-[11px] text-gray-400">
           <AlertCircle size={14} className="mt-0.5 text-[var(--aurora-3)] shrink-0" />
-          Link reset dari email harus dibuka dari browser yang sama sampai proses ini selesai.
+          {t('Link reset dari email harus dibuka dari browser yang sama sampai proses ini selesai.')}
         </div>
 
         <button
@@ -82,7 +85,7 @@ const ResetPassword = () => {
           className="mt-6 w-full py-4 rounded-2xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {loading ? <Loader2 size={16} className="animate-spin" /> : done ? <CheckCircle2 size={16} /> : <Lock size={16} />}
-          {done ? 'Berhasil' : 'Simpan Kata Sandi'}
+          {done ? t('Berhasil') : t('Simpan Kata Sandi')}
         </button>
       </motion.form>
     </div>

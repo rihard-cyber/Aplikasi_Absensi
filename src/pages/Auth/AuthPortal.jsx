@@ -48,6 +48,50 @@ const validateField = (name, value, deps = {}) => {
   return rule.validate(value, deps);
 };
 
+// ─── Helper: render floating input ────────────────────────────
+const FloatingInput = ({ name, type = 'text', label, value, onChange, onBlur, leftIcon, rightIcon, error, borderColor, extraClass, touched }) => {
+  const hasError = error && touched?.[name];
+  return (
+    <div className="relative">
+      <div className={`relative h-14 ${extraClass || ''}`}>
+        {leftIcon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 text-gray-500">
+            {leftIcon}
+          </div>
+        )}
+        <input
+          type={type}
+          name={name}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          required
+          placeholder=" "
+          className={`peer w-full h-full bg-[#1A1C23] rounded-xl px-4 pt-4 pb-2 text-white outline-none transition-all shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]
+            ${leftIcon ? 'pl-10' : ''}
+            ${hasError ? 'border-2 border-[var(--danger)]' : borderColor || 'border border-white/10 focus:border-[var(--aurora-3)]'}
+          `}
+        />
+        <label style={{ left: leftIcon ? '2.5rem' : '1rem' }} className="absolute top-4 text-gray-500 text-sm transition-all pointer-events-none
+          peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-3)]
+          peer-valid:top-1.5 peer-valid:text-xs
+          ${hasError ? 'text-[var(--danger)]' : ''}
+        ">
+          {label}
+        </label>
+        {rightIcon && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+            {rightIcon}
+          </div>
+        )}
+      </div>
+      {hasError && (
+        <p className="text-[var(--danger)] text-[10px] mt-1 ml-1 font-medium">{error}</p>
+      )}
+    </div>
+  );
+};
+
 const AuthPortal = ({ onLogin }) => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -587,48 +631,6 @@ const AuthPortal = ({ onLogin }) => {
   }, [mode, biometricScan]);
 
   // ─── Helper: render floating input ────────────────────────────
-  const FloatingInput = ({ name, type = 'text', label, value, onChange, onBlur, leftIcon, rightIcon, error, borderColor, extraClass }) => {
-    const hasError = error && touched[name];
-    return (
-      <div className="relative">
-        <div className={`relative h-14 ${extraClass || ''}`}>
-          {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 text-gray-500">
-              {leftIcon}
-            </div>
-          )}
-          <input
-            type={type}
-            name={name}
-            value={value}
-            onChange={onChange}
-            onBlur={() => { touchField(name); validateAndSetError(name, value); }}
-            required
-            placeholder=" "
-            className={`peer w-full h-full bg-[#1A1C23] rounded-xl px-4 pt-4 pb-2 text-white outline-none transition-all shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]
-              ${leftIcon ? 'pl-10' : ''}
-              ${hasError ? 'border-2 border-[var(--danger)]' : borderColor || 'border border-white/10 focus:border-[var(--aurora-3)]'}
-            `}
-          />
-          <label style={{ left: leftIcon ? '2.5rem' : '1rem' }} className="absolute top-4 text-gray-500 text-sm transition-all pointer-events-none
-            peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-3)]
-            peer-valid:top-1.5 peer-valid:text-xs
-            ${hasError ? 'text-[var(--danger)]' : ''}
-          ">
-            {label}
-          </label>
-          {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
-              {rightIcon}
-            </div>
-          )}
-        </div>
-        {hasError && (
-          <p className="text-[var(--danger)] text-[10px] mt-1 ml-1 font-medium">{error}</p>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-[var(--bg-darker)] flex flex-col items-center justify-center relative overflow-hidden font-sans px-0" onMouseMove={handleMouseMove}>
@@ -819,7 +821,9 @@ const AuthPortal = ({ onLogin }) => {
                       label={loginMethod === 'whatsapp' ? 'Nomor WhatsApp Aktif' : 'Email atau ID Karyawan'}
                       value={formData.identifier}
                       onChange={handleInput}
+                      onBlur={() => { touchField('identifier'); validateAndSetError('identifier', formData.identifier); }}
                       error={errors.identifier}
+                      touched={touched}
                       leftIcon={loginMethod === 'whatsapp' ? <MessageCircle size={16} /> : null}
                       borderColor={errors.identifier && touched.identifier ? 'border-2 border-[var(--danger)]' : 'border border-white/10 focus:border-[var(--aurora-3)]'}
                     />
@@ -958,7 +962,9 @@ const AuthPortal = ({ onLogin }) => {
                       label="Nama Lengkap (KTP)"
                       value={formData.name}
                       onChange={handleInput}
+                      onBlur={() => { touchField('name'); validateAndSetError('name', formData.name); }}
                       error={errors.name}
+                      touched={touched}
                       borderColor={errors.name && touched.name ? 'border-2 border-[var(--danger)]' : 'border border-white/10 focus:border-[var(--aurora-1)]'}
                     />
                   </motion.div>
@@ -1001,7 +1007,9 @@ const AuthPortal = ({ onLogin }) => {
                         label="ID Karyawan (NIP)"
                         value={formData.nip}
                         onChange={handleInput}
+                        onBlur={() => { touchField('nip'); validateAndSetError('nip', formData.nip, { isTenantReg }); }}
                         error={errors.nip}
+                        touched={touched}
                         borderColor={errors.nip && touched.nip ? 'border-2 border-[var(--danger)]' : 'border border-white/10 focus:border-[var(--aurora-1)]'}
                       />
                     </motion.div>
@@ -1015,7 +1023,9 @@ const AuthPortal = ({ onLogin }) => {
                       label="Nomor WhatsApp Aktif"
                       value={formData.phone}
                       onChange={handleInput}
+                      onBlur={() => { touchField('phone'); validateAndSetError('phone', formData.phone); }}
                       error={errors.phone}
+                      touched={touched}
                       leftIcon={<MessageCircle size={16} />}
                       borderColor={errors.phone && touched.phone ? 'border-2 border-[var(--danger)]' : 'border border-white/10 focus:border-[var(--aurora-1)]'}
                     />
@@ -1029,7 +1039,9 @@ const AuthPortal = ({ onLogin }) => {
                       label="Email Aktif"
                       value={formData.email}
                       onChange={handleInput}
+                      onBlur={() => { touchField('email'); validateAndSetError('email', formData.email); }}
                       error={errors.email}
+                      touched={touched}
                       borderColor={errors.email && touched.email ? 'border-2 border-[var(--danger)]' : 'border border-white/10 focus:border-[var(--aurora-1)]'}
                     />
                   </motion.div>

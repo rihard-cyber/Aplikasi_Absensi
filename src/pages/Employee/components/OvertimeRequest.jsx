@@ -88,9 +88,16 @@ const OvertimeRequest = ({ onBack }) => {
   };
 
   const getStatusBadge = (status) => {
-    const styles = { pending: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30', approved: 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30', rejected: 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/30', billed: 'bg-blue-500/10 text-blue-400 border-blue-500/30', cancelled: 'bg-gray-500/10 text-gray-400 border-gray-500/30' };
-    return <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border ${styles[status] || styles.pending}`}>{status}</span>;
+    const styles = new Map([
+      ['pending', 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'],
+      ['approved', 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30'],
+      ['rejected', 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/30'],
+      ['billed', 'bg-blue-500/10 text-blue-400 border-blue-500/30'],
+      ['cancelled', 'bg-gray-500/10 text-gray-400 border-gray-500/30']
+    ]);
+    return <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border ${styles.get(status) || styles.get('pending')}`}>{status}</span>;
   };
+  const t = (s) => s;
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="w-full">
@@ -99,8 +106,8 @@ const OvertimeRequest = ({ onBack }) => {
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h2 className="text-xl font-serif font-bold text-white">Pengajuan Lembur</h2>
-          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">Ajukan lembur untuk disetujui atasan</p>
+          <h2 className="text-xl font-serif font-bold text-white">{t('Pengajuan Lembur')}</h2>
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">{t('Ajukan lembur untuk disetujui atasan')}</p>
         </div>
       </div>
 
@@ -108,12 +115,12 @@ const OvertimeRequest = ({ onBack }) => {
       <div className="glass-panel p-6 rounded-[32px] border border-white/5 mb-6">
         <div className="space-y-4">
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Tanggal Lembur</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Tanggal Lembur')}</label>
             <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})}
               className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)] transition-colors" />
           </div>
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Jenis Lembur</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Jenis Lembur')}</label>
             <div className="grid grid-cols-2 gap-2">
               {OVERTIME_TYPES.map(t => (
                 <button key={t.value} onClick={() => setForm({...form, overtime_type: t.value})}
@@ -126,12 +133,12 @@ const OvertimeRequest = ({ onBack }) => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Jam Mulai</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Jam Mulai')}</label>
               <input type="time" value={form.start_time} onChange={e => setForm({...form, start_time: e.target.value})}
                 className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)]" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Jam Selesai</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Jam Selesai')}</label>
               <input type="time" value={form.end_time} onChange={e => setForm({...form, end_time: e.target.value})}
                 className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)]" />
             </div>
@@ -139,11 +146,11 @@ const OvertimeRequest = ({ onBack }) => {
           {form.start_time && form.end_time && (
             <div className="bg-white/5 rounded-xl p-3 flex items-center gap-3">
               <Clock size={16} className="text-[var(--aurora-3)]" />
-              <span className="text-sm text-gray-400">Total: <strong className="text-white">{calcHours(form.start_time, form.end_time).toFixed(1)} jam</strong></span>
+              <span className="text-sm text-gray-400">{t('Total: ')}<strong className="text-white">{calcHours(form.start_time, form.end_time).toFixed(1)} jam</strong></span>
             </div>
           )}
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Alasan / Keterangan</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Alasan / Keterangan')}</label>
             <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3}
               placeholder="Jelaskan alasan lembur..."
               className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)] resize-none text-sm" />
@@ -156,13 +163,13 @@ const OvertimeRequest = ({ onBack }) => {
       </div>
 
       {/* Riwayat */}
-      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">Riwayat Pengajuan</h3>
+      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">{t('Riwayat Pengajuan')}</h3>
       {loading ? (
         <div className="flex justify-center py-8"><Loader2 size={24} className="animate-spin text-[var(--aurora-3)]" /></div>
       ) : requests.length === 0 ? (
         <div className="text-center py-8 glass-panel rounded-[32px]">
           <AlertCircle size={32} className="mx-auto text-gray-500 mb-2" />
-          <p className="text-gray-500 text-sm">Belum ada pengajuan lembur</p>
+          <p className="text-gray-500 text-sm">{t('Belum ada pengajuan lembur')}</p>
         </div>
       ) : (
         <div className="space-y-2">

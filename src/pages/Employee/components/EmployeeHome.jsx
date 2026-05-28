@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Calendar, Wallet, TrendingUp, Zap, RefreshCcw, CheckCircle2, FileText, Megaphone, Sun, QrCode, DollarSign, Receipt, Edit3, Bot, Headphones, DoorOpen, Route, Repeat, AlertTriangle, MapPin, ClipboardList, CalendarDays } from 'lucide-react';
+import { Clock, Calendar, Wallet, TrendingUp, Zap, CheckCircle2, FileText, Megaphone, Sun, QrCode, DollarSign, Receipt, Edit3, Bot, Headphones, DoorOpen, Route, Repeat, AlertTriangle, MapPin, ClipboardList, CalendarDays } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../../utils/supabaseClient';
+
+/** @type {(s: string) => string} Passthrough i18n */
+const t = (s) => s;
 
 const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
   const [announcements, setAnnouncements] = useState([]);
@@ -96,7 +99,7 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
       {/* Greeting Card */}
       <div className="glass-panel p-6 rounded-[32px] border-t border-[var(--aurora-1)]/30 shadow-[0_10px_40px_rgba(142,45,226,0.15)] relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--aurora-1)] rounded-full blur-[80px] opacity-20"></div>
-        <h2 className="text-2xl font-serif font-bold text-[var(--text-primary)] tracking-wide">Selamat datang kembali, <br /><span className="text-[var(--aurora-3)]">{user?.full_name?.split(' ')[0] || 'Alexander'}!</span></h2>
+        <h2 className="text-2xl font-serif font-bold text-[var(--text-primary)] tracking-wide">{t('Selamat datang kembali,')} <br /><span className="text-[var(--aurora-3)]">{user?.full_name?.split(' ')[0] || 'Alexander'}!</span></h2>
         <p className="text-[var(--text-secondary)] text-sm mt-1 font-sans">{user?.position || 'Software Engineer'} • Divisi {user?.division || 'Frontend'}</p>
 
         <div className="mt-6 flex items-center gap-3 bg-[var(--text-primary)]/5 border border-[var(--text-primary)]/10 p-3 rounded-2xl">
@@ -104,8 +107,8 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
             <Zap size={20} className="drop-shadow-[0_0_10px_var(--aurora-1)]" />
           </div>
           <div>
-            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest font-bold opacity-60">Status Kehadiran</p>
-            <p className="font-bold text-[var(--text-primary)] text-sm">Aktif • Sesuai Jadwal</p>
+            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest font-bold opacity-60">{t('Status Kehadiran')}</p>
+            <p className="font-bold text-[var(--text-primary)] text-sm">{t('Aktif • Sesuai Jadwal')}</p>
           </div>
         </div>
       </div>
@@ -117,7 +120,7 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
             <Clock size={24} />
           </div>
           <h3 className="text-2xl font-bold text-[var(--text-primary)] mt-1">{stats?.weeklyHours || 0}h</h3>
-          <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest font-bold opacity-60">Jam kerja minggu ini</p>
+          <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest font-bold opacity-60">{t('Jam kerja minggu ini')}</p>
         </div>
 
         <div className="glass-panel p-5 rounded-3xl flex flex-col items-center text-center justify-center gap-2 border border-[var(--text-primary)]/5 hover:border-[var(--aurora-1)]/50 transition-all group">
@@ -125,7 +128,7 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
             <Calendar size={24} />
           </div>
           <h3 className="text-2xl font-bold text-[var(--text-primary)] mt-1">{leaveBalance ? leaveBalance.total_days - leaveBalance.used_days : stats?.leaveBalance || 0}</h3>
-          <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest font-bold opacity-60">Sisa cuti {leaveBalance ? `(${leaveBalance.used_days} terpakai)` : ''}</p>
+          <p className="text-xs text-[var(--text-secondary)] uppercase tracking-widest font-bold opacity-60">{t('Sisa cuti')} {leaveBalance ? `(${leaveBalance.used_days} ${t('terpakai')})` : ''}</p>
         </div>
       </div>
 
@@ -158,7 +161,7 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
             <div className="w-10 h-10 rounded-xl bg-[var(--aurora-1)]/20 text-[var(--aurora-1)] flex items-center justify-center animate-pulse">
               <Megaphone size={20} />
             </div>
-            <h3 className="font-serif text-lg text-white font-bold tracking-tight">Pusat Pengumuman</h3>
+            <h3 className="font-serif text-lg text-white font-bold tracking-tight">{t('Pusat Pengumuman')}</h3>
           </div>
           
           <div className="space-y-3">
@@ -221,24 +224,24 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
             <div className="w-10 h-10 rounded-xl bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] flex items-center justify-center">
               <TrendingUp size={20} />
             </div>
-            <h3 className="font-serif text-lg text-white font-bold tracking-tight">Informasi Perusahaan</h3>
+            <h3 className="font-serif text-lg text-white font-bold tracking-tight">{t('Informasi Perusahaan')}</h3>
           </div>
           <div className="px-3 py-1 rounded-full bg-[var(--success)]/10 border border-[var(--success)]/30">
-            <span className="text-[8px] font-black text-[var(--success)] uppercase tracking-widest">Terhubung</span>
+            <span className="text-[8px] font-black text-[var(--success)] uppercase tracking-widest">{t('Terhubung')}</span>
           </div>
         </div>
         
         <div className="grid grid-cols-1 gap-4">
-          <InfoRow icon={<Clock />} label="Jam Kerja Standar" value={companyInfo?.workHours || '08:00 - 17:00'} color="var(--aurora-3)" />
-          <InfoRow icon={<Calendar />} label="Hari Kerja Efektif" value={companyInfo?.workDays || 'Senin - Jumat'} color="var(--aurora-1)" />
-          <InfoRow icon={<Zap />} label="Toleransi Keterlambatan" value={companyInfo?.gracePeriod || '15 Menit'} color="var(--warning)" />
+          <InfoRow icon={<Clock />} label={t('Jam Kerja Standar')} value={companyInfo?.workHours || '08:00 - 17:00'} color="var(--aurora-3)" />
+          <InfoRow icon={<Calendar />} label={t('Hari Kerja Efektif')} value={companyInfo?.workDays || 'Senin - Jumat'} color="var(--aurora-1)" />
+          <InfoRow icon={<Zap />} label={t('Toleransi Keterlambatan')} value={companyInfo?.gracePeriod || '15 Menit'} color="var(--warning)" />
         </div>
 
         <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
-          <p className="text-[9px] text-gray-600 uppercase font-black tracking-[0.2em]">Tenant: {companyInfo?.tenantName || 'PT. Perusahaan'}</p>
+          <p className="text-[9px] text-gray-600 uppercase font-black tracking-[0.2em]">{t('Tenant:')} {companyInfo?.tenantName || 'PT. Perusahaan'}</p>
           <div className="flex items-center gap-1">
             <div className="w-1 h-1 rounded-full bg-[var(--success)] animate-pulse" />
-            <span className="text-[8px] text-[var(--success)] font-bold uppercase">Sistem Online</span>
+            <span className="text-[8px] text-[var(--success)] font-bold uppercase">{t('Sistem Online')}</span>
           </div>
         </div>
       </div>

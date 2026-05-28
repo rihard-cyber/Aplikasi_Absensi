@@ -108,11 +108,16 @@ const ShiftSwapRequest = ({ onBack }) => {
   };
 
   const getStatusBadge = (status) => {
-    const styles = { pending: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30', approved: 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30', rejected: 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/30' };
-    return <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border ${styles[status] || styles.pending}`}>{status}</span>;
+    const styles = new Map([
+      ['pending', 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'],
+      ['approved', 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30'],
+      ['rejected', 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/30']
+    ]);
+    return <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border ${styles.get(status) || styles.get('pending')}`}>{status}</span>;
   };
 
   const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const t = (s) => s;
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="w-full">
@@ -121,8 +126,8 @@ const ShiftSwapRequest = ({ onBack }) => {
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h2 className="text-xl font-serif font-bold text-white">Shift Swap Request</h2>
-          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">Tukar shift dengan rekan kerja</p>
+          <h2 className="text-xl font-serif font-bold text-white">{t('Shift Swap Request')}</h2>
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">{t('Tukar shift dengan rekan kerja')}</p>
         </div>
       </div>
 
@@ -153,10 +158,10 @@ const ShiftSwapRequest = ({ onBack }) => {
 
       {selectedDate && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 rounded-[32px] border border-white/5 mb-6">
-          <h3 className="text-sm font-bold text-white mb-4">Tukar Shift Tanggal: <span className="text-[var(--aurora-3)]">{selectedDate}</span></h3>
+          <h3 className="text-sm font-bold text-white mb-4">{t('Tukar Shift Tanggal: ')}<span className="text-[var(--aurora-3)]">{selectedDate}</span></h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Pilih Kolega</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Pilih Kolega')}</label>
               <select value={selectedColleague} onChange={e => handleColleagueSelect(e.target.value)} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)]">
                 <option value="">— Pilih —</option>
                 {colleagues.map(c => <option key={c.id} value={c.id}>{c.full_name} ({c.nip})</option>)}
@@ -167,14 +172,14 @@ const ShiftSwapRequest = ({ onBack }) => {
                 <div className="flex items-center gap-3">
                   <RefreshCw size={18} className="text-[var(--aurora-3)]" />
                   <div>
-                    <p className="text-xs text-gray-400">Shift kolega pada {selectedDate}:</p>
+                    <p className="text-xs text-gray-400">{t('Shift kolega pada ')}{selectedDate}:</p>
                     <p className="text-sm font-bold text-white">{selectedColleagueShift}</p>
                   </div>
                 </div>
               </div>
             )}
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Alasan</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Alasan')}</label>
               <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)] resize-none" placeholder="Alasan pertukaran shift..." />
             </div>
             <button onClick={submitSwap} disabled={submitting || !selectedColleague}
@@ -185,11 +190,11 @@ const ShiftSwapRequest = ({ onBack }) => {
         </motion.div>
       )}
 
-      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">Permintaan Saya</h3>
+      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">{t('Permintaan Saya')}</h3>
       {requests.length === 0 ? (
         <div className="text-center py-8 glass-panel rounded-[32px]">
           <AlertCircle size={32} className="mx-auto text-gray-500 mb-2" />
-          <p className="text-gray-500 text-sm">Belum ada permintaan swap</p>
+          <p className="text-gray-500 text-sm">{t('Belum ada permintaan swap')}</p>
         </div>
       ) : (
         <div className="space-y-2">

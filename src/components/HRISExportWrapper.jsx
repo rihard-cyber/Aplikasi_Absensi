@@ -3,7 +3,8 @@ import { supabase } from '../utils/supabaseClient';
 import SecureExportButton from './SecureExportButton';
 import { Loader2, ShieldCheck, Lock } from 'lucide-react';
 
-const SCOPE_LABEL = { superadmin: 'SEMUA TENANT', tenant: 'TENANT', project: 'PROJECT', division: 'DIVISI' };
+/** @type {(s: string) => string} Passthrough i18n - app is monolingual Indonesian */
+const t = (s) => s;
 
 const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propProjectId, divisionId: propDivisionId, label: propLabel }) => {
   const [data, setData] = useState([]);
@@ -25,7 +26,7 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
-        setAuthInfo({ role: 'EMPLOYEE', scope: 'employee', scopeId: null, label: 'Tidak ada akses' });
+        setAuthInfo({ role: 'EMPLOYEE', scope: 'employee', scopeId: null, label: t('Tidak ada akses') });
         setData([]);
         return;
       }
@@ -35,7 +36,7 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
         .eq('auth_id', session.user.id).maybeSingle();
 
       if (!profile) {
-        setAuthInfo({ role: 'EMPLOYEE', scope: 'employee', scopeId: null, label: 'Tidak ada akses' });
+        setAuthInfo({ role: 'EMPLOYEE', scope: 'employee', scopeId: null, label: t('Tidak ada akses') });
         setData([]);
         return;
       }
@@ -48,7 +49,7 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
       if (role === 'SUPER_ADMIN') {
         const scope = finalDiv ? 'division' : finalProj ? 'project' : finalTenant ? 'tenant' : 'superadmin';
         const scopeId = finalDiv || finalProj || finalTenant || null;
-        setAuthInfo({ role, scope, scopeId, label: hasManualFilter ? 'Filter Manual' : 'Semua Tenant' });
+        setAuthInfo({ role, scope, scopeId, label: hasManualFilter ? t('Filter Manual') : t('Semua Tenant') });
         await fetchData(scope, scopeId);
       } else if (role === 'TENANT_ADMIN') {
         if (finalTenant && finalTenant !== profile.tenant_id) throw new Error('Scope tenant tidak sesuai profil admin.');
@@ -66,7 +67,7 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
           scope = 'division';
           scopeId = finalDiv;
         }
-        setAuthInfo({ role, scope, scopeId, label: profile.tenants?.name || 'Tenant' });
+        setAuthInfo({ role, scope, scopeId, label: profile.tenants?.name || t('Tenant') });
         await fetchData(scope, scopeId);
       } else if (role === 'SUB_ADMIN' && profile.project_id) {
         if (finalTenant && finalTenant !== profile.tenant_id) throw new Error('Scope tenant tidak sesuai profil sub-admin.');
@@ -80,15 +81,15 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
           scopeId = finalDiv;
         }
         const { data: proj } = await supabase.from('projects').select('name').eq('id', profile.project_id).maybeSingle();
-        setAuthInfo({ role, scope, scopeId, label: proj?.name || 'Project' });
+        setAuthInfo({ role, scope, scopeId, label: proj?.name || t('Project') });
         await fetchData(scope, scopeId);
       } else {
-        setAuthInfo({ role: role || 'EMPLOYEE', scope: 'employee', scopeId: null, label: 'Tidak ada akses' });
+        setAuthInfo({ role: role || 'EMPLOYEE', scope: 'employee', scopeId: null, label: t('Tidak ada akses') });
         setData([]);
       }
     } catch (e) {
       console.error('Auth resolve error:', e);
-      setAuthInfo({ role: 'EMPLOYEE', scope: 'employee', scopeId: null, label: 'Tidak ada akses' });
+      setAuthInfo({ role: 'EMPLOYEE', scope: 'employee', scopeId: null, label: t('Tidak ada akses') });
       setData([]);
     } finally {
       setLoading(false);
@@ -160,7 +161,7 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
 
   if (loading) {
     return <div className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white/5 text-gray-500 border border-white/10 text-xs ${className}`}>
-      <Loader2 size={16} className="animate-spin" /> Memeriksa Otorisasi...
+      <Loader2 size={16} className="animate-spin" /> {t('Memeriksa Otorisasi...')}
     </div>;
   }
 
@@ -168,8 +169,8 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
   if (authInfo.scope === 'employee') {
     return (
       <div className={`flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-500/5 text-gray-600 border border-gray-500/10 text-xs cursor-not-allowed ${className}`}
-        title="Hanya Admin yang bisa mengunduh data HRIS">
-        <Lock size={14} /> Tidak Ada Akses Unduh
+        title={t('Hanya Admin yang bisa mengunduh data HRIS')}>
+        <Lock size={14} /> {t('Tidak Ada Akses Unduh')}
       </div>
     );
   }
@@ -179,14 +180,14 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
       <div className="flex items-center gap-2 mb-1">
         {authInfo.scope === 'superadmin' && <ShieldCheck size={12} className="text-[var(--warning)]" />}
         <span className="text-[8px] text-gray-600 uppercase tracking-widest">
-          {authInfo.label} ({data.length} pegawai)
-          {!data.length && <span className="text-[var(--warning)] ml-1">— kosong</span>}
+          {authInfo.label} ({data.length} {t('pegawai')})
+          {!data.length && <span className="text-[var(--warning)] ml-1">{t('- kosong')}</span>}
         </span>
       </div>
       <SecureExportButton
         data={data}
         filename={`Data_HRIS_${authInfo.scope}`}
-        label={propLabel || (data.length ? `Unduh Database HRIS (${data.length})` : 'Unduh Database HRIS (0)')}
+        label={propLabel || (data.length ? t(`Unduh Database HRIS (${data.length})`) : t('Unduh Database HRIS (0)'))}
         className={className}
         scope={authInfo.scope}
         scopeId={authInfo.scopeId}
@@ -194,7 +195,7 @@ const HRISExportWrapper = ({ className, tenantId: propTenantId, projectId: propP
         role={authInfo.role}
       />
       {!data.length && (
-        <p className="text-[8px] text-gray-600 mt-1 italic">Belum ada data pegawai untuk diunduh. Isi data pegawai terlebih dahulu.</p>
+        <p className="text-[8px] text-gray-600 mt-1 italic">{t('Belum ada data pegawai untuk diunduh. Isi data pegawai terlebih dahulu.')}</p>
       )}
     </div>
   );

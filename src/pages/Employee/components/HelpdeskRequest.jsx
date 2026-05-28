@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Ticket, Send, ArrowLeft, Loader2, Upload, Clock, CheckCircle2, XCircle, AlertCircle, Image as ImageIcon, Star } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Ticket, Send, ArrowLeft, Loader2, Upload, Clock, CheckCircle2, XCircle, Star } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { notifyAdminsInTenant, NOTIF_TYPES } from '../../../utils/notificationEngine';
@@ -21,12 +21,15 @@ const PRIORITIES = [
   { value: 'critical', label: 'Kritis', desc: 'Darurat / mengganggu operasional' },
 ];
 
-const STATUS_STYLES = {
-  open: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  in_progress: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
-  resolved: 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30',
-  closed: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
-};
+const STATUS_STYLES = new Map([
+  ['open', 'bg-blue-500/10 text-blue-400 border-blue-500/30'],
+  ['in_progress', 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'],
+  ['resolved', 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30'],
+  ['closed', 'bg-gray-500/10 text-gray-400 border-gray-500/30']
+]);
+
+/** @type {(s: string) => string} Passthrough i18n — app is monolingual Indonesian */
+const t = (s) => s;
 
 const HelpdeskRequest = ({ onBack }) => {
   const [profile, setProfile] = useState(null);
@@ -39,6 +42,7 @@ const HelpdeskRequest = ({ onBack }) => {
   const [photoPreview, setPhotoPreview] = useState([]);
   const toast = useToast();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { init(); }, []);
 
   const init = async () => {
@@ -135,8 +139,15 @@ const HelpdeskRequest = ({ onBack }) => {
   };
 
   const getStatusBadge = (status) => {
-    const labels = { open: 'Open', in_progress: 'In Progress', resolved: 'Resolved', closed: 'Closed' };
-    return <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border ${STATUS_STYLES[status] || STATUS_STYLES.open}`}>{labels[status] || status}</span>;
+    const labels = new Map([
+      ['open', 'Open'],
+      ['in_progress', 'In Progress'],
+      ['resolved', 'Resolved'],
+      ['closed', 'Closed']
+    ]);
+    const styleClass = STATUS_STYLES.get(status) || STATUS_STYLES.get('open');
+    const labelText = labels.get(status) || status;
+    return <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border ${styleClass}`}>{labelText}</span>;
   };
 
   const renderStars = (rating) => {
@@ -157,8 +168,8 @@ const HelpdeskRequest = ({ onBack }) => {
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h2 className="text-xl font-serif font-bold text-white">Bantuan / Helpdesk</h2>
-          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">Laporkan masalah atau ajukan permintaan bantuan</p>
+          <h2 className="text-xl font-serif font-bold text-white">{t('Bantuan / Helpdesk')}</h2>
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">{t('Laporkan masalah atau ajukan permintaan bantuan')}</p>
         </div>
       </div>
 
@@ -166,7 +177,7 @@ const HelpdeskRequest = ({ onBack }) => {
       <div className="glass-panel p-6 rounded-[32px] border border-white/5 mb-6">
         <div className="space-y-4">
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Kategori</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Kategori')}</label>
             <div className="grid grid-cols-3 gap-2">
               {CATEGORIES.map(c => (
                 <button key={c.value} onClick={() => setForm({...form, category: c.value})}
@@ -178,7 +189,7 @@ const HelpdeskRequest = ({ onBack }) => {
             </div>
           </div>
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Prioritas</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Prioritas')}</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {PRIORITIES.map(p => (
                 <button key={p.value} onClick={() => setForm({...form, priority: p.value})}
@@ -190,18 +201,18 @@ const HelpdeskRequest = ({ onBack }) => {
             </div>
           </div>
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Subjek</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Subjek')}</label>
             <input value={form.subject} onChange={e => setForm({...form, subject: e.target.value})}
               className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)]" placeholder="Contoh: AC kantor mati" />
           </div>
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Deskripsi</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Deskripsi')}</label>
             <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={4}
               placeholder="Jelaskan masalah secara detail..."
               className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)] resize-none text-sm" />
           </div>
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Foto (opsional, bisa lebih dari 1)</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Foto (opsional, bisa lebih dari 1)')}</label>
             <label className="flex items-center gap-3 p-4 bg-white/5 border border-dashed border-white/20 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
               <Upload size={20} className="text-gray-400" />
               <span className="text-sm text-gray-400">{photos.length ? `${photos.length} file dipilih` : 'Upload foto bukti'}</span>
@@ -228,13 +239,13 @@ const HelpdeskRequest = ({ onBack }) => {
       </div>
 
       {/* My Tickets */}
-      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">Tiket Saya</h3>
+      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">{t('Tiket Saya')}</h3>
       {loading ? (
         <div className="flex justify-center py-8"><Loader2 size={24} className="animate-spin text-[var(--aurora-3)]" /></div>
       ) : tickets.length === 0 ? (
         <div className="text-center py-8 glass-panel rounded-[32px]">
           <Ticket size={32} className="mx-auto text-gray-500 mb-2" />
-          <p className="text-gray-500 text-sm">Belum ada tiket bantuan</p>
+          <p className="text-gray-500 text-sm">{t('Belum ada tiket bantuan')}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -256,7 +267,7 @@ const HelpdeskRequest = ({ onBack }) => {
                   </div>
                   {t.resolution_notes && (
                     <div className="mt-2 bg-[var(--success)]/5 border border-[var(--success)]/10 rounded-xl p-2">
-                      <p className="text-[9px] text-[var(--success)] font-bold uppercase tracking-widest mb-0.5">Resolusi</p>
+                      <p className="text-[9px] text-[var(--success)] font-bold uppercase tracking-widest mb-0.5">{t('Resolusi')}</p>
                       <p className="text-[10px] text-gray-300">{t.resolution_notes}</p>
                     </div>
                   )}

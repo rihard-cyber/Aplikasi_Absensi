@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Home, MapPin, Navigation, Save, Loader2, ArrowLeft,
-  CheckCircle2, AlertCircle, Clock, ShieldCheck, Radius
+  CheckCircle2, AlertCircle, Clock
 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';

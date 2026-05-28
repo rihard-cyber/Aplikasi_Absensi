@@ -5,7 +5,7 @@ import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-const monthName = (month) => MONTHS[Number(month) - 1] || '-';
+const monthName = (month) => MONTHS.at(Number(month) - 1) || '-';
 const escapeHtml = (value) => String(value ?? '-')
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
@@ -246,6 +246,7 @@ const PayslipView = ({ onBack }) => {
 
   const allowances = details.filter(d => d.component_type === 'ALLOWANCE');
   const deductions = details.filter(d => d.component_type === 'DEDUCTION');
+  const t = (s) => s;
 
   if (!periods.length) {
     return (
@@ -253,8 +254,8 @@ const PayslipView = ({ onBack }) => {
         <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
           <FileText size={32} className="text-gray-500" />
         </div>
-        <p className="text-gray-500 text-sm">Belum ada slip gaji tersedia</p>
-        <p className="text-gray-600 text-[10px] mt-1">HR akan memproses payroll setiap periode</p>
+        <p className="text-gray-500 text-sm">{t('Belum ada slip gaji tersedia')}</p>
+        <p className="text-gray-600 text-[10px] mt-1">{t('HR akan memproses payroll setiap periode')}</p>
       </div>
     );
   }
@@ -271,7 +272,7 @@ const PayslipView = ({ onBack }) => {
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center mx-auto mb-4 shadow-lg">
           <DollarSign size={24} className="text-white" />
         </div>
-        <h2 className="text-xl font-serif font-bold text-white">Slip Gaji</h2>
+        <h2 className="text-xl font-serif font-bold text-white">{t('Slip Gaji')}</h2>
         <p className="text-xs text-gray-400 mt-1">{profile?.full_name} • {profile?.nip}</p>
 
         <select value={selectedPeriod?.id} onChange={e => handlePeriodChange(periods.find(p => p.id === e.target.value))}
@@ -286,16 +287,16 @@ const PayslipView = ({ onBack }) => {
         <>
           <div className="glass-panel p-6 border border-[var(--aurora-3)]/20 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--aurora-3)]/5 rounded-full blur-3xl" />
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Take Home Pay</p>
-            <p className="text-4xl font-bold text-white font-mono tracking-tight">Rp {Number(summary.take_home_pay).toLocaleString()}</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">{t('Take Home Pay')}</p>
+            <p className="text-4xl font-bold text-white font-mono tracking-tight">{t('Rp ')}{Number(summary.take_home_pay).toLocaleString()}</p>
             <div className="flex gap-6 mt-4 text-xs text-gray-400">
-              <span>Tunjangan: <span className="text-[var(--success)] font-bold">Rp {Number(summary.total_allowance).toLocaleString()}</span></span>
-              <span>Potongan: <span className="text-[var(--danger)] font-bold">Rp {Number(summary.total_deduction).toLocaleString()}</span></span>
+              <span>{t('Tunjangan: ')}<span className="text-[var(--success)] font-bold">Rp {Number(summary.total_allowance).toLocaleString()}</span></span>
+              <span>{t('Potongan: ')}<span className="text-[var(--danger)] font-bold">Rp {Number(summary.total_deduction).toLocaleString()}</span></span>
             </div>
           </div>
 
           <button onClick={() => setExpanded(!expanded)} className="glass-panel p-4 flex items-center justify-between hover:bg-white/[0.03] transition-all">
-            <span className="text-sm font-bold text-white">Rincian Komponen</span>
+            <span className="text-sm font-bold text-white">{t('Rincian Komponen')}</span>
             {expanded ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
           </button>
 
@@ -303,22 +304,22 @@ const PayslipView = ({ onBack }) => {
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-4">
               {allowances.length > 0 && (
                 <div className="glass-panel p-5">
-                  <h4 className="text-xs font-bold text-[var(--success)] uppercase tracking-widest mb-3">Tunjangan</h4>
+                  <h4 className="text-xs font-bold text-[var(--success)] uppercase tracking-widest mb-3">{t('Tunjangan')}</h4>
                   {allowances.map(d => (
                     <div key={d.id} className="flex justify-between py-2 border-b border-white/5 last:border-0">
                       <span className="text-sm text-gray-300">{d.component_code} — {d.component_name}</span>
-                      <span className="text-sm font-mono font-bold text-white">Rp {Number(d.amount).toLocaleString()}</span>
+                      <span className="text-sm font-mono font-bold text-white">{t('Rp ')}{Number(d.amount).toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
               )}
               {deductions.length > 0 && (
                 <div className="glass-panel p-5">
-                  <h4 className="text-xs font-bold text-[var(--danger)] uppercase tracking-widest mb-3">Potongan</h4>
+                  <h4 className="text-xs font-bold text-[var(--danger)] uppercase tracking-widest mb-3">{t('Potongan')}</h4>
                   {deductions.map(d => (
                     <div key={d.id} className="flex justify-between py-2 border-b border-white/5 last:border-0">
                       <span className="text-sm text-gray-300">{d.component_code} — {d.component_name}</span>
-                      <span className="text-sm font-mono font-bold text-[var(--danger)]">Rp {Number(d.amount).toLocaleString()}</span>
+                      <span className="text-sm font-mono font-bold text-[var(--danger)]">{t('Rp ')}{Number(d.amount).toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
@@ -327,23 +328,23 @@ const PayslipView = ({ onBack }) => {
           )}
 
           <div className="glass-panel p-5">
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Ringkasan Kehadiran</h4>
+            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">{t('Ringkasan Kehadiran')}</h4>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white/5 rounded-xl p-3 text-center">
                 <p className="text-2xl font-bold text-white">{summary.total_days_worked}</p>
-                <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">Hari Kerja</p>
+                <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">{t('Hari Kerja')}</p>
               </div>
               <div className="bg-white/5 rounded-xl p-3 text-center">
                 <p className="text-2xl font-bold text-white">{summary.total_overtime_hours}</p>
-                <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">Jam Lembur</p>
+                <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">{t('Jam Lembur')}</p>
               </div>
               <div className="bg-white/5 rounded-xl p-3 text-center">
                 <p className="text-2xl font-bold text-[var(--warning)]">{summary.total_late_minutes}</p>
-                <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">Menit Terlambat</p>
+                <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">{t('Menit Terlambat')}</p>
               </div>
               <div className="bg-white/5 rounded-xl p-3 text-center">
                 <p className="text-2xl font-bold text-[var(--danger)]">{summary.total_absence_days}</p>
-                <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">Absen Tidak Hadir</p>
+                <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">{t('Absen Tidak Hadir')}</p>
               </div>
             </div>
           </div>

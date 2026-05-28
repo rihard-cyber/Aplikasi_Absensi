@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, ShieldAlert, Megaphone, Building2, Zap, ArrowLeft } from 'lucide-react';
+import { MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, ShieldAlert, Megaphone, Building2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../components/ConfirmDialog';
 import { Geolocation } from '@capacitor/geolocation';
@@ -35,6 +35,9 @@ import { useToast } from '../../components/Toast';
 import { verifyFace } from '../../utils/faceVerification';
 import { checkWifiGeofence } from '../../utils/wifiGeofence';
 
+/** @type {(s: string) => string} Passthrough i18n - app is monolingual Indonesian */
+const t = (s) => s;
+
   // --- Extracted Clock In UI ---
 const ClockInTab = () => {
   const toast = useToast();
@@ -42,9 +45,7 @@ const ClockInTab = () => {
   const [chargeProgress, setChargeProgress] = useState(0);
   const [status, setStatus] = useState('IDLE'); // IDLE, SCANNING, VERIFIED, FAILED
   const [isClockOut, setIsClockOut] = useState(false);
-  const [fraudBlocked, setFraudBlocked] = useState(false);
   const [workMode, setWorkMode] = useState('WFO');
-  const [workModeLabel, setWorkModeLabel] = useState('');
 
   // --- Geofencing & Location State ---
   const [locationState, setLocationState] = useState('CHECKING');
@@ -124,9 +125,6 @@ const ClockInTab = () => {
           .select('work_mode').eq('user_id', profile.id).eq('date', today).maybeSingle();
         const mode = schedule?.work_mode || 'WFO';
         setWorkMode(mode);
-        const labels = { WFO: 'Kerja di Kantor', WFH: 'Kerja dari Rumah', WFA: 'Kerja di Mana Saja' };
-        setWorkModeLabel(labels[mode] || '');
-
         if (mode === 'WFH') {
           const { data: home } = await supabase.from('employee_home_addresses')
             .select('latitude, longitude, radius_meters, address')
@@ -254,9 +252,8 @@ const ClockInTab = () => {
           if (prev >= 100) {
             if (locationState === 'OUT_OF_RANGE' && !isGodMode) {
               setStatus('FAILED');
-              setFraudBlocked(true);
               if (window.navigator?.vibrate) window.navigator.vibrate([300]);
-              setTimeout(() => { setStatus('IDLE'); setFraudBlocked(false); }, 3000);
+              setTimeout(() => { setStatus('IDLE'); }, 3000);
               setIsPressing(false);
               return 100;
             }
@@ -455,7 +452,7 @@ const ClockInTab = () => {
           {/* Verification Progress Overlay */}
           {status === 'SCANNING' && (
             <div className="absolute inset-0 flex flex-col items-center justify-center z-40 bg-[var(--aurora-3)]/10 backdrop-blur-[2px]">
-                <p className="text-[10px] font-bold text-[var(--aurora-3)] uppercase tracking-[0.3em] mb-2">Merekam Bukti...</p>
+                <p className="text-[10px] font-bold text-[var(--aurora-3)] uppercase tracking-[0.3em] mb-2">{t('Merekam Bukti...')}</p>
               <div className="w-24 h-1 bg-white/10 rounded-full overflow-hidden">
                 <motion.div className="h-full bg-[var(--aurora-3)]" style={{ width: `${chargeProgress}%` }} />
               </div>
@@ -467,14 +464,14 @@ const ClockInTab = () => {
             {status === 'VERIFIED' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-[var(--success)]/20 backdrop-blur-md flex flex-col items-center justify-center z-50">
                 <CheckCircle2 size={48} className="text-[var(--success)] drop-shadow-[0_0_10px_var(--success)]" />
-                <p className="text-[10px] font-black text-[var(--success)] uppercase tracking-widest mt-2">Bukti Terekam</p>
+                <p className="text-[10px] font-black text-[var(--success)] uppercase tracking-widest mt-2">{t('Bukti Terekam')}</p>
               </motion.div>
             )}
             {status === 'FAILED' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-[var(--danger)]/20 backdrop-blur-md flex flex-col items-center justify-center z-50 text-center p-4">
                 <ShieldAlert size={48} className="text-[var(--danger)]" />
-                <p className="text-[10px] font-black text-[var(--danger)] uppercase tracking-widest mt-2">Lokasi Tidak Valid</p>
-                <p className="text-[8px] text-white/60 mt-1 uppercase">Absensi diblokir oleh validasi lokasi</p>
+                <p className="text-[10px] font-black text-[var(--danger)] uppercase tracking-widest mt-2">{t('Lokasi Tidak Valid')}</p>
+                <p className="text-[8px] text-white/60 mt-1 uppercase">{t('Absensi diblokir oleh validasi lokasi')}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -495,7 +492,7 @@ const ClockInTab = () => {
         >
           <div className="relative flex flex-col items-center">
             {status === 'VERIFIED' ? (
-              <span className="text-black font-black text-xl tracking-tighter">SUCCESS</span>
+              <span className="text-black font-black text-xl tracking-tighter">{t('SUCCESS')}</span>
             ) : (
               <>
                 <Fingerprint size={24} className={`mb-1 sm:mb-2 transition-colors ${isPressing ? 'text-[var(--aurora-3)]' : 'text-white/40'}`} />
@@ -548,7 +545,7 @@ const ClockInTab = () => {
                 className="flex-1 bg-[#0B0C10] border border-[var(--aurora-3)]/30 rounded-xl px-4 py-2.5 text-white text-xs outline-none focus:border-[var(--aurora-3)] uppercase tracking-widest font-mono placeholder:text-gray-700"
               />
               <button onClick={() => setShowCodeInput(false)}
-                className="px-3 py-2 bg-white/5 rounded-xl text-gray-500 hover:text-white text-[10px] font-bold">Batal</button>
+                className="px-3 py-2 bg-white/5 rounded-xl text-gray-500 hover:text-white text-[10px] font-bold">{t('Batal')}</button>
             </div>
           ) : (
             <button onClick={() => setShowCodeInput(true)}
@@ -596,7 +593,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
     let backPressCount = 0;
     let backPressTimer;
 
-    const backButtonListener = App.addListener('backButton', ({ canGoBack }) => {
+    const backButtonListener = App.addListener('backButton', () => {
       if (activeTab !== 'home' || activeSubView !== null) {
         setActiveTab('home');
         setActiveSubView(null);
@@ -783,7 +780,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
           <Megaphone size={14} className="text-[var(--aurora-1)] flex-shrink-0 mr-3 animate-pulse" />
           <div className="flex-1 overflow-hidden relative">
             <div className="whitespace-nowrap animate-marquee inline-block text-xs text-[var(--aurora-1)] font-bold tracking-wide">
-              {announcements.map((a, i) => (
+              {announcements.map((a) => (
                 <span key={a.id} className="mr-8">📢 {a.title}: {a.message}</span>
               ))}
             </div>
@@ -880,8 +877,8 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
                   <ArrowLeft size={20} />
                 </button>
                 <div>
-                  <h2 className="text-xl font-serif font-bold text-white">Tanya AI</h2>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">Asisten Kebijakan HR</p>
+                  <h2 className="text-xl font-serif font-bold text-white">{t('Tanya AI')}</h2>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">{t('Asisten Kebijakan HR')}</p>
                 </div>
               </div>
               <div className="glass-panel p-6 rounded-[32px] border border-white/5 bg-white/[0.02] flex-1 flex flex-col overflow-hidden">
@@ -946,7 +943,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
 
       {/* GLOBAL BRANDING FOOTER */}
       <div className="fixed bottom-1 w-full text-center pointer-events-none z-40 safe-bottom">
-        <p className="text-[8px] text-gray-600 font-bold tracking-[0.3em] uppercase">SI PRESENSI PRO MAX - v3.5</p>
+        <p className="text-[8px] text-gray-600 font-bold tracking-[0.3em] uppercase">{t('SI PRESENSI PRO MAX - v3.5')}</p>
       </div>
 
     </div>

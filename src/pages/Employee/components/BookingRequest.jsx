@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, Truck, Wrench, Calendar, Clock, Send, CheckCircle2, Loader2, ArrowLeft, FileText, StepBack } from 'lucide-react';
+import { Building2, Truck, Wrench, Calendar, Send, CheckCircle2, Loader2, ArrowLeft, FileText, StepBack } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { notifyAdminsInTenant, NOTIF_TYPES } from '../../../utils/notificationEngine';
+
+/** @type {(s: string) => string} Passthrough i18n — app is monolingual Indonesian */
+const t = (s) => s;
 
 const FACILITY_TYPES = [
   { value: 'room', label: 'Ruangan', icon: <Building2 size={16} />, desc: 'Ruang meeting, rapat, pelatihan' },
@@ -28,6 +31,7 @@ const BookingRequest = ({ onBack }) => {
   const [form, setForm] = useState({ booking_date: '', start_time: '', end_time: '', purpose: '' });
   const toast = useToast();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchInitial(); }, []);
 
   const fetchInitial = async () => {
@@ -105,15 +109,15 @@ const BookingRequest = ({ onBack }) => {
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h2 className="text-xl font-serif font-bold text-white">Pesan Fasilitas</h2>
-          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">Ruangan, Kendaraan & Peralatan</p>
+          <h2 className="text-xl font-serif font-bold text-white">{t('Pesan Fasilitas')}</h2>
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">{t('Ruangan, Kendaraan & Peralatan')}</p>
         </div>
       </div>
 
       <AnimatePresence mode="wait">
         {step === 1 && (
           <motion.div key="step1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3">
-            <p className="text-xs text-gray-400 mb-2">Pilih tipe fasilitas yang ingin dipesan:</p>
+            <p className="text-xs text-gray-400 mb-2">{t('Pilih tipe fasilitas yang ingin dipesan:')}</p>
             {FACILITY_TYPES.map(t => (
               <button key={t.value} onClick={() => selectType(t.value)} className="w-full p-5 bg-white/5 rounded-2xl border border-white/10 hover:border-[var(--aurora-3)]/30 hover:bg-white/[0.08] transition-all text-left flex items-center gap-4 group">
                 <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-[var(--aurora-3)] group-hover:bg-[var(--aurora-3)]/10 transition-all">
@@ -135,7 +139,7 @@ const BookingRequest = ({ onBack }) => {
               <span className="text-[10px] text-gray-600">/</span>
               <span className="text-[10px] text-[var(--aurora-3)] font-bold">{FACILITY_TYPES.find(t => t.value === facilityType)?.label}</span>
             </div>
-            <p className="text-xs text-gray-400 mb-2">Pilih {FACILITY_TYPES.find(t => t.value === facilityType)?.label} yang tersedia:</p>
+            <p className="text-xs text-gray-400 mb-2">{t('Pilih ')}{FACILITY_TYPES.find(t => t.value === facilityType)?.label}{t(' yang tersedia:')}</p>
             {facilities.map(f => (
               <button key={f.id} onClick={() => { setSelectedFacility(f.id); setStep(3); }} className="w-full p-5 bg-white/5 rounded-2xl border border-white/10 hover:border-[var(--aurora-3)]/30 hover:bg-white/[0.08] transition-all text-left flex items-center gap-4 group">
                 <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-gray-400 group-hover:text-[var(--aurora-3)]">
@@ -144,14 +148,14 @@ const BookingRequest = ({ onBack }) => {
                 <div className="flex-1">
                   <h4 className="text-sm font-bold text-white">{f.name}</h4>
                   <div className="flex items-center gap-3 text-[9px] text-gray-500 mt-0.5">
-                    {f.capacity && <span>Kapasitas: {f.capacity}</span>}
+                    {f.capacity && <span>{t('Kapasitas: ')}{f.capacity}</span>}
                     {f.location && <span>{f.location}</span>}
                     {f.facilities?.length > 0 && <span>{f.facilities.join(', ')}</span>}
                   </div>
                 </div>
               </button>
             ))}
-            {!facilities.length && <p className="text-center text-gray-500 py-8 text-sm">Tidak ada {FACILITY_TYPES.find(t => t.value === facilityType)?.label} tersedia</p>}
+            {!facilities.length && <p className="text-center text-gray-500 py-8 text-sm">{t('Tidak ada ')}{FACILITY_TYPES.find(t => t.value === facilityType)?.label}{t(' tersedia')}</p>}
           </motion.div>
         )}
 
@@ -160,43 +164,43 @@ const BookingRequest = ({ onBack }) => {
             <div className="flex items-center gap-2 mb-4">
               <button onClick={() => setStep(2)} className="text-[10px] text-gray-500 hover:text-white flex items-center gap-1"><StepBack size={12} /> Kembali</button>
               <span className="text-[10px] text-gray-600">/</span>
-              <span className="text-[10px] text-gray-500">Detail Pemesanan</span>
+              <span className="text-[10px] text-gray-500">{t('Detail Pemesanan')}</span>
             </div>
             <div className="glass-panel p-8 rounded-[40px] border border-white/5 space-y-6 bg-white/[0.02]">
               <div className="flex items-center gap-3 mb-2">
                 <FileText className="text-[var(--aurora-3)]" size={20} />
-                <h3 className="text-lg font-serif font-bold text-white tracking-wide">Detail Pemesanan</h3>
+                <h3 className="text-lg font-serif font-bold text-white tracking-wide">{t('Detail Pemesanan')}</h3>
               </div>
               <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Tanggal</label>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Tanggal')}</label>
                   <input type="date" required value={form.booking_date} onChange={e => setForm({...form, booking_date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Jam Mulai</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Jam Mulai')}</label>
                     <input type="time" required value={form.start_time} onChange={e => setForm({...form, start_time: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Jam Selesai</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Jam Selesai')}</label>
                     <input type="time" required value={form.end_time} onChange={e => setForm({...form, end_time: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Keperluan</label>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Keperluan')}</label>
                   <textarea rows="3" placeholder="Tuliskan keperluan pemesanan..." value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)] resize-none" />
                 </div>
                 <div className="pt-4">
                   {showSuccess ? (
                     <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="w-full py-4 rounded-2xl bg-[var(--success)]/20 text-[var(--success)] flex items-center justify-center gap-3 border border-[var(--success)]/30">
                       <CheckCircle2 size={20} />
-                      <span className="text-xs font-bold uppercase tracking-widest">Berhasil Diajukan</span>
+                      <span className="text-xs font-bold uppercase tracking-widest">{t('Berhasil Diajukan')}</span>
                     </motion.div>
                   ) : (
                     <div className="flex gap-3">
-                      <button type="button" onClick={() => setStep(2)} className="flex-1 py-4 rounded-2xl bg-white/5 border border-white/10 text-gray-400 font-bold uppercase tracking-widest text-[10px]">Batal</button>
+                      <button type="button" onClick={() => setStep(2)} className="flex-1 py-4 rounded-2xl bg-white/5 border border-white/10 text-gray-400 font-bold uppercase tracking-widest text-[10px]">{t('Batal')}</button>
                       <button type="submit" disabled={isSubmitting} className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-[var(--aurora-2)] to-[var(--aurora-3)] text-white font-bold uppercase tracking-widest text-[10px] shadow-[0_15px_30px_rgba(0,201,255,0.2)] flex items-center justify-center gap-3">
-                        {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <>Ajukan <Send size={14} /></>}
+                        {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <>{t('Ajukan')} <Send size={14} /></>}
                       </button>
                     </div>
                   )}
@@ -213,7 +217,7 @@ const BookingRequest = ({ onBack }) => {
         </div>
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <button onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); } else setCalMonth(calMonth - 1); }} className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400">&lt;</button>
-          <span className="text-xs font-bold text-white min-w-[120px] text-center">{MONTHS[calMonth]} {calYear}</span>
+          <span className="text-xs font-bold text-white min-w-[120px] text-center">{MONTHS.at(calMonth)} {calYear}</span>
           <button onClick={() => { if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); } else setCalMonth(calMonth + 1); }} className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400">&gt;</button>
         </div>
         <div className="grid grid-cols-7 gap-0.5 mb-6">
@@ -240,7 +244,7 @@ const BookingRequest = ({ onBack }) => {
 
         {upcoming.length > 0 && (
           <div className="mb-4">
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Akan Datang</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">{t('Akan Datang')}</p>
             <div className="space-y-2">
               {upcoming.map(b => (
                 <div key={b.id} className="p-4 bg-white/5 rounded-xl border border-white/10">
@@ -260,8 +264,8 @@ const BookingRequest = ({ onBack }) => {
           </div>
         )}
         {past.length > 0 && (
-          <div>
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Riwayat</p>
+          <div className="mb-4">
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">{t('Riwayat')}</p>
             <div className="space-y-2">
               {past.map(b => (
                 <div key={b.id} className="p-4 bg-white/5 rounded-xl border border-white/10 opacity-60">
@@ -279,7 +283,7 @@ const BookingRequest = ({ onBack }) => {
             </div>
           </div>
         )}
-        {!myBookings.length && <p className="text-center text-gray-500 text-xs py-6">Belum ada pemesanan</p>}
+        {!myBookings.length && <p className="text-center text-gray-500 text-xs py-6">{t('Belum ada pemesanan')}</p>}
       </div>
     </motion.div>
   );

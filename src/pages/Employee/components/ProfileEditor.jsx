@@ -36,6 +36,7 @@ const ProfileEditor = ({ onBack }) => {
     finally { setSaving(false); }
   };
 
+  const t = (s) => s;
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6 pb-8">
       <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors w-fit"><ArrowLeft size={18} /> Kembali</button>
@@ -44,8 +45,8 @@ const ProfileEditor = ({ onBack }) => {
         <div className="flex items-center gap-4 mb-6">
           <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center text-xl font-bold text-white">{profile.full_name?.charAt(0) || 'U'}</div>
           <div>
-            <h2 className="text-xl font-serif font-bold text-white">Edit Profil Saya</h2>
-            <p className="text-sm text-gray-400">Perbarui data diri Anda</p>
+            <h2 className="text-xl font-serif font-bold text-white">{t('Edit Profil Saya')}</h2>
+            <p className="text-sm text-gray-400">{t('Perbarui data diri Anda')}</p>
           </div>
         </div>
 
@@ -69,7 +70,7 @@ const ProfileEditor = ({ onBack }) => {
             <textarea value={profile.address} onChange={e => setProfile({...profile, address: e.target.value})} rows={3} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
           </div>
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Jenis Kelamin</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Jenis Kelamin')}</label>
             <div className="flex gap-4">
               {['Laki-laki', 'Perempuan'].map(g => (
                 <label key={g} className={`flex-1 p-4 rounded-xl border cursor-pointer text-center transition-all ${profile.gender === g ? 'bg-[var(--aurora-3)]/10 border-[var(--aurora-3)]/30 text-[var(--aurora-3)]' : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20'}`}>

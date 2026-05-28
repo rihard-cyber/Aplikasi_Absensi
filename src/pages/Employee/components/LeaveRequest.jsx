@@ -15,6 +15,9 @@ import ReimbursementRequest from './ReimbursementRequest';
 import QRScanner from './QRScanner';
 import ProfileEditor from './ProfileEditor';
 
+/** @type {(s: string) => string} Passthrough i18n */
+const t = (s) => s;
+
 const LeaveRequest = ({ onBack, category = 'leave' }) => {
   const [view, setView] = useState('history');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,8 +42,8 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
   }
 
   // CATEGORY CONFIGURATION
-  const config = {
-    leave: {
+  const config = new Map([
+    ['leave', {
       title: "Izin & Cuti",
       icon: <Calendar />,
       types: [
@@ -49,28 +52,28 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
         "Keguguran, Khitan, Baptisan", "Cuti Bencana Alam / Kebanjiran / Musibah",
         "Cuti Tahunan", "Cuti Sakit", "Lupa Absen", "Perjalanan Dinas"
       ]
-    },
-    lembur: {
+    }],
+    ['lembur', {
       title: "Lembur",
       icon: <Zap />,
       types: ["Lembur Hari Kerja", "Lembur Hari Libur", "Lembur Proyek Khusus"]
-    },
-    shift: {
+    }],
+    ['shift', {
       title: "Tukar Shift",
       icon: <RefreshCcw />,
       types: ["Tukar Shift Pagi-Malam", "Ganti Hari Libur"]
-    },
-    'req-absen': {
+    }],
+    ['req-absen', {
       title: "Request Absen",
       icon: <CheckCircleIcon />,
       types: ["Lupa Tapping", "Mesin Error", "Dinas Luar"]
-    },
-    salary: { title: "Slip Gaji", icon: <Wallet />, types: ["Download Slip Mei 2026", "Download Slip April 2026"] },
-    contract: { title: "PKWT / Kontrak", icon: <FileText />, types: ["View Kontrak Aktif"] },
-    overtime: { title: "Overtime", icon: <TrendingUp />, types: ["Pengajuan Overtime"] }
-  };
+    }],
+    ['salary', { title: "Slip Gaji", icon: <Wallet />, types: ["Download Slip Mei 2026", "Download Slip April 2026"] }],
+    ['contract', { title: "PKWT / Kontrak", icon: <FileText />, types: ["View Kontrak Aktif"] }],
+    ['overtime', { title: "Overtime", icon: <TrendingUp />, types: ["Pengajuan Overtime"] }]
+  ]);
 
-  const currentConfig = config[category] || config.leave;
+  const currentConfig = config.get(category) || config.get('leave');
 
   // MOCK DATA: History
   const [history, setHistory] = useState([]);
@@ -229,7 +232,7 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
           </button>
           <div>
             <h2 className="text-xl font-serif font-bold text-white">{currentConfig.title}</h2>
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">Management Portal</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">{t('Management Portal')}</p>
           </div>
         </div>
         {view === 'history' && (
@@ -258,8 +261,8 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
             {history.length === 0 ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-12 text-center glass-panel rounded-3xl border border-white/5 mt-4">
                 <FileText size={48} className="text-gray-600 mb-4" />
-                <h4 className="text-white font-bold text-sm">Belum Ada Pengajuan</h4>
-                <p className="text-gray-500 text-xs mt-1">Data pengajuan {currentConfig.title} Anda akan muncul di sini.</p>
+                <h4 className="text-white font-bold text-sm">{t('Belum Ada Pengajuan')}</h4>
+                <p className="text-gray-500 text-xs mt-1">{t('Data pengajuan')} {currentConfig.title} {t('Anda akan muncul di sini.')}</p>
               </motion.div>
             ) : (
               <>

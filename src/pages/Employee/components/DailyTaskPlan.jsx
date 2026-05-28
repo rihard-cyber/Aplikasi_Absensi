@@ -8,12 +8,15 @@ import {
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
-const STATUS_CONFIG = {
-  pending: { label: 'Pending', color: 'var(--warning)' },
-  submitted: { label: 'Terkirim', color: 'var(--aurora-3)' },
-  approved: { label: 'Disetujui', color: 'var(--success)' },
-  rejected: { label: 'Ditolak', color: 'var(--danger)' },
-};
+const STATUS_CONFIG = new Map([
+  ['pending', { label: 'Pending', color: 'var(--warning)' }],
+  ['submitted', { label: 'Terkirim', color: 'var(--aurora-3)' }],
+  ['approved', { label: 'Disetujui', color: 'var(--success)' }],
+  ['rejected', { label: 'Ditolak', color: 'var(--danger)' }]
+]);
+
+/** @type {(s: string) => string} Passthrough i18n — app is monolingual Indonesian */
+const t = (s) => s;
 
 const DAYS_ID = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
@@ -65,7 +68,7 @@ const DailyTaskPlan = ({ onBack }) => {
 
       if (plan) {
         setTodayPlan(plan);
-        setCurrentStatus(STATUS_CONFIG[plan.status] || STATUS_CONFIG.pending);
+        setCurrentStatus(STATUS_CONFIG.get(plan.status) || STATUS_CONFIG.get('pending'));
         if (plan.tasks && Array.isArray(plan.tasks) && plan.tasks.length > 0) {
           setTasks(plan.tasks);
         }
@@ -164,7 +167,7 @@ const DailyTaskPlan = ({ onBack }) => {
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h2 className="text-xl font-serif font-bold text-white">Rencana Tugas Harian</h2>
+          <h2 className="text-xl font-serif font-bold text-white">{t('Rencana Tugas Harian')}</h2>
           <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">
             {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
@@ -176,9 +179,9 @@ const DailyTaskPlan = ({ onBack }) => {
         <div className="p-4 bg-[var(--danger)]/5 border border-[var(--danger)]/20 rounded-2xl flex items-start gap-3">
           <AlertCircle size={16} className="text-[var(--danger)] shrink-0 mt-0.5" />
           <div>
-            <p className="text-xs font-bold text-white">Hari ini bukan jadwal WFH</p>
+            <p className="text-xs font-bold text-white">{t('Hari ini bukan jadwal WFH')}</p>
             <p className="text-[10px] text-gray-400 mt-0.5">
-              Rencana tugas harian hanya tersedia untuk hari kerja WFH. Jadwal Anda hari ini adalah WFO.
+              {t('Rencana tugas harian hanya tersedia untuk hari kerja WFH. Jadwal Anda hari ini adalah WFO.')}
             </p>
           </div>
         </div>
@@ -192,11 +195,11 @@ const DailyTaskPlan = ({ onBack }) => {
           </div>
           <div>
             <p className="text-xs font-bold text-white">
-              Status Hari Ini: <span style={{ color: currentStatus.color }}>{currentStatus.label}</span>
+              {t('Status Hari Ini: ')}<span style={{ color: currentStatus.color }}>{currentStatus.label}</span>
             </p>
             {todayPlan.submitted_at && (
               <p className="text-[9px] text-gray-500 mt-0.5">
-                Dikirim {new Date(todayPlan.submitted_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                {t('Dikirim ')}{new Date(todayPlan.submitted_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
               </p>
             )}
           </div>
@@ -250,7 +253,7 @@ const DailyTaskPlan = ({ onBack }) => {
                   )}
                 </div>
                 <div>
-                  <label className="text-[9px] text-gray-500 uppercase tracking-widest font-bold block mb-1">Judul Tugas *</label>
+                  <label className="text-[9px] text-gray-500 uppercase tracking-widest font-bold block mb-1">{t('Judul Tugas *')}</label>
                   <input
                     required
                     value={task.title}
@@ -260,7 +263,7 @@ const DailyTaskPlan = ({ onBack }) => {
                   />
                 </div>
                 <div>
-                  <label className="text-[9px] text-gray-500 uppercase tracking-widest font-bold block mb-1">Deskripsi</label>
+                  <label className="text-[9px] text-gray-500 uppercase tracking-widest font-bold block mb-1">{t('Deskripsi')}</label>
                   <textarea
                     rows={2}
                     value={task.description}
@@ -270,7 +273,7 @@ const DailyTaskPlan = ({ onBack }) => {
                   />
                 </div>
                 <div className="w-1/2">
-                  <label className="text-[9px] text-gray-500 uppercase tracking-widest font-bold block mb-1">Estimasi Jam</label>
+                  <label className="text-[9px] text-gray-500 uppercase tracking-widest font-bold block mb-1">{t('Estimasi Jam')}</label>
                   <input
                     type="number"
                     min={0.5}
@@ -288,7 +291,7 @@ const DailyTaskPlan = ({ onBack }) => {
           {tasks.length === 0 && (
             <div className="text-center py-6">
               <ClipboardCheck size={32} className="text-gray-600 mx-auto mb-2" />
-              <p className="text-xs text-gray-500">Belum ada tugas. Klik "Tambah Tugas" untuk memulai.</p>
+              <p className="text-xs text-gray-500">{t('Belum ada tugas. Klik "Tambah Tugas" untuk memulai.')}</p>
             </div>
           )}
 
@@ -311,16 +314,16 @@ const DailyTaskPlan = ({ onBack }) => {
         {weeklyPlans.length === 0 ? (
           <div className="text-center py-8">
             <FileText size={32} className="text-gray-600 mx-auto mb-2" />
-            <p className="text-xs text-gray-500">Belum ada rencana tugas minggu ini</p>
+            <p className="text-xs text-gray-500">{t('Belum ada rencana tugas minggu ini')}</p>
           </div>
         ) : (
           <div className="space-y-2">
             {weeklyPlans.map((plan, i) => {
               const d = new Date(plan.date + 'T00:00:00');
-              const dayName = DAYS_ID[d.getDay()];
+              const dayName = DAYS_ID.at(d.getDay());
               const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
               const isTodayPlan = plan.date === today;
-              const planStatus = STATUS_CONFIG[plan.status] || STATUS_CONFIG.pending;
+              const planStatus = STATUS_CONFIG.get(plan.status) || STATUS_CONFIG.get('pending');
               const taskCount = Array.isArray(plan.tasks) ? plan.tasks.length : 0;
               const totalHours = Array.isArray(plan.tasks) ? plan.tasks.reduce((s, t) => s + (t.estimated_hours || 0), 0) : 0;
 

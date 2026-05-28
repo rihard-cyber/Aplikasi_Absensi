@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, Calendar, MapPin, Briefcase, Heart, CreditCard, Shield, Activity, GraduationCap, Building2, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import { User, MapPin, Briefcase, Heart, CreditCard, Shield, Activity, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
@@ -34,11 +34,12 @@ const HRISDataForm = ({ user, onCancel, onSave }) => {
 
   useEffect(() => {
     fetchHRISData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]);
 
   const fetchHRISData = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error: _error } = await supabase
         .from('employee_hris_data')
         .select('*')
         .eq('user_id', user.id)
@@ -91,8 +92,8 @@ const HRISDataForm = ({ user, onCancel, onSave }) => {
       // Clean up empty strings for date columns to avoid Postgres syntax errors
       const dateColumns = ['join_date', 'contract_end_date', 'permanent_date', 'resign_date', 'certificate_issued_date', 'certificate_expiry_date'];
       dateColumns.forEach(key => {
-        if (hrisPayload[key] === '') {
-          hrisPayload[key] = null;
+        if (Reflect.get(hrisPayload, key) === '') {
+          Reflect.set(hrisPayload, key, null);
         }
       });
 

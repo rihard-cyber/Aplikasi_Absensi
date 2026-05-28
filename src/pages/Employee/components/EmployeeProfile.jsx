@@ -3,8 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LogOut, Settings, Smartphone, Key, ShieldCheck, ChevronRight,
-  Bell, RefreshCw, Palette, User, Mail, Calendar, Phone, MapPin,
-  Lock, CheckCircle2, AlertCircle, X, ShieldAlert, Fingerprint, Info, Loader2
+  RefreshCw, Palette, User, Lock, X, ShieldAlert, Fingerprint, Info, Loader2
 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { DeviceUtil } from '../../../utils/deviceUtil';
@@ -43,13 +42,14 @@ const EmployeeProfile = () => {
   const [activeItem, setActiveItem] = useState(null);
   const confirm = useConfirm();
   const toast = useToast();
-  const [editData, setEditData] = useState({ ...user });
+  const [_editData, setEditData] = useState({ ...user });
 
   useEffect(() => {
     (async () => {
       await fetchUserData();
       checkDeviceBinding();
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Haptic Feedback Simulation (Replace with actual Capacitor Haptics if available)
@@ -66,7 +66,7 @@ const EmployeeProfile = () => {
 
       const isGodMode = sessionStorage.getItem('super_admin_verified') === 'true';
 
-      const { data: profile, error } = await supabase
+      const { data: profile, error: _error } = await supabase
         .from('profiles')
         .select('*, divisions(name)')
         .eq('auth_id', session.user.id)
@@ -115,7 +115,7 @@ const EmployeeProfile = () => {
     setIsBound(user.device_id === device.identifier || (() => { try { return !!sessionStorage.getItem('bound_device_id'); } catch { return false; } })());
   };
 
-  const handleUpdateProfile = async () => {
+  const _handleUpdateProfile = async () => {
     // Legacy simple update - we use HRISDataForm now
   };
 
@@ -201,7 +201,7 @@ const EmployeeProfile = () => {
     show: { opacity: 1, x: 0, transition: { staggerChildren: 0.1 } }
   };
 
-  const itemVariants = {
+  const _itemVariants = {
     hidden: { opacity: 0, x: -20 },
     show: { opacity: 1, x: 0 }
   };
@@ -483,10 +483,12 @@ const EmployeeProfile = () => {
                     className="w-10 h-12 bg-white/5 border border-white/10 rounded-lg text-center text-xl font-bold text-white focus:border-[var(--warning)] outline-none"
                     value={digit}
                     onChange={(e) => {
-                      const newPin = [...pin];
-                      newPin[i] = e.target.value;
+                      const newPin = pin.map((d, idx) => idx === i ? e.target.value : d);
                       setPin(newPin);
-                      if (e.target.value && i < 5) document.getElementById(`pin-${i + 1}`).focus();
+                      if (e.target.value && i < 5) {
+                        const nextEl = document.getElementById(`pin-${i + 1}`);
+                        if (nextEl) nextEl.focus();
+                      }
                     }}
                   />
                 ))}
@@ -560,6 +562,7 @@ const MenuItem = ({ id, activeItem, icon, title, subtitle, color, onClick, badge
   </button>
 );
 
+// eslint-disable-next-line no-unused-vars
 const EditField = ({ icon, label, value, onChange, type = "text" }) => (
   <div className="flex flex-col gap-2">
     <label className="text-[10px] text-gray-500 uppercase tracking-widest ml-1">{label}</label>

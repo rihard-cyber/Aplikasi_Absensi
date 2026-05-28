@@ -4,12 +4,16 @@ import {
   Shield, UploadCloud, FileCheck, AlertCircle,
   CheckCircle2, ChevronRight, XCircle, CreditCard,
   Users, GraduationCap, Award, FileText, Loader2,
-  MapPin, History, Info, HeartPulse, Banknote
+  History, Info, HeartPulse, Banknote
 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { sanitizeUrl } from '../../../utils/urlSanitizer';
 import { compressImage } from '../../../utils/imageCompressor';
+
+/** @type {(s: string) => string} Passthrough i18n */
+const t = (s) => s;
+
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -20,8 +24,8 @@ const DocumentVault = () => {
   const toast = useToast();
   const [showSuccess, setShowSuccess] = useState(false);
   const [submissions, setSubmissions] = useState([]);
-  const [hrisData, setHrisData] = useState(null);
-  const [profile, setProfile] = useState(null);
+  const [_hrisData, setHrisData] = useState(null);
+  const [_profile, setProfile] = useState(null);
   const [categories, setCategories] = useState([
     { id: 'ktp', label: 'KTP (Identitas)', icon: <CreditCard />, color: 'var(--aurora-3)', complete: false },
     { id: 'kk', label: 'Kartu Keluarga', icon: <Users />, color: 'var(--aurora-2)', complete: false },
@@ -243,18 +247,18 @@ const DocumentVault = () => {
           <SmartInput label="Nomor Kartu Keluarga" name="no_kk" value={formData.no_kk} onChange={handleInputChange} placeholder="16 Digit No KK" />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">Status Pernikahan</label>
+              <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Status Pernikahan')}</label>
               <select name="marriage_status" value={formData.marriage_status} onChange={handleInputChange}
                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]">
-                <option value="TK" className="bg-[#0B0C10]">Tidak Kawin</option>
-                <option value="K" className="bg-[#0B0C10]">Kawin</option>
+                <option value="TK" className="bg-[#0B0C10]">{t('Tidak Kawin')}</option>
+                <option value="K" className="bg-[#0B0C10]">{t('Kawin')}</option>
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">Jumlah Anak</label>
+              <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Jumlah Anak')}</label>
               <select name="children_count" value={formData.children_count} onChange={handleInputChange}
                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]">
-                {[0, 1, 2, 3].map(n => <option key={n} value={n} className="bg-[#0B0C10]">{n} Anak</option>)}
+                {[0, 1, 2, 3].map(n => <option key={n} value={n} className="bg-[#0B0C10]">{n} {t('Anak')}</option>)}
               </select>
             </div>
           </div>
@@ -267,7 +271,7 @@ const DocumentVault = () => {
           <div className="p-4 bg-[var(--aurora-3)]/5 border border-[var(--aurora-3)]/20 rounded-2xl flex justify-between items-center">
             <div className="flex items-center gap-3">
               <AlertCircle size={16} className="text-[var(--aurora-3)]" />
-              <p className="text-[10px] text-gray-400">Estimasi Status Pajak (PTKP):</p>
+              <p className="text-[10px] text-gray-400">{t('Estimasi Status Pajak (PTKP):')}</p>
             </div>
             <span className="text-lg font-bold text-[var(--aurora-3)] tracking-tighter">{calculatePTKP()}</span>
           </div>
@@ -276,7 +280,7 @@ const DocumentVault = () => {
       case 'education':
         return (<>
           <div className="space-y-1.5">
-            <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">Tingkat Pendidikan</label>
+            <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Tingkat Pendidikan')}</label>
             <select name="education_level" value={formData.education_level} onChange={handleInputChange}
               className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]">
               {['SMA', 'D1', 'D3', 'S1', 'S2', 'S3'].map(l => <option key={l} value={l}>{l}</option>)}
@@ -293,7 +297,7 @@ const DocumentVault = () => {
         return (<>
           <div className="p-4 bg-[var(--warning)]/5 border border-[var(--warning)]/20 rounded-2xl mb-2 flex items-start gap-3">
             <Info size={16} className="text-[var(--warning)] shrink-0 mt-0.5" />
-            <p className="text-[10px] text-gray-400">Untuk Satpam/Security: isi No. KTA dan Sertifikat Gada Pratama.</p>
+            <p className="text-[10px] text-gray-400">{t('Untuk Satpam/Security: isi No. KTA dan Sertifikat Gada Pratama.')}</p>
           </div>
           <SmartInput label="Nama Sertifikat" name="cert_name" value={formData.cert_name} onChange={handleInputChange} placeholder="Gada Pratama / Sertifikat Ahli" />
           <div className="grid grid-cols-2 gap-4">
@@ -310,7 +314,7 @@ const DocumentVault = () => {
         return (<>
           <div className="p-4 bg-[var(--success)]/5 border border-[var(--success)]/20 rounded-2xl mb-2 flex items-start gap-3">
             <Info size={16} className="text-[var(--success)] shrink-0 mt-0.5" />
-            <p className="text-[10px] text-gray-400">Data BPJS akan digunakan untuk perhitungan payroll otomatis.</p>
+            <p className="text-[10px] text-gray-400">{t('Data BPJS akan digunakan untuk perhitungan payroll otomatis.')}</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <SmartInput label="BPJS Kesehatan" name="bpjs_kes" value={formData.bpjs_kes} onChange={handleInputChange} placeholder="No. Peserta" />
@@ -347,8 +351,8 @@ const DocumentVault = () => {
             <Shield size={24} />
           </div>
           <div>
-            <h2 className="text-xl font-serif font-bold text-white">Brankas Digital</h2>
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">Secure Document Sync</p>
+            <h2 className="text-xl font-serif font-bold text-white">{t('Brankas Digital')}</h2>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">{t('Secure Document Sync')}</p>
           </div>
         </div>
         <button onClick={() => { setView(v => v === 'history' ? 'categories' : 'history'); if (view !== 'history') setActiveCategory(null); }}
@@ -363,9 +367,9 @@ const DocumentVault = () => {
             <div className="p-5 bg-[var(--aurora-3)]/10 border border-[var(--aurora-3)]/30 rounded-3xl mb-2 flex items-start gap-4">
               <Info className="text-[var(--aurora-3)] shrink-0 mt-1" size={18} />
               <p className="text-xs text-gray-300 leading-relaxed">
-                Lengkapi dokumen untuk sinkronisasi payroll & PPh 21. Dokumen {' '}
-                <span className="text-[var(--success)] font-bold">TERVERIFIKASI</span> {' '}
-akan ditandai centang hijau.
+                {t('Lengkapi dokumen untuk sinkronisasi payroll & PPh 21. Dokumen ')}{' '}
+                <span className="text-[var(--success)] font-bold">{t('TERVERIFIKASI')}</span> {' '}
+                {t('akan ditandai centang hijau.')}
               </p>
             </div>
             {categories.map(cat => (
@@ -378,12 +382,12 @@ akan ditandai centang hijau.
                   </div>
                   <div className="text-left">
                     <h4 className="text-white font-bold text-sm">{cat.label}</h4>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest">Digitalize Document</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest">{t('Digitalize Document')}</p>
                   </div>
                 </div>
                 {cat.complete ? (
                   <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--success)]/10 border border-[var(--success)]/20">
-                    <span className="text-[8px] font-black text-[var(--success)] uppercase tracking-tighter">Lengkap</span>
+                    <span className="text-[8px] font-black text-[var(--success)] uppercase tracking-tighter">{t('Lengkap')}</span>
                     <CheckCircle2 size={14} className="text-[var(--success)]" />
                   </div>
                 ) : (
@@ -420,15 +424,15 @@ akan ditandai centang hijau.
                   <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }}
                     className="w-full py-4 rounded-2xl bg-[var(--success)]/20 text-[var(--success)] flex items-center justify-center gap-3 border border-[var(--success)]/30">
                     <CheckCircle2 size={20} />
-                    <span className="text-xs font-bold uppercase tracking-widest">Tersimpan & Terkirim</span>
+                    <span className="text-xs font-bold uppercase tracking-widest">{t('Tersimpan & Terkirim')}</span>
                   </motion.div>
                 ) : (
                   <button onClick={handleSubmit} disabled={isSubmitting}
                     className="w-full py-4 rounded-2xl bg-gradient-to-r from-[var(--aurora-2)] to-[var(--aurora-3)] text-white font-bold uppercase tracking-widest text-xs shadow-[0_15px_30px_rgba(0,201,255,0.2)] flex items-center justify-center gap-3 disabled:opacity-50">
-                    {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <><UploadCloud size={16} /> Ajukan Verifikasi <ChevronRight size={16} /></>}
+                    {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <><UploadCloud size={16} /> {t('Ajukan Verifikasi')} <ChevronRight size={16} /></>}
                   </button>
                 )}
-                <p className="text-[8px] text-center text-gray-600 mt-4 uppercase tracking-[0.2em]">Data akan diverifikasi oleh HRD</p>
+                <p className="text-[8px] text-center text-gray-600 mt-4 uppercase tracking-[0.2em]">{t('Data akan diverifikasi oleh HRD')}</p>
               </div>
             </div>
           </motion.div>
@@ -436,13 +440,13 @@ akan ditandai centang hijau.
 
         {view === 'history' && (
           <motion.div key="history" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex flex-col gap-4">
-            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-[0.3em] mb-2 ml-2">Riwayat Pengajuan</h3>
+            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-[0.3em] mb-2 ml-2">{t('Riwayat Pengajuan')}</h3>
             {submissions.length === 0 ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="flex flex-col items-center justify-center py-12 text-center glass-panel rounded-[32px] border border-white/5 mt-4">
                 <FileCheck size={48} className="text-gray-600 mb-4" />
-                <h4 className="text-white font-bold text-sm">Belum Ada Dokumen</h4>
-                <p className="text-gray-500 text-xs mt-1">Dokumen yang diunggah akan muncul di sini.</p>
+                <h4 className="text-white font-bold text-sm">{t('Belum Ada Dokumen')}</h4>
+                <p className="text-gray-500 text-xs mt-1">{t('Dokumen yang diunggah akan muncul di sini.')}</p>
               </motion.div>
             ) : (
               submissions.map(sub => {
@@ -464,7 +468,7 @@ akan ditandai centang hijau.
                     </div>
                     <div className="flex items-center gap-3">
                       {sub.file_url && (
-                        <a href={sanitizeUrl(sub.file_url)} target="_blank" rel="noopener noreferrer" className="text-[var(--aurora-3)] hover:underline text-[10px]">Lihat</a>
+                        <a href={sanitizeUrl(sub.file_url)} target="_blank" rel="noopener noreferrer" className="text-[var(--aurora-3)] hover:underline text-[10px]">{t('Lihat')}</a>
                       )}
                       <span className={`text-[8px] font-black uppercase tracking-tighter px-2 py-0.5 rounded ${
                         isVerified ? 'bg-[var(--success)]/10 text-[var(--success)]' :

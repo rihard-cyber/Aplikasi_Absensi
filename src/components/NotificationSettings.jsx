@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Bell, BellOff, BellRing, Check, X, Loader2,
+  Bell, BellOff, BellRing, Check, Loader2,
   ShieldCheck, Smartphone, Info, ChevronRight
 } from 'lucide-react';
 import {
@@ -13,6 +13,9 @@ import {
   showLocalNotification
 } from '../utils/pushNotification';
 import { useToast } from './Toast';
+
+/** @type {(s: string) => string} Passthrough i18n - app is monolingual Indonesian */
+const t = (s) => s;
 
 /**
  * NotificationSettings Component
@@ -68,7 +71,7 @@ const NotificationSettings = () => {
         // Send a test notification
         setTimeout(() => {
           showLocalNotification('SI PRESENSI', {
-            body: '🔔 Notifikasi aktif! Anda akan menerima pemberitahuan absensi, persetujuan izin, dan pengumuman.',
+            body: t('Notifikasi aktif! Anda akan menerima pemberitahuan absensi, persetujuan izin, dan pengumuman.'),
             tag: 'welcome-notification',
           });
         }, 1000);
@@ -85,7 +88,7 @@ const NotificationSettings = () => {
     return (
       <div className="glass-panel p-5 rounded-3xl flex items-center gap-3">
         <Loader2 size={18} className="animate-spin text-gray-500" />
-        <span className="text-xs text-gray-500">Memeriksa dukungan notifikasi...</span>
+        <span className="text-xs text-gray-500">{t('Memeriksa dukungan notifikasi...')}</span>
       </div>
     );
   }
@@ -98,8 +101,8 @@ const NotificationSettings = () => {
             <BellOff size={18} />
           </div>
           <div>
-            <p className="text-sm font-bold text-white">Notifikasi Tidak Didukung</p>
-            <p className="text-[9px] text-gray-500 mt-0.5">Browser atau perangkat ini belum mendukung push notifications.</p>
+            <p className="text-sm font-bold text-white">{t('Notifikasi Tidak Didukung')}</p>
+            <p className="text-[9px] text-gray-500 mt-0.5">{t('Browser atau perangkat ini belum mendukung push notifications.')}</p>
           </div>
         </div>
       </div>
@@ -108,7 +111,7 @@ const NotificationSettings = () => {
 
   const isBlocked = permission === 'denied';
   const statusColor = subscribed ? 'var(--success)' : isBlocked ? 'var(--danger)' : 'var(--aurora-3)';
-  const statusLabel = subscribed ? 'Notifikasi Aktif' : isBlocked ? 'Diblokir Oleh Browser' : 'Notifikasi Nonaktif';
+  const statusLabel = subscribed ? t('Notifikasi Aktif') : isBlocked ? t('Diblokir Oleh Browser') : t('Notifikasi Nonaktif');
   const StatusIcon = subscribed ? BellRing : isBlocked ? BellOff : Bell;
 
   return (
@@ -127,7 +130,7 @@ const NotificationSettings = () => {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-white">Push Notifications</p>
+            <p className="text-sm font-bold text-white">{t('Push Notifications')}</p>
             {subscribed && (
               <motion.div
                 initial={{ scale: 0 }}
@@ -155,7 +158,7 @@ const NotificationSettings = () => {
               background: subscribed ? 'var(--success)' : 'rgba(255,255,255,0.1)',
               border: `1.5px solid ${subscribed ? 'var(--success)' : 'rgba(255,255,255,0.15)'}`,
             }}
-            aria-label={subscribed ? 'Nonaktifkan notifikasi' : 'Aktifkan notifikasi'}
+            aria-label={subscribed ? t('Nonaktifkan notifikasi') : t('Aktifkan notifikasi')}
           >
             <motion.div
               className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md flex items-center justify-center"
@@ -180,9 +183,9 @@ const NotificationSettings = () => {
             <div className="bg-[var(--danger)]/5 border border-[var(--danger)]/20 rounded-2xl p-3 flex items-start gap-3">
               <Info size={14} className="text-[var(--danger)] flex-shrink-0 mt-0.5" />
               <p className="text-[10px] text-gray-400 leading-relaxed">
-                Notifikasi diblokir di level browser. Aktifkan kembali melalui{' '}
-                <strong className="text-white">Pengaturan Browser → Izin Situs → Notifikasi</strong>
-                {' '}untuk domain ini.
+                {t('Notifikasi diblokir di level browser. Aktifkan kembali melalui')}{' '}
+                <strong className="text-white">{t('Pengaturan Browser -> Izin Situs -> Notifikasi')}</strong>
+                {' '}{t('untuk domain ini.')}
               </p>
             </div>
           </motion.div>
@@ -192,13 +195,13 @@ const NotificationSettings = () => {
       {/* Feature list */}
       <div className="px-5 pb-5 space-y-2">
         <p className="text-[9px] text-gray-600 uppercase font-bold tracking-widest mb-2">
-          Notifikasi yang akan diterima:
+          {t('Notifikasi yang akan diterima:')}
         </p>
         {[
-          { icon: <ShieldCheck size={12} />, text: 'Persetujuan / Penolakan Izin & Cuti' },
-          { icon: <Smartphone size={12} />, text: 'Pengingat Absensi (Clock-In Reminder)' },
-          { icon: <BellRing size={12} />, text: 'Pengumuman Perusahaan Terbaru' },
-          { icon: <Check size={12} />, text: 'Status Pembayaran Gaji & Slip Gaji' },
+          { icon: <ShieldCheck size={12} />, text: t('Persetujuan / Penolakan Izin & Cuti') },
+          { icon: <Smartphone size={12} />, text: t('Pengingat Absensi (Clock-In Reminder)') },
+          { icon: <BellRing size={12} />, text: t('Pengumuman Perusahaan Terbaru') },
+          { icon: <Check size={12} />, text: t('Status Pembayaran Gaji & Slip Gaji') },
         ].map((item, i) => (
           <div key={i} className="flex items-center gap-2.5">
             <div
@@ -230,7 +233,7 @@ const NotificationSettings = () => {
           >
             <span className="flex items-center gap-2">
               <Bell size={12} />
-              Aktifkan notifikasi sekarang
+              {t('Aktifkan notifikasi sekarang')}
             </span>
             <ChevronRight size={12} />
           </motion.button>

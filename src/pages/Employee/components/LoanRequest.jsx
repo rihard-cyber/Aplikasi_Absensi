@@ -45,6 +45,7 @@ const LoanRequest = ({ onBack }) => {
 
   const activeLoans = loans.filter(l => l.status === 'ACTIVE');
   const totalRemaining = activeLoans.reduce((s, l) => s + Number(l.remaining), 0);
+  const t = (s) => s;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6 pb-8">
@@ -52,17 +53,17 @@ const LoanRequest = ({ onBack }) => {
 
       <div className="glass-panel p-6">
         <h2 className="text-xl font-serif font-bold text-white mb-2 flex items-center gap-2"><DollarSign className="text-[var(--aurora-3)]" /> Ajukan Pinjaman</h2>
-        <p className="text-xs text-gray-400 mb-6">Pinjaman akan dipotong otomatis dari gaji setiap bulan.</p>
+        <p className="text-xs text-gray-400 mb-6">{t('Pinjaman akan dipotong otomatis dari gaji setiap bulan.')}</p>
 
         {totalRemaining > 0 && (
           <div className="mb-6 p-4 bg-[var(--warning)]/10 border border-[var(--warning)]/20 rounded-xl">
-            <p className="text-xs text-[var(--warning)] font-bold">Pinjaman aktif: Rp {totalRemaining.toLocaleString()} (dipotong dari gaji)</p>
+            <p className="text-xs text-[var(--warning)] font-bold">{t('Pinjaman aktif: Rp ')}{totalRemaining.toLocaleString()} (dipotong dari gaji)</p>
           </div>
         )}
 
         <div className="space-y-4">
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Jumlah Pinjaman</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Jumlah Pinjaman')}</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">Rp</span>
               <input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" placeholder="1000000" />
@@ -70,20 +71,20 @@ const LoanRequest = ({ onBack }) => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Cicilan (bulan)</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Cicilan (bulan)')}</label>
               <select value={form.installments} onChange={e => setForm({...form, installments: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
                 {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => <option key={n} value={n}>{n}x</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Per Bulan</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Per Bulan')}</label>
               <div className="h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white font-mono font-bold text-sm flex items-center">
-                Rp {form.amount ? Math.round(Number(form.amount) / Number(form.installments)).toLocaleString() : '0'}
+                {t('\n                Rp ')}{form.amount ? Math.round(Number(form.amount) / Number(form.installments)).toLocaleString() : '0'}
               </div>
             </div>
           </div>
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tujuan</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tujuan')}</label>
             <input value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" placeholder="Pembelian laptop, renovasi rumah, dll" />
           </div>
           <button onClick={handleSubmit} disabled={submitting} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
@@ -94,12 +95,12 @@ const LoanRequest = ({ onBack }) => {
 
       {loans.length > 0 && (
         <div className="glass-panel p-6">
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Riwayat Pinjaman</h3>
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">{t('Riwayat Pinjaman')}</h3>
           <div className="space-y-3">
             {loans.map(l => (
               <div key={l.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
                 <div>
-                  <p className="text-sm font-bold text-white">Rp {Number(l.amount).toLocaleString()}</p>
+                  <p className="text-sm font-bold text-white">{t('Rp ')}{Number(l.amount).toLocaleString()}</p>
                   <p className="text-[10px] text-gray-500">{l.installment_count}x cicilan • Sisa: Rp {Number(l.remaining).toLocaleString()}</p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${

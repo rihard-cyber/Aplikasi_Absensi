@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Clock, CalendarCheck, AlertTriangle, Filter, Search, ChevronRight, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { MapPin, Clock, Filter, ChevronRight, ShieldCheck } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
+
+/** @type {(s: string) => string} Passthrough i18n - app is monolingual Indonesian */
+const t = (s) => s;
 
 const AttendanceHistory = () => {
   const [filter, setFilter] = useState('ALL'); // ALL, ONTIME, LATE, ABSENT
   const [historyData, setHistoryData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchHistory();
@@ -69,8 +72,8 @@ const AttendanceHistory = () => {
       <div className="flex flex-col gap-4">
         <div className="flex justify-between items-end">
           <div>
-            <h2 className="text-2xl font-serif font-bold text-white tracking-tight">Log Aktivitas</h2>
-            <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold mt-1">Biometric Attendance Logs</p>
+            <h2 className="text-2xl font-serif font-bold text-white tracking-tight">{t('Log Aktivitas')}</h2>
+            <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold mt-1">{t('Biometric Attendance Logs')}</p>
           </div>
           <button className="p-3 bg-white/5 border border-white/10 rounded-2xl text-gray-400 hover:text-[var(--aurora-3)] transition-all">
             <Filter size={20} />
@@ -78,9 +81,9 @@ const AttendanceHistory = () => {
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <StatMini label="Total" value={stats.total} color="var(--aurora-3)" active={filter === 'ALL'} onClick={() => setFilter('ALL')} />
-          <StatMini label="Hadir" value={stats.ontime} color="var(--success)" active={filter === 'ONTIME'} onClick={() => setFilter('ONTIME')} />
-          <StatMini label="Telat" value={stats.late} color="var(--warning)" active={filter === 'LATE'} onClick={() => setFilter('LATE')} />
+          <StatMini label={t('Total')} value={stats.total} color="var(--aurora-3)" active={filter === 'ALL'} onClick={() => setFilter('ALL')} />
+          <StatMini label={t('Hadir')} value={stats.ontime} color="var(--success)" active={filter === 'ONTIME'} onClick={() => setFilter('ONTIME')} />
+          <StatMini label={t('Telat')} value={stats.late} color="var(--warning)" active={filter === 'LATE'} onClick={() => setFilter('LATE')} />
         </div>
       </div>
 
@@ -90,8 +93,8 @@ const AttendanceHistory = () => {
           {filteredHistory.length === 0 ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-12 text-center glass-panel rounded-[32px] border border-white/5 mt-4">
               <Clock size={48} className="text-gray-600 mb-4" />
-              <h4 className="text-white font-bold text-sm">Belum Ada Log Presensi</h4>
-              <p className="text-gray-500 text-xs mt-1">Data absensi harian Anda akan tercatat di sini.</p>
+              <h4 className="text-white font-bold text-sm">{t('Belum Ada Log Presensi')}</h4>
+              <p className="text-gray-500 text-xs mt-1">{t('Data absensi harian Anda akan tercatat di sini.')}</p>
             </motion.div>
           ) : (
             <>
@@ -124,7 +127,7 @@ const AttendanceHistory = () => {
                       {record.biometric && (
                         <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--aurora-3)]/10 border border-[var(--aurora-3)]/20">
                           <ShieldCheck size={8} className="text-[var(--aurora-3)]" />
-                          <span className="text-[7px] text-[var(--aurora-3)] font-black tracking-tighter uppercase">Face ID Verified</span>
+                          <span className="text-[7px] text-[var(--aurora-3)] font-black tracking-tighter uppercase">{t('Face ID Verified')}</span>
                         </div>
                       )}
                     </div>
@@ -132,7 +135,7 @@ const AttendanceHistory = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-[#0B0C10]/40 p-4 rounded-[24px] border border-white/5 flex flex-col gap-2">
-                      <p className="text-[8px] text-gray-500 uppercase tracking-[0.2em] font-black">Time In</p>
+                      <p className="text-[8px] text-gray-500 uppercase tracking-[0.2em] font-black">{t('Time In')}</p>
                       <div className="flex items-center gap-3">
                         <div className={`p-2 rounded-xl bg-white/5 ${record.status === 'LATE' ? 'text-[var(--warning)]' : 'text-[var(--success)]'}`}>
                           <Clock size={16} />
@@ -141,7 +144,7 @@ const AttendanceHistory = () => {
                       </div>
                     </div>
                     <div className="bg-[#0B0C10]/40 p-4 rounded-[24px] border border-white/5 flex flex-col gap-2">
-                      <p className="text-[8px] text-gray-500 uppercase tracking-[0.2em] font-black">Time Out</p>
+                      <p className="text-[8px] text-gray-500 uppercase tracking-[0.2em] font-black">{t('Time Out')}</p>
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-xl bg-white/5 text-[var(--aurora-1)]">
                           <Clock size={16} />
@@ -152,7 +155,7 @@ const AttendanceHistory = () => {
                   </div>
 
                   <button className="w-full mt-4 py-3 flex items-center justify-center gap-2 text-[11px] text-gray-600 font-black uppercase tracking-[0.3em] hover:text-white transition-colors group">
-                    Lihat Detail <ChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                    {t('Lihat Detail')} <ChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                 </motion.div>
               ))}
@@ -176,10 +179,10 @@ const StatMini = ({ label, value, color, active, onClick }) => (
 
 const StatusBadge = ({ status }) => {
   const config = {
-    'ONTIME': { label: 'Tepat Waktu', color: 'var(--success)' },
-    'LATE': { label: 'Terlambat', color: 'var(--warning)' },
-    'ABSENT': { label: 'Mangkir', color: 'var(--danger)' },
-    'OUT_OF_RANGE': { label: 'Luar Radius', color: 'var(--danger)' }
+    'ONTIME': { label: t('Tepat Waktu'), color: 'var(--success)' },
+    'LATE': { label: t('Terlambat'), color: 'var(--warning)' },
+    'ABSENT': { label: t('Mangkir'), color: 'var(--danger)' },
+    'OUT_OF_RANGE': { label: t('Luar Radius'), color: 'var(--danger)' }
   };
   const safeStatus = typeof status === 'string' && Object.prototype.hasOwnProperty.call(config, status) ? status : 'ONTIME';
   const { label, color } = config[safeStatus];

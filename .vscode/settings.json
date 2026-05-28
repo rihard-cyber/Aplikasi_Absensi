@@ -45,6 +45,10 @@
   "securecoder.checkI18n": false,
   "securecoder.diagnostics.i18n": false,
   "securecoder.ignore": ["i18n", "no-literal-string", "jsx-no-hardcoded-content"],
+  "securecoder.enabled": false,
+  "securecoder.enable": false,
+  "google.securecoder.enabled": false,
+  "google.securecoder.enable": false,
 
   "sonarlint.disableTelemetry": true,
   "sonarlint.rules": {

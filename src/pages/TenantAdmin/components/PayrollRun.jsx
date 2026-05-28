@@ -7,6 +7,14 @@ import { logAudit } from '../../../utils/auditLogger';
 
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
+/** @type {(s: string) => string} Passthrough i18n — app is monolingual Indonesian */
+const t = (s) => s;
+
+const getMonthName = (monthNum) => {
+  const m = MONTHS.at((monthNum - 1) % 12);
+  return m || '';
+};
+
 const PayrollRun = () => {
   const [tenantId, setTenantId] = useState(null);
   const [periods, setPeriods] = useState([]);
@@ -104,7 +112,7 @@ const PayrollRun = () => {
     }).select().single();
 
     if (error) { toast('Gagal: ' + error.message, 'error'); return; }
-    const label = newPeriod.period_type === 'custom' ? (newPeriod.label || `${startDate} s.d ${endDate}`) : `${MONTHS[newPeriod.month-1]} ${newPeriod.year}`;
+    const label = newPeriod.period_type === 'custom' ? (newPeriod.label || `${startDate} s.d ${endDate}`) : `${getMonthName(newPeriod.month)} ${newPeriod.year}`;
     logAudit('CREATE_PAYROLL_PERIOD', { period: label, start_date: startDate, end_date: endDate, type: newPeriod.period_type });
     toast('Periode payroll dibuat', 'success');
     setShowNewPeriod(false);
@@ -134,10 +142,10 @@ const PayrollRun = () => {
     setSelectedPeriod(period);
     try {
       const { data: sals } = await supabase.from('employee_salaries').select('*, salary_components!inner(*)').eq('tenant_id', tenantId);
-      const salaryMap = {};
+      const salaryMap = new Map();
       (sals || []).forEach(s => {
-        if (!salaryMap[s.user_id]) salaryMap[s.user_id] = [];
-        salaryMap[s.user_id].push(s);
+        if (!salaryMap.has(s.user_id)) salaryMap.set(s.user_id, []);
+        salaryMap.get(s.user_id).push(s);
       });
 
       const { data: attendanceLogs } = await supabase.from('attendance_logs')
@@ -145,17 +153,17 @@ const PayrollRun = () => {
         .eq('tenant_id', tenantId)
         .gte('timestamp', period.start_date + 'T00:00:00Z')
         .lte('timestamp', period.end_date + 'T23:59:59Z');
-      const attendanceByUser = {};
+      const attendanceByUser = new Map();
       (attendanceLogs || []).forEach(log => {
-        if (!attendanceByUser[log.user_id]) attendanceByUser[log.user_id] = [];
-        attendanceByUser[log.user_id].push(log);
+        if (!attendanceByUser.has(log.user_id)) attendanceByUser.set(log.user_id, []);
+        attendanceByUser.get(log.user_id).push(log);
       });
 
       const { data: activeLoans } = await supabase.from('loans').select('*').eq('tenant_id', tenantId).eq('status', 'ACTIVE');
-      const loansByUser = {};
+      const loansByUser = new Map();
       (activeLoans || []).forEach(l => {
-        if (!loansByUser[l.user_id]) loansByUser[l.user_id] = [];
-        loansByUser[l.user_id].push(l);
+        if (!loansByUser.has(l.user_id)) loansByUser.set(l.user_id, []);
+        loansByUser.get(l.user_id).push(l);
       });
 
       const allowanceComponents = components.filter(c => c.type === 'ALLOWANCE');
@@ -165,9 +173,9 @@ const PayrollRun = () => {
       const allSummaries = [];
 
       for (const emp of profiles) {
-        const empSals = salaryMap[emp.id] || [];
-        const logs = attendanceByUser[emp.id] || [];
-        const empLoans = loansByUser[emp.id] || [];
+        const empSals = salaryMap.get(emp.id) || [];
+        const logs = attendanceByUser.get(emp.id) || [];
+        const empLoans = loansByUser.get(emp.id) || [];
         let totalAllowance = 0, totalDeduction = 0;
         const empResults = [];
 
@@ -275,9 +283,9 @@ const PayrollRun = () => {
 
       await supabase.from('payroll_periods').update({ status: 'LOCKED', processed_at: new Date().toISOString() }).eq('id', period.id).eq('tenant_id', tenantId);
 
-      logAudit('PROCESS_PAYROLL', { period: `${MONTHS[period.period_month-1]} ${period.period_year}`, employees: profiles.length, total_thp: allSummaries.reduce((s,r) => s+Number(r.take_home_pay), 0) });
+      logAudit('PROCESS_PAYROLL', { period: `${getMonthName(period.period_month)} ${period.period_year}`, employees: profiles.length, total_thp: allSummaries.reduce((s,r) => s+Number(r.take_home_pay), 0) });
 
-      toast(`Payroll ${MONTHS[period.period_month-1]} ${period.period_year} selesai diproses!`, 'success');
+      toast(`Payroll ${getMonthName(period.period_month)} ${period.period_year} selesai diproses!`, 'success');
       init();
     } catch (e) {
       console.error('Payroll error:', e);
@@ -297,36 +305,36 @@ const PayrollRun = () => {
 
   const markPaid = async (period) => {
     await supabase.from('payroll_periods').update({ status: 'PAID' }).eq('id', period.id).eq('tenant_id', tenantId);
-    logAudit('PAY_PAYROLL', { period: `${MONTHS[period.period_month-1]} ${period.period_year}` });
+    logAudit('PAY_PAYROLL', { period: `${getMonthName(period.period_month)} ${period.period_year}` });
     toast('Payroll ditandai sebagai LUNAS', 'success');
     setViewResult(null);
     init();
   };
 
   const getStatusBadge = (status) => {
-    const styles = { DRAFT: 'bg-gray-500/10 text-gray-400 border-gray-500/30', LOCKED: 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30', PAID: 'bg-blue-500/10 text-blue-400 border-blue-500/30' };
-    return <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${styles[status] || styles.DRAFT}`}>{status}</span>;
+    const styleClass = status === 'LOCKED' ? 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30' : status === 'PAID' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' : 'bg-gray-500/10 text-gray-400 border-gray-500/30';
+    return <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${styleClass}`}>{status}</span>;
   };
 
   const getPeriodLabel = (p) => {
     if (p.period_type === 'custom') return p.label || `${p.start_date} s.d ${p.end_date}`;
-    return `${MONTHS[p.period_month - 1]} ${p.period_year}`;
+    return `${getMonthName(p.period_month)} ${p.period_year}`;
   };
 
-  const groupedResults = {};
+  const groupedResults = new Map();
   results.forEach(r => {
-    if (!groupedResults[r.user_id]) groupedResults[r.user_id] = [];
-    groupedResults[r.user_id].push(r);
+    if (!groupedResults.has(r.user_id)) groupedResults.set(r.user_id, []);
+    groupedResults.get(r.user_id).push(r);
   });
 
   return (
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-8">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Proses Payroll</h2>
-          <p className="text-sm text-gray-400 mt-1">Kalkulasi gaji otomatis dari data absensi & komponen gaji</p>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('Proses Payroll')}</h2>
+          <p className="text-sm text-gray-400 mt-1">{t('Kalkulasi gaji otomatis dari data absensi & komponen gaji')}</p>
         </div>
-        <button onClick={() => { setShowNewPeriod(true); setNewPeriod({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), period_type: 'monthly', start_date: '', end_date: '', label: '' }); }} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> Periode Baru</button>
+        <button onClick={() => { setShowNewPeriod(true); setNewPeriod({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), period_type: 'monthly', start_date: '', end_date: '', label: '' }); }} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> {t('Periode Baru')}</button>
       </div>
 
       <AnimatePresence>
@@ -334,22 +342,22 @@ const PayrollRun = () => {
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="mb-8 p-6 bg-white/5 rounded-2xl border border-white/10">
             <div className="flex flex-wrap gap-4 items-end">
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tipe Periode</label>
+                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tipe Periode')}</label>
                 <select value={newPeriod.period_type} onChange={e => setNewPeriod({...newPeriod, period_type: e.target.value})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
-                  <option value="monthly">Bulanan</option>
-                  <option value="custom">Kustom (Tanggal)</option>
+                  <option value="monthly">{t('Bulanan')}</option>
+                  <option value="custom">{t('Kustom (Tanggal)')}</option>
                 </select>
               </div>
               {newPeriod.period_type === 'monthly' ? (
                 <>
                   <div>
-                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Bulan</label>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Bulan')}</label>
                     <select value={newPeriod.month} onChange={e => setNewPeriod({...newPeriod, month: Number(e.target.value)})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
                       {MONTHS.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tahun</label>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tahun')}</label>
                     <select value={newPeriod.year} onChange={e => setNewPeriod({...newPeriod, year: Number(e.target.value)})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
                       {[2024,2025,2026,2027,2028].map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
@@ -358,22 +366,22 @@ const PayrollRun = () => {
               ) : (
                 <>
                   <div>
-                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tanggal Mulai</label>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tanggal Mulai')}</label>
                     <input type="date" value={newPeriod.start_date} onChange={e => setNewPeriod({...newPeriod, start_date: e.target.value})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none" />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tanggal Selesai</label>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tanggal Selesai')}</label>
                     <input type="date" value={newPeriod.end_date} onChange={e => setNewPeriod({...newPeriod, end_date: e.target.value})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none" />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Label</label>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Label')}</label>
                     <input type="text" value={newPeriod.label} onChange={e => setNewPeriod({...newPeriod, label: e.target.value})} placeholder="Contoh: Proyek A" className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none w-40" />
                   </div>
                 </>
               )}
               <div className="flex gap-2">
-                <button onClick={createPeriod} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold">Buat Periode</button>
-                <button onClick={() => setShowNewPeriod(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">Batal</button>
+                <button onClick={createPeriod} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold">{t('Buat Periode')}</button>
+                <button onClick={() => setShowNewPeriod(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">{t('Batal')}</button>
               </div>
             </div>
           </motion.div>
@@ -385,36 +393,36 @@ const PayrollRun = () => {
           <div key={p.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-5 bg-white/5 rounded-2xl border border-white/10 hover:border-white/20 transition-all">
             <div className="flex items-center gap-6">
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold ${p.period_type === 'custom' ? 'bg-gradient-to-br from-[var(--warning)] to-[var(--aurora-2)]' : 'bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)]'}`}>
-                {p.period_type === 'custom' ? <CalendarRange size={20} /> : MONTHS[p.period_month - 1]?.slice(0,3)}
+                {p.period_type === 'custom' ? <CalendarRange size={20} /> : getMonthName(p.period_month)?.slice(0,3)}
               </div>
               <div>
                 <h4 className="text-white font-bold">{getPeriodLabel(p)}</h4>
-                <p className="text-[10px] text-gray-500">{p.start_date} s.d {p.end_date} • {getStatusBadge(p.status)} {p.period_type === 'custom' && <span className="text-[var(--warning)]">• Kustom</span>}</p>
+                <p className="text-[10px] text-gray-500">{p.start_date} s.d {p.end_date} • {getStatusBadge(p.status)} {p.period_type === 'custom' && <span className="text-[var(--warning)]">• {t('Kustom')}</span>}</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
               {p.status === 'DRAFT' && (
                 <button onClick={() => runPayroll(p)} disabled={isProcessing} className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[10px] font-bold flex items-center gap-2 hover:shadow-lg transition-all disabled:opacity-50">
-                  {isProcessing && selectedPeriod?.id === p.id ? <Loader2 size={14} className="animate-spin" /> : <Calculator size={14} />} Proses Payroll
+                  {isProcessing && selectedPeriod?.id === p.id ? <Loader2 size={14} className="animate-spin" /> : <Calculator size={14} />} {t('Proses Payroll')}
                 </button>
               )}
               {p.status !== 'DRAFT' && (
-                <button onClick={() => viewPayroll(p)} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-[10px] font-bold flex items-center gap-2 hover:bg-white/10 transition-all"><Eye size={14} /> Lihat Hasil</button>
+                <button onClick={() => viewPayroll(p)} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-[10px] font-bold flex items-center gap-2 hover:bg-white/10 transition-all"><Eye size={14} /> {t('Lihat Hasil')}</button>
               )}
             </div>
           </div>
         ))}
-        {!periods.length && <p className="text-center text-gray-500 py-8 text-sm">Belum ada periode payroll. Buat periode baru untuk memulai.</p>}
+        {!periods.length && <p className="text-center text-gray-500 py-8 text-sm">{t('Belum ada periode payroll. Buat periode baru untuk memulai.')}</p>}
       </div>
 
       <AnimatePresence>
         {viewResult && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="border-t border-white/10 pt-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-              <h3 className="text-xl font-serif font-bold text-white">Hasil Payroll • {getPeriodLabel(viewResult)}</h3>
+              <h3 className="text-xl font-serif font-bold text-white">{t('Hasil Payroll • ')}{getPeriodLabel(viewResult)}</h3>
               <div className="flex flex-wrap gap-3">
-                {viewResult.status === 'LOCKED' && <button onClick={() => markPaid(viewResult)} className="px-5 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-bold flex items-center gap-2 whitespace-nowrap"><CheckCircle2 size={14} /> Tandai Lunas</button>}
-                <button onClick={() => setViewResult(null)} className="px-5 py-2.5 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-[10px] font-bold whitespace-nowrap">Tutup</button>
+                {viewResult.status === 'LOCKED' && <button onClick={() => markPaid(viewResult)} className="px-5 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-bold flex items-center gap-2 whitespace-nowrap"><CheckCircle2 size={14} /> {t('Tandai Lunas')}</button>}
+                <button onClick={() => setViewResult(null)} className="px-5 py-2.5 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-[10px] font-bold whitespace-nowrap">{t('Tutup')}</button>
               </div>
             </div>
 
@@ -422,27 +430,27 @@ const PayrollRun = () => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-white/5 text-gray-500 uppercase tracking-widest">
                   <tr>
-                    <th className="p-4 font-bold">Karyawan</th>
-                    <th className="p-4 font-bold">NIP</th>
-                    <th className="p-4 font-bold text-right">Jam Lembur</th>
-                    <th className="p-4 font-bold text-right">Tunjangan</th>
-                    <th className="p-4 font-bold text-right">Potongan</th>
-                    <th className="p-4 font-bold text-right">Take Home Pay</th>
-                    <th className="p-4 font-bold text-center">Detail</th>
+                    <th className="p-4 font-bold">{t('Karyawan')}</th>
+                    <th className="p-4 font-bold">{t('NIP')}</th>
+                    <th className="p-4 font-bold text-right">{t('Jam Lembur')}</th>
+                    <th className="p-4 font-bold text-right">{t('Tunjangan')}</th>
+                    <th className="p-4 font-bold text-right">{t('Potongan')}</th>
+                    <th className="p-4 font-bold text-right">{t('Take Home Pay')}</th>
+                    <th className="p-4 font-bold text-center">{t('Detail')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {summaries.map(s => {
-                    const userResults = groupedResults[s.user_id] || [];
+                    const userResults = groupedResults.get(s.user_id) || [];
                     const isExpanded = expandedUser === s.user_id;
                     return (
                       <tr key={s.id} className="hover:bg-white/[0.02]">
                         <td className="p-4 font-bold text-white">{s.profiles?.full_name}</td>
                         <td className="p-4 text-gray-400">{s.profiles?.nip}</td>
                         <td className="p-4 text-right text-[var(--aurora-3)] font-mono font-bold">{Number(s.total_overtime_hours).toFixed(1)}</td>
-                        <td className="p-4 text-right text-[var(--success)] font-mono font-bold">Rp {Number(s.total_allowance).toLocaleString()}</td>
-                        <td className="p-4 text-right text-[var(--danger)] font-mono font-bold">Rp {Number(s.total_deduction).toLocaleString()}</td>
-                        <td className="p-4 text-right text-white font-mono font-bold">Rp {Number(s.take_home_pay).toLocaleString()}</td>
+                        <td className="p-4 text-right text-[var(--success)] font-mono font-bold">{t('Rp ')}{Number(s.total_allowance).toLocaleString()}</td>
+                        <td className="p-4 text-right text-[var(--danger)] font-mono font-bold">{t('Rp ')}{Number(s.total_deduction).toLocaleString()}</td>
+                        <td className="p-4 text-right text-white font-mono font-bold">{t('Rp ')}{Number(s.take_home_pay).toLocaleString()}</td>
                         <td className="p-4 text-center">
                           <button onClick={() => setExpandedUser(isExpanded ? null : s.user_id)} className={`transition-all text-[var(--aurora-3)] hover:text-white ${isExpanded ? 'rotate-90' : ''}`}>
                             <ChevronRight size={14} />
@@ -457,26 +465,26 @@ const PayrollRun = () => {
 
             {expandedUser && (
               <div className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/10">
-                <h4 className="text-sm font-bold text-white mb-3">Rincian Komponen Gaji</h4>
+                <h4 className="text-sm font-bold text-white mb-3">{t('Rincian Komponen Gaji')}</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead className="bg-white/5 text-gray-500 uppercase tracking-widest">
                       <tr>
-                        <th className="p-3 font-bold">Komponen</th>
-                        <th className="p-3 font-bold">Tipe</th>
-                        <th className="p-3 font-bold text-right">Jumlah</th>
+                        <th className="p-3 font-bold">{t('Komponen')}</th>
+                        <th className="p-3 font-bold">{t('Tipe')}</th>
+                        <th className="p-3 font-bold text-right">{t('Jumlah')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                      {(groupedResults[expandedUser] || []).map(r => (
+                      {(groupedResults.get(expandedUser) || []).map(r => (
                         <tr key={r.id} className="hover:bg-white/[0.02]">
                           <td className="p-3 text-white font-bold">{r.component_name}</td>
                           <td className="p-3">
                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${r.component_type === 'ALLOWANCE' ? 'bg-[var(--success)]/10 text-[var(--success)]' : 'bg-[var(--danger)]/10 text-[var(--danger)]'}`}>
-                              {r.component_type === 'ALLOWANCE' ? 'Tunjangan' : 'Potongan'}
+                              {r.component_type === 'ALLOWANCE' ? t('Tunjangan') : t('Potongan')}
                             </span>
                           </td>
-                          <td className="p-3 text-right font-mono font-bold text-white">Rp {Number(r.amount).toLocaleString()}</td>
+                          <td className="p-3 text-right font-mono font-bold text-white">{t('Rp ')}{Number(r.amount).toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>

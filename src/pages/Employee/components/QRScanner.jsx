@@ -33,6 +33,8 @@ const QRScanner = ({ onBack }) => {
     if (token) setManualCode(token);
   }, [location.search]);
 
+  const t = (s) => s;
+
   const handleManualSubmit = async (codeOverride) => {
     const rawCode = typeof codeOverride === 'string' ? codeOverride : manualCode;
     if (!rawCode.trim()) { toast('Masukkan kode QR', 'error'); return; }
@@ -137,23 +139,23 @@ const QRScanner = ({ onBack }) => {
         <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center mx-auto mb-6 shadow-lg">
           <QrCode size={36} className="text-white" />
         </div>
-        <h2 className="text-2xl font-serif font-bold text-white mb-2">Absensi via QR Code</h2>
-        <p className="text-sm text-gray-400 mb-8">Scan QR code yang tersedia di lokasi kerja Anda</p>
+        <h2 className="text-2xl font-serif font-bold text-white mb-2">{t('Absensi via QR Code')}</h2>
+        <p className="text-sm text-gray-400 mb-8">{t('Scan QR code yang tersedia di lokasi kerja Anda')}</p>
 
         <div className="w-full space-y-4">
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 text-left">Masukkan Kode QR</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 text-left">{t('Masukkan Kode QR')}</label>
             <div className="flex gap-2">
               <input value={manualCode} onChange={e => setManualCode(e.target.value)}
                 placeholder="Tempel URL atau kode QR di sini..."
                 onKeyDown={e => e.key === 'Enter' && handleManualSubmit()}
-                className="flex-1 bg-[#1A1C23] border border-white/10 rounded-xl px-0 py-4 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+                className="flex-1 bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
               <button onClick={handleManualSubmit} disabled={status === 'scanning'}
-                className="px-0 py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs disabled:opacity-50">
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs disabled:opacity-50">
                 {status === 'scanning' ? <Loader2 size={18} className="animate-spin" /> : 'Absen'}
               </button>
             </div>
-            <p className="text-[9px] text-gray-600 mt-2 text-left">Atau scan langsung dari kamera (jika tersedia)</p>
+            <p className="text-[9px] text-gray-600 mt-2 text-left">{t('Atau scan langsung dari kamera (jika tersedia)')}</p>
           </div>
 
           <div className="border-t border-white/10 pt-6">
@@ -163,15 +165,15 @@ const QRScanner = ({ onBack }) => {
                 <ShieldCheck size={20} />
               </div>
               <div>
-                <p className="text-xs font-bold text-white">Verifikasi Wajah Aktif</p>
-                <p className="text-[9px] text-gray-500 mt-0.5">Setelah QR terverifikasi, sistem akan meminta konfirmasi wajah Anda untuk keamanan tambahan.</p>
+                <p className="text-xs font-bold text-white">{t('Verifikasi Wajah Aktif')}</p>
+                <p className="text-[9px] text-gray-500 mt-0.5">{t('Setelah QR terverifikasi, sistem akan meminta konfirmasi wajah Anda untuk keamanan tambahan.')}</p>
               </div>
             </div>
             <div className="bg-white/5 rounded-2xl p-6 border border-dashed border-white/10">
               <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
                 <Camera size={28} className="text-gray-500" />
               </div>
-              <p className="text-xs text-gray-500">Arahkan kamera ke QR code yang tersedia di lokasi</p>
+              <p className="text-xs text-gray-500">{t('Arahkan kamera ke QR code yang tersedia di lokasi')}</p>
             </div>
           </div>
         </div>
@@ -180,10 +182,10 @@ const QRScanner = ({ onBack }) => {
       <div className="glass-panel p-5">
         <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Smartphone size={16} /> Cara Penggunaan</h3>
         <ol className="text-xs text-gray-400 space-y-2 list-decimal list-inside">
-          <li>Buka halaman QR Attendance di aplikasi</li>
-          <li>Scan QR code yang terpajang di lokasi kerja (pintu masuk, resepsionis)</li>
-          <li>Atau minta URL QR dari admin dan tempel di kolom di atas</li>
-          <li>Konfirmasi absensi masuk otomatis tercatat</li>
+          <li>{t('Buka halaman QR Attendance di aplikasi')}</li>
+          <li>{t('Scan QR code yang terpajang di lokasi kerja (pintu masuk, resepsionis)')}</li>
+          <li>{t('Atau minta URL QR dari admin dan tempel di kolom di atas')}</li>
+          <li>{t('Konfirmasi absensi masuk otomatis tercatat')}</li>
         </ol>
       </div>
 
@@ -203,9 +205,9 @@ const QRScanner = ({ onBack }) => {
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md">
             <motion.div initial={{ y: 20 }} animate={{ y: 0 }} className="glass-panel p-10 text-center border border-[var(--danger)]/30">
               <XCircle size={64} className="text-[var(--danger)] mx-auto mb-4" />
-              <h3 className="text-xl font-serif font-bold text-white mb-2">Gagal</h3>
-              <p className="text-sm text-gray-400">Kode QR tidak valid. Coba lagi.</p>
-              <button onClick={() => setStatus('idle')} className="mt-6 px-0 py-3 rounded-xl bg-white/10 text-white text-xs font-bold">Tutup</button>
+              <h3 className="text-xl font-serif font-bold text-white mb-2">{t('Gagal')}</h3>
+              <p className="text-sm text-gray-400">{t('Kode QR tidak valid. Coba lagi.')}</p>
+              <button onClick={() => setStatus('idle')} className="mt-6 px-6 py-3 rounded-xl bg-white/10 text-white text-xs font-bold">{t('Tutup')}</button>
             </motion.div>
           </motion.div>
         )}
