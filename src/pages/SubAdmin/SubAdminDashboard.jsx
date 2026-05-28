@@ -231,7 +231,7 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
   ];
 
   return (
-    <div className={`min-h-screen bg-[#0B0C10] text-white ${isEmbedded ? '' : 'p-4 sm:p-6'}`}>
+    <div className={`min-h-screen bg-[#0B0C10] text-white ${isEmbedded ? '' : 'p-4 sm:p-6'} ${isImpersonating && !isEmbedded ? 'pt-10' : ''}`}>
       <div className="max-w-6xl mx-auto">
         {!isEmbedded && (
           <header className="flex justify-between items-center mb-6 bg-white/5 p-4 sm:p-6 rounded-3xl border border-white/10">

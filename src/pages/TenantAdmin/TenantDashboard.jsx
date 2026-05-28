@@ -257,7 +257,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
 
       {/* Main Content */}
       <main className="flex-1 p-0 z-10 overflow-y-auto">
-        <div className="w-full px-4 mt-2 sm:mt-4">
+        <div className={`w-full px-4 ${isImpersonating ? 'pt-10 mt-2 sm:mt-4' : 'mt-2 sm:mt-4'}`}>
           <Suspense fallback={<div className="p-20 text-center"><div className="w-8 h-8 border-2 border-[var(--aurora-3)] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
             {activeTab === 'home' && <DashboardHome onNavigate={(tab) => { setActiveTab(tab); setIsSidebarOpen(false); }} />}
             {activeTab === 'profile' && <CompanyProfile onUpdate={fetchTenantData} />}

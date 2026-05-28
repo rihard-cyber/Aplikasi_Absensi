@@ -10,11 +10,38 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
+  componentDidMount() {
+    try {
+      // Clear chunk load reload flag on successful load
+      sessionStorage.removeItem('chunk_load_failed_reload');
+    } catch {}
+  }
+
   componentDidCatch(error, errorInfo) {
     this.setState({ errorInfo });
     console.error("=== CRITICAL UI CRASH ===");
     console.error("Error:", error);
     console.error("Component Stack:", errorInfo?.componentStack);
+
+    // Auto reload on chunk load failure (SPA deployment caching issue)
+    const errorMsg = error?.toString() || '';
+    if (
+      errorMsg.includes('dynamically imported module') || 
+      errorMsg.includes('Failed to fetch dynamically imported module') || 
+      errorMsg.includes('chunk') ||
+      errorMsg.includes('loading chunk')
+    ) {
+      try {
+        const reloadFlag = sessionStorage.getItem('chunk_load_failed_reload');
+        if (!reloadFlag) {
+          sessionStorage.setItem('chunk_load_failed_reload', 'true');
+          console.warn("Chunk load failed, auto reloading to fetch latest assets...");
+          window.location.reload();
+        }
+      } catch (e) {
+        console.error("Failed to perform auto reload", e);
+      }
+    }
   }
 
   handleReset = () => {

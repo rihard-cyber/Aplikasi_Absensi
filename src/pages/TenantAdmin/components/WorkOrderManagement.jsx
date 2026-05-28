@@ -157,8 +157,8 @@ const WorkOrderManagement = () => {
       </div>
 
       {showForm && (
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowForm(false)}>
-          <div className="w-full max-w-lg glass-panel p-8 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="fixed inset-0 z-[9999] overflow-y-auto bg-black/80 backdrop-blur-sm p-4 flex justify-center items-start" onClick={() => setShowForm(false)}>
+          <div className="w-full max-w-lg glass-panel p-8 my-auto relative" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-serif font-bold text-white">{editingId ? 'Edit' : 'Buat'} Work Order</h3>
               <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>
@@ -235,8 +235,8 @@ const WorkOrderManagement = () => {
       </div>
 
       {showDetail && selectedWO && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowDetail(false)}>
-          <div className="w-full max-w-2xl glass-panel p-8 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[9999] overflow-y-auto bg-black/80 backdrop-blur-sm p-4 flex justify-center items-start" onClick={() => setShowDetail(false)}>
+          <div className="w-full max-w-2xl glass-panel p-8 my-auto relative" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-serif font-bold text-white">{selectedWO.title}</h3>
               <button onClick={() => setShowDetail(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>

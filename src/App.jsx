@@ -383,7 +383,7 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
       <RouteLoadingBar />
 
       {/* GLOBAL BACK BUTTON — visible on dashboards, resets to home */}
-      {isDashboard && (
+      {isDashboard && location.pathname === '/app' && (
         <button onClick={() => {
           // Emit a custom event that dashboard components can listen for
           window.dispatchEvent(new CustomEvent('go-dashboard-home'));
