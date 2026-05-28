@@ -24,17 +24,28 @@ const VisitorManagement = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-    if (!p?.tenant_id && !isGod) return;
-    if (p?.tenant_id) setTenantId(p.tenant_id);
+    
+    let activeTenantId = p?.tenant_id;
+    if (!activeTenantId && isGod) {
+      try {
+        const impTenant = JSON.parse(localStorage.getItem('impersonated_tenant'));
+        if (impTenant?.id) activeTenantId = impTenant.id;
+      } catch (e) {
+        console.error("Failed to parse impersonated tenant", e);
+      }
+    }
+
+    if (!activeTenantId && !isGod) return;
+    if (activeTenantId) setTenantId(activeTenantId);
 
     let q1 = supabase.from('visitors').select('*, profiles!host_id(full_name, nip)');
-    if (p?.tenant_id) q1 = q1.eq('tenant_id', p.tenant_id);
+    if (activeTenantId) q1 = q1.eq('tenant_id', activeTenantId);
     q1 = q1.order('visit_date', { ascending: false });
     const { data: v } = await q1;
     if (v) setVisitors(v);
 
     let q2 = supabase.from('profiles').select('id, full_name, nip');
-    if (p?.tenant_id) q2 = q2.eq('tenant_id', p.tenant_id);
+    if (activeTenantId) q2 = q2.eq('tenant_id', activeTenantId);
     q2 = q2.in('role', ['EMPLOYEE', 'SUB_ADMIN']);
     const { data: e } = await q2;
     if (e) setEmployees(e);

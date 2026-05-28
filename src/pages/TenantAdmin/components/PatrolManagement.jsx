@@ -39,9 +39,20 @@ const PatrolManagement = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-    if (!profile?.tenant_id && !isGod) return;
-    if (profile?.tenant_id) setTenantId(profile.tenant_id);
-    const tid = profile?.tenant_id;
+    
+    let activeTenantId = profile?.tenant_id;
+    if (!activeTenantId && isGod) {
+      try {
+        const impTenant = JSON.parse(localStorage.getItem('impersonated_tenant'));
+        if (impTenant?.id) activeTenantId = impTenant.id;
+      } catch (e) {
+        console.error("Failed to parse impersonated tenant", e);
+      }
+    }
+
+    if (!activeTenantId && !isGod) return;
+    if (activeTenantId) setTenantId(activeTenantId);
+    const tid = activeTenantId;
 
     const [cpData, rData, lData, iData, hData, pData] = await Promise.all([
       tid ? supabase.from('patrol_checkpoints').select('*').eq('tenant_id', tid).order('name') : Promise.resolve({ data: [] }),

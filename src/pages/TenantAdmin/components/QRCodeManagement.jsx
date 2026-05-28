@@ -20,16 +20,27 @@ const QRCodeManagement = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-    if (!p?.tenant_id && !isGod) return;
-    if (p?.tenant_id) setTenantId(p.tenant_id);
+    
+    let activeTenantId = p?.tenant_id;
+    if (!activeTenantId && isGod) {
+      try {
+        const impTenant = JSON.parse(localStorage.getItem('impersonated_tenant'));
+        if (impTenant?.id) activeTenantId = impTenant.id;
+      } catch (e) {
+        console.error("Failed to parse impersonated tenant", e);
+      }
+    }
 
-    let q1 = supabase.from('projects').select('id, name, code');
-    if (p?.tenant_id) q1 = q1.eq('tenant_id', p.tenant_id);
+    if (!activeTenantId && !isGod) return;
+    if (activeTenantId) setTenantId(activeTenantId);
+
+    let q1 = supabase.from('projects').select('id, name, code, tenant_id');
+    if (activeTenantId) q1 = q1.eq('tenant_id', activeTenantId);
     const { data: projs } = await q1;
     if (projs) setProjects(projs);
 
     let q2 = supabase.from('qr_attendance_tokens').select('*, projects(name)');
-    if (p?.tenant_id) q2 = q2.eq('tenant_id', p.tenant_id);
+    if (activeTenantId) q2 = q2.eq('tenant_id', activeTenantId);
     q2 = q2.order('created_at', { ascending: false });
     const { data: t } = await q2;
     if (t) setTokens(t);
@@ -41,8 +52,9 @@ const QRCodeManagement = () => {
     crypto.getRandomValues(randomBytes);
     const token = Array.from(randomBytes, b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
     const project = projects.find(p => p.id === newToken.project_id);
+    const activeTenantId = tenantId || project?.tenant_id;
     const { error } = await supabase.from('qr_attendance_tokens').insert({
-      tenant_id: tenantId, project_id: newToken.project_id, token,
+      tenant_id: activeTenantId, project_id: newToken.project_id, token,
       description: newToken.description || `QR ${project?.name || ''}`, is_active: true
     });
     if (error) { toast('Gagal: ' + error.message, 'error'); return; }

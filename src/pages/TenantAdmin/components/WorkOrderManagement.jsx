@@ -36,17 +36,28 @@ const WorkOrderManagement = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
-    if (!p?.tenant_id && !isGod) return;
-    if (p?.tenant_id) setTenantId(p.tenant_id);
+    
+    let activeTenantId = p?.tenant_id;
+    if (!activeTenantId && isGod) {
+      try {
+        const impTenant = JSON.parse(localStorage.getItem('impersonated_tenant'));
+        if (impTenant?.id) activeTenantId = impTenant.id;
+      } catch (e) {
+        console.error("Failed to parse impersonated tenant", e);
+      }
+    }
+
+    if (!activeTenantId && !isGod) return;
+    if (activeTenantId) setTenantId(activeTenantId);
 
     let q1 = supabase.from('work_orders').select('*, profiles!assigned_to(full_name, nip)');
-    if (p?.tenant_id) q1 = q1.eq('tenant_id', p.tenant_id);
+    if (activeTenantId) q1 = q1.eq('tenant_id', activeTenantId);
     q1 = q1.order('created_at', { ascending: false });
     const { data: w } = await q1;
     if (w) setWorkOrders(w);
 
     let q2 = supabase.from('profiles').select('id, full_name, nip');
-    if (p?.tenant_id) q2 = q2.eq('tenant_id', p.tenant_id);
+    if (activeTenantId) q2 = q2.eq('tenant_id', activeTenantId);
     q2 = q2.or('role.eq.TEKNISI,role.eq.SUB_ADMIN,role.eq.EMPLOYEE');
     const { data: t } = await q2;
     if (t) setTechnicians(t);

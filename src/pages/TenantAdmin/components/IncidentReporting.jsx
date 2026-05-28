@@ -52,18 +52,29 @@ const IncidentReporting = ({ onBack }) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const { data: p } = await supabase.from('profiles').select('id, tenant_id').eq('auth_id', session.user.id).maybeSingle();
-    if (!p?.tenant_id && !isGod) return;
+    
+    let activeTenantId = p?.tenant_id;
+    if (!activeTenantId && isGod) {
+      try {
+        const impTenant = JSON.parse(localStorage.getItem('impersonated_tenant'));
+        if (impTenant?.id) activeTenantId = impTenant.id;
+      } catch (e) {
+        console.error("Failed to parse impersonated tenant", e);
+      }
+    }
+
+    if (!activeTenantId && !isGod) return;
     if (p) setProfileId(p.id);
-    if (p?.tenant_id) setTenantId(p.tenant_id);
+    if (activeTenantId) setTenantId(activeTenantId);
 
     let q = supabase.from('incident_reports').select('*, profiles!reported_by(full_name, nip)');
-    if (p?.tenant_id) q = q.eq('tenant_id', p.tenant_id);
+    if (activeTenantId) q = q.eq('tenant_id', activeTenantId);
     q = q.order('created_at', { ascending: false });
     const { data: r } = await q;
     if (r) setIncidents(r);
 
     let q2 = supabase.from('profiles').select('id, full_name, nip');
-    if (p?.tenant_id) q2 = q2.eq('tenant_id', p.tenant_id);
+    if (activeTenantId) q2 = q2.eq('tenant_id', activeTenantId);
     q2 = q2.in('role', ['EMPLOYEE', 'SUB_ADMIN']);
     const { data: pr } = await q2;
     if (pr) setProfiles(pr);
