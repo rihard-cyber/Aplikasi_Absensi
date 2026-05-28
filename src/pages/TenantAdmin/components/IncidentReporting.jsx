@@ -67,7 +67,7 @@ const IncidentReporting = ({ onBack }) => {
     if (p) setProfileId(p.id);
     if (activeTenantId) setTenantId(activeTenantId);
 
-    let q = supabase.from('incident_reports').select('*, profiles!reported_by(full_name, nip)');
+    let q = supabase.from('incident_reports').select('*, profiles!reporter_id(full_name, nip)');
     if (activeTenantId) q = q.eq('tenant_id', activeTenantId);
     q = q.order('created_at', { ascending: false });
     const { data: r } = await q;
@@ -83,10 +83,18 @@ const IncidentReporting = ({ onBack }) => {
   const handleSubmit = async () => {
     if (!form.location || !form.description) { toast('Lokasi & deskripsi wajib', 'error'); return; }
     try {
-      await supabase.from('incident_reports').insert({
-        ...form, tenant_id: tenantId, reported_by: profileId,
-        status: 'Reported',
-      });
+      const insertData = {
+        incident_type: form.incident_type,
+        location: form.location,
+        description: form.description,
+        severity: form.severity,
+        photos: form.photo_url ? [form.photo_url] : [],
+        tenant_id: tenantId,
+        reporter_id: profileId,
+        status: 'Reported'
+      };
+      const { error } = await supabase.from('incident_reports').insert(insertData);
+      if (error) throw error;
       toast('Laporan insiden dikirim', 'success');
       logAudit('REPORT_INCIDENT', { type: form.incident_type, severity: form.severity });
       setShowForm(false);
@@ -279,7 +287,7 @@ const IncidentReporting = ({ onBack }) => {
                 </div>
               </div>
               <div className="flex items-center gap-2 ml-4">
-                {inc.photo_url && <a href={inc.photo_url} target="_blank" className="p-2 hover:bg-white/10 rounded-lg text-[var(--aurora-3)]"><Eye size={14} /></a>}
+                {inc.photos && inc.photos.length > 0 && <a href={inc.photos[0]} target="_blank" className="p-2 hover:bg-white/10 rounded-lg text-[var(--aurora-3)]"><Eye size={14} /></a>}
                 {nextStatus.get(inc.status) && (
                   <button onClick={() => handleStatusUpdate(inc.id, nextStatus.get(inc.status))}
                     className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[9px] font-bold text-gray-400 hover:text-white">

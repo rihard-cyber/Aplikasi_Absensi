@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, QrCode, Copy, Trash2, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Plus, QrCode, Copy, Trash2, CheckCircle2, XCircle, Loader2, Eye, Printer, Download, X } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
@@ -11,6 +11,7 @@ const QRCodeManagement = () => {
   const [showForm, setShowForm] = useState(false);
   const [newToken, setNewToken] = useState({ project_id: '', description: '' });
   const [copiedId, setCopiedId] = useState(null);
+  const [activeQRModal, setActiveQRModal] = useState(null);
   const toast = useToast();
 
   useEffect(() => { fetchData(); }, []);
@@ -90,6 +91,67 @@ const QRCodeManagement = () => {
     return `${base}?tenant_id=${tenantId || ''}&location=${encodeURIComponent(projectName)}`;
   };
 
+  const downloadQRCode = async (url, filename) => {
+    try {
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+      const response = await fetch(qrApiUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename || 'qrcode.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+      toast('QR Code berhasil diunduh!', 'success');
+    } catch (err) {
+      console.error(err);
+      toast('Gagal mengunduh QR Code', 'error');
+    }
+  };
+
+  const printQRCode = (url, title) => {
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print QR Code - ${title}</title>
+          <style>
+            body {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 100vh;
+              margin: 0;
+              font-family: sans-serif;
+            }
+            .container {
+              border: 2px solid #ccc;
+              border-radius: 16px;
+              padding: 30px;
+              text-align: center;
+              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            h2 { margin-bottom: 5px; color: #333; }
+            p { margin-top: 0; color: #666; font-size: 14px; margin-bottom: 20px; }
+            img { width: 250px; height: 250px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h2>${title}</h2>
+            <p>Scan barcode ini untuk menggunakan layanan</p>
+            <img src="${qrApiUrl}" onload="window.print(); window.close();" />
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   return (
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-8">
@@ -147,6 +209,9 @@ const QRCodeManagement = () => {
                   <div className="font-mono text-[9px] text-green-400 break-all flex-1 select-all">
                     {qrUrl(t.token)}
                   </div>
+                  <button onClick={() => setActiveQRModal({ url: qrUrl(t.token), title: `QR Absensi - ${t.description || ''}`, filename: `qr-absen-${t.token}.png` })} className="p-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-colors" title="Lihat QR Code">
+                    <QrCode size={12} />
+                  </button>
                   <button onClick={() => handleCopy(qrUrl(t.token), `att-${t.id}`)} className="p-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-colors">
                     {copiedId === `att-${t.id}` ? <CheckCircle2 size={12} className="text-[var(--success)]" /> : <Copy size={12} />}
                   </button>
@@ -159,6 +224,9 @@ const QRCodeManagement = () => {
                   <div className="font-mono text-[9px] text-[var(--aurora-3)] break-all flex-1 select-all">
                     {publicPortalUrl(t.projects?.name || '')}
                   </div>
+                  <button onClick={() => setActiveQRModal({ url: publicPortalUrl(t.projects?.name || ''), title: `Portal Publik - ${t.projects?.name || ''}`, filename: `qr-portal-${t.projects?.name || 'layanan'}.png` })} className="p-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-colors" title="Lihat QR Code">
+                    <QrCode size={12} />
+                  </button>
                   <button onClick={() => handleCopy(publicPortalUrl(t.projects?.name || ''), `pub-${t.id}`)} className="p-1.5 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-colors">
                     {copiedId === `pub-${t.id}` ? <CheckCircle2 size={12} className="text-[var(--success)]" /> : <Copy size={12} />}
                   </button>
@@ -176,6 +244,61 @@ const QRCodeManagement = () => {
         ))}
         {!tokens.length && <p className="text-center text-gray-500 py-8 col-span-full text-sm">Belum ada QR token. Buat token untuk memulai absensi via scan.</p>}
       </div>
+
+      {/* Visual QR Code Modal */}
+      {activeQRModal && (
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+          onClick={() => setActiveQRModal(null)}
+        >
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            className="bg-[#14151A] border border-white/10 rounded-3xl p-6 max-w-sm w-full text-center relative space-y-4 shadow-2xl" 
+            onClick={e => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setActiveQRModal(null)} 
+              className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+            >
+              <X size={18} />
+            </button>
+            
+            <h3 className="text-base font-bold text-white pt-2">{activeQRModal.title}</h3>
+            
+            <div className="bg-white rounded-2xl p-4 w-fit mx-auto border border-white/5 shadow-inner">
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeQRModal.url)}`} 
+                alt="QR Code" 
+                className="w-48 h-48 mx-auto"
+              />
+            </div>
+            
+            <div className="bg-black/40 border border-white/5 rounded-xl p-2.5 text-left">
+              <p className="text-[8px] text-gray-500 uppercase tracking-widest font-black mb-1">LINK URL</p>
+              <p className="font-mono text-[9px] text-gray-400 break-all select-all">{activeQRModal.url}</p>
+            </div>
+            
+            <div className="flex gap-2 pt-2">
+              <button 
+                onClick={() => downloadQRCode(activeQRModal.url, activeQRModal.filename)}
+                className="flex-1 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/5 hover:border-white/10 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+              >
+                <Download size={12} /> Download
+              </button>
+              
+              <button 
+                onClick={() => printQRCode(activeQRModal.url, activeQRModal.title)}
+                className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] hover:opacity-90 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-[0_4px_12px_rgba(142,45,226,0.2)]"
+              >
+                <Printer size={12} /> Print QR
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 };

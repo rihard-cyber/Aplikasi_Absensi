@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Plus, Save, X, User, LogIn, LogOut, Ban, Printer, QrCode, Calendar, Loader2, Users, Shield, Phone, Car, Building2 } from 'lucide-react';
+import { Search, Plus, Save, X, User, LogIn, LogOut, Ban, Printer, QrCode, Calendar, Loader2, Users, Shield, Phone, Car, Building2, Download } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
@@ -16,6 +16,67 @@ const VisitorManagement = () => {
   const [form, setForm] = useState({ host_id: '', full_name: '', company: '', identity_number: '', phone: '', vehicle_plate: '', purpose: '', visit_date: new Date().toISOString().split('T')[0] });
   const [qrData, setQrData] = useState(null);
   const toast = useToast();
+
+  const downloadQRCode = async (data, filename) => {
+    try {
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data)}`;
+      const response = await fetch(qrApiUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename || 'qrcode.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+      toast('QR Code berhasil diunduh!', 'success');
+    } catch (err) {
+      console.error(err);
+      toast('Gagal mengunduh QR Code', 'error');
+    }
+  };
+
+  const printQRCode = (data, title) => {
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data)}`;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print QR Code - ${title}</title>
+          <style>
+            body {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 100vh;
+              margin: 0;
+              font-family: sans-serif;
+            }
+            .container {
+              border: 2px solid #ccc;
+              border-radius: 16px;
+              padding: 30px;
+              text-align: center;
+              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            h2 { margin-bottom: 5px; color: #333; }
+            p { margin-top: 0; color: #666; font-size: 14px; margin-bottom: 20px; }
+            img { width: 250px; height: 250px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h2>${title}</h2>
+            <p>Scan barcode ini di meja resepsionis atau pos penjagaan untuk Check-In</p>
+            <img src="${qrApiUrl}" onload="window.print(); window.close();" />
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -187,12 +248,47 @@ const VisitorManagement = () => {
       )}
 
       {qrData && (
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mb-6 p-6 bg-white/5 rounded-2xl border border-[var(--aurora-3)]/30 text-center">
-          <p className="text-xs text-[var(--aurora-3)] font-bold mb-2">QR Code Generated</p>
-          <div className="inline-block p-4 bg-white rounded-xl">
-            <QrCode size={120} className="text-black" />
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mb-6 p-6 bg-white/5 rounded-2xl border border-[var(--aurora-3)]/30 text-center space-y-4 relative">
+          <button 
+            onClick={() => setQrData(null)} 
+            className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+          >
+            <X size={16} />
+          </button>
+          
+          <p className="text-xs text-[var(--aurora-3)] font-bold">QR Code Generated</p>
+          
+          <div className="bg-white rounded-2xl p-4 w-fit mx-auto border border-white/5 shadow-inner">
+            <img 
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrData)}`} 
+              alt="Visitor QR Code" 
+              className="w-40 h-40 mx-auto"
+            />
           </div>
-          <p className="text-[9px] text-gray-500 mt-2 break-all font-mono">{qrData}</p>
+          
+          <p className="text-[9px] text-gray-500 break-all font-mono bg-black/30 rounded-xl p-3 border border-white/5 max-w-sm mx-auto">{qrData}</p>
+          
+          <div className="flex gap-2 max-w-sm mx-auto">
+            <button 
+              onClick={() => {
+                const visitorObj = JSON.parse(qrData);
+                downloadQRCode(qrData, `visitor-qr-${visitorObj.name || 'pass'}.png`);
+              }}
+              className="flex-1 py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/5 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all"
+            >
+              <Download size={12} /> Download
+            </button>
+            
+            <button 
+              onClick={() => {
+                const visitorObj = JSON.parse(qrData);
+                printQRCode(qrData, `Visitor Pass - ${visitorObj.name || 'Guest'}`);
+              }}
+              className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] hover:opacity-90 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all shadow-[0_4px_12px_rgba(142,45,226,0.2)]"
+            >
+              <Printer size={12} /> Print QR
+            </button>
+          </div>
         </motion.div>
       )}
 

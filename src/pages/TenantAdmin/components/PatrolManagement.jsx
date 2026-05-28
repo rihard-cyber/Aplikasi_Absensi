@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Route, ClipboardList, AlertTriangle, Users, Plus, QrCode, GripVertical, Loader2, CheckCircle2, XCircle, Map, Clock, Search, Save, Trash2, ToggleLeft, ToggleRight, Eye } from 'lucide-react';
+import { MapPin, Route, ClipboardList, AlertTriangle, Users, Plus, QrCode, GripVertical, Loader2, CheckCircle2, XCircle, Map, Clock, Search, Save, Trash2, ToggleLeft, ToggleRight, Eye, Printer, Download, X } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { logAudit } from '../../../utils/auditLogger';
@@ -30,6 +30,67 @@ const PatrolManagement = () => {
   const [selectedLog, setSelectedLog] = useState(null);
   const [missedGuards, setMissedGuards] = useState([]);
   const toast = useToast();
+
+  const downloadQRCode = async (data, filename) => {
+    try {
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data)}`;
+      const response = await fetch(qrApiUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename || 'qrcode.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+      toast('QR Code berhasil diunduh!', 'success');
+    } catch (err) {
+      console.error(err);
+      toast('Gagal mengunduh QR Code', 'error');
+    }
+  };
+
+  const printQRCode = (data, title) => {
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data)}`;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print QR Code - ${title}</title>
+          <style>
+            body {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 100vh;
+              margin: 0;
+              font-family: sans-serif;
+            }
+            .container {
+              border: 2px solid #ccc;
+              border-radius: 16px;
+              padding: 30px;
+              text-align: center;
+              box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            h2 { margin-bottom: 5px; color: #333; }
+            p { margin-top: 0; color: #666; font-size: 14px; margin-bottom: 20px; }
+            img { width: 250px; height: 250px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h2>${title}</h2>
+            <p>Scan barcode ini untuk melakukan patroli checkpoint</p>
+            <img src="${qrApiUrl}" onload="window.print(); window.close();" />
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   useEffect(() => { init(); }, []);
 
@@ -217,14 +278,37 @@ const PatrolManagement = () => {
       </div>
       {selectedCheckpoint && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedCheckpoint(null)}>
-          <div className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-sm w-full text-center" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-white mb-2">{selectedCheckpoint.name}</h3>
-            <div className="bg-white/5 rounded-2xl p-6 mb-4 border border-white/10">
-              <QrCode size={120} className="mx-auto text-white" />
+          <div className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-sm w-full text-center relative" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setSelectedCheckpoint(null)} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+              <X size={18} />
+            </button>
+            <h3 className="text-lg font-bold text-white mb-4">{selectedCheckpoint.name}</h3>
+            
+            <div className="bg-white rounded-2xl p-4 w-fit mx-auto mb-4 border border-white/5 shadow-inner">
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(selectedCheckpoint.qr_code)}`} 
+                alt="QR Code" 
+                className="w-48 h-48 mx-auto"
+              />
             </div>
+            
             <p className="text-xs font-mono text-green-400 break-all bg-black/30 rounded-xl p-3 border border-white/5 mb-4">{selectedCheckpoint.qr_code}</p>
-            <button onClick={() => { navigator.clipboard.writeText(selectedCheckpoint.qr_code); toast('QR code disalin!', 'success'); }} className="px-4 py-2 rounded-xl bg-[var(--aurora-3)]/10 border border-[var(--aurora-3)]/30 text-[var(--aurora-3)] text-[10px] font-bold">Salin Kode</button>
-            <button onClick={() => setSelectedCheckpoint(null)} className="ml-2 px-4 py-2 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-[10px] font-bold">Tutup</button>
+            
+            <div className="flex gap-2">
+              <button 
+                onClick={() => downloadQRCode(selectedCheckpoint.qr_code, `checkpoint-${selectedCheckpoint.name}.png`)}
+                className="flex-1 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/5 hover:border-white/10 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+              >
+                <Download size={12} /> Download
+              </button>
+              
+              <button 
+                onClick={() => printQRCode(selectedCheckpoint.qr_code, selectedCheckpoint.name)}
+                className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] hover:opacity-90 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-[0_4px_12px_rgba(142,45,226,0.2)]"
+              >
+                <Printer size={12} /> Print QR
+              </button>
+            </div>
           </div>
         </motion.div>
       )}

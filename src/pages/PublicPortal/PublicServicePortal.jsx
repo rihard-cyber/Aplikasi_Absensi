@@ -88,6 +88,31 @@ export default function PublicServicePortal() {
   // Load active tenants
   useEffect(() => {
     async function loadTenants() {
+      const params = new URLSearchParams(window.location.hash.split('?')[1] || window.location.search);
+      const tenantIdParam = params.get('tenant_id');
+      const locationParam = params.get('location');
+
+      if (tenantIdParam) {
+        try {
+          const { data: singleTenant } = await supabase
+            .from('tenants')
+            .select('id, name, is_active')
+            .eq('id', tenantIdParam)
+            .maybeSingle();
+          if (singleTenant) {
+            setSelectedTenant(singleTenant);
+            setTenants([singleTenant]);
+            if (locationParam) {
+              setIdentity(prev => ({ ...prev, location: decodeURIComponent(locationParam) }));
+            }
+            setLoadingTenants(false);
+            return;
+          }
+        } catch (err) {
+          console.error('Failed to load specific tenant:', err);
+        }
+      }
+
       try {
         const { data, error } = await supabase
           .from('tenants')
@@ -97,16 +122,6 @@ export default function PublicServicePortal() {
         
         if (error) throw error;
         setTenants(data || []);
-        
-        // Check query param
-        const params = new URLSearchParams(window.location.hash.split('?')[1] || window.location.search);
-        const tenantIdParam = params.get('tenant_id');
-        if (tenantIdParam) {
-          const found = data.find(t => t.id.toString() === tenantIdParam.toString());
-          if (found) {
-            setSelectedTenant(found);
-          }
-        }
       } catch (err) {
         console.error('Failed to load tenants:', err);
         toast('Gagal memuat daftar lokasi gedung', 'error');
@@ -188,7 +203,7 @@ export default function PublicServicePortal() {
         location: identity.location,
         description: fullDescription,
         severity: incidentForm.severity,
-        photo_url: incidentForm.photo_url || null,
+        photos: incidentForm.photo_url ? [incidentForm.photo_url] : [],
         status: 'Reported'
       });
 
@@ -562,22 +577,33 @@ export default function PublicServicePortal() {
                     /* Success view */
                     <motion.div
                       key="success"
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
+                      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                      transition={{ type: 'spring', duration: 0.8, bounce: 0.3 }}
                       className="glass-panel p-6 border border-[var(--success)]/30 bg-[#14151A]/90 rounded-[32px] text-center shadow-[0_20px_50px_rgba(46,213,115,0.12)]"
                     >
-                      <div className="w-16 h-16 rounded-full bg-[var(--success)]/10 text-[var(--success)] flex items-center justify-center mx-auto mb-5 border border-[var(--success)]/20 shadow-[0_0_20px_rgba(46,213,115,0.2)]">
+                      <motion.div 
+                        initial={{ scale: 0, rotate: -45 }} 
+                        animate={{ scale: 1, rotate: 0 }} 
+                        transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 10 }}
+                        className="w-16 h-16 rounded-full bg-[var(--success)]/10 text-[var(--success)] flex items-center justify-center mx-auto mb-5 border border-[var(--success)]/20 shadow-[0_0_20px_rgba(46,213,115,0.2)]"
+                      >
                         <CheckCircle2 size={32} />
-                      </div>
+                      </motion.div>
                       <h2 className="text-xl font-serif font-bold text-white mb-2">{t('Pengiriman Sukses!')}</h2>
                       <p className="text-xs text-gray-400 max-w-xs mx-auto mb-6 leading-relaxed">
                         {t('Permintaan')} <span className="font-bold text-white">{successData.type}</span> {t('Anda telah diterima. Simpan kode referensi Anda:')}
                       </p>
                       
-                      <div className="bg-gradient-to-r from-black/60 to-black/30 border border-white/10 rounded-2xl py-3.5 px-6 w-fit mx-auto mb-8 font-mono text-xl font-black text-[var(--aurora-3)] tracking-[0.2em] shadow-inner">
+                      <motion.div 
+                        initial={{ opacity: 0, y: 15 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        transition={{ delay: 0.3, type: 'spring', stiffness: 100 }}
+                        className="bg-gradient-to-r from-black/60 to-black/30 border border-white/10 rounded-2xl py-3.5 px-6 w-fit mx-auto mb-8 font-mono text-xl font-black text-[var(--aurora-3)] tracking-[0.2em] shadow-inner"
+                      >
                         {successData.code}
-                      </div>
+                      </motion.div>
 
                       <div className="space-y-3">
                         <motion.a
