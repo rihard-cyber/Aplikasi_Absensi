@@ -1,17 +1,21 @@
-/* eslint-disable react/jsx-props-no-spreading, i18next/no-literal-string, react/jsx-no-literals, i18n-text/no-en, react-intl/string-is-marked-with-id */
+/* eslint-disable react/jsx-props-no-spreading */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
   Menu, X, ChevronRight, CheckCircle2, Star, Users, Clock, DollarSign, 
   ShieldCheck, Camera, MapPin, QrCode, Smartphone, FileText, Calculator, 
-  CreditCard, Gift, TrendingUp, BarChart3, Building2, Award, Download, 
+  CreditCard, Gift, TrendingUp, Building2, 
   MessageSquare, ChevronDown, Sparkles, Send, Loader2, Phone, Mail, 
-  CheckSquare, Activity, Zap, Globe, UserCheck, Briefcase, Calendar, 
-  PieChart, RefreshCw, Headphones, Route, Truck, Package, AlertTriangle, 
-  Shuffle, Home, Layers, Fingerprint, Wifi, Eye, HelpCircle, ArrowRight
+  CheckSquare, Zap, Globe, UserCheck, Briefcase, Calendar, 
+  RefreshCw, Headphones, Route, Truck, AlertTriangle, 
+  Shuffle, Home, Layers, Fingerprint, Wifi, Eye, ArrowRight
 } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
+
+const publicAsset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
+/** @type {(s: string) => string} Passthrough i18n - app is monolingual Indonesian */
+const i18n = (s) => s;
 
 const FEATURE_CATEGORIES = [
   {
@@ -20,7 +24,7 @@ const FEATURE_CATEGORIES = [
     tagline: 'Lacak kehadiran real-time dengan akurasi 99.9% anti-curang.',
     icon: <Camera size={22} />,
     color: '#00C9FF',
-    image: '/feature_absensi.png',
+    image: publicAsset('/feature_absensi.png'),
     features: [
       { icon: <Camera size={20} />, name: 'Face Camera Check-in', desc: 'Selfie real-time dengan face recognition + liveness detection. Anti-fake photo!' },
       { icon: <MapPin size={20} />, name: 'GPS Geofencing Cerdas', desc: 'Radius presisi per unit/proyek. Hanya bisa absen jika berada dalam area kerja.' },
@@ -36,7 +40,7 @@ const FEATURE_CATEGORIES = [
     tagline: 'Proses penggajian bulanan 100+ karyawan selesai dalam 15 menit.',
     icon: <Calculator size={22} />,
     color: '#00FF87',
-    image: '/feature_payroll.png',
+    image: publicAsset('/feature_payroll.png'),
     features: [
       { icon: <Calculator size={20} />, name: 'Kalkulator Gaji 1-Klik', desc: 'Hitung otomatis gaji pokok, potongan absen, klaim, hingga kasbon tanpa spreadsheet.' },
       { icon: <DollarSign size={20} />, name: 'Lembur Multi-Tarif', desc: 'Penghitungan otomatis lembur hari kerja, akhir pekan, & hari libur sesuai UU.' },
@@ -52,7 +56,7 @@ const FEATURE_CATEGORIES = [
     tagline: 'Optimalkan operasional gedung, aset, dan keluhan tenant/karyawan.',
     icon: <Headphones size={22} />,
     color: '#FFD700',
-    image: '/feature_helpdesk.png',
+    image: publicAsset('/feature_helpdesk.png'),
     features: [
       { icon: <MessageSquare size={20} />, name: 'Ticketing Multi-Kategori', desc: 'Keluhan AC, listrik, kebersihan, IT dengan foto, tingkat urgensi, dan tracking status.' },
       { icon: <Building2 size={20} />, name: 'Booking Fasilitas Kantor', desc: 'Reservasi ruang rapat, kendaraan operasional, inventaris dengan kalender real-time.' },
@@ -66,7 +70,7 @@ const FEATURE_CATEGORIES = [
     tagline: 'Pantau kinerja satpam secara real-time dengan jaminan rute patroli lengkap.',
     icon: <Route size={22} />,
     color: '#FF6B6B',
-    image: '/feature_patroli.png',
+    image: publicAsset('/feature_patroli.png'),
     features: [
       { icon: <QrCode size={20} />, name: 'QR Code Checkpoint', desc: 'Tempel barcode tangguh di titik krusial. Satpam wajib scan untuk verifikasi kedatangan.' },
       { icon: <MapPin size={20} />, name: 'Rute GPS Guard Tracking', desc: 'Visualisasikan rute pergerakan satpam di peta digital secara live selama jam patroli.' },
@@ -80,7 +84,7 @@ const FEATURE_CATEGORIES = [
     tagline: 'Manajemen kerja fleksibel, jadwalkan shift rumit seefisien mungkin.',
     icon: <Shuffle size={22} />,
     color: '#8E2DE2',
-    image: '/feature_wfh.png',
+    image: publicAsset('/feature_wfh.png'),
     features: [
       { icon: <Home size={20} />, name: 'Hybrid Work Mode', desc: 'Pisahkan absen WFH (verifikasi alamat rumah), WFO (WiFi zone), & WFA (GPS bebas).' },
       { icon: <RefreshCw size={20} />, name: 'Shift Swap Peer-to-Peer', desc: 'Karyawan bisa ajukan tukar shift mandiri lewat aplikasi dengan persetujuan atasan.' },
@@ -176,7 +180,7 @@ const LandingPage = () => {
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-[999] bg-[#25D366] hover:bg-[#20ba5a] text-white p-4 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group duration-300"
       >
-        <span className="absolute right-full mr-3 bg-black/80 backdrop-blur-sm border border-white/10 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap">Tanya Via WhatsApp</span>
+        <span className="absolute right-full mr-3 bg-black/80 backdrop-blur-sm border border-white/10 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap">{i18n("Tanya Via WhatsApp")}</span>
         <div className="absolute inset-0 bg-[#25D366] rounded-full animate-ping opacity-45 -z-10" />
         <MessageSquare size={24} className="fill-white text-[#25D366]" />
       </a>
@@ -186,10 +190,10 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
             <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => scrollTo('hero')}>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center text-white font-bold text-lg font-serif shadow-lg shadow-purple-500/20">SP</div>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center text-white font-bold text-lg font-serif shadow-lg shadow-purple-500/20">{i18n("SP")}</div>
               <div>
-                <span className="font-bold text-sm tracking-wide text-white block leading-none">SI PRESENSI</span>
-                <span className="text-[7px] text-[var(--success)] uppercase tracking-[0.2em] font-extrabold block mt-1">PRO MAX v3.2</span>
+                <span className="font-bold text-sm tracking-wide text-white block leading-none">{i18n("SI PRESENSI")}</span>
+                <span className="text-[7px] text-[var(--success)] uppercase tracking-[0.2em] font-extrabold block mt-1">{i18n("PRO MAX v3.2")}</span>
               </div>
             </div>
             <div className="hidden md:flex items-center gap-6 lg:gap-8">
@@ -197,8 +201,8 @@ const LandingPage = () => {
                 <button key={item} onClick={() => scrollTo(item.toLowerCase())} className="text-xs text-gray-400 hover:text-white tracking-wider uppercase font-bold transition-all hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">{item}</button>
               ))}
               <span className="w-[1px] h-4 bg-white/10" />
-              <button onClick={() => navigate('/login')} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/20 text-white text-[10px] font-bold uppercase tracking-wider hover:bg-white/10 transition-all">Masuk Portal</button>
-              <button onClick={() => setShowModal(true)} className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[10px] font-bold uppercase tracking-wider hover:shadow-lg hover:shadow-purple-500/30 transition-all hover:scale-105 active:scale-95">Uji Coba Demo</button>
+              <button onClick={() => navigate('/login')} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/20 text-white text-[10px] font-bold uppercase tracking-wider hover:bg-white/10 transition-all">{i18n("Masuk Portal")}</button>
+              <button onClick={() => setShowModal(true)} className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[10px] font-bold uppercase tracking-wider hover:shadow-lg hover:shadow-purple-500/30 transition-all hover:scale-105 active:scale-95">{i18n("Uji Coba Demo")}</button>
             </div>
             <button className="md:hidden text-gray-400 hover:text-white" onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -213,8 +217,8 @@ const LandingPage = () => {
                   <button key={item} onClick={() => scrollTo(item.toLowerCase())} className="block text-sm text-gray-400 hover:text-white w-full text-left py-2 font-semibold">{item}</button>
                 ))}
                 <div className="flex gap-3 pt-4 border-t border-white/10">
-                  <button onClick={() => navigate('/login')} className="flex-1 py-3.5 rounded-xl bg-white/5 border border-white/20 text-white text-xs font-bold uppercase">Masuk</button>
-                  <button onClick={() => setShowModal(true)} className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold uppercase">Demo Gratis</button>
+                  <button onClick={() => navigate('/login')} className="flex-1 py-3.5 rounded-xl bg-white/5 border border-white/20 text-white text-xs font-bold uppercase">{i18n("Masuk")}</button>
+                  <button onClick={() => setShowModal(true)} className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold uppercase">{i18n("Demo Gratis")}</button>
                 </div>
               </div>
             </motion.div>
@@ -241,40 +245,33 @@ const LandingPage = () => {
             >
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-[var(--success)]/10 to-[var(--aurora-3)]/10 border border-[var(--success)]/25 mb-6">
                 <Sparkles size={14} className="text-[var(--success)] animate-pulse" />
-                <span className="text-[9px] text-[var(--success)] font-extrabold uppercase tracking-widest">🔥 SOLUSI KELAS ENTERPRISE ALL-IN-ONE</span>
+                <span className="text-[9px] text-[var(--success)] font-extrabold uppercase tracking-widest">{i18n("🔥 SOLUSI KELAS ENTERPRISE ALL-IN-ONE")}</span>
               </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold leading-[1.1] mb-6 text-white tracking-tight">
-                1 Dashboard Super.<br />
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-[var(--aurora-3)] via-[var(--success)] to-[var(--aurora-1)]">Ratusan Urusan</span><br />
-                Operasional Beres.
-              </h1>
-              <p className="text-sm sm:text-base text-gray-400 mb-8 max-w-xl leading-relaxed">
-                Platform ERP HR & Building Management nomor 1 di Indonesia. Satukan divisi HRD, tim Security, tim Maintenance, Cleaning Service, hingga logistik armada dalam 1 login super. <span className="text-white font-bold">Instan, anti-fake GPS, dan otomatis PPh 21 TER.</span>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold leading-[1.1] mb-6 text-white tracking-tight">{i18n("1 Dashboard Super.")}<br />
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-[var(--aurora-3)] via-[var(--success)] to-[var(--aurora-1)]">{i18n("Ratusan Urusan")}</span><br />{i18n("Operasional Beres. ")}</h1>
+              <p className="text-sm sm:text-base text-gray-400 mb-8 max-w-xl leading-relaxed">{i18n("Platform ERP HR & Building Management nomor 1 di Indonesia. Satukan divisi HRD, tim Security, tim Maintenance, Cleaning Service, hingga logistik armada dalam 1 login super. ")}<span className="text-white font-bold">{i18n("Instan, anti-fake GPS, dan otomatis PPh 21 TER.")}</span>
               </p>
               
               {/* CTAs */}
               <div className="flex flex-wrap gap-4 mb-10">
-                <button onClick={() => setShowModal(true)} className="px-8 py-4.5 rounded-2xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-extrabold text-xs uppercase tracking-wider flex items-center gap-3 hover:shadow-[0_0_30px_rgba(142,45,226,0.4)] transition-all hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/20">
-                  Konsultasi Demo Gratis <ChevronRight size={16} />
+                <button onClick={() => setShowModal(true)} className="px-8 py-4.5 rounded-2xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-extrabold text-xs uppercase tracking-wider flex items-center gap-3 hover:shadow-[0_0_30px_rgba(142,45,226,0.4)] transition-all hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/20">{i18n("Konsultasi Demo Gratis ")}<ChevronRight size={16} />
                 </button>
-                <button onClick={() => scrollTo('fitur')} className="px-8 py-4.5 rounded-2xl border border-white/10 hover:border-white/30 text-white font-bold text-xs uppercase tracking-wider bg-white/[0.02] hover:bg-white/5 transition-all hover:scale-105 active:scale-95">
-                  Eksplorasi Fitur Asli
-                </button>
+                <button onClick={() => scrollTo('fitur')} className="px-8 py-4.5 rounded-2xl border border-white/10 hover:border-white/30 text-white font-bold text-xs uppercase tracking-wider bg-white/[0.02] hover:bg-white/5 transition-all hover:scale-105 active:scale-95">{i18n("Eksplorasi Fitur Asli ")}</button>
               </div>
 
               {/* Trusts & Accreditations */}
               <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/5">
                 <div>
-                  <p className="text-lg font-bold font-mono text-[var(--success)]">15+ Modul</p>
-                  <p className="text-[9px] text-gray-500 uppercase font-bold tracking-wider">Terintegrasi Penuh</p>
+                  <p className="text-lg font-bold font-mono text-[var(--success)]">{i18n("15+ Modul")}</p>
+                  <p className="text-[9px] text-gray-500 uppercase font-bold tracking-wider">{i18n("Terintegrasi Penuh")}</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold font-mono text-[var(--aurora-3)]">99.9% Up</p>
-                  <p className="text-[9px] text-gray-500 uppercase font-bold tracking-wider">SLA Real-time Cloud</p>
+                  <p className="text-lg font-bold font-mono text-[var(--aurora-3)]">{i18n("99.9% Up")}</p>
+                  <p className="text-[9px] text-gray-500 uppercase font-bold tracking-wider">{i18n("SLA Real-time Cloud")}</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold font-mono text-[var(--warning)]">24/7 WA</p>
-                  <p className="text-[9px] text-gray-500 uppercase font-bold tracking-wider">Dukungan Premium</p>
+                  <p className="text-lg font-bold font-mono text-[var(--warning)]">{i18n("24/7 WA")}</p>
+                  <p className="text-[9px] text-gray-500 uppercase font-bold tracking-wider">{i18n("Dukungan Premium")}</p>
                 </div>
               </div>
             </motion.div>
@@ -291,7 +288,7 @@ const LandingPage = () => {
                 <div className="glass-panel p-2.5 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden bg-black/40">
                   <div className="relative overflow-hidden rounded-2xl bg-[#090A0F]">
                     <img 
-                      src="/hero_dashboard.png" 
+                      src={publicAsset('/hero_dashboard.png')} 
                       alt="SI PRESENSI Premium Dashboard Screenshot" 
                       className="w-full h-auto object-cover transform hover:scale-102 transition-transform duration-700" 
                     />
@@ -301,9 +298,9 @@ const LandingPage = () => {
                     <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
                       <div className="flex items-center gap-2.5 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
                         <span className="w-2 h-2 rounded-full bg-[var(--success)] animate-ping" />
-                        <span className="text-[9px] text-white font-extrabold uppercase tracking-widest font-mono">Live Demo Workspace</span>
+                        <span className="text-[9px] text-white font-extrabold uppercase tracking-widest font-mono">{i18n("Live Demo Workspace")}</span>
                       </div>
-                      <span className="text-[9px] bg-white/10 backdrop-blur-md text-gray-300 px-3 py-1.5 rounded-xl border border-white/5 font-bold uppercase tracking-wider">SaaS Platform</span>
+                      <span className="text-[9px] bg-white/10 backdrop-blur-md text-gray-300 px-3 py-1.5 rounded-xl border border-white/5 font-bold uppercase tracking-wider">{i18n("SaaS Platform")}</span>
                     </div>
                   </div>
                 </div>
@@ -319,8 +316,8 @@ const LandingPage = () => {
                   <UserCheck size={18} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-white leading-none">Anti-Fraud</p>
-                  <p className="text-[8px] text-gray-500 mt-1 leading-tight">Liveness & GPS Geofence aktif</p>
+                  <p className="text-xs font-bold text-white leading-none">{i18n("Anti-Fraud")}</p>
+                  <p className="text-[8px] text-gray-500 mt-1 leading-tight">{i18n("Liveness & GPS Geofence aktif")}</p>
                 </div>
               </motion.div>
             </motion.div>
@@ -366,14 +363,11 @@ const LandingPage = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--aurora-3)]/10 border border-[var(--aurora-3)]/30 mb-4">
               <Eye size={14} className="text-[var(--aurora-3)]" />
-              <span className="text-[9px] text-[var(--aurora-3)] font-extrabold uppercase tracking-widest">BUKTIKAN FITUR ASLINYA</span>
+              <span className="text-[9px] text-[var(--aurora-3)] font-extrabold uppercase tracking-widest">{i18n("BUKTIKAN FITUR ASLINYA")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4">
-              Eksplorasi Interface <span className="text-[var(--aurora-3)]">Aplikasi Asli</span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4">{i18n("Eksplorasi Interface ")}<span className="text-[var(--aurora-3)]">{i18n("Aplikasi Asli")}</span>
             </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto text-sm">
-              Kami tidak menyembunyikan desain kami di balik gambar ilustrasi generic. Lihat langsung screenshot modul operasional kami di bawah ini.
-            </p>
+            <p className="text-gray-400 max-w-2xl mx-auto text-sm">{i18n("Kami tidak menyembunyikan desain kami di balik gambar ilustrasi generic. Lihat langsung screenshot modul operasional kami di bawah ini. ")}</p>
           </motion.div>
 
           {/* Interactive Feature Category Tabs */}
@@ -409,7 +403,7 @@ const LandingPage = () => {
                 {/* Feature highlights column */}
                 <div className="lg:col-span-5 space-y-6">
                   <div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: cat.color }}>Modul Utama</span>
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: cat.color }}>{i18n("Modul Utama")}</span>
                     <h3 className="text-2xl sm:text-3xl font-serif font-bold text-white mt-1.5 mb-3">{cat.title}</h3>
                     <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">{cat.tagline}</p>
                   </div>
@@ -428,7 +422,7 @@ const LandingPage = () => {
 
                   <div className="pt-4">
                     <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white hover:text-[var(--aurora-3)] transition-colors group">
-                      <span>Coba demo modul {cat.title.split(' ')[0]} ini</span>
+                      <span>{i18n("Coba demo modul ")}{cat.title.split(' ')[0]}{i18n(" ini")}</span>
                       <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </button>
                   </div>
@@ -472,14 +466,11 @@ const LandingPage = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--success)]/10 border border-[var(--success)]/30 mb-4">
               <Users size={14} className="text-[var(--success)]" />
-              <span className="text-[9px] text-[var(--success)] font-extrabold uppercase tracking-widest">SATU APLIKASI UNTUK SEMUA DEPARTEMEN</span>
+              <span className="text-[9px] text-[var(--success)] font-extrabold uppercase tracking-widest">{i18n("SATU APLIKASI UNTUK SEMUA DEPARTEMEN")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4">
-              Solusi Terpadu <span className="text-[var(--success)]">Lintas Divisi</span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4">{i18n("Solusi Terpadu ")}<span className="text-[var(--success)]">{i18n("Lintas Divisi")}</span>
             </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto text-sm">
-              Tak perlu lagi membayar lisensi 5 aplikasi berbeda untuk HRD, Keamanan, Teknisi, & Operasional. Kami menyatukan semuanya dalam satu atap data.
-            </p>
+            <p className="text-gray-400 max-w-2xl mx-auto text-sm">{i18n("Tak perlu lagi membayar lisensi 5 aplikasi berbeda untuk HRD, Keamanan, Teknisi, & Operasional. Kami menyatukan semuanya dalam satu atap data. ")}</p>
           </motion.div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -567,9 +558,7 @@ const LandingPage = () => {
                   </ul>
                 </div>
                 
-                <button onClick={() => setShowModal(true)} className="w-full py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider transition-all">
-                  Konsultasi Modul
-                </button>
+                <button onClick={() => setShowModal(true)} className="w-full py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-wider transition-all">{i18n("Konsultasi Modul ")}</button>
               </motion.div>
             ))}
           </div>
@@ -585,19 +574,17 @@ const LandingPage = () => {
             <div className="absolute top-[-10%] right-[-10%] w-72 h-72 bg-[var(--aurora-3)] rounded-full blur-[180px] opacity-10" />
             
             <div className="text-center mb-8">
-              <span className="text-[10px] text-[var(--success)] font-extrabold uppercase tracking-widest block mb-2">KALKULATOR PRESTASI OPERASIONAL</span>
-              <h3 className="text-2xl sm:text-3xl font-serif font-bold text-white mb-3">Lihat Berapa Banyak Anda Hemat</h3>
-              <p className="text-xs sm:text-sm text-gray-400">
-                Pindahkan slider sesuai jumlah karyawan perusahaan Anda dan hitung waktu & pengeluaran yang berhasil dipangkas per bulan.
-              </p>
+              <span className="text-[10px] text-[var(--success)] font-extrabold uppercase tracking-widest block mb-2">{i18n("KALKULATOR PRESTASI OPERASIONAL")}</span>
+              <h3 className="text-2xl sm:text-3xl font-serif font-bold text-white mb-3">{i18n("Lihat Berapa Banyak Anda Hemat")}</h3>
+              <p className="text-xs sm:text-sm text-gray-400">{i18n("Pindahkan slider sesuai jumlah karyawan perusahaan Anda dan hitung waktu & pengeluaran yang berhasil dipangkas per bulan. ")}</p>
             </div>
 
             <div className="space-y-8">
               {/* Slider widget */}
               <div className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-bold text-gray-400">Jumlah Karyawan Operasional:</span>
-                  <span className="text-xl font-bold font-mono text-[var(--aurora-3)]">{roiEmployees} Orang</span>
+                  <span className="text-xs font-bold text-gray-400">{i18n("Jumlah Karyawan Operasional:")}</span>
+                  <span className="text-xl font-bold font-mono text-[var(--aurora-3)]">{roiEmployees}{i18n(" Orang")}</span>
                 </div>
                 
                 <input 
@@ -610,31 +597,29 @@ const LandingPage = () => {
                 />
                 
                 <div className="flex justify-between text-[9px] text-gray-600 mt-2 font-bold uppercase tracking-wider">
-                  <span>5 Orang</span>
-                  <span>100 Orang</span>
-                  <span>250 Orang</span>
-                  <span>500 Orang</span>
+                  <span>{i18n("5 Orang")}</span>
+                  <span>{i18n("100 Orang")}</span>
+                  <span>{i18n("250 Orang")}</span>
+                  <span>{i18n("500 Orang")}</span>
                 </div>
               </div>
 
               {/* ROI Results */}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 text-center">
-                  <span className="text-[10px] text-gray-500 uppercase tracking-wider block font-bold mb-1.5">Waktu Kerja HR & Admin Hemat:</span>
-                  <p className="text-3xl sm:text-4xl font-bold font-mono text-[var(--success)]">{roi.hoursSaved} Jam / Bulan</p>
-                  <p className="text-[9px] text-gray-400 mt-2 leading-relaxed">Dapat dialokasikan untuk training & rekrutmen strategis.</p>
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider block font-bold mb-1.5">{i18n("Waktu Kerja HR & Admin Hemat:")}</span>
+                  <p className="text-3xl sm:text-4xl font-bold font-mono text-[var(--success)]">{roi.hoursSaved}{i18n(" Jam / Bulan")}</p>
+                  <p className="text-[9px] text-gray-400 mt-2 leading-relaxed">{i18n("Dapat dialokasikan untuk training & rekrutmen strategis.")}</p>
                 </div>
                 <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 text-center">
-                  <span className="text-[10px] text-gray-500 uppercase tracking-wider block font-bold mb-1.5">Total Penghematan Biaya Operasional:</span>
-                  <p className="text-3xl sm:text-4xl font-bold font-mono text-[var(--warning)]">{formatRupiah(roi.moneySaved)} / Bulan</p>
-                  <p className="text-[9px] text-gray-400 mt-2 leading-relaxed">Berdasarkan audit biaya paperwork, fake-GPS, dan inefisiensi lembur.</p>
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider block font-bold mb-1.5">{i18n("Total Penghematan Biaya Operasional:")}</span>
+                  <p className="text-3xl sm:text-4xl font-bold font-mono text-[var(--warning)]">{formatRupiah(roi.moneySaved)}{i18n(" / Bulan")}</p>
+                  <p className="text-[9px] text-gray-400 mt-2 leading-relaxed">{i18n("Berdasarkan audit biaya paperwork, fake-GPS, dan inefisiensi lembur.")}</p>
                 </div>
               </div>
 
               <div className="text-center pt-2">
-                <button onClick={() => setShowModal(true)} className="px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold uppercase tracking-wider hover:scale-103 active:scale-97 transition-all">
-                  Ambil Penghematan Ini Sekarang
-                </button>
+                <button onClick={() => setShowModal(true)} className="px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold uppercase tracking-wider hover:scale-103 active:scale-97 transition-all">{i18n("Ambil Penghematan Ini Sekarang ")}</button>
               </div>
 
             </div>
@@ -660,14 +645,11 @@ const LandingPage = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] border border-[var(--aurora-1)]/30 mb-4">
               <Layers size={14} className="text-[var(--aurora-3)]" />
-              <span className="text-[9px] text-[var(--aurora-3)] font-extrabold uppercase tracking-widest">PELUANG BISNIS DASYAT</span>
+              <span className="text-[9px] text-[var(--aurora-3)] font-extrabold uppercase tracking-widest">{i18n("PELUANG BISNIS DASYAT")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4">
-              Miliki Aplikasi Ini dengan <span className="text-[var(--aurora-3)]">Brand Anda Sendiri</span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4">{i18n("Miliki Aplikasi Ini dengan ")}<span className="text-[var(--aurora-3)]">{i18n("Brand Anda Sendiri")}</span>
             </h2>
-            <p className="text-gray-400 max-w-2xl mx-auto text-sm">
-              Untuk Software House, Konsultan HR, Agensi IT, atau Penyedia Jasa Security. Jual solusi canggih ini ke client Anda dengan nama, logo, domain, & harga Anda sendiri!
-            </p>
+            <p className="text-gray-400 max-w-2xl mx-auto text-sm">{i18n("Untuk Software House, Konsultan HR, Agensi IT, atau Penyedia Jasa Security. Jual solusi canggih ini ke client Anda dengan nama, logo, domain, & harga Anda sendiri! ")}</p>
           </motion.div>
 
           <div className="grid lg:grid-cols-12 gap-8 items-stretch mb-12">
@@ -681,10 +663,8 @@ const LandingPage = () => {
               className="lg:col-span-6 glass-panel p-8 flex flex-col justify-between"
             >
               <div>
-                <h3 className="text-xl font-serif font-bold text-white mb-2">🚀 Mengapa Menjadi Partner SaaS Kami?</h3>
-                <p className="text-xs text-gray-500 mb-6 leading-relaxed">
-                  Kami mengurus semua infrastruktur teknis, database backup, pembaharuan regulasi PPh 21, hingga maintenance server. Anda fokus melakukan branding & marketing dengan profit 100% milik Anda.
-                </p>
+                <h3 className="text-xl font-serif font-bold text-white mb-2">{i18n("🚀 Mengapa Menjadi Partner SaaS Kami?")}</h3>
+                <p className="text-xs text-gray-500 mb-6 leading-relaxed">{i18n("Kami mengurus semua infrastruktur teknis, database backup, pembaharuan regulasi PPh 21, hingga maintenance server. Anda fokus melakukan branding & marketing dengan profit 100% milik Anda. ")}</p>
                 
                 <div className="grid grid-cols-2 gap-4">
                   {[
@@ -705,8 +685,7 @@ const LandingPage = () => {
               </div>
 
               <div className="pt-6">
-                <button onClick={() => setShowBookModal(true)} className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:shadow-lg hover:shadow-purple-500/25 transition-all">
-                  Pelajari Skema Kemitraan <ChevronRight size={14} />
+                <button onClick={() => setShowBookModal(true)} className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:shadow-lg hover:shadow-purple-500/25 transition-all">{i18n("Pelajari Skema Kemitraan ")}<ChevronRight size={14} />
                 </button>
               </div>
             </motion.div>
@@ -720,47 +699,39 @@ const LandingPage = () => {
               className="lg:col-span-6 glass-panel p-8 border-[var(--aurora-3)]/30 flex flex-col justify-between"
             >
               <div>
-                <h3 className="text-xl font-serif font-bold text-white mb-2">💼 Pilihan Kerja Sama & Bagi Hasil</h3>
-                <p className="text-xs text-gray-500 mb-6 leading-relaxed">
-                  Pilih skema yang paling sesuai dengan target pasar & modal usaha yang Anda inginkan.
-                </p>
+                <h3 className="text-xl font-serif font-bold text-white mb-2">{i18n("💼 Pilihan Kerja Sama & Bagi Hasil")}</h3>
+                <p className="text-xs text-gray-500 mb-6 leading-relaxed">{i18n("Pilih skema yang paling sesuai dengan target pasar & modal usaha yang Anda inginkan. ")}</p>
 
                 <div className="space-y-4">
                   <div className="p-4.5 rounded-xl bg-white/[0.02] border border-white/5">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-bold text-white">1. Skema Reseller Komisi</span>
-                      <span className="text-xs font-extrabold font-mono text-[var(--success)]">30% - 50% Share</span>
+                      <span className="text-xs font-bold text-white">{i18n("1. Skema Reseller Komisi")}</span>
+                      <span className="text-xs font-extrabold font-mono text-[var(--success)]">{i18n("30% - 50% Share")}</span>
                     </div>
-                    <p className="text-[9px] text-gray-500 leading-relaxed">
-                      Tanpa biaya setup. Cukup referensikan client ke kami, dapatkan bagi hasil bulanan dari total billing client Anda selama mereka aktif berlangganan.
-                    </p>
+                    <p className="text-[9px] text-gray-500 leading-relaxed">{i18n("Tanpa biaya setup. Cukup referensikan client ke kami, dapatkan bagi hasil bulanan dari total billing client Anda selama mereka aktif berlangganan. ")}</p>
                   </div>
                   
                   <div className="p-4.5 rounded-xl bg-white/[0.02] border border-white/5">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-bold text-white">2. Skema White-Label SaaS</span>
-                      <span className="text-xs font-extrabold font-mono text-[var(--aurora-3)]">Sekali Bayar Setup</span>
+                      <span className="text-xs font-bold text-white">{i18n("2. Skema White-Label SaaS")}</span>
+                      <span className="text-xs font-extrabold font-mono text-[var(--aurora-3)]">{i18n("Sekali Bayar Setup")}</span>
                     </div>
-                    <p className="text-[9px] text-gray-500 leading-relaxed">
-                      Deploy platform ini di VPS/Cloud khusus. Domain, email server, & logo diganti total milik Anda. Client membayar langsung ke rekening perusahaan Anda.
-                    </p>
+                    <p className="text-[9px] text-gray-500 leading-relaxed">{i18n("Deploy platform ini di VPS/Cloud khusus. Domain, email server, & logo diganti total milik Anda. Client membayar langsung ke rekening perusahaan Anda. ")}</p>
                   </div>
 
                   <div className="p-4.5 rounded-xl bg-white/[0.02] border border-white/5 border-l-2" style={{ borderLeftColor: 'var(--warning)' }}>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-bold text-white">3. Integrasi Enterprise On-Premise</span>
-                      <span className="text-xs font-extrabold font-mono text-[var(--warning)]">VPS Khusus</span>
+                      <span className="text-xs font-bold text-white">{i18n("3. Integrasi Enterprise On-Premise")}</span>
+                      <span className="text-xs font-extrabold font-mono text-[var(--warning)]">{i18n("VPS Khusus")}</span>
                     </div>
-                    <p className="text-[9px] text-gray-500 leading-relaxed">
-                      Untuk perusahaan holding skala raksasa yang ingin meletakkan server absensi di data center lokal milik internal untuk kebutuhan kepatuhan PDP.
-                    </p>
+                    <p className="text-[9px] text-gray-500 leading-relaxed">{i18n("Untuk perusahaan holding skala raksasa yang ingin meletakkan server absensi di data center lokal milik internal untuk kebutuhan kepatuhan PDP. ")}</p>
                   </div>
                 </div>
               </div>
 
               <div className="pt-6 text-center lg:text-left">
-                <span className="text-[10px] text-gray-500 font-semibold">Hubungi tim kemitraan kami: </span>
-                <a href="https://wa.me/6281234567890?text=Halo%20saya%20tertarik%20mengenai%20kemitraan%20white-label%20SaaS" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[var(--aurora-3)] font-bold hover:underline">0812-3456-7890 (WA)</a>
+                <span className="text-[10px] text-gray-500 font-semibold">{i18n("Hubungi tim kemitraan kami: ")}</span>
+                <a href="https://wa.me/6281234567890?text=Halo%20saya%20tertarik%20mengenai%20kemitraan%20white-label%20SaaS" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[var(--aurora-3)] font-bold hover:underline">{i18n("0812-3456-7890 (WA)")}</a>
               </div>
             </motion.div>
 
@@ -786,27 +757,22 @@ const LandingPage = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--warning)]/10 border border-[var(--warning)]/30 mb-4">
               <Calculator size={14} className="text-[var(--warning)]" />
-              <span className="text-[9px] text-[var(--warning)] font-extrabold uppercase tracking-widest">HARGA JUJUR TANPA TERSEMBUNYI</span>
+              <span className="text-[9px] text-[var(--warning)] font-extrabold uppercase tracking-widest">{i18n("HARGA JUJUR TANPA TERSEMBUNYI")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4">
-              Investasi Mulai Dari <span className="text-[var(--aurora-3)]">Rp 7.000</span> / Karyawan
-            </h2>
-            <p className="text-gray-400 max-w-xl mx-auto text-sm">
-              Satu harga mencakup seluruh 15+ modul. Tidak ada batasan akses menu. Tidak ada biaya tambahan di tengah jalan.
-            </p>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4">{i18n("Investasi Mulai Dari ")}<span className="text-[var(--aurora-3)]">{i18n("Rp 7.000")}</span>{i18n(" / Karyawan ")}</h2>
+            <p className="text-gray-400 max-w-xl mx-auto text-sm">{i18n("Satu harga mencakup seluruh 15+ modul. Tidak ada batasan akses menu. Tidak ada biaya tambahan di tengah jalan. ")}</p>
           </motion.div>
 
           {/* Monthly / Annual Billing Toggle */}
           <div className="flex items-center justify-center gap-4 mb-12">
-            <span className={`text-xs font-bold transition-colors ${!annualBilling ? 'text-white' : 'text-gray-500'}`}>Ditagih Bulanan</span>
+            <span className={`text-xs font-bold transition-colors ${!annualBilling ? 'text-white' : 'text-gray-500'}`}>{i18n("Ditagih Bulanan")}</span>
             <button 
               onClick={() => setAnnualBilling(!annualBilling)} 
               className={`relative w-14 h-8 rounded-full transition-all duration-300 ${annualBilling ? 'bg-[var(--aurora-3)]' : 'bg-white/10'}`}
             >
               <div className={`absolute top-1.5 w-5 h-5 rounded-full bg-white shadow-md transition-all duration-300 ${annualBilling ? 'left-8' : 'left-1'}`} />
             </button>
-            <span className={`text-xs font-bold transition-colors ${annualBilling ? 'text-[var(--aurora-3)]' : 'text-gray-500'}`}>
-              Ditagih Tahunan <span className="text-[var(--success)] text-[10px] font-extrabold bg-[var(--success)]/10 border border-[var(--success)]/30 px-2 py-0.5 rounded-full ml-1">Hemat 20%</span>
+            <span className={`text-xs font-bold transition-colors ${annualBilling ? 'text-[var(--aurora-3)]' : 'text-gray-500'}`}>{i18n("Ditagih Tahunan ")}<span className="text-[var(--success)] text-[10px] font-extrabold bg-[var(--success)]/10 border border-[var(--success)]/30 px-2 py-0.5 rounded-full ml-1">{i18n("Hemat 20%")}</span>
             </span>
           </div>
 
@@ -900,13 +866,11 @@ const LandingPage = () => {
                   }`}
                 >
                   {p.popular && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4.5 py-1.5 rounded-full bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[8px] font-extrabold uppercase tracking-widest whitespace-nowrap shadow-lg shadow-purple-500/25">
-                      ⭐ PALING BANYAK DIPILIH
-                    </div>
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4.5 py-1.5 rounded-full bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[8px] font-extrabold uppercase tracking-widest whitespace-nowrap shadow-lg shadow-purple-500/25">{i18n("⭐ PALING BANYAK DIPILIH ")}</div>
                   )}
 
                   <div>
-                    <span className="text-[9px] uppercase tracking-wider font-extrabold text-gray-500">Plan Pilihan</span>
+                    <span className="text-[9px] uppercase tracking-wider font-extrabold text-gray-500">{i18n("Plan Pilihan")}</span>
                     <h3 className="text-xl font-bold text-white mt-1 mb-0.5">{p.name}</h3>
                     <p className="text-[9px] text-gray-500 mb-5 leading-tight">{p.users}</p>
                     
@@ -917,9 +881,7 @@ const LandingPage = () => {
                       </div>
                       
                       {annualBilling && p.priceAnnual !== 'Gratis' && (
-                        <p className="text-[9px] text-[var(--success)] font-bold mt-1">
-                          Hemat 20% dibandingkan bulanan
-                        </p>
+                        <p className="text-[9px] text-[var(--success)] font-bold mt-1">{i18n("Hemat 20% dibandingkan bulanan ")}</p>
                       )}
                     </div>
 
@@ -957,10 +919,10 @@ const LandingPage = () => {
           </div>
 
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 mt-12 text-[10px] text-gray-600 font-bold uppercase tracking-wider">
-            <span>✅ Uji coba gratis 30 hari</span>
-            <span>✅ Tanpa ikatan kontrak</span>
-            <span>✅ Dukungan teknis WhatsApp</span>
-            <span>✅ Jaminan PDP Data Lokal</span>
+            <span>{i18n("✅ Uji coba gratis 30 hari")}</span>
+            <span>{i18n("✅ Tanpa ikatan kontrak")}</span>
+            <span>{i18n("✅ Dukungan teknis WhatsApp")}</span>
+            <span>{i18n("✅ Jaminan PDP Data Lokal")}</span>
           </div>
 
         </div>
@@ -979,14 +941,11 @@ const LandingPage = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-400/10 border border-yellow-400/30 mb-4">
               <Star size={14} className="text-yellow-400 fill-yellow-400" />
-              <span className="text-[9px] text-yellow-400 font-extrabold uppercase tracking-widest">RATING TERTINGGI 4.9 DARI HRD</span>
+              <span className="text-[9px] text-yellow-400 font-extrabold uppercase tracking-widest">{i18n("RATING TERTINGGI 4.9 DARI HRD")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4">
-              Apa Kata <span className="text-yellow-400">HRD & Operasional</span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-4">{i18n("Apa Kata ")}<span className="text-yellow-400">{i18n("HRD & Operasional")}</span>
             </h2>
-            <p className="text-gray-400 max-w-xl mx-auto text-sm">
-              Pengalaman nyata dari manajer operasional dan profesional HRD di berbagai daerah Indonesia.
-            </p>
+            <p className="text-gray-400 max-w-xl mx-auto text-sm">{i18n("Pengalaman nyata dari manajer operasional dan profesional HRD di berbagai daerah Indonesia. ")}</p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -1021,9 +980,7 @@ const LandingPage = () => {
                       <Star key={j} size={13} className="text-yellow-400 fill-yellow-400" />
                     ))}
                   </div>
-                  <p className="text-xs sm:text-sm text-gray-300 italic leading-relaxed mb-6">
-                    "{t.text}"
-                  </p>
+                  <p className="text-xs sm:text-sm text-gray-300 italic leading-relaxed mb-6">{`"${t.text}"`}</p>
                 </div>
                 
                 <div className="flex items-center gap-3 pt-4 border-t border-white/5">
@@ -1053,12 +1010,8 @@ const LandingPage = () => {
             transition={fadeIn.transition} 
             className="text-center mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white mb-4">
-              Pertanyaan yang Sering Diajukan
-            </h2>
-            <p className="text-gray-400 text-sm">
-              Semua yang perlu Anda ketahui sebelum melangkah bersama kami.
-            </p>
+            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white mb-4">{i18n("Pertanyaan yang Sering Diajukan ")}</h2>
+            <p className="text-gray-400 text-sm">{i18n("Semua yang perlu Anda ketahui sebelum melangkah bersama kami. ")}</p>
           </motion.div>
 
           <div className="space-y-4">
@@ -1104,19 +1057,14 @@ const LandingPage = () => {
             viewport={fadeIn.viewport} 
             transition={fadeIn.transition}
           >
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-6">
-              Siap Menghemat Waktu & Operasional Perusahaan Anda?
-            </h2>
-            <p className="text-gray-400 mb-10 max-w-lg mx-auto text-sm leading-relaxed">
-              Mulai uji coba gratis 30 hari sekarang. Setup hanya butuh 15 menit. Rasakan kedisiplinan & efisiensi maksimal mulai besok pagi.
-            </p>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-6">{i18n("Siap Menghemat Waktu & Operasional Perusahaan Anda? ")}</h2>
+            <p className="text-gray-400 mb-10 max-w-lg mx-auto text-sm leading-relaxed">{i18n("Mulai uji coba gratis 30 hari sekarang. Setup hanya butuh 15 menit. Rasakan kedisiplinan & efisiensi maksimal mulai besok pagi. ")}</p>
             
             <div className="flex flex-wrap justify-center gap-4">
               <button 
                 onClick={() => setShowModal(true)} 
                 className="px-10 py-5 rounded-2xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-extrabold text-xs uppercase tracking-wider flex items-center gap-3 hover:shadow-2xl hover:shadow-purple-500/40 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-purple-500/20"
-              >
-                Jadwalkan Demo Gratis <ChevronRight size={18} />
+              >{i18n("Jadwalkan Demo Gratis ")}<ChevronRight size={18} />
               </button>
               <a 
                 href="https://wa.me/6281234567890?text=Halo%20saya%20ingin%20tanya%20mengenai%20SI%20PRESENSI%20Pro%20Max" 
@@ -1124,15 +1072,14 @@ const LandingPage = () => {
                 rel="noopener noreferrer"
                 className="px-10 py-5 rounded-2xl border border-[var(--success)]/30 text-[var(--success)] font-extrabold text-xs uppercase tracking-wider flex items-center gap-3 bg-[var(--success)]/5 hover:bg-[var(--success)]/10 hover:border-[var(--success)]/50 transition-all hover:scale-105 active:scale-95"
               >
-                <MessageSquare size={16} /> Konsultasi via WhatsApp
-              </a>
+                <MessageSquare size={16} />{i18n(" Konsultasi via WhatsApp ")}</a>
             </div>
             
             <div className="flex justify-center gap-6 mt-10 text-[9px] text-gray-600 font-bold uppercase tracking-wider">
-              <span>🚀 30 hari gratis</span>
-              <span>🔒 100% aman</span>
-              <span>📈 ROI Terbukti</span>
-              <span>👥 Setup dibantu tim ahli</span>
+              <span>{i18n("🚀 30 hari gratis")}</span>
+              <span>{i18n("🔒 100% aman")}</span>
+              <span>{i18n("📈 ROI Terbukti")}</span>
+              <span>{i18n("👥 Setup dibantu tim ahli")}</span>
             </div>
           </motion.div>
         </div>
@@ -1144,48 +1091,46 @@ const LandingPage = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div>
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center text-white font-bold text-xs font-serif shadow-md">SP</div>
-                <span className="text-xs font-bold text-white tracking-wide">SI PRESENSI</span>
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center text-white font-bold text-xs font-serif shadow-md">{i18n("SP")}</div>
+                <span className="text-xs font-bold text-white tracking-wide">{i18n("SI PRESENSI")}</span>
               </div>
-              <p className="text-[10px] text-gray-500 leading-relaxed max-w-xs">
-                Satu-satunya sistem ERP operasional terlengkap untuk perusahaan, pengelola properti, & penyedia jasa keamanan di Indonesia.
-              </p>
+              <p className="text-[10px] text-gray-500 leading-relaxed max-w-xs">{i18n("Satu-satunya sistem ERP operasional terlengkap untuk perusahaan, pengelola properti, & penyedia jasa keamanan di Indonesia. ")}</p>
             </div>
             <div>
-              <h4 className="text-[10px] font-extrabold text-white uppercase tracking-widest mb-4.5">Menu Modul</h4>
+              <h4 className="text-[10px] font-extrabold text-white uppercase tracking-widest mb-4.5">{i18n("Menu Modul")}</h4>
               <div className="space-y-2.5 text-[10px] text-gray-500 font-semibold">
-                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => scrollTo('fitur')}>Absensi & Geofence</p>
-                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => scrollTo('fitur')}>Payroll & TER 2024</p>
-                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => scrollTo('fitur')}>Helpdesk & Teknisi</p>
-                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => scrollTo('fitur')}>Security Patrol & K3</p>
+                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => scrollTo('fitur')}>{i18n("Absensi & Geofence")}</p>
+                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => scrollTo('fitur')}>{i18n("Payroll & TER 2024")}</p>
+                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => scrollTo('fitur')}>{i18n("Helpdesk & Teknisi")}</p>
+                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => scrollTo('fitur')}>{i18n("Security Patrol & K3")}</p>
               </div>
             </div>
             <div>
-              <h4 className="text-[10px] font-extrabold text-white uppercase tracking-widest mb-4.5">Program Kemitraan</h4>
+              <h4 className="text-[10px] font-extrabold text-white uppercase tracking-widest mb-4.5">{i18n("Program Kemitraan")}</h4>
               <div className="space-y-2.5 text-[10px] text-gray-500 font-semibold">
-                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => setShowBookModal(true)}>White-Label SaaS</p>
-                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => setShowBookModal(true)}>Reseller Afiliasi</p>
-                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => setShowBookModal(true)}>On-Premise Holding</p>
-                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => setShowBookModal(true)}>Integrasi Kustom API</p>
+                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => setShowBookModal(true)}>{i18n("White-Label SaaS")}</p>
+                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => setShowBookModal(true)}>{i18n("Reseller Afiliasi")}</p>
+                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => setShowBookModal(true)}>{i18n("On-Premise Holding")}</p>
+                <p className="hover:text-white transition-colors cursor-pointer" onClick={() => setShowBookModal(true)}>{i18n("Integrasi Kustom API")}</p>
               </div>
             </div>
             <div>
-              <h4 className="text-[10px] font-extrabold text-white uppercase tracking-widest mb-4.5">Hubungi Kami</h4>
+              <h4 className="text-[10px] font-extrabold text-white uppercase tracking-widest mb-4.5">{i18n("Hubungi Kami")}</h4>
               <div className="space-y-2.5 text-[10px] text-gray-500 font-semibold">
-                <div className="flex items-center gap-2"><Mail size={12} /> hello@sipresensi.com</div>
-                <div className="flex items-center gap-2"><Phone size={12} /> 0812-3456-7890</div>
-                <div className="flex items-center gap-2"><MessageSquare size={12} /> WA: 0812-3456-7890</div>
+                <div className="flex items-center gap-2"><Mail size={12} />{i18n(" hello@sipresensi.com")}</div>
+                <div className="flex items-center gap-2"><Phone size={12} />{i18n(" 0812-3456-7890")}</div>
+                <div className="flex items-center gap-2"><MessageSquare size={12} />{i18n(" WA: 0812-3456-7890")}</div>
               </div>
             </div>
           </div>
           
           <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex flex-col md:flex-row items-center gap-2.5">
-              <span className="text-[9px] text-gray-600 font-semibold">SI PRESENSI PRO MAX — By Richard Meha. © 2026 Seluruh Hak Cipta Dilindungi.</span>
+              <span className="text-[9px] text-gray-600 font-semibold">{i18n("SI PRESENSI PRO MAX — By Richard Meha. © 2026 Seluruh Hak Cipta Dilindungi.")}</span>
             </div>
             <div className="flex items-center gap-6 text-[9px] text-gray-500 font-bold uppercase tracking-wider">
-              <button onClick={() => navigate('/login')} className="hover:text-white transition-colors">Portal Login</button>
-              <button onClick={() => setShowModal(true)} className="hover:text-white transition-colors">Pesan Demo</button>
+              <button onClick={() => navigate('/login')} className="hover:text-white transition-colors">{i18n("Portal Login")}</button>
+              <button onClick={() => setShowModal(true)} className="hover:text-white transition-colors">{i18n("Pesan Demo")}</button>
             </div>
           </div>
         </div>
@@ -1280,74 +1225,74 @@ const DemoRequestModal = ({ onClose }) => {
             <div className="w-16 h-16 rounded-2xl bg-[var(--success)]/20 flex items-center justify-center mx-auto mb-4">
               <CheckSquare size={32} className="text-[var(--success)]" />
             </div>
-            <h3 className="text-lg font-serif font-bold text-white mb-2">Permintaan Dikirim! 🎉</h3>
-            <p className="text-xs text-gray-400">Tim spesialis kami akan menghubungi Anda via WhatsApp dalam 1x24 jam.</p>
+            <h3 className="text-lg font-serif font-bold text-white mb-2">{i18n("Permintaan Dikirim! 🎉")}</h3>
+            <p className="text-xs text-gray-400">{i18n("Tim spesialis kami akan menghubungi Anda via WhatsApp dalam 1x24 jam.")}</p>
           </div>
         ) : (
           <>
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center text-white font-bold text-sm">SP</div>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center text-white font-bold text-sm">{i18n("SP")}</div>
               <div>
-                <h3 className="text-sm sm:text-base font-serif font-bold text-white leading-tight">Uji Coba Demo Gratis</h3>
-                <p className="text-[9px] text-gray-500">Jelajahi seluruh menu modul operasional kami</p>
+                <h3 className="text-sm sm:text-base font-serif font-bold text-white leading-tight">{i18n("Uji Coba Demo Gratis")}</h3>
+                <p className="text-[9px] text-gray-500">{i18n("Jelajahi seluruh menu modul operasional kami")}</p>
               </div>
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">Nama Lengkap</label>
+                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">{i18n("Nama Lengkap")}</label>
                   <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[var(--aurora-3)]" placeholder="John Doe" />
                 </div>
                 <div>
-                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">Nama Perusahaan</label>
+                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">{i18n("Nama Perusahaan")}</label>
                   <input value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[var(--aurora-3)]" placeholder="PT. Sukses Mulia" />
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">Email Kantor</label>
+                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">{i18n("Email Kantor")}</label>
                   <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[var(--aurora-3)]" placeholder="nama@company.com" />
                 </div>
                 <div>
-                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">Nomor WhatsApp</label>
+                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">{i18n("Nomor WhatsApp")}</label>
                   <input type="tel" required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[var(--aurora-3)]" placeholder="0812xxxx" />
                 </div>
               </div>
               
               <div>
-                <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">Rentang Jumlah Karyawan</label>
+                <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">{i18n("Rentang Jumlah Karyawan")}</label>
                 <select value={form.employees} onChange={e => setForm({ ...form, employees: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none">
-                  <option>1 - 10 Orang</option>
-                  <option>11 - 50 Orang</option>
-                  <option>51 - 100 Orang</option>
-                  <option>101 - 500 Orang</option>
-                  <option>500+ Orang</option>
+                  <option>{i18n("1 - 10 Orang")}</option>
+                  <option>{i18n("11 - 50 Orang")}</option>
+                  <option>{i18n("51 - 100 Orang")}</option>
+                  <option>{i18n("101 - 500 Orang")}</option>
+                  <option>{i18n("500+ Orang")}</option>
                 </select>
               </div>
               
               <div>
-                <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">Modul Utama Paling Diminati</label>
+                <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">{i18n("Modul Utama Paling Diminati")}</label>
                 <select value={form.interest} onChange={e => setForm({ ...form, interest: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none">
-                  <option value="all">Seluruh Modul (All-in-One)</option>
-                  <option value="payroll">Modul Gaji & Pajak PPh 21</option>
-                  <option value="helpdesk">Modul Helpdesk & Booking Gedung</option>
-                  <option value="security">Modul Security Patroli Satpam</option>
-                  <option value="witelabel">Program White-Label SaaS</option>
+                  <option value="all">{i18n("Seluruh Modul (All-in-One)")}</option>
+                  <option value="payroll">{i18n("Modul Gaji & Pajak PPh 21")}</option>
+                  <option value="helpdesk">{i18n("Modul Helpdesk & Booking Gedung")}</option>
+                  <option value="security">{i18n("Modul Security Patroli Satpam")}</option>
+                  <option value="witelabel">{i18n("Program White-Label SaaS")}</option>
                 </select>
               </div>
               
               <div>
-                <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">Pesan Tambahan (Opsional)</label>
+                <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">{i18n("Pesan Tambahan (Opsional)")}</label>
                 <textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} rows={2.5} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[var(--aurora-3)]" placeholder="Beritahu kami tantangan operasional terbesar Anda..." />
               </div>
               
               <button type="submit" disabled={sending} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:shadow-xl disabled:opacity-50">
                 {sending ? (
-                  <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Mengirimkan...</span>
+                  <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" />{i18n(" Mengirimkan...")}</span>
                 ) : (
-                  <span className="flex items-center gap-2"><Send size={14} /> Dapatkan Demo Gratis</span>
+                  <span className="flex items-center gap-2"><Send size={14} />{i18n(" Dapatkan Demo Gratis")}</span>
                 )}
               </button>
             </form>
@@ -1404,8 +1349,8 @@ const PartnerBookingModal = ({ onClose }) => {
             <div className="w-16 h-16 rounded-2xl bg-[var(--success)]/20 flex items-center justify-center mx-auto mb-4">
               <CheckSquare size={32} className="text-[var(--success)]" />
             </div>
-            <h3 className="text-lg font-serif font-bold text-white mb-2">Terima Kasih! 🎉</h3>
-            <p className="text-xs text-gray-400">Tim Kemitraan kami akan segera menghubungi Anda dengan penawaran & brosur khusus.</p>
+            <h3 className="text-lg font-serif font-bold text-white mb-2">{i18n("Terima Kasih! 🎉")}</h3>
+            <p className="text-xs text-gray-400">{i18n("Tim Kemitraan kami akan segera menghubungi Anda dengan penawaran & brosur khusus.")}</p>
           </div>
         ) : (
           <>
@@ -1414,53 +1359,53 @@ const PartnerBookingModal = ({ onClose }) => {
                 <Layers size={18} />
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-serif font-bold text-white leading-tight">Pengajuan Mitra Partner</h3>
-                <p className="text-[9px] text-gray-500">Miliki solusi SaaS ERP dengan Brand & Domain Sendiri</p>
+                <h3 className="text-sm sm:text-base font-serif font-bold text-white leading-tight">{i18n("Pengajuan Mitra Partner")}</h3>
+                <p className="text-[9px] text-gray-500">{i18n("Miliki solusi SaaS ERP dengan Brand & Domain Sendiri")}</p>
               </div>
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">Nama Lengkap</label>
+                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">{i18n("Nama Lengkap")}</label>
                   <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[var(--aurora-3)]" placeholder="John Doe" />
                 </div>
                 <div>
-                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">Nama Perusahaan / Organisasi</label>
+                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">{i18n("Nama Perusahaan / Organisasi")}</label>
                   <input value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[var(--aurora-3)]" placeholder="PT. Sukses Mitra" />
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">Email Kontak</label>
+                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">{i18n("Email Kontak")}</label>
                   <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[var(--aurora-3)]" placeholder="partner@company.com" />
                 </div>
                 <div>
-                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">Nomor WhatsApp HP</label>
+                  <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">{i18n("Nomor WhatsApp HP")}</label>
                   <input type="tel" required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[var(--aurora-3)]" placeholder="0812xxxx" />
                 </div>
               </div>
               
               <div>
-                <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">Model Kemitraan yang Diminati</label>
+                <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">{i18n("Model Kemitraan yang Diminati")}</label>
                 <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none">
-                  <option value="witelabel">Program White-Label (100% Brand Anda)</option>
-                  <option value="reseller">Program Reseller / Afiliasi Komisi</option>
-                  <option value="integrasi">Kustom Integrasi Enterprise Server</option>
+                  <option value="witelabel">{i18n("Program White-Label (100% Brand Anda)")}</option>
+                  <option value="reseller">{i18n("Program Reseller / Afiliasi Komisi")}</option>
+                  <option value="integrasi">{i18n("Kustom Integrasi Enterprise Server")}</option>
                 </select>
               </div>
               
               <div>
-                <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">Deskripsikan Rencana Anda</label>
+                <label className="block text-[8px] text-gray-500 uppercase tracking-widest font-extrabold mb-1">{i18n("Deskripsikan Rencana Anda")}</label>
                 <textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[var(--aurora-3)]" placeholder="Jelaskan target pasar atau jumlah client potensial yang Anda miliki..." />
               </div>
               
               <button type="submit" disabled={sending} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:shadow-xl disabled:opacity-50">
                 {sending ? (
-                  <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Mengirimkan...</span>
+                  <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" />{i18n(" Mengirimkan...")}</span>
                 ) : (
-                  <span className="flex items-center gap-2"><Send size={14} /> Daftarkan Kemitraan</span>
+                  <span className="flex items-center gap-2"><Send size={14} />{i18n(" Daftarkan Kemitraan")}</span>
                 )}
               </button>
             </form>

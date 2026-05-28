@@ -1,4 +1,4 @@
-/* eslint-disable i18next/no-literal-string, react/jsx-no-literals, i18n-text/no-en, react-intl/string-is-marked-with-id */
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Route, ClipboardList, AlertTriangle, Users, Plus, QrCode, GripVertical, Loader2, CheckCircle2, XCircle, Map, Clock, Search, Save, Trash2, ToggleLeft, ToggleRight, Eye, Printer, Download, X } from 'lucide-react';
@@ -6,6 +6,9 @@ import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { logAudit } from '../../../utils/auditLogger';
 import { notifyAdminsInTenant, NOTIF_TYPES } from '../../../utils/notificationEngine';
+
+/** @type {(s: string) => string} Passthrough i18n — app is monolingual Indonesian */
+const t = (s) => s;
 
 const TABS = [
   { key: 'checkpoints', label: 'Checkpoints', icon: MapPin },
@@ -220,32 +223,32 @@ const PatrolManagement = () => {
   const renderCheckpoints = () => (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Daftar Checkpoint</h3>
+        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">{t('Daftar Checkpoint')}</h3>
         <button onClick={() => setShowAddCheckpoint(true)} className="px-3 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[10px] font-bold flex items-center gap-1"><Plus size={14} /> Tambah</button>
       </div>
       {showAddCheckpoint && (
         <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} onSubmit={addCheckpoint} className="mb-6 p-5 bg-white/5 rounded-2xl border border-white/10 space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Nama Checkpoint</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Nama Checkpoint')}</label>
               <input name="name" required className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Pos Utama" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Deskripsi Lokasi</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Deskripsi Lokasi')}</label>
               <input name="location_description" className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Dekat pintu masuk utama" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Latitude</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Latitude')}</label>
               <input name="latitude" type="number" step="any" className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="-6.2088" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Longitude</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Longitude')}</label>
               <input name="longitude" type="number" step="any" className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="106.8456" />
             </div>
           </div>
           <div className="flex gap-2 pt-2">
-            <button type="submit" className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold">Simpan</button>
-            <button type="button" onClick={() => setShowAddCheckpoint(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">Batal</button>
+            <button type="submit" className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold">{t('Simpan')}</button>
+            <button type="button" onClick={() => setShowAddCheckpoint(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">{t('Batal')}</button>
           </div>
         </motion.form>
       )}
@@ -270,12 +273,12 @@ const PatrolManagement = () => {
             <div className="flex items-center justify-between text-[9px] text-gray-500">
               {cp.latitude && cp.longitude ? (
                 <span className="flex items-center gap-1"><Map size={10} /> {cp.latitude.toFixed(4)}, {cp.longitude.toFixed(4)}</span>
-              ) : <span className="text-gray-600">No GPS</span>}
+              ) : <span className="text-gray-600">{t('No GPS')}</span>}
               <button onClick={() => setSelectedCheckpoint(cp)} className="text-[var(--aurora-3)] hover:underline flex items-center gap-1"><Eye size={10} /> QR</button>
             </div>
           </div>
         ))}
-        {!checkpoints.length && <p className="text-gray-500 text-sm col-span-full text-center py-8">Belum ada checkpoint. Tambahkan sekarang!</p>}
+        {!checkpoints.length && <p className="text-gray-500 text-sm col-span-full text-center py-8">{t('Belum ada checkpoint. Tambahkan sekarang!')}</p>}
       </div>
       {selectedCheckpoint && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedCheckpoint(null)}>
@@ -319,23 +322,23 @@ const PatrolManagement = () => {
   const renderRoutes = () => (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Daftar Route Patroli</h3>
+        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">{t('Daftar Route Patroli')}</h3>
         <button onClick={() => setShowAddRoute(true)} className="px-3 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[10px] font-bold flex items-center gap-1"><Plus size={14} /> Tambah Route</button>
       </div>
       {showAddRoute && (
         <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} onSubmit={addRoute} className="mb-6 p-5 bg-white/5 rounded-2xl border border-white/10 space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Nama Route</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Nama Route')}</label>
               <input name="name" required className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Route Pagi" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Estimasi Durasi (menit)</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Estimasi Durasi (menit)')}</label>
               <input name="estimated_duration" type="number" className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="30" />
             </div>
           </div>
           <div>
-            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Pilih Checkpoint (urutkan sesuai keinginan)</label>
+            <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Pilih Checkpoint (urutkan sesuai keinginan)')}</label>
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {checkpoints.filter(cp => cp.is_active).map(cp => (
                 <label key={cp.id} className="flex items-center gap-3 p-2 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10">
@@ -347,8 +350,8 @@ const PatrolManagement = () => {
             </div>
           </div>
           <div className="flex gap-2 pt-2">
-            <button type="submit" className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold">Simpan</button>
-            <button type="button" onClick={() => setShowAddRoute(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">Batal</button>
+            <button type="submit" className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold">{t('Simpan')}</button>
+            <button type="button" onClick={() => setShowAddRoute(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">{t('Batal')}</button>
           </div>
         </motion.form>
       )}
@@ -377,14 +380,14 @@ const PatrolManagement = () => {
             </div>
           </div>
         ))}
-        {!routes.length && <p className="text-gray-500 text-sm text-center py-8">Belum ada route patroli</p>}
+        {!routes.length && <p className="text-gray-500 text-sm text-center py-8">{t('Belum ada route patroli')}</p>}
       </div>
     </div>
   );
 
   const renderLogs = () => (
     <div>
-      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Log Patroli</h3>
+      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">{t('Log Patroli')}</h3>
       <div className="space-y-2">
         {logs.map(l => (
           <div key={l.id} className="bg-white/5 rounded-2xl border border-white/10 p-4 flex flex-col sm:flex-row justify-between gap-3 cursor-pointer hover:border-white/20" onClick={() => setSelectedLog(selectedLog?.id === l.id ? null : l)}>
@@ -401,11 +404,11 @@ const PatrolManagement = () => {
             </div>
           </div>
         ))}
-        {!logs.length && <p className="text-gray-500 text-sm text-center py-8">Belum ada log patroli</p>}
+        {!logs.length && <p className="text-gray-500 text-sm text-center py-8">{t('Belum ada log patroli')}</p>}
       </div>
       {selectedLog && selectedLog.latitude && selectedLog.longitude && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/10">
-          <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Lokasi GPS</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Lokasi GPS')}</p>
           <a href={`https://www.google.com/maps?q=${selectedLog.latitude},${selectedLog.longitude}`} target="_blank" rel="noreferrer" className="text-[var(--aurora-3)] text-xs underline break-all">
             {selectedLog.latitude}, {selectedLog.longitude}
           </a>
@@ -416,7 +419,7 @@ const PatrolManagement = () => {
 
   const renderIncidents = () => (
     <div>
-      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Insiden Patroli</h3>
+      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">{t('Insiden Patroli')}</h3>
       <div className="space-y-3">
         {incidents.map(inc => (
           <div key={inc.id} className="bg-white/5 rounded-2xl border border-[var(--danger)]/20 p-4">
@@ -442,14 +445,14 @@ const PatrolManagement = () => {
             </div>
           </div>
         ))}
-        {!incidents.length && <p className="text-gray-500 text-sm text-center py-8">Belum ada insiden tercatat</p>}
+        {!incidents.length && <p className="text-gray-500 text-sm text-center py-8">{t('Belum ada insiden tercatat')}</p>}
       </div>
     </div>
   );
 
   const renderHandovers = () => (
     <div>
-      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Shift Handover</h3>
+      <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">{t('Shift Handover')}</h3>
       <div className="space-y-3">
         {handovers.map(h => (
           <div key={h.id} className="bg-white/5 rounded-2xl border border-white/10 p-4">
@@ -469,7 +472,7 @@ const PatrolManagement = () => {
             </div>
           </div>
         ))}
-        {!handovers.length && <p className="text-gray-500 text-sm text-center py-8">Belum ada handover</p>}
+        {!handovers.length && <p className="text-gray-500 text-sm text-center py-8">{t('Belum ada handover')}</p>}
       </div>
     </div>
   );
@@ -490,8 +493,8 @@ const PatrolManagement = () => {
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-6">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Patrol Management</h2>
-          <p className="text-sm text-gray-400 mt-1">Kelola checkpoint, route, dan log patroli satpam</p>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('Patrol Management')}</h2>
+          <p className="text-sm text-gray-400 mt-1">{t('Kelola checkpoint, route, dan log patroli satpam')}</p>
         </div>
       </div>
 
@@ -501,7 +504,7 @@ const PatrolManagement = () => {
           <AlertTriangle size={20} className="text-[var(--danger)] shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-bold text-[var(--danger)]">{missedGuards.length} Satpam Belum Absen Hari Ini</p>
-            <p className="text-xs text-gray-400 mt-1">Terjadwal tapi belum clock-in. Segera konfirmasi via telepon/HT.</p>
+            <p className="text-xs text-gray-400 mt-1">{t('Terjadwal tapi belum clock-in. Segera konfirmasi via telepon/HT.')}</p>
             <div className="flex flex-wrap gap-2 mt-3">
               {missedGuards.map(g => (
                 <span key={g.id} className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[11px] text-white font-medium">

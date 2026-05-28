@@ -20,6 +20,7 @@ const browserGlobals = {
   FileReader: 'readonly',
   FormData: 'readonly',
   Image: 'readonly',
+  Intl: 'readonly',
   localStorage: 'readonly',
   navigator: 'readonly',
   Notification: 'readonly',
