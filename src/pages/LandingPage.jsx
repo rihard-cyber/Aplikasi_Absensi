@@ -128,7 +128,7 @@ const LandingPage = () => {
   }, []);
 
   const getRoiData = (employees) => {
-    const tier = ROI_TIERS.find(t => employees >= t.range[0] && employees <= t.range[1]) || ROI_TIERS[ROI_TIERS.length - 1];
+    const tier = ROI_TIERS.find(t => employees >= t.range[0] && employees <= t.range[1]) || ROI_TIERS[4];
     const multiplier = employees / ((tier.range[0] + tier.range[1]) / 2 || employees);
     return {
       hoursSaved: Math.round(tier.hours * multiplier),
@@ -357,7 +357,13 @@ const LandingPage = () => {
       <section id="fitur" className="py-24 border-t border-white/5 bg-[#0B0C10]/80 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           
-          <motion.div {...fadeIn} className="text-center mb-16">
+          <motion.div 
+            initial={fadeIn.initial} 
+            whileInView={fadeIn.whileInView} 
+            viewport={fadeIn.viewport} 
+            transition={fadeIn.transition} 
+            className="text-center mb-16"
+          >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--aurora-3)]/10 border border-[var(--aurora-3)]/30 mb-4">
               <Eye size={14} className="text-[var(--aurora-3)]" />
               <span className="text-[9px] text-[var(--aurora-3)] font-extrabold uppercase tracking-widest">BUKTIKAN FITUR ASLINYA</span>
@@ -457,7 +463,13 @@ const LandingPage = () => {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           
-          <motion.div {...fadeIn} className="text-center mb-16">
+          <motion.div 
+            initial={fadeIn.initial} 
+            whileInView={fadeIn.whileInView} 
+            viewport={fadeIn.viewport} 
+            transition={fadeIn.transition} 
+            className="text-center mb-16"
+          >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--success)]/10 border border-[var(--success)]/30 mb-4">
               <Users size={14} className="text-[var(--success)]" />
               <span className="text-[9px] text-[var(--success)] font-extrabold uppercase tracking-widest">SATU APLIKASI UNTUK SEMUA DEPARTEMEN</span>
@@ -639,7 +651,13 @@ const LandingPage = () => {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           
-          <motion.div {...fadeIn} className="text-center mb-16">
+          <motion.div 
+            initial={fadeIn.initial} 
+            whileInView={fadeIn.whileInView} 
+            viewport={fadeIn.viewport} 
+            transition={fadeIn.transition} 
+            className="text-center mb-16"
+          >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] border border-[var(--aurora-1)]/30 mb-4">
               <Layers size={14} className="text-[var(--aurora-3)]" />
               <span className="text-[9px] text-[var(--aurora-3)] font-extrabold uppercase tracking-widest">PELUANG BISNIS DASYAT</span>
@@ -655,7 +673,13 @@ const LandingPage = () => {
           <div className="grid lg:grid-cols-12 gap-8 items-stretch mb-12">
             
             {/* Why join column */}
-            <motion.div {...fadeInLeft} className="lg:col-span-6 glass-panel p-8 flex flex-col justify-between">
+            <motion.div 
+              initial={fadeInLeft.initial} 
+              whileInView={fadeInLeft.whileInView} 
+              viewport={fadeInLeft.viewport} 
+              transition={fadeInLeft.transition} 
+              className="lg:col-span-6 glass-panel p-8 flex flex-col justify-between"
+            >
               <div>
                 <h3 className="text-xl font-serif font-bold text-white mb-2">🚀 Mengapa Menjadi Partner SaaS Kami?</h3>
                 <p className="text-xs text-gray-500 mb-6 leading-relaxed">
@@ -688,7 +712,13 @@ const LandingPage = () => {
             </motion.div>
 
             {/* Partnerships schemes column */}
-            <motion.div {...fadeInRight} className="lg:col-span-6 glass-panel p-8 border-[var(--aurora-3)]/30 flex flex-col justify-between">
+            <motion.div 
+              initial={fadeInRight.initial} 
+              whileInView={fadeInRight.whileInView} 
+              viewport={fadeInRight.viewport} 
+              transition={fadeInRight.transition} 
+              className="lg:col-span-6 glass-panel p-8 border-[var(--aurora-3)]/30 flex flex-col justify-between"
+            >
               <div>
                 <h3 className="text-xl font-serif font-bold text-white mb-2">💼 Pilihan Kerja Sama & Bagi Hasil</h3>
                 <p className="text-xs text-gray-500 mb-6 leading-relaxed">
@@ -747,7 +777,13 @@ const LandingPage = () => {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           
-          <motion.div {...fadeIn} className="text-center mb-8">
+          <motion.div 
+            initial={fadeIn.initial} 
+            whileInView={fadeIn.whileInView} 
+            viewport={fadeIn.viewport} 
+            transition={fadeIn.transition} 
+            className="text-center mb-8"
+          >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--warning)]/10 border border-[var(--warning)]/30 mb-4">
               <Calculator size={14} className="text-[var(--warning)]" />
               <span className="text-[9px] text-[var(--warning)] font-extrabold uppercase tracking-widest">HARGA JUJUR TANPA TERSEMBUNYI</span>
@@ -934,7 +970,13 @@ const LandingPage = () => {
       <section className="py-24 border-t border-white/5 bg-[#07080C]/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          <motion.div {...fadeIn} className="text-center mb-16">
+          <motion.div 
+            initial={fadeIn.initial} 
+            whileInView={fadeIn.whileInView} 
+            viewport={fadeIn.viewport} 
+            transition={fadeIn.transition} 
+            className="text-center mb-16"
+          >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-400/10 border border-yellow-400/30 mb-4">
               <Star size={14} className="text-yellow-400 fill-yellow-400" />
               <span className="text-[9px] text-yellow-400 font-extrabold uppercase tracking-widest">RATING TERTINGGI 4.9 DARI HRD</span>
@@ -1004,7 +1046,13 @@ const LandingPage = () => {
       <section id="faq" className="py-24 border-t border-white/5 bg-[#0B0C10]/80">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          <motion.div {...fadeIn} className="text-center mb-16">
+          <motion.div 
+            initial={fadeIn.initial} 
+            whileInView={fadeIn.whileInView} 
+            viewport={fadeIn.viewport} 
+            transition={fadeIn.transition} 
+            className="text-center mb-16"
+          >
             <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white mb-4">
               Pertanyaan yang Sering Diajukan
             </h2>
@@ -1050,7 +1098,12 @@ const LandingPage = () => {
         </div>
         
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <motion.div {...fadeIn}>
+          <motion.div 
+            initial={fadeIn.initial} 
+            whileInView={fadeIn.whileInView} 
+            viewport={fadeIn.viewport} 
+            transition={fadeIn.transition}
+          >
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white mb-6">
               Siap Menghemat Waktu & Operasional Perusahaan Anda?
             </h2>
