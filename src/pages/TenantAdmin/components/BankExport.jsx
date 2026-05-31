@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import { safeGet } from '../../../utils/safeAccess';
 import { Download, Building2, Copy, CheckCircle2, DollarSign } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-const monthName = (month) => MONTHS[Number(month) - 1] || '-';
+const monthName = (month) => safeGet(MONTHS, Number(month) - 1) || '-';
 
 const BANK_FORMATS = {
   BCA: { name: 'Bank BCA (BDI)', desc: 'Format BCA Data Import' },
@@ -17,10 +19,11 @@ const BankExport = () => {
   const [periods, setPeriods] = useState([]);
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [summaries, setSummaries] = useState([]);
-  const [profiles, setProfiles] = useState({});
+  const [profiles, setProfiles] = useState(new Map());
   const [bankFormat, setBankFormat] = useState('BCA');
   const [copied, setCopied] = useState(false);
   const toast = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => { fetchPeriods(); }, []);
 
@@ -40,8 +43,8 @@ const BankExport = () => {
     let q2 = supabase.from('profiles').select('id, full_name, nip');
     if (p?.tenant_id) q2 = q2.eq('tenant_id', p.tenant_id);
     const { data: emps } = await q2;
-    const pmap = {};
-    (emps || []).forEach(e => pmap[e.id] = e);
+    const pmap = new Map();
+    (emps || []).forEach(e => pmap.set(e.id, e));
     setProfiles(pmap);
   };
 
@@ -62,7 +65,7 @@ const BankExport = () => {
 
     for (const s of summaries) {
       if (s.take_home_pay <= 0) continue;
-      const emp = profiles[s.user_id];
+      const emp = profiles.get(s.user_id);
       const bankName = s.employee_hris_data?.bank_name || '';
       const bankAccount = s.employee_hris_data?.bank_account_number || '';
       const accountName = s.employee_hris_data?.bank_account_name || emp?.full_name || '';
@@ -108,7 +111,7 @@ const BankExport = () => {
 
   const totalTransfer = summaries.reduce((s, r) => s + Number(r.take_home_pay), 0);
   const validCount = summaries.filter(s => {
-    const emp = profiles[s.user_id];
+    const emp = profiles.get(s.user_id);
     const bankAcc = s.employee_hris_data?.bank_account_number || s.employee_hris_data?.bank_account_number;
     return s.take_home_pay > 0 && bankAcc;
   }).length;
@@ -116,20 +119,20 @@ const BankExport = () => {
   return (
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="border-b border-white/10 pb-6 mb-8">
-        <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Export Bank Transfer</h2>
-        <p className="text-sm text-gray-400 mt-1">Generate file payroll untuk BCA, Mandiri, dan BSI</p>
+        <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('bankExport.title')}</h2>
+        <p className="text-sm text-gray-400 mt-1">{t('bankExport.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div>
-          <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Periode Payroll</label>
-          <select value={selectedPeriod?.id || ''} onChange={e => loadPeriod(e.target.value)} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
-            <option value="">Pilih periode</option>
+          <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('bankExport.period')}</label>
+          <select value={selectedPeriod?.id || ''} onChange={e => loadPeriod(e.target.value)}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+            <option value="">{t('bankExport.selectPeriod')}</option>
             {periods.map(p => <option key={p.id} value={p.id}>{monthName(p.period_month)} {p.period_year}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Format Bank</label>
+          <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('bankExport.format')}</label>
           <div className="flex flex-wrap gap-2">
             {Object.entries(BANK_FORMATS).map(([key, val]) => (
               <button key={key} onClick={() => setBankFormat(key)} className={`flex-1 min-w-[80px] px-3 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${bankFormat === key ? 'bg-white/10 border-[var(--aurora-3)]/30 text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}>
@@ -153,23 +156,23 @@ const BankExport = () => {
           <div className="mb-6 p-5 bg-gradient-to-r from-[var(--aurora-3)]/10 to-[var(--aurora-1)]/10 rounded-2xl border border-white/10">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-[9px] text-gray-500 uppercase tracking-widest">Total Transfer</p>
-                <p className="text-xl font-bold text-white font-mono">Rp {totalTransfer.toLocaleString()}</p>
+                <p className="text-[9px] text-gray-500 uppercase tracking-widest">{t('bankExport.totalTransfer')}</p>
+                <p className="text-xl font-bold text-white font-mono">{t('bankExport.currencySymbol')} {totalTransfer.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-[9px] text-gray-500 uppercase tracking-widest">Karyawan</p>
+                <p className="text-[9px] text-gray-500 uppercase tracking-widest">{t('bankExport.employee')}</p>
                 <p className="text-xl font-bold text-white">{summaries.length} org</p>
               </div>
               <div>
-                <p className="text-[9px] text-gray-500 uppercase tracking-widest">Valid Rekening</p>
+                <p className="text-[9px] text-gray-500 uppercase tracking-widest">{t('bankExport.validAccount')}</p>
                 <p className="text-xl font-bold text-[var(--success)]">{validCount} org</p>
               </div>
             </div>
           </div>
 
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Preview Export ({BANK_FORMATS[bankFormat].name})</h3>
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">{t('bankExport.previewExport')}{safeGet(BANK_FORMATS, bankFormat)?.name || ''})</h3>
           <pre className="bg-black/40 rounded-2xl p-6 text-[10px] text-green-400 font-mono leading-relaxed max-h-[400px] overflow-y-auto custom-scrollbar border border-white/5">
-            {generateBankData() || <span className="text-gray-500">Tidak ada data rekening valid untuk diekspor. Pastikan karyawan memiliki data bank di profil HRIS.</span>}
+            {generateBankData() || <span className="text-gray-500">{t('bankExport.noValidAccount')}</span>}
           </pre>
 
           {validCount < summaries.length && (

@@ -323,10 +323,11 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
   return (
     <div className="flex flex-col gap-4 relative h-full">
       {/* Sticky Header */}
-      <div className="flex items-center justify-between sticky top-0 bg-[#0B0C10]/95 backdrop-blur-xl py-4 z-[30] border-b border-white/10 mb-2">
+      <div className="flex items-center justify-between sticky top-0 bg-[#0B0C10]/80 backdrop-blur-xl py-4 z-[30] border-b border-white/5 mb-2">
         <div className="flex flex-col">
           <h2 className="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
-            <Building size={16} className="text-[var(--aurora-1)]" /> Manajemen Unit SaaS
+            <span className="w-6 h-6 rounded-lg bg-[var(--aurora-1)]/10 flex items-center justify-center shadow-[0_0_8px_rgba(142,45,226,0.2)]"><Building size={12} className="text-[var(--aurora-1)]" /></span>
+            Manajemen Unit SaaS
           </h2>
           <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">{filteredTenants.length} {t('Entitas Terdeteksi')}</p>
         </div>
@@ -362,8 +363,8 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   className={`rounded-2xl border overflow-hidden transition-all ${tenant.active
-                      ? 'bg-[#1A1C23] border-white/5 hover:border-[var(--aurora-3)]/40 hover:bg-white/5 hover:shadow-[0_0_20px_rgba(0,201,255,0.08)]'
-                      : 'bg-[var(--danger)]/5 border-[var(--danger)]/30'
+                      ? 'bg-white/5 backdrop-blur-lg border-white/10 hover:border-[var(--aurora-3)]/40 hover:bg-white/[0.08] hover:shadow-[0_0_20px_rgba(0,201,255,0.08)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]'
+                      : 'bg-rose-500/5 border-rose-500/30'
                     }`}
                 >
                   {/* Main Row */}
@@ -412,10 +413,10 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                         {/* Codes Section */}
                         <div className="px-4 py-3 bg-white/[0.02] border-b border-white/5 flex flex-col sm:flex-row gap-3 justify-between">
                           {/* Admin Code */}
-                          <div className="flex-1 flex items-center justify-between bg-black/30 px-3 py-2 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                          <div className="flex-1 flex items-center justify-between bg-white/5 backdrop-blur-lg px-3 py-2 rounded-xl border border-white/5 hover:border-amber-500/40 transition-colors shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
                             <div className="flex flex-col">
-                              <span className="text-[8px] text-[var(--warning)] font-black uppercase tracking-widest">{t('Lisensi Admin')}</span>
-                              <span className="text-xs font-mono font-bold text-white mt-0.5">{tenant.adminCode || '-'}</span>
+                              <span className="text-[8px] text-amber-400 font-black uppercase tracking-widest">{t('Lisensi Admin')}</span>
+                              <span className="text-xs font-mono font-bold text-white mt-0.5 drop-shadow-[0_0_6px_rgba(255,214,0,0.2)]">{tenant.adminCode || '-'}</span>
                             </div>
                             {tenant.adminCode && (
                               <button
@@ -427,16 +428,16 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                                 }}
                                 className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
                               >
-                                {copiedId === 'adm-' + tenant.id ? <CheckCircle2 size={14} className="text-[var(--success)]" /> : <Copy size={14} />}
+                                {copiedId === 'adm-' + tenant.id ? <CheckCircle2 size={14} className="text-emerald-400" /> : <Copy size={14} />}
                               </button>
                             )}
                           </div>
 
                           {/* Employee Code */}
-                          <div className="flex-1 flex items-center justify-between bg-black/30 px-3 py-2 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                          <div className="flex-1 flex items-center justify-between bg-white/5 backdrop-blur-lg px-3 py-2 rounded-xl border border-white/5 hover:border-[var(--aurora-3)]/40 transition-colors shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
                             <div className="flex flex-col">
                               <span className="text-[8px] text-[var(--aurora-3)] font-black uppercase tracking-widest">{t('Kode Karyawan')}</span>
-                              <span className="text-xs font-mono font-bold text-white mt-0.5">{tenant.activationCode || '-'}</span>
+                              <span className="text-xs font-mono font-bold text-white mt-0.5 drop-shadow-[0_0_6px_rgba(0,201,255,0.2)]">{tenant.activationCode || '-'}</span>
                             </div>
                             {tenant.activationCode && (
                               <button
@@ -448,7 +449,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                                 }}
                                 className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
                               >
-                                {copiedId === 'emp-' + tenant.id ? <CheckCircle2 size={14} className="text-[var(--success)]" /> : <Copy size={14} />}
+                                {copiedId === 'emp-' + tenant.id ? <CheckCircle2 size={14} className="text-emerald-400" /> : <Copy size={14} />}
                               </button>
                             )}
                           </div>
@@ -554,7 +555,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
               initial={{ scale: 0.9, opacity: 0, y: 30 }} 
               animate={{ scale: 1, opacity: 1, y: 0 }} 
               exit={{ scale: 0.9, opacity: 0, y: 30 }} 
-              className="bg-[#14151A] border border-white/10 rounded-[32px] w-[98%] sm:max-w-lg px-4 pt-4 pb-14 relative z-[210] overflow-y-auto max-h-[85vh] shadow-[0_0_80px_rgba(0,0,0,0.9)] custom-scrollbar"
+              className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-[32px] w-[98%] sm:max-w-lg px-4 pt-4 pb-14 relative z-[210] overflow-y-auto max-h-[85vh] shadow-[0_0_80px_rgba(0,0,0,0.9)] custom-scrollbar"
             >
               <div className="absolute top-3 right-3">
                 <button disabled={isCreating} onClick={() => setShowCreateModal(false)} className="p-1.5 rounded-xl hover:bg-white/5 text-gray-500 hover:text-white transition-colors">
@@ -578,15 +579,15 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                 <div>
                   <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Nama Resmi Entitas')}</label>
                   <input required value={newTenant.name} onChange={e => setNewTenant({...newTenant, name: e.target.value})} type="text" 
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--aurora-1)] transition-all placeholder:text-gray-700" 
-                    placeholder={t("Masukkan Nama Perusahaan...")} />
+                     
+                    placeholder={t("Masukkan Nama Perusahaan...")}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all duration-300 placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Tier Subscription')}</label>
                     <select value={newTenant.tier} onChange={e => setNewTenant({...newTenant, tier: e.target.value})} 
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--aurora-1)] transition-all appearance-none">
+                       className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all duration-300 appearance-none placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                       <option value="Bronze">{t('Bronze (Trial)')}</option><option value="Silver">{t('Silver')}</option>
                       <option value="Gold">{t('Gold')}</option><option value="Enterprise">{t('Enterprise')}</option>
                     </select>
@@ -594,7 +595,7 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                   <div>
                     <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Limit User')}</label>
                     <input type="number" value={newTenant.maxUsers} onChange={e => setNewTenant({...newTenant, maxUsers: e.target.value})} 
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[var(--aurora-1)] transition-all" />
+                        className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all duration-300 placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                   </div>
                 </div>
 

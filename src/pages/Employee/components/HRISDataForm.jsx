@@ -302,8 +302,8 @@ const SmartInput = ({ label, icon, isTextArea, name, value, onChange, placeholde
           placeholder={placeholder}
           disabled={disabled}
           maxLength={maxLength}
-          className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)] transition-all min-h-[80px]"
-        />
+          
+         className="w-full bg-white/5 border border-white/20 rounded-2xl py-3 px-4 text-xs text-white outline-none transition-all duration-300 min-h-[80px] placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
       ) : (
         <input
           type={type}
@@ -328,8 +328,8 @@ const SmartSelect = ({ label, options, name, value, onChange, disabled }) => (
       value={value}
       onChange={onChange}
       disabled={disabled}
-      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)] transition-all"
-    >
+      
+     className="w-full bg-white/5 border border-white/20 rounded-2xl py-3.5 px-4 text-xs text-white outline-none transition-all duration-300 placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
       <option value="" disabled>{t('Pilih...')}</option>
       {options.map(opt => <option key={opt.val} value={opt.val} className="bg-[#0B0C10]">{opt.label}</option>)}
     </select>

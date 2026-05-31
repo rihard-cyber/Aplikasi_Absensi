@@ -152,13 +152,13 @@ const WorkOrderManagement = () => {
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari work order..." className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-white text-xs outline-none focus:border-[var(--aurora-3)]" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari work order..."   className="w-full bg-white/5 border border-white/20 rounded-xl pl-9 pr-3 py-2.5 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
         </div>
-        <select value={filterType} onChange={e => setFilterType(e.target.value)} className="bg-[#1A1C23] border border-white/10 rounded-xl px-3 py-2.5 text-white text-xs outline-none focus:border-[var(--aurora-3)]">
+        <select value={filterType} onChange={e => setFilterType(e.target.value)}  className="bg-white/5 border border-white/20 rounded-xl px-3 py-2.5 text-white text-xs outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
           <option value="ALL">Semua Tipe</option>
           {WORK_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="bg-[#1A1C23] border border-white/10 rounded-xl px-3 py-2.5 text-white text-xs outline-none focus:border-[var(--aurora-3)]">
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}  className="bg-white/5 border border-white/20 rounded-xl px-3 py-2.5 text-white text-xs outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
           <option value="ALL">Semua Status</option>
           <option value="OPEN">Open</option>
           <option value="IN_PROGRESS">In Progress</option>
@@ -177,34 +177,34 @@ const WorkOrderManagement = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Judul</label>
-                <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                <input value={form.title} onChange={e => setForm({...form, title: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tipe Pekerjaan</label>
-                  <select value={form.work_type} onChange={e => setForm({...form, work_type: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+                  <select value={form.work_type} onChange={e => setForm({...form, work_type: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                     {WORK_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Jadwal</label>
-                  <input type="date" value={form.schedule_date} onChange={e => setForm({...form, schedule_date: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                  <input type="date" value={form.schedule_date} onChange={e => setForm({...form, schedule_date: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
               </div>
               <div>
                 <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Assign Ke</label>
-                <select value={form.assigned_to} onChange={e => setForm({...form, assigned_to: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+                <select value={form.assigned_to} onChange={e => setForm({...form, assigned_to: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                   <option value="">— Pilih Teknisi —</option>
                   {technicians.map(t => <option key={t.id} value={t.id}>{t.full_name} ({t.nip})</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Helpdesk Ticket ID (opsional)</label>
-                <input value={form.helpdesk_ticket_id} onChange={e => setForm({...form, helpdesk_ticket_id: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                <input value={form.helpdesk_ticket_id} onChange={e => setForm({...form, helpdesk_ticket_id: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               <div>
                 <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Deskripsi</label>
-                <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               <button onClick={handleSave} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs flex items-center justify-center gap-2">
                 <Save size={14} /> {editingId ? 'Update' : 'Buat'} Work Order
@@ -295,7 +295,7 @@ const WorkOrderManagement = () => {
                     {materials.map((m, idx) => (
                       <div key={idx} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
                         <input value={m.item_name} onChange={e => { const u = [...materials]; u[idx] = { ...u[idx], item_name: e.target.value }; setMaterials(u); }} placeholder="Nama material..." className="flex-1 bg-transparent border-none text-xs text-white outline-none" />
-                        <input value={m.quantity} onChange={e => { const u = [...materials]; u[idx] = { ...u[idx], quantity: e.target.value }; setMaterials(u); }} placeholder="Qty" className="w-20 bg-[#1A1C23] border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none" />
+                        <input value={m.quantity} onChange={e => { const u = [...materials]; u[idx] = { ...u[idx], quantity: e.target.value }; setMaterials(u); }} placeholder="Qty"   className="w-20 bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-xs text-white outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                       </div>
                     ))}
                   </div>

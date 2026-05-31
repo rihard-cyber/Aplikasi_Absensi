@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import { safeGet } from '../../../utils/safeAccess';
 import { CalendarDays, Plus, Save, X, Edit3, Trash2, MapPin, Clock, Users, Loader2 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
@@ -24,6 +26,7 @@ const CompanyEvents = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const toast = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => { fetchEvents(); }, []);
 
@@ -95,7 +98,7 @@ const CompanyEvents = () => {
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-8">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Kalender Acara</h2>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('events.calendar')}</h2>
           <p className="text-sm text-gray-400 mt-1">{events.length} acara • {filtered.length} bulan ini</p>
         </div>
         <button onClick={openNew} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> Tambah Acara</button>
@@ -103,9 +106,9 @@ const CompanyEvents = () => {
 
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <button onClick={() => { if (selectedMonth === 0) { setSelectedMonth(11); setSelectedYear(selectedYear - 1); } else setSelectedMonth(selectedMonth - 1); }} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 flex-shrink-0">&lt;</button>
-        <span className="text-lg font-bold text-white min-w-0 sm:min-w-[160px] text-center">{MONTHS[selectedMonth]} {selectedYear}</span>
+        <span className="text-lg font-bold text-white min-w-0 sm:min-w-[160px] text-center">{safeGet(MONTHS, selectedMonth)} {selectedYear}</span>
         <button onClick={() => { if (selectedMonth === 11) { setSelectedMonth(0); setSelectedYear(selectedYear + 1); } else setSelectedMonth(selectedMonth + 1); }} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 flex-shrink-0">&gt;</button>
-        <button onClick={() => { setSelectedMonth(new Date().getMonth()); setSelectedYear(new Date().getFullYear()); }} className="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] text-gray-400 hover:text-white whitespace-nowrap">Hari Ini</button>
+        <button onClick={() => { setSelectedMonth(new Date().getMonth()); setSelectedYear(new Date().getFullYear()); }} className="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] text-gray-400 hover:text-white whitespace-nowrap">{t('events.today')}</button>
       </div>
 
       <div className="grid grid-cols-7 gap-1 mb-6">
@@ -145,13 +148,13 @@ const CompanyEvents = () => {
               <div className="flex items-center gap-4">
                 <div className="text-center w-12">
                   <p className="text-lg font-bold text-white">{d.getDate()}</p>
-                  <p className="text-[8px] text-gray-500 uppercase">{MONTHS[d.getMonth()].slice(0, 3)}</p>
+                  <p className="text-[8px] text-gray-500 uppercase">{safeGet(MONTHS, d.getMonth()).slice(0, 3)}</p>
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm">{cat?.icon}</span>
                     <span className="text-sm font-bold text-white">{ev.title}</span>
-                    {ev.is_mandatory && <span className="text-[8px] px-1.5 py-0.5 rounded bg-[var(--danger)]/10 text-[var(--danger)] font-bold">WAJIB</span>}
+                    {ev.is_mandatory && <span className="text-[8px] px-1.5 py-0.5 rounded bg-[var(--danger)]/10 text-[var(--danger)] font-bold">{t('events.required')}</span>}
                   </div>
                   <div className="flex items-center gap-3 text-[9px] text-gray-500 mt-0.5">
                     {ev.event_time && <span className="flex items-center gap-1"><Clock size={9} /> {ev.event_time}</span>}
@@ -167,7 +170,7 @@ const CompanyEvents = () => {
             </div>
           );
         })}
-        {!filtered.length && <p className="text-gray-500 text-xs text-center py-4">Tidak ada acara bulan ini</p>}
+        {!filtered.length && <p className="text-gray-500 text-xs text-center py-4">{t('events.noEventThisMonth')}</p>}
       </div>
 
       {showForm && (
@@ -179,36 +182,36 @@ const CompanyEvents = () => {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Judul</label>
-                <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.eventTitle')}</label>
+                <input value={form.title} onChange={e => setForm({...form, title: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tanggal</label>
-                  <input type="date" value={form.event_date} onChange={e => setForm({...form, event_date: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.date')}</label>
+                  <input type="date" value={form.event_date} onChange={e => setForm({...form, event_date: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Waktu</label>
-                  <input type="time" value={form.event_time} onChange={e => setForm({...form, event_time: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.time')}</label>
+                  <input type="time" value={form.event_time} onChange={e => setForm({...form, event_time: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Kategori</label>
-                <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.category')}</label>
+                <select value={form.category} onChange={e => setForm({...form, category: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                   {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.icon} {c.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Lokasi</label>
-                <input value={form.location} onChange={e => setForm({...form, location: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.location')}</label>
+                <input value={form.location} onChange={e => setForm({...form, location: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Deskripsi</label>
-                <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.description')}</label>
+                <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-white/5 hover:bg-white/5">
                 <input type="checkbox" checked={form.is_mandatory} onChange={e => setForm({...form, is_mandatory: e.target.checked})} className="w-4 h-4" />
-                <span className="text-xs text-gray-300">Acara wajib dihadiri</span>
+                <span className="text-xs text-gray-300">{t('events.requiredToAttend')}</span>
               </label>
               <button onClick={handleSave} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs flex items-center justify-center gap-2">
                 <Save size={14} /> Simpan Acara

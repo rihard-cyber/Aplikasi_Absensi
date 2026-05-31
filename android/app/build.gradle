@@ -7,9 +7,9 @@ android {
     signingConfigs {
         release {
             storeFile file('release.keystore')
-            storePassword 'Meha1122'
-            keyAlias 'RichardOwner'
-            keyPassword 'Meha1122'
+            storePassword System.getenv('KEYSTORE_PASSWORD') ?: 'Meha1122'
+            keyAlias System.getenv('KEYSTORE_ALIAS') ?: 'RichardOwner'
+            keyPassword System.getenv('KEYSTORE_PASSWORD') ?: 'Meha1122'
         }
     }
 

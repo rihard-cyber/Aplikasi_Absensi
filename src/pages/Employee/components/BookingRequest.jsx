@@ -104,7 +104,7 @@ const BookingRequest = ({ onBack }) => {
   });
 
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col gap-6 pb-24 relative min-h-[60vh]">
+    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full flex flex-col gap-6 pb-24 relative min-h-[60vh]">
       <div className="flex items-center gap-4">
         <button onClick={onBack} className="p-3 bg-white/5 border border-white/10 rounded-2xl text-gray-400 hover:text-white transition-colors">
           <ArrowLeft size={20} />
@@ -175,21 +175,21 @@ const BookingRequest = ({ onBack }) => {
               <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Tanggal')}</label>
-                  <input type="date" required value={form.booking_date} onChange={e => setForm({...form, booking_date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]" />
+                  <input type="date" required value={form.booking_date} onChange={e => setForm({...form, booking_date: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-2xl py-4 px-4 text-xs text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Jam Mulai')}</label>
-                    <input type="time" required value={form.start_time} onChange={e => setForm({...form, start_time: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]" />
+                    <input type="time" required value={form.start_time} onChange={e => setForm({...form, start_time: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-2xl py-4 px-4 text-xs text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Jam Selesai')}</label>
-                    <input type="time" required value={form.end_time} onChange={e => setForm({...form, end_time: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]" />
+                    <input type="time" required value={form.end_time} onChange={e => setForm({...form, end_time: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-2xl py-4 px-4 text-xs text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Keperluan')}</label>
-                  <textarea rows="3" placeholder="Tuliskan keperluan pemesanan..." value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)] resize-none" />
+                  <textarea rows="3" placeholder="Tuliskan keperluan pemesanan..." value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-2xl py-4 px-4 text-xs text-white outline-none resize-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div className="pt-4">
                   {showSuccess ? (
@@ -234,7 +234,7 @@ const BookingRequest = ({ onBack }) => {
               <div key={day} className={`min-h-[40px] p-0.5 rounded-lg border ${isToday ? 'bg-[var(--aurora-3)]/10 border-[var(--aurora-3)]/20' : 'bg-white/5 border-white/10'}`}>
                 <p className={`text-[8px] font-bold ${isToday ? 'text-[var(--aurora-3)]' : 'text-gray-500'}`}>{day}</p>
                 {dayBookings.slice(0, 1).map(b => (
-                  <div key={b.id} className={`text-[5px] px-0.5 py-0.5 rounded truncate text-white font-bold ${b.status === 'APPROVED' ? 'bg-[var(--success)]/60' : b.status === 'REJECTED' ? 'bg-[var(--danger)]/60' : 'bg-[var(--warning)]/60'}`}>
+                  <div key={b.id} className={`text-[7px] px-0.5 py-0.5 rounded truncate text-white font-bold ${b.status === 'APPROVED' ? 'bg-[var(--success)]/60' : b.status === 'REJECTED' ? 'bg-[var(--danger)]/60' : 'bg-[var(--warning)]/60'}`}>
                     {b.facilities?.name}
                   </div>
                 ))}

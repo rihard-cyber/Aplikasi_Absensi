@@ -306,14 +306,14 @@ const WebhookSettings = () => {
               <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">Nama Webhook *</label>
               <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                 placeholder="Contoh: Slack Notifikasi Absensi"
-                className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-1)]" />
+                  className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
 
             <div>
               <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">URL Endpoint *</label>
               <input value={form.url} onChange={e => setForm({ ...form, url: e.target.value })}
                 placeholder="https://hooks.slack.com/services/..."
-                className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-mono outline-none focus:border-[var(--aurora-1)]" />
+                  className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm font-mono outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
 
             <div>
@@ -323,7 +323,7 @@ const WebhookSettings = () => {
                   type={showSecrets.form ? 'text' : 'password'}
                   value={form.secret} onChange={e => setForm({ ...form, secret: e.target.value })}
                   placeholder="Signature secret untuk verifikasi"
-                  className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 pr-10 py-3 text-white text-sm font-mono outline-none focus:border-[var(--aurora-1)]" />
+                    className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 pr-10 py-3 text-white text-sm font-mono outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 <button onClick={() => setShowSecrets(p => ({ ...p, form: !p.form }))}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
                   {showSecrets.form ? <EyeOff size={14} /> : <Eye size={14} />}

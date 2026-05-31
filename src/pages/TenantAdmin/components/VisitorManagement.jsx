@@ -1,15 +1,15 @@
-/* eslint-disable i18next/no-literal-string, react/jsx-no-literals, i18n-text/no-en, react-intl/string-is-marked-with-id */
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Plus, Save, X, User, LogIn, LogOut, Ban, Printer, QrCode, Calendar, Loader2, Users, Shield, Phone, Car, Building2, Download } from 'lucide-react';
+import { Search, Plus, Save, X, User, LogIn, LogOut, Ban, Printer, QrCode, Calendar, Phone, Car, Building2, Download } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
+import { useTranslation } from 'react-i18next';
 
 const VisitorManagement = () => {
+  const { t } = useTranslation();
   const [visitors, setVisitors] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [tenantId, setTenantId] = useState(null);
-  const [search, setSearch] = useState('');
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
   const [filterHost, setFilterHost] = useState('');
   const [filterName, setFilterName] = useState('');
@@ -31,10 +31,10 @@ const VisitorManagement = () => {
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(blobUrl);
-      toast('QR Code berhasil diunduh!', 'success');
+      toast(t('visitor.qrDownloadSuccess'), 'success');
     } catch (err) {
       console.error(err);
-      toast('Gagal mengunduh QR Code', 'error');
+      toast(t('visitor.qrDownloadFail'), 'error');
     }
   };
 
@@ -44,7 +44,7 @@ const VisitorManagement = () => {
     printWindow.document.write(`
       <html>
         <head>
-          <title>Print QR Code - ${title}</title>
+          <title>${t('visitor.printQRTitle')}${title}</title>
           <style>
             body {
               display: flex;
@@ -70,7 +70,7 @@ const VisitorManagement = () => {
         <body>
           <div class="container">
             <h2>${title}</h2>
-            <p>Scan barcode ini di meja resepsionis atau pos penjagaan untuk Check-In</p>
+            <p>${t('visitor.scanPrompt')}</p>
             <img src="${qrApiUrl}" onload="window.print(); window.close();" />
           </div>
         </body>
@@ -116,44 +116,54 @@ const VisitorManagement = () => {
   const generateQR = (visitor) => {
     const data = JSON.stringify({ id: visitor.id, name: visitor.full_name, company: visitor.company, visit_date: visitor.visit_date });
     setQrData(data);
-    toast('QR Code siap digunakan', 'success');
+    toast(t('visitor.qrReady'), 'success');
   };
 
   const handleSave = async () => {
-    if (!form.full_name || !form.visit_date) { toast('Nama dan tanggal wajib', 'error'); return; }
+    if (!form.full_name || !form.visit_date) { toast(t('visitor.nameAndDateRequired'), 'error'); return; }
     try {
       const payload = { tenant_id: tenantId, host_id: form.host_id || null, full_name: form.full_name, company: form.company || null, identity_number: form.identity_number || null, phone: form.phone || null, vehicle_plate: form.vehicle_plate || null, purpose: form.purpose || null, visit_date: form.visit_date };
       const { data, error } = await supabase.from('visitors').insert(payload).select().single();
       if (error) throw error;
-      toast('Visitor pre-registered', 'success');
+      toast(t('visitor.registerSuccess'), 'success');
       setShowForm(false);
       setForm({ host_id: '', full_name: '', company: '', identity_number: '', phone: '', vehicle_plate: '', purpose: '', visit_date: new Date().toISOString().split('T')[0] });
       if (data) generateQR(data);
       fetchAll();
-    } catch (e) { toast('Gagal: ' + e.message, 'error'); }
+    } catch (e) { toast(t('visitor.registerFail') + e.message, 'error'); }
   };
 
   const handleCheckIn = async (id) => {
     await supabase.from('visitors').update({ checked_in_at: new Date().toISOString(), is_checked_in: true }).eq('id', id);
-    toast('Visitor checked in', 'success');
+    toast(t('visitor.checkInSuccess'), 'success');
     fetchAll();
   };
 
   const handleCheckOut = async (id) => {
     await supabase.from('visitors').update({ checked_out_at: new Date().toISOString(), is_checked_out: true }).eq('id', id);
-    toast('Visitor checked out', 'success');
+    toast(t('visitor.checkOutSuccess'), 'success');
     fetchAll();
   };
 
   const toggleBlacklist = async (v) => {
     await supabase.from('visitors').update({ is_blacklisted: !v.is_blacklisted }).eq('id', v.id);
-    toast(`Visitor ${v.is_blacklisted ? 'dihapus dari' : 'ditambahkan ke'} blacklist`, 'info');
+    toast(
+      v.is_blacklisted 
+        ? t('visitor.removedFromBlacklist') 
+        : t('visitor.addedToBlacklist'), 
+      'info'
+    );
     fetchAll();
   };
 
   const toggleBadgePrinted = async (id, current) => {
     await supabase.from('visitors').update({ badge_printed: !current }).eq('id', id);
-    toast(`Badge ${current ? 'unmarked' : 'marked'} as printed`, 'success');
+    toast(
+      current 
+        ? t('visitor.badgeUnmarked') 
+        : t('visitor.badgeMarked'), 
+      'success'
+    );
     fetchAll();
   };
 
@@ -171,23 +181,23 @@ const VisitorManagement = () => {
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-8">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Manajemen Visitor</h2>
-          <p className="text-sm text-gray-400 mt-1">{todayVisitors.length} hari ini • {checkedInToday} check-in • {visitors.filter(v => v.is_blacklisted).length} blacklisted</p>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('visitor.title')}</h2>
+          <p className="text-sm text-gray-400 mt-1">{t('visitor.summary', { count: todayVisitors.length, checkedIn: checkedInToday, blacklisted: visitors.filter(v => v.is_blacklisted).length })}</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> Pre-Register</button>
+        <button onClick={() => setShowForm(true)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> {t('visitor.preRegister')}</button>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-[150px]">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={filterName} onChange={e => setFilterName(e.target.value)} placeholder="Cari nama..." className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-white text-xs outline-none focus:border-[var(--aurora-3)]" />
+          <input value={filterName} onChange={e => setFilterName(e.target.value)} placeholder={t('visitor.searchNamePlaceholder')}   className="w-full bg-white/5 border border-white/20 rounded-xl pl-9 pr-3 py-2.5 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
         </div>
         <div>
-          <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} className="bg-[#1A1C23] border border-white/10 rounded-xl px-3 py-2.5 text-white text-xs outline-none focus:border-[var(--aurora-3)]" />
+          <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}   className="bg-white/5 border border-white/20 rounded-xl px-3 py-2.5 text-white text-xs outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
         </div>
         <div className="relative flex-1 min-w-[150px]">
           <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={filterHost} onChange={e => setFilterHost(e.target.value)} placeholder="Cari host..." className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-white text-xs outline-none focus:border-[var(--aurora-3)]" />
+          <input value={filterHost} onChange={e => setFilterHost(e.target.value)} placeholder={t('visitor.searchHostPlaceholder')}   className="w-full bg-white/5 border border-white/20 rounded-xl pl-9 pr-3 py-2.5 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
         </div>
       </div>
 
@@ -195,53 +205,53 @@ const VisitorManagement = () => {
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowForm(false)}>
           <div className="w-full max-w-lg glass-panel p-8 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-serif font-bold text-white">Pre-Register Visitor</h3>
+              <h3 className="text-lg font-serif font-bold text-white">{t('visitor.registerVisitorFormTitle')}</h3>
               <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Host (Pencarian)</label>
-                <select value={form.host_id} onChange={e => setForm({...form, host_id: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none">
-                  <option value="">— Pilih Host —</option>
+                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.host')}</label>
+                <select value={form.host_id} onChange={e => setForm({...form, host_id: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                  <option value="">{t('visitor.selectHost')}</option>
                   {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} ({e.nip})</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Nama Lengkap</label>
-                  <input value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.fullName')}</label>
+                  <input value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Perusahaan</label>
-                  <input value={form.company} onChange={e => setForm({...form, company: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">No. Identitas</label>
-                  <input value={form.identity_number} onChange={e => setForm({...form, identity_number: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">No. Telepon</label>
-                  <input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.company')}</label>
+                  <input value={form.company} onChange={e => setForm({...form, company: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Plat Kendaraan</label>
-                  <input value={form.vehicle_plate} onChange={e => setForm({...form, vehicle_plate: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.identityNumber')}</label>
+                  <input value={form.identity_number} onChange={e => setForm({...form, identity_number: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tanggal Kunjungan</label>
-                  <input type="date" value={form.visit_date} onChange={e => setForm({...form, visit_date: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.phoneNumber')}</label>
+                  <input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.vehiclePlate')}</label>
+                  <input value={form.vehicle_plate} onChange={e => setForm({...form, vehicle_plate: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.visitDate')}</label>
+                  <input type="date" value={form.visit_date} onChange={e => setForm({...form, visit_date: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Keperluan</label>
-                <textarea value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})} rows={3} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.purpose')}</label>
+                <textarea value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})} rows={3}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               <button onClick={handleSave} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs flex items-center justify-center gap-2">
-                <Save size={14} /> Register Visitor
+                <Save size={14} /> {t('visitor.registerButton')}
               </button>
             </div>
           </div>
@@ -257,7 +267,7 @@ const VisitorManagement = () => {
             <X size={16} />
           </button>
           
-          <p className="text-xs text-[var(--aurora-3)] font-bold">QR Code Generated</p>
+          <p className="text-xs text-[var(--aurora-3)] font-bold">{t('visitor.qrGenerated')}</p>
           
           <div className="bg-white rounded-2xl p-4 w-fit mx-auto border border-white/5 shadow-inner">
             <img 
@@ -277,7 +287,7 @@ const VisitorManagement = () => {
               }}
               className="flex-1 py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/5 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all"
             >
-              <Download size={12} /> Download
+              <Download size={12} /> {t('visitor.download')}
             </button>
             
             <button 
@@ -287,7 +297,7 @@ const VisitorManagement = () => {
               }}
               className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] hover:opacity-90 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all shadow-[0_4px_12px_rgba(142,45,226,0.2)]"
             >
-              <Printer size={12} /> Print QR
+              <Printer size={12} /> {t('visitor.printQR')}
             </button>
           </div>
         </motion.div>
@@ -304,8 +314,8 @@ const VisitorManagement = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-white">{v.full_name}</span>
-                    {v.is_blacklisted && <span className="text-[8px] px-1.5 py-0.5 rounded bg-[var(--danger)]/10 text-[var(--danger)] font-bold">BLACKLIST</span>}
-                    {v.badge_printed && <span className="text-[8px] px-1.5 py-0.5 rounded bg-[var(--success)]/10 text-[var(--success)] font-bold">BADGE</span>}
+                    {v.is_blacklisted && <span className="text-[8px] px-1.5 py-0.5 rounded bg-[var(--danger)]/10 text-[var(--danger)] font-bold">{t('visitor.blacklistBadge')}</span>}
+                    {v.badge_printed && <span className="text-[8px] px-1.5 py-0.5 rounded bg-[var(--success)]/10 text-[var(--success)] font-bold">{t('visitor.badgePrintedBadge')}</span>}
                   </div>
                   <div className="flex items-center gap-3 text-[9px] text-gray-500 mt-0.5">
                     {v.company && <span className="flex items-center gap-1"><Building2 size={9} /> {v.company}</span>}
@@ -317,7 +327,7 @@ const VisitorManagement = () => {
                     {v.phone && <span className="flex items-center gap-1"><Phone size={9} /> {v.phone}</span>}
                     {v.vehicle_plate && <span className="flex items-center gap-1"><Car size={9} /> {v.vehicle_plate}</span>}
                   </div>
-                  {v.purpose && <p className="text-[9px] text-gray-500 italic mt-0.5">"{v.purpose}"</p>}
+                  {v.purpose && <p className="text-[9px] text-gray-500 italic mt-0.5">&quot;{v.purpose}&quot;</p>}
                   <div className="flex items-center gap-2 mt-1">
                     {v.is_checked_in && <span className="text-[8px] text-blue-400 flex items-center gap-1"><LogIn size={8} /> {new Date(v.checked_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>}
                     {v.is_checked_out && <span className="text-[8px] text-gray-400 flex items-center gap-1"><LogOut size={8} /> {new Date(v.checked_out_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>}
@@ -338,7 +348,7 @@ const VisitorManagement = () => {
             </div>
           </div>
         ))}
-        {!filtered.length && <p className="text-center text-gray-500 py-8 text-sm">Tidak ada visitor</p>}
+        {!filtered.length && <p className="text-center text-gray-500 py-8 text-sm">{t('visitor.noVisitor')}</p>}
       </div>
     </div>
   );

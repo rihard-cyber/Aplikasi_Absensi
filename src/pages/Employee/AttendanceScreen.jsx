@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, ShieldAlert, Megaphone, Building2, ArrowLeft } from 'lucide-react';
+import { MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, ShieldAlert, Megaphone, Building2, ArrowLeft, Navigation, Camera, QrCode, LogIn, Circle, UserCircle, MapPinned } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../components/ConfirmDialog';
 import { Geolocation } from '@capacitor/geolocation';
@@ -38,7 +38,7 @@ import { checkWifiGeofence } from '../../utils/wifiGeofence';
 /** @type {(s: string) => string} Passthrough i18n - app is monolingual Indonesian */
 const t = (s) => s;
 
-  // --- Extracted Clock In UI ---
+// --- Clock In / Presensi UI ---
 const ClockInTab = () => {
   const toast = useToast();
   const [isPressing, setIsPressing] = useState(false);
@@ -46,10 +46,12 @@ const ClockInTab = () => {
   const [status, setStatus] = useState('IDLE'); // IDLE, SCANNING, VERIFIED, FAILED
   const [isClockOut, setIsClockOut] = useState(false);
   const [workMode, setWorkMode] = useState('WFO');
+  const [todayStats, setTodayStats] = useState({ hadir: 0, terlambat: 0, izin: 0 });
 
   // --- Geofencing & Location State ---
   const [locationState, setLocationState] = useState('CHECKING');
   const [distance, setDistance] = useState(null);
+  const [coordsDisplay, setCoordsDisplay] = useState({ lat: '-6.2000', lng: '106.8166' });
   const [officeCoords, setOfficeCoords] = useState({ latitude: -6.200000, longitude: 106.816666, radius: 50, name: 'Mencari Lokasi...' });
   const [projectCode, setProjectCode] = useState('');
   const [showCodeInput, setShowCodeInput] = useState(false);
@@ -59,6 +61,15 @@ const ClockInTab = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [cameraError, setCameraError] = useState('');
+  const [faceMatched, setFaceMatched] = useState(false);
+
+  // --- Today's date ---
+  const todayDate = new Date();
+  const dayName = todayDate.toLocaleDateString('id-ID', { weekday: 'long' });
+  const dateStr = todayDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  // --- User Info ---
+  const [userFullName, setUserFullName] = useState('User');
 
   // Fetch project by code
   const lookupProjectByCode = async (code) => {
@@ -90,7 +101,8 @@ const ClockInTab = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
-        const { data: profile } = await supabase.from('profiles').select('project_id').eq('auth_id', session.user.id).maybeSingle();
+        const { data: profile } = await supabase.from('profiles').select('project_id, full_name').eq('auth_id', session.user.id).maybeSingle();
+        if (profile?.full_name) setUserFullName(profile.full_name);
         if (profile?.project_id) {
           const { data: loc } = await supabase.from('projects').select('*').eq('id', profile.project_id).maybeSingle();
           if (loc) {
@@ -110,6 +122,29 @@ const ClockInTab = () => {
       }
     };
     fetchLocation();
+  }, []);
+
+  // Fetch today's attendance stats
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const { data: profile } = await supabase.from('profiles').select('id').eq('auth_id', session.user.id).maybeSingle();
+        if (!profile?.id) return;
+        const today = new Date().toISOString().split('T')[0];
+        const { data: logs } = await supabase.from('attendance_logs')
+          .select('action, status')
+          .eq('user_id', profile.id)
+          .gte('timestamp', today);
+        if (logs) {
+          const hadir = logs.filter(l => l.action === 'CLOCK_IN' || l.action === 'CLOCK_OUT').length > 0 ? 1 : 0;
+          const terlambat = logs.filter(l => l.status === 'LATE').length;
+          const izin = logs.filter(l => l.action === 'LEAVE' || l.status === 'EXCUSED').length;
+          setTodayStats({ hadir: hadir > 0 ? 1 : 0, terlambat, izin: izin || 0 });
+        }
+      } catch (e) { console.warn('Stats fetch error:', e); }
+    })();
   }, []);
 
   // Hybrid Work: Fetch mode + home address
@@ -164,9 +199,9 @@ const ClockInTab = () => {
     if (workMode) checkLocation();
   }, [workMode]);
 
-  // Formula Haversine: Kalkulasi Akurat Jarak GPS
+  // Formula Haversine
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // Radius bumi (meter)
+    const R = 6371e3;
     const p1 = lat1 * Math.PI / 180;
     const p2 = lat2 * Math.PI / 180;
     const dp = (lat2 - lat1) * Math.PI / 180;
@@ -177,7 +212,6 @@ const ClockInTab = () => {
   };
 
   const checkLocation = async () => {
-    // WFA: skip location check entirely
     if (workMode === 'WFA') {
       setLocationState('IN_RANGE');
       setDistance(0);
@@ -190,13 +224,8 @@ const ClockInTab = () => {
         setLocationState('IN_RANGE');
         return;
       }
-
-      // Capacitor Geolocation dengan Akurasi Tinggi
       if (!Geolocation) throw new Error("Geolocation plugin not available");
-      
       const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
-
-      // Anti-Fake GPS: Analisis multi-level
       const gpsAnalysis = analyzePosition(position);
       if (gpsAnalysis.isMocked) {
         toast(`⚠️ ${gpsAnalysis.reason} - Absensi ditolak.`, 'error');
@@ -216,10 +245,9 @@ const ClockInTab = () => {
         } catch {}
         return;
       }
-
       const { latitude, longitude, accuracy } = position.coords;
+      setCoordsDisplay({ lat: latitude.toFixed(4), lng: longitude.toFixed(4) });
       const dist = calculateDistance(latitude, longitude, officeCoords.latitude, officeCoords.longitude);
-
       setDistance(Math.round(dist));
       if (dist <= officeCoords.radius) {
         setLocationState('IN_RANGE');
@@ -237,8 +265,6 @@ const ClockInTab = () => {
 
   useEffect(() => {
     checkLocation();
-
-    // Robust Offline Sync via offlineSync utility
     const cleanup = registerOnlineSyncListener(toast);
     return cleanup;
   }, []);
@@ -273,15 +299,12 @@ const ClockInTab = () => {
 
   const runVerificationSequence = async () => {
     try {
-      // WFO: check wifi geofence (soft warning, not blocking)
       if (workMode === 'WFO') {
         const wifiResult = await checkWifiGeofence();
         if (!wifiResult.allowed && wifiResult.method !== 'NO_ZONES_CONFIGURED') {
           toast(wifiResult.message, 'warning');
         }
       }
-
-      // Face verification for all modes (liveness check)
       let faceResult = { verified: true, confidence: 100, snapshot: null, message: '' };
       if (videoRef.current?.srcObject) {
         faceResult = await verifyFace(videoRef.current);
@@ -300,7 +323,7 @@ const ClockInTab = () => {
           }
         }
       }
-
+      setFaceMatched(true);
       setStatus('VERIFIED');
       await saveAttendanceLog(faceResult.snapshot);
       if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
@@ -317,8 +340,6 @@ const ClockInTab = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data: profile } = await supabase.from('profiles').select('id, tenant_id').eq('auth_id', session.user.id).maybeSingle();
-
-      // Capture Photo (use face snapshot if available, else capture fresh frame)
       let capturedPhoto = null;
       const blobToUpload = faceSnapshot;
       if (!blobToUpload && videoRef.current && canvasRef.current && videoRef.current.srcObject) {
@@ -351,7 +372,6 @@ const ClockInTab = () => {
           capturedPhoto = supabase.storage.from('documents').getPublicUrl(filePath).data.publicUrl;
         }
       }
-
       const verificationMethod = workMode === 'WFA' ? 'selfie' : workMode === 'WFH' ? 'gps_home' : 'gps';
       const logData = {
         user_id: profile?.id,
@@ -364,7 +384,6 @@ const ClockInTab = () => {
         work_mode: workMode,
         verification_method: verificationMethod,
       };
-
       if (!navigator.onLine) {
         enqueueAttendance(logData);
         const qCount = getQueueCount();
@@ -375,7 +394,6 @@ const ClockInTab = () => {
           if (session) {
             logData.user_id = profile.id;
             await supabase.from('attendance_logs').insert([logData]);
-            // Push notification konfirmasi absensi
             const now = new Date();
             const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
             showLocalNotification('SI PRESENSI — Absensi Tercatat ✅', {
@@ -398,168 +416,306 @@ const ClockInTab = () => {
       setIsClockOut(!isClockOut);
       setStatus('IDLE');
       setChargeProgress(0);
+      setFaceMatched(false);
     }
   };
 
+  const handleMasukClick = () => {
+    if (status === 'IDLE' && (locationState === 'IN_RANGE' || isGodMode)) {
+      setIsPressing(true);
+    }
+  };
+
+  const isInRange = locationState === 'IN_RANGE' || isGodMode;
+  const isOutRange = locationState === 'OUT_OF_RANGE' && !isGodMode;
+
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex-1 w-full max-w-md flex flex-col items-center justify-center relative z-10 pb-20">
+    <div className="w-full max-w-md mx-auto space-y-5 pb-20">
+      {/* 1. Top Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-white">Presensi Hari Ini</h1>
+          <p className="text-sm text-gray-400 mt-0.5">{dayName}, {dateStr}</p>
+        </div>
+        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-gray-400 border border-white/5">
+          <User size={18} />
+        </div>
+      </div>
 
-      {/* Face ID Scanner Container */}
-      <div className="relative flex items-center justify-center w-full max-w-[288px] aspect-square mb-10">
-
-        {/* Pulsing Outer Rings */}
-        {status === 'SCANNING' && (
-          <div className="absolute inset-0">
-            <motion.div initial={{ scale: 0.8, opacity: 0.5 }} animate={{ scale: 1.4, opacity: 0 }} transition={{ duration: 1.5, repeat: Infinity }} className="absolute inset-0 rounded-full border border-[var(--aurora-3)]" />
-            <motion.div initial={{ scale: 0.8, opacity: 0.5 }} animate={{ scale: 1.6, opacity: 0 }} transition={{ duration: 1.5, delay: 0.5, repeat: Infinity }} className="absolute inset-0 rounded-full border border-[var(--aurora-1)]" />
+      {/* 2. Card: Rangkuman Hadir */}
+      <div className="bg-[#13151A] bg-opacity-80 backdrop-blur-xl border border-white/10 rounded-[20px] shadow-[inset_0_2px_10px_rgba(0,201,255,0.15)] p-5">
+        <h3 className="text-sm text-gray-300 mb-3 font-medium">Rangkuman Hadir</h3>
+        <div className="grid grid-cols-3 divide-x divide-white/10">
+          {/* Hadir */}
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 text-xs">Hadir</span>
+              <span className="bg-[#B2FF59] text-black rounded-full px-2 py-0.5 text-[10px] font-bold">H</span>
+            </div>
+            <p className="text-2xl font-bold text-white mt-1">{todayStats.hadir}</p>
           </div>
-        )}
+          {/* Terlambat */}
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 text-xs">Terlambat</span>
+              <span className="bg-orange-500 text-white rounded-full px-2 py-0.5 text-[10px] font-bold">T</span>
+            </div>
+            <p className="text-2xl font-bold text-white mt-1">{todayStats.terlambat}</p>
+          </div>
+          {/* Izin */}
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 text-xs">Izin</span>
+              <span className="bg-blue-500 text-white rounded-full px-2 py-0.5 text-[10px] font-bold">I</span>
+            </div>
+            <p className="text-2xl font-bold text-white mt-1">{todayStats.izin}</p>
+          </div>
+        </div>
+      </div>
 
-        {/* Camera/Scanner Mask */}
-        <div className="w-44 h-44 sm:w-56 sm:h-56 rounded-full border-4 border-white/5 bg-[#1A1C23] relative overflow-hidden flex items-center justify-center shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+      {/* 3. Card: Main Action */}
+      <div className="bg-[#13151A] bg-opacity-80 backdrop-blur-xl border border-white/10 rounded-[20px] border-t-teal-500/30 border-l-teal-500/30 p-5">
+        <h3 className="text-sm text-gray-200 mb-4 font-medium">Presensi Masuk/Pulang</h3>
 
-          {/* Real Camera Feed */}
+        {/* A. Face Recognition UI */}
+        <div className="relative rounded-xl overflow-hidden h-48 bg-slate-800">
+          {/* Camera Feed */}
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${status === 'SCANNING' ? 'scale-110 opacity-60 blur-[1px]' : 'opacity-100'}`}
+            className="absolute inset-0 w-full h-full object-cover"
           />
-          {/* Overlay gradient so text is readable */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60 opacity-60" />
-          
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Camera Error Message */}
-          {cameraError && (
-            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 p-6 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-[var(--danger)]/20 flex items-center justify-center mb-3">
-                <span className="text-2xl">📷</span>
-              </div>
-              <p className="text-[11px] text-gray-300 leading-relaxed">{cameraError}</p>
-            </div>
-          )}
+          {/* Camera overlay darkening */}
+          <div className="absolute inset-0 bg-black/10" />
 
-          {/* Scanning Laser Line */}
+          {/* Header overlay: Camera icon + label */}
+          <div className="absolute top-3 left-3 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 z-20">
+            <Camera size={12} className="text-white" />
+            <span className="text-white text-xs">Pengenalan Wajah</span>
+          </div>
+
+          {/* Face Oval */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-32 border-2 border-white/80 rounded-[50%] shadow-[0_0_15px_rgba(255,255,255,0.3)] z-10" />
+
+          {/* Scanning laser line */}
           {status === 'SCANNING' && (
             <motion.div
-              initial={{ top: '-10%' }} animate={{ top: '110%' }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[var(--aurora-3)] to-transparent shadow-[0_0_15px_var(--aurora-3)] z-30"
+              initial={{ top: '15%' }}
+              animate={{ top: '85%' }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="absolute left-[calc(50%-3rem)] right-[calc(50%-3rem)] h-0.5 bg-gradient-to-r from-transparent via-[#00C9FF] to-transparent shadow-[0_0_15px_#00C9FF] z-20"
+              style={{ width: '6rem', marginLeft: 'auto', marginRight: 'auto' }}
             />
           )}
 
-          {/* Verification Progress Overlay */}
-          {status === 'SCANNING' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-40 bg-[var(--aurora-3)]/10 backdrop-blur-[2px]">
-                <p className="text-[10px] font-bold text-[var(--aurora-3)] uppercase tracking-[0.3em] mb-2">{t('Merekam Bukti...')}</p>
-              <div className="w-24 h-1 bg-white/10 rounded-full overflow-hidden">
-                <motion.div className="h-full bg-[var(--aurora-3)]" style={{ width: `${chargeProgress}%` }} />
+          {/* Camera Error */}
+          {cameraError && (
+            <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80 backdrop-blur-lg p-6">
+              <div className="text-center">
+                <div className="w-10 h-10 rounded-2xl bg-rose-500/20 flex items-center justify-center mx-auto mb-2 shadow-[0_0_15px_rgba(255,61,0,0.3)]">
+                  <Camera size={18} className="text-rose-400" />
+                </div>
+                <p className="text-[11px] text-gray-300">{cameraError}</p>
               </div>
             </div>
           )}
 
-          {/* Success / Failure Overlays */}
-          <AnimatePresence>
-            {status === 'VERIFIED' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-[var(--success)]/20 backdrop-blur-md flex flex-col items-center justify-center z-50">
-                <CheckCircle2 size={48} className="text-[var(--success)] drop-shadow-[0_0_10px_var(--success)]" />
-                <p className="text-[10px] font-black text-[var(--success)] uppercase tracking-widest mt-2">{t('Bukti Terekam')}</p>
-              </motion.div>
-            )}
-            {status === 'FAILED' && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-[var(--danger)]/20 backdrop-blur-md flex flex-col items-center justify-center z-50 text-center p-4">
-                <ShieldAlert size={48} className="text-[var(--danger)]" />
-                <p className="text-[10px] font-black text-[var(--danger)] uppercase tracking-widest mt-2">{t('Lokasi Tidak Valid')}</p>
-                <p className="text-[8px] text-white/60 mt-1 uppercase">{t('Absensi diblokir oleh validasi lokasi')}</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+          {/* Success Overlay */}
+          {status === 'VERIFIED' && (
+            <div className="absolute inset-0 z-30 flex items-center justify-center bg-emerald-500/10 backdrop-blur-sm">
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(52,211,153,0.3)]">
+                  <CheckCircle2 size={28} className="text-emerald-400" />
+                </div>
+                <p className="text-white text-sm font-bold mt-1">Tercatat</p>
+              </div>
+            </div>
+          )}
 
-        {/* Main Interaction Button (Floating above scanner) */}
-        <motion.button
-          onPointerDown={() => status === 'IDLE' && (locationState === 'IN_RANGE' || isGodMode) && setIsPressing(true)}
-          onPointerUp={() => setIsPressing(false)}
-          onPointerLeave={() => setIsPressing(false)}
-          onClick={handleReset}
-          whileTap={{ scale: 0.95 }}
-          className={`absolute z-50 w-36 h-36 sm:w-44 sm:h-44 rounded-full flex flex-col items-center justify-center transition-all duration-500 border-4 ${status === 'VERIFIED' ? 'bg-[var(--success)] border-white/20 shadow-[0_0_60px_rgba(0,255,135,0.4)]' :
-            status === 'FAILED' ? 'bg-[var(--danger)] border-white/20' :
-              locationState === 'OUT_OF_RANGE' && !isGodMode ? 'bg-[var(--danger)]/20 backdrop-blur-md border-[var(--danger)]/30 cursor-not-allowed' :
-                'bg-black/40 backdrop-blur-md border-white/10'
-            }`}
-        >
-          <div className="relative flex flex-col items-center">
-            {status === 'VERIFIED' ? (
-              <span className="text-black font-black text-xl tracking-tighter">{t('SUCCESS')}</span>
-            ) : (
-              <>
-                <Fingerprint size={24} className={`mb-1 sm:mb-2 transition-colors ${isPressing ? 'text-[var(--aurora-3)]' : 'text-white/40'}`} />
-                <span className="text-[11px] sm:text-sm font-bold font-serif tracking-widest text-white leading-tight text-center px-1 sm:px-2">
-                  {locationState === 'CHECKING' ? 'MENCARI LOKASI...' : locationState === 'OUT_OF_RANGE' && !isGodMode ? `DILUAR RADIUS (${distance}m)` : isClockOut ? 'ABSEN KELUAR' : 'ABSEN MASUK'}
-                </span>
-                <span className="text-[7px] sm:text-[8px] mt-1 sm:mt-2 text-gray-500 uppercase tracking-widest font-bold text-center px-2 sm:px-4">
-                  {isPressing ? 'TAHAN SEBENTAR' : 'TAP & HOLD ABSEN'}
-                </span>
-              </>
-            )}
-          </div>
-        </motion.button>
-      </div>
+          {/* Failed Overlay */}
+          {status === 'FAILED' && (
+            <div className="absolute inset-0 z-30 flex items-center justify-center bg-rose-500/10 backdrop-blur-sm">
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-full bg-rose-500/20 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(255,61,0,0.3)]">
+                  <ShieldAlert size={28} className="text-rose-400" />
+                </div>
+                <p className="text-rose-400 text-sm font-bold mt-1">Gagal</p>
+              </div>
+            </div>
+          )}
 
-      {/* Location Details */}
-      <div className="glass-panel w-full p-5 mt-2 border border-white/5 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-[var(--aurora-3)]/5 rounded-full blur-2xl group-hover:bg-[var(--aurora-3)]/10 transition-all" />
-        <div className="flex items-center gap-5">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white/5 border border-white/10 relative">
-            <MapPin size={22} className="text-[var(--aurora-3)]" />
-            <motion.div animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="absolute inset-0 bg-[var(--aurora-3)] rounded-2xl" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-bold text-sm tracking-wide text-white truncate">{locationState === 'CHECKING' ? 'Mencari Satelit GPS...' : `${officeCoords.name} • Jarak: ${distance !== null ? distance + 'm' : '...'}`}</h3>
-            <div className="flex items-center gap-2 mt-1">
-              <div className={`w-2 h-2 rounded-full shadow-[0_0_10px_currentColor] animate-pulse ${locationState === 'IN_RANGE' || isGodMode ? 'bg-[var(--success)] text-[var(--success)]' : 'bg-[var(--danger)] text-[var(--danger)]'}`} />
-              <p className={`text-[10px] font-black uppercase tracking-widest ${locationState === 'IN_RANGE' || isGodMode ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>{locationState === 'IN_RANGE' ? 'Dalam Radius Aman' : isGodMode ? 'SUPER ADMIN PREVIEW' : 'Di Luar Radius Aman'}</p>
+          {/* Match Badge (Top Right) */}
+          <div className="absolute top-3 right-3 z-20">
+            <span className="bg-[#B2FF59] text-black text-[10px] font-bold px-2 py-1 rounded-t-lg block text-center">
+              Wajah Dikenali
+            </span>
+            {/* Matched Face Box */}
+            <div className="w-16 h-20 bg-black/60 border border-[#B2FF59]/50 rounded-b-lg rounded-tl-lg overflow-hidden relative">
+              {/* Simulated face silhouette */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <UserCircle size={28} className="text-gray-400/60" />
+              </div>
+              {/* Cyan dotted mesh overlay */}
+              <svg className="absolute inset-0 w-full h-full opacity-40" viewBox="0 0 64 80">
+                <line x1="0" y1="20" x2="64" y2="20" stroke="#00C9FF" strokeWidth="0.5" strokeDasharray="2,2" />
+                <line x1="0" y1="40" x2="64" y2="40" stroke="#00C9FF" strokeWidth="0.5" strokeDasharray="2,2" />
+                <line x1="0" y1="60" x2="64" y2="60" stroke="#00C9FF" strokeWidth="0.5" strokeDasharray="2,2" />
+                <line x1="16" y1="0" x2="16" y2="80" stroke="#00C9FF" strokeWidth="0.5" strokeDasharray="2,2" />
+                <line x1="32" y1="0" x2="32" y2="80" stroke="#00C9FF" strokeWidth="0.5" strokeDasharray="2,2" />
+                <line x1="48" y1="0" x2="48" y2="80" stroke="#00C9FF" strokeWidth="0.5" strokeDasharray="2,2" />
+              </svg>
             </div>
           </div>
-          {workMode !== 'WFO' && (
-            <div className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider ${
-              workMode === 'WFH' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-            }`}>
-              {workMode === 'WFH' ? 'WFH' : 'WFA'}
+
+          {/* Name Tag (Bottom Right) */}
+          <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-xs px-3 py-1 rounded-full z-20">
+            {userFullName}
+          </div>
+
+          {/* Verification Progress */}
+          {status === 'SCANNING' && (
+            <div className="absolute bottom-3 left-3 z-20 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full">
+              <div className="flex items-center gap-2">
+                <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-[#8E2DE2] to-[#00C9FF] rounded-full"
+                    style={{ width: `${chargeProgress}%` }}
+                  />
+                </div>
+                <span className="text-[10px] text-white/80">{chargeProgress}%</span>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Project Code Selector */}
-        <div className="w-full mt-3 flex items-center gap-2">
+        {/* B. GPS Location UI */}
+        <div className="relative rounded-xl overflow-hidden h-32 mt-4 bg-slate-900">
+          {/* Dark map pattern simulation */}
+          <div className="absolute inset-0 opacity-30">
+            <svg className="w-full h-full" viewBox="0 0 400 128" preserveAspectRatio="none">
+              <rect width="400" height="128" fill="#0F172A" />
+              {Array.from({ length: 20 }).map((_, i) => (
+                <line key={`h${i}`} x1="0" y1={i * 6.4} x2="400" y2={i * 6.4} stroke="#1E293B" strokeWidth="0.5" />
+              ))}
+              {Array.from({ length: 20 }).map((_, i) => (
+                <line key={`v${i}`} x1={i * 20} y1="0" x2={i * 20} y2="128" stroke="#1E293B" strokeWidth="0.5" />
+              ))}
+              {/* Random road-like lines */}
+              <line x1="50" y1="0" x2="120" y2="128" stroke="#334155" strokeWidth="2" strokeDasharray="8,4" />
+              <line x1="200" y1="0" x2="350" y2="128" stroke="#334155" strokeWidth="1.5" strokeDasharray="6,3" />
+              <line x1="0" y1="80" x2="400" y2="80" stroke="#334155" strokeWidth="2" />
+              <line x1="300" y1="0" x2="300" y2="128" stroke="#334155" strokeWidth="1" />
+            </svg>
+          </div>
+
+          {/* Header overlay */}
+          <div className="absolute top-3 left-3 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
+            <MapPin size={12} className="text-emerald-400" />
+            <span className="text-white text-xs">Lokasi Presensi (GPS)</span>
+          </div>
+
+          {/* Status Badge */}
+          <div className="absolute top-3 right-3 z-10">
+            <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider backdrop-blur-md ${
+              isInRange ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+              isOutRange ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+              'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+            }`}>
+              {isInRange ? 'Aman' : isGodMode ? 'Preview' : isOutRange ? 'Luar' : 'Cek...'}
+            </span>
+          </div>
+
+          {/* Radius Circle */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full bg-emerald-500/20 border border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)] z-10" />
+
+          {/* Ping Dot */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+            <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+            <motion.div
+              animate={{ scale: [1, 1.8, 1], opacity: [0.6, 0, 0.6] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="w-4 h-4 bg-blue-500/30 rounded-full absolute inset-0"
+            />
+          </div>
+
+          {/* Coordinate Text */}
+          <div className="absolute bottom-2 right-2 text-gray-400 text-[10px] font-mono z-10 bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded">
+            Lat: {coordsDisplay.lat}, Long: {coordsDisplay.lng}
+          </div>
+
+          {/* Project Code Selector */}
           {showCodeInput ? (
-            <div className="flex-1 flex gap-2">
+            <div className="absolute bottom-2 left-2 z-10 flex gap-1">
               <input type="text" maxLength={6} autoFocus
-                placeholder="Masukkan kode project..."
+                placeholder="Kode..."
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') lookupProjectByCode(e.target.value);
                   if (e.key === 'Escape') setShowCodeInput(false);
                 }}
-                className="flex-1 bg-[#0B0C10] border border-[var(--aurora-3)]/30 rounded-xl px-4 py-2.5 text-white text-xs outline-none focus:border-[var(--aurora-3)] uppercase tracking-widest font-mono placeholder:text-gray-700"
-              />
+                
+               className="w-24 bg-white/10 border border-[#00C9FF]/30 rounded px-2 py-1 text-white text-[10px] outline-none uppercase tracking-widest font-mono transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               <button onClick={() => setShowCodeInput(false)}
-                className="px-3 py-2 bg-white/5 rounded-xl text-gray-500 hover:text-white text-[10px] font-bold">{t('Batal')}</button>
+                className="px-2 py-1 bg-white/10 rounded text-gray-400 hover:text-white text-[9px]">Batal</button>
             </div>
+          ) : projectCode ? (
+            <button onClick={() => setShowCodeInput(true)}
+              className="absolute bottom-2 left-2 z-10 bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-[#00C9FF] font-mono border border-[#00C9FF]/20">
+              {projectCode}
+            </button>
           ) : (
             <button onClick={() => setShowCodeInput(true)}
-              className="glass-panel w-full py-2.5 rounded-xl border border-dashed border-white/10 text-[10px] font-bold tracking-widest text-gray-500 hover:text-[var(--aurora-3)] hover:border-[var(--aurora-3)]/30 transition-all flex items-center justify-center gap-2">
-              <MapPin size={12} />
-              {projectCode ? `📍 ${officeCoords.name} (${projectCode}) — Ketuk untuk ganti` : '📍 Ketuk untuk pilih lokasi absen'}
+              className="absolute bottom-2 left-2 z-10 bg-black/40 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-gray-400 hover:text-white border border-white/10">
+              + Kode
             </button>
           )}
         </div>
+
+        {/* Status Indicator */}
+        <div className="flex items-center gap-2 mt-2">
+          <CheckCircle2 size={14} className={isInRange ? 'text-emerald-500' : 'text-gray-500'} />
+          <span className={`text-xs ${isInRange ? 'text-emerald-500' : 'text-gray-400'}`}>
+            {isInRange ? 'Dalam Area Radius' : isGodMode ? 'Super Admin Preview' : isOutRange ? `Di Luar Radius (${distance}m)` : 'Memeriksa lokasi...'}
+          </span>
+        </div>
+
+        {/* C. Action Buttons */}
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <button
+            onPointerDown={handleMasukClick}
+            onPointerUp={() => setIsPressing(false)}
+            onPointerLeave={() => setIsPressing(false)}
+            onClick={status === 'VERIFIED' ? handleReset : undefined}
+            disabled={isOutRange && status === 'IDLE'}
+            className={`bg-gradient-to-r from-[#8E2DE2] to-[#00C9FF] text-white py-3 rounded-xl text-sm font-semibold hover:opacity-90 shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+              isPressing ? 'scale-95 opacity-80' : ''
+            } ${status === 'VERIFIED' ? 'ring-2 ring-[#B2FF59]/50' : ''}`}
+          >
+            {status === 'VERIFIED' ? (
+              <><CheckCircle2 size={16} className="text-[#B2FF59]" /> {isClockOut ? 'Siapkan Masuk' : 'Siapkan Pulang'}</>
+            ) : isPressing ? (
+              <><div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" /> Memproses...</>
+            ) : (
+              <><LogIn size={16} /> {isClockOut ? 'Presensi Pulang' : 'Presensi Masuk'}</>
+            )}
+          </button>
+          <button
+            onClick={() => {
+              if (window.navigator?.vibrate) window.navigator.vibrate(40);
+              window.dispatchEvent(new CustomEvent('navigate-to-qr'));
+            }}
+            className="border border-white/20 text-white py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-white/5 transition-all"
+          >
+            <QrCode size={16} /> Scan QR Code
+          </button>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
-// --- End Extracted Clock In UI ---
 
 const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => {
   const navigate = useNavigate();
@@ -573,7 +729,19 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
   const [tenantName, setTenantName] = useState('Memuat...');
   const [structureName, setStructureName] = useState('PORTAL KARYAWAN');
   const [announcements, setAnnouncements] = useState([]);
-  const [todayShift, setTodayShift] = useState(null); // null = follow Pengaturan Umum
+  const [todayShift, setTodayShift] = useState(null);
+
+  // Listen for QR navigation from ClockInTab
+  useEffect(() => {
+    const handler = () => {
+      try { sessionStorage.setItem('employee_active_tab', 'home'); } catch {}
+      try { sessionStorage.setItem('employee_active_subview', 'qr'); } catch {}
+      setActiveTab('home');
+      setActiveSubView('qr');
+    };
+    window.addEventListener('navigate-to-qr', handler);
+    return () => window.removeEventListener('navigate-to-qr', handler);
+  }, []);
 
   useEffect(() => {
     try { sessionStorage.setItem('employee_active_tab', activeTab); } catch {}
@@ -588,14 +756,30 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
       }
     } catch {}
   }, [activeSubView]);
-  
-  // NEW DYNAMIC STATES
+
+  const [isNavVisible, setIsNavVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const controlNavbar = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsNavVisible(false);
+      } else if (currentScrollY < lastScrollY) {
+        setIsNavVisible(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
+    window.addEventListener('scroll', controlNavbar, { passive: true });
+    return () => window.removeEventListener('scroll', controlNavbar);
+  }, [lastScrollY]);
+
   const confirm = useConfirm();
   const [userData, setUserData] = useState({ full_name: 'User', position: 'Staff', division: 'Division' });
   const [stats, setStats] = useState({ weeklyHours: 0, leaveBalance: 12 });
-  const [companyInfo, setCompanyInfo] = useState({ 
-    workHours: '08:00 - 17:00', 
-    workDays: 'Senin - Jumat', 
+  const [companyInfo, setCompanyInfo] = useState({
+    workHours: '08:00 - 17:00',
+    workDays: 'Senin - Jumat',
     gracePeriod: '15 Menit',
     tenantName: 'PT. PERUSAHAAN',
     logo_url: null,
@@ -606,11 +790,9 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
   const userRole = (() => { try { return localStorage.getItem('user_role'); } catch { return null; } })();
   const isAdminUser = userRole === 'TENANT_ADMIN' || userRole === 'SUB_ADMIN';
 
-  // --- SMART NAVIGATION (ANTI-EXIT) ---
   useEffect(() => {
     let backPressCount = 0;
     let backPressTimer;
-
     const backButtonListener = App.addListener('backButton', () => {
       if (activeTab !== 'home' || activeSubView !== null) {
         setActiveTab('home');
@@ -632,7 +814,6 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
         }
       }
     });
-
     return () => backButtonListener.then(listener => listener.remove());
   }, [activeTab, activeSubView]);
 
@@ -644,32 +825,26 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
         const { data: profile } = await supabase.from('profiles')
           .select('tenant_id, project_id, division_id, tenants(name, logo_url), projects(name), divisions(name)')
           .eq('auth_id', session.user.id).maybeSingle();
-        
+
         if (profile) {
           let tName = profile.tenants?.name;
           let tLogo = profile.tenants?.logo_url;
 
-          // Fallback if join fails (RLS or Schema) or if SUPER ADMIN PREVIEW with no tenant_id
           if (!tName && (profile.tenant_id || isGodMode)) {
             let tQuery = supabase.from('tenants').select('name, logo_url');
             if (profile.tenant_id) tQuery = tQuery.eq('id', profile.tenant_id);
             else tQuery = tQuery.order('created_at').limit(1);
-            
             const { data: tData } = await tQuery.maybeSingle();
-            if (tData) {
-              tName = tData.name;
-              tLogo = tData.logo_url;
-            }
+            if (tData) { tName = tData.name; tLogo = tData.logo_url; }
           }
 
           tName = tName || 'PT. PERUSAHAAN CONTOH';
           const pName = profile.projects?.name || 'GLOBAL';
           const dName = profile.divisions?.name || 'ALL DIVISION';
-          
+
           setTenantName(tName);
           setStructureName(`${pName} - ${dName}`);
 
-          // Fetch Full Profile for Greeting
           const { data: fullProfile } = await supabase.from('profiles').select('*').eq('auth_id', session.user.id).maybeSingle();
           if (fullProfile) {
             setUserData({
@@ -677,11 +852,9 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
               position: fullProfile.position || (fullProfile.role === 'SUB_ADMIN' ? 'Supervisor' : 'Staff'),
               division: dName
             });
-            // stats.leaveBalance fallback
             setStats(prev => ({ ...prev, leaveBalance: fullProfile.leave_balance || 12 }));
           }
 
-          // Fetch Weekly Working Hours (Last 7 Days) — user_id = profiles.id
           const startOfWeek = new Date();
           startOfWeek.setDate(startOfWeek.getDate() - 7);
           const { data: weeklyLogs } = await supabase
@@ -689,7 +862,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
             .select('*')
             .eq('user_id', fullProfile?.id || profile?.id)
             .gte('timestamp', startOfWeek.toISOString());
-          
+
           if (weeklyLogs) {
             const sortedLogs = [...weeklyLogs].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
             let totalMinutes = 0;
@@ -704,18 +877,13 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
             setStats(prev => ({ ...prev, weeklyHours: Math.round(totalMinutes / 60) }));
           }
 
-          // Fetch Company Settings
           const tid = profile.tenant_id;
           let tSettingsQuery = supabase.from('tenant_settings').select('*');
-          if (tid) {
-            tSettingsQuery = tSettingsQuery.eq('tenant_id', tid);
-          } else if (isGodMode) {
-            // SUPER ADMIN PREVIEW: pick any tenant that has settings
-            tSettingsQuery = tSettingsQuery.order('created_at').limit(1);
-          }
-          
+          if (tid) { tSettingsQuery = tSettingsQuery.eq('tenant_id', tid); }
+          else if (isGodMode) { tSettingsQuery = tSettingsQuery.order('created_at').limit(1); }
+
           const { data: tSettings } = await (tid || isGodMode ? tSettingsQuery.maybeSingle() : Promise.resolve({ data: null }));
-          
+
           if (tSettings) {
             setCompanyInfo({
               tenantId: tid || tSettings.tenant_id,
@@ -730,32 +898,24 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
             setCompanyInfo(prev => ({ ...prev, tenantId: tid, tenantName: tName, logo_url: tLogo, banners: [] }));
           }
 
-          // Fetch Announcements
           const { data: aData } = await supabase.from('announcements')
-            .select('*')
-            .eq('is_active', true)
-            .eq('tenant_id', profile.tenant_id)
+            .select('*').eq('is_active', true).eq('tenant_id', profile.tenant_id)
             .or(`project_id.is.null,project_id.eq.${profile.project_id || '00000000-0000-0000-0000-000000000000'}`)
             .order('created_at', { ascending: false });
-          
+
           if (aData) setAnnouncements(aData);
 
-          // Fetch today's shift (user_id = profiles.id, BUKAN auth.users.id)
           const today = new Date().toISOString().split('T')[0];
           const { data: scheduleData } = await supabase
             .from('user_schedules')
             .select('*, master_shifts(shift_code, shift_name, time_in, time_out, is_cross_day)')
-            .eq('user_id', profile.id)
-            .eq('date', today)
-            .maybeSingle();
+            .eq('user_id', profile.id).eq('date', today).maybeSingle();
 
           if (scheduleData?.master_shifts) {
             setTodayShift(scheduleData.master_shifts);
           }
         }
-      } catch (e) {
-        console.error("Failed to fetch tenant/project info", e);
-      }
+      } catch (e) { console.error("Failed to fetch tenant/project info", e); }
     };
     fetchTenant();
   }, []);
@@ -763,38 +923,30 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
   const handleLogoClick = () => {
     if (!isGodMode && !isImpersonating) return;
     setClickCount(prev => prev + 1);
-
-    // Haptic Feedback for Luxury Feel
     if (window.navigator?.vibrate) window.navigator.vibrate(50);
-
     if (clickCount === 1) {
-      if (onCycleRole && isGodMode) {
-        onCycleRole();
-      } else if (onGodModeReturn) {
-        onGodModeReturn();
-      }
+      if (onCycleRole && isGodMode) { onCycleRole(); }
+      else if (onGodModeReturn) { onGodModeReturn(); }
       setClickCount(0);
     }
     setTimeout(() => setClickCount(0), 1000);
   };
 
   return (
-    <div className="min-h-screen pb-24 pt-8 px-0 flex flex-col items-center relative overflow-hidden bg-[var(--bg-darker)]">
+    <div className="min-h-screen pb-24 pt-8 px-0 flex flex-col items-center relative overflow-hidden bg-[#0B0C10]">
 
       <div className="absolute inset-0 pointer-events-none opacity-20 z-0">
         <div className="absolute top-0 left-0 w-full h-[30%] bg-gradient-to-b from-[var(--aurora-1)]/20 to-transparent"></div>
       </div>
 
-      {/* SUPER ADMIN PREVIEW OVERLAY */}
       {isGodMode && (
-        <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="fixed top-4 right-4 z-50 bg-[var(--danger)]/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-[var(--danger)] text-white text-[10px] font-black tracking-widest flex items-center gap-2 shadow-[0_0_15px_rgba(255,0,85,0.5)] safe-top">
+        <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="fixed top-4 right-4 z-50 bg-rose-500/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-rose-500 text-white text-[10px] font-black tracking-widest flex items-center gap-2 shadow-[0_0_15px_rgba(255,0,85,0.5)] safe-top">
           <ShieldAlert size={12} /> SUPER ADMIN PREVIEW ACTIVE
         </motion.div>
       )}
 
-      {/* Announcements Marquee */}
       {announcements.length > 0 && (
-        <div className="w-full mx-4 mb-4 bg-[var(--aurora-1)]/10 border border-[var(--aurora-1)]/30 rounded-xl overflow-hidden relative z-10 flex items-center px-3 py-2">
+        <div className="w-full max-w-4xl mx-4 mb-4 bg-[var(--aurora-1)]/5 backdrop-blur-lg border border-[var(--aurora-1)]/20 rounded-xl overflow-hidden relative z-10 flex items-center px-3 py-2">
           <Megaphone size={14} className="text-[var(--aurora-1)] flex-shrink-0 mr-3 animate-pulse" />
           <div className="flex-1 overflow-hidden relative">
             <div className="whitespace-nowrap animate-marquee inline-block text-xs text-[var(--aurora-1)] font-bold tracking-wide">
@@ -806,7 +958,6 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
         </div>
       )}
 
-      {/* Banner Carousel Header */}
       <BannerCarousel
         tenantName={tenantName}
         structureName={structureName}
@@ -820,18 +971,16 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
         tenantId={companyInfo.tenantId}
       />
 
-      {/* Admin Back to Dashboard */}
       {isAdminUser && !isGodMode && !isImpersonating && (
         <div className="w-full max-w-md mb-4 relative z-10 flex justify-center">
           <button onClick={() => navigate(userRole === 'TENANT_ADMIN' ? '/tenantadmin' : '/subadmin')}
-            className="glass-panel px-5 py-2 rounded-full border border-[var(--aurora-3)]/20 text-[10px] font-bold uppercase tracking-widest text-[var(--aurora-3)] hover:bg-[var(--aurora-3)]/10 transition-all flex items-center gap-2">
+            className="bg-white/5 backdrop-blur-lg border border-[var(--aurora-3)]/20 rounded-full px-5 py-2 text-[10px] font-bold uppercase tracking-widest text-[var(--aurora-3)] hover:bg-[var(--aurora-3)]/10 transition-all flex items-center gap-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
             <Building2 size={14} /> Dashboard Admin
           </button>
         </div>
       )}
 
-      {/* Dynamic Tab Content */}
-      <div className="w-full flex-1 relative z-10 overflow-y-auto hide-scrollbar px-4">
+      <div className="w-full max-w-4xl flex-1 relative z-10 overflow-y-auto hide-scrollbar px-4">
         <AnimatePresence mode="wait">
           {activeSubView === 'helpdesk' ? (
             <HelpdeskRequest key="helpdesk" onBack={() => setActiveSubView(null)} />
@@ -848,46 +997,21 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
           ) : activeSubView === 'incident-report' ? (
             <IncidentReporting key="incident-report" onBack={() => setActiveSubView(null)} />
           ) : activeSubView === 'lembur' ? (
-            <OvertimeRequest
-              key="lembur"
-              onBack={() => setActiveSubView(null)}
-            />
+            <OvertimeRequest key="lembur" onBack={() => setActiveSubView(null)} />
           ) : activeSubView === 'leave' || activeSubView === 'req-absen' || activeSubView === 'shift' || activeSubView === 'contract' ? (
-            <LeaveRequest
-              key={activeSubView}
-              onBack={() => setActiveSubView(null)}
-              category={activeSubView}
-            />
+            <LeaveRequest key={activeSubView} onBack={() => setActiveSubView(null)} category={activeSubView} />
           ) : activeSubView === 'loan' ? (
-            <LoanRequest
-              key="loan"
-              onBack={() => setActiveSubView(null)}
-            />
+            <LoanRequest key="loan" onBack={() => setActiveSubView(null)} />
           ) : activeSubView === 'reimbursement' ? (
-            <ReimbursementRequest
-              key="reimbursement"
-              onBack={() => setActiveSubView(null)}
-            />
+            <ReimbursementRequest key="reimbursement" onBack={() => setActiveSubView(null)} />
           ) : activeSubView === 'salary' ? (
-            <PayslipView
-              key="salary"
-              onBack={() => setActiveSubView(null)}
-            />
+            <PayslipView key="salary" onBack={() => setActiveSubView(null)} />
           ) : activeSubView === 'qr' ? (
-            <QRScanner
-              key="qr"
-              onBack={() => setActiveSubView(null)}
-            />
+            <QRScanner key="qr" onBack={() => setActiveSubView(null)} />
           ) : activeSubView === 'edit-profile' ? (
-            <ProfileEditor
-              key="edit-profile"
-              onBack={() => setActiveSubView(null)}
-            />
+            <ProfileEditor key="edit-profile" onBack={() => setActiveSubView(null)} />
           ) : activeSubView === 'attendance-calendar' ? (
-            <AttendanceCalendar
-              key="attendance-calendar"
-              onBack={() => setActiveSubView(null)}
-            />
+            <AttendanceCalendar key="attendance-calendar" onBack={() => setActiveSubView(null)} />
           ) : activeSubView === 'chatbot' ? (
             <div className="w-full flex-1 relative z-10 flex flex-col pb-24">
               <div className="flex items-center gap-4 mb-6">
@@ -899,14 +1023,14 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
                   <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">{t('Asisten Kebijakan HR')}</p>
                 </div>
               </div>
-              <div className="glass-panel p-6 rounded-[32px] border border-white/5 bg-white/[0.02] flex-1 flex flex-col overflow-hidden">
+              <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-[32px] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] flex-1 flex flex-col overflow-hidden">
                 <HRChatbot />
               </div>
             </div>
           ) : activeTab === 'home' ? (
-            <EmployeeHome 
-              key="home" 
-              onAction={(view) => setActiveSubView(view)} 
+            <EmployeeHome
+              key="home"
+              onAction={(view) => setActiveSubView(view)}
               user={userData}
               stats={stats}
               companyInfo={companyInfo}
@@ -924,8 +1048,8 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
       </div>
 
       {/* Floating Dock Navigation Bar */}
-      <div className="fixed bottom-6 w-full px-0 flex justify-center z-50 safe-bottom">
-        <div className="glass-panel px-6 py-3 mx-4 flex items-center justify-between w-full rounded-full">
+      <div className={`fixed bottom-6 w-full px-0 flex justify-center z-50 safe-bottom transition-transform duration-300 ease-in-out ${isNavVisible ? 'translate-y-0' : 'translate-y-[150%]'}`}>
+        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-full px-6 py-3 mx-4 flex items-center justify-between w-full max-w-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
           {[
             { id: 'home', icon: Home },
             { id: 'history', icon: Clock },
@@ -938,12 +1062,12 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
               onClick={() => {
                 if (window.navigator?.vibrate) window.navigator.vibrate(40);
                 setActiveTab(item.id);
-                setActiveSubView(null); // Reset subview when changing tabs
+                setActiveSubView(null);
               }}
               whileHover={{ y: -5 }}
               whileTap={{ scale: 0.9 }}
               className={`relative ${item.center
-                ? 'bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] w-14 h-14 rounded-full flex items-center justify-center text-white shadow-[0_0_15px_rgba(142,45,226,0.5)] -mt-8 border-4 border-[#0B0C10]'
+                ? 'bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] w-14 h-14 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_rgba(142,45,226,0.5)] -mt-8 border-4 border-[#0B0C10]'
                 : `p-3 rounded-full transition-colors ${activeTab === item.id ? 'text-[var(--aurora-3)]' : 'text-gray-500'}`
                 }`}
             >
@@ -959,9 +1083,9 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
         </div>
       </div>
 
-      {/* GLOBAL BRANDING FOOTER */}
-      <div className="fixed bottom-1 w-full text-center pointer-events-none z-40 safe-bottom">
-        <p className="text-[8px] text-gray-600 font-bold tracking-[0.3em] uppercase">{t('SI PRESENSI PRO MAX - v3.5')}</p>
+      {/* Copyright Watermark */}
+      <div className="fixed bottom-1 w-full pointer-events-none z-40 safe-bottom">
+        <p className="text-center text-[10px] text-gray-500/50 tracking-widest uppercase pb-2 w-full">© 2026 RICHARD MEHA - SI PRESENSI PRO MAX</p>
       </div>
 
     </div>

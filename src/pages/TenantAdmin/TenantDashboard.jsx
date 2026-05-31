@@ -131,10 +131,10 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
 
       {/* Sidebar */}
       <aside className={`fixed lg:relative top-0 left-0 z-[90] h-full lg:h-[calc(100vh-32px)] w-[85vw] max-w-sm lg:w-72 m-0 lg:m-4 transition-all duration-500 ease-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="h-full glass-panel border-r border-white/5 p-6 flex flex-col gap-2 rounded-none lg:rounded-3xl">
+        <div className="h-full bg-white/5 backdrop-blur-lg border border-white/10 p-6 flex flex-col gap-2 rounded-none lg:rounded-3xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
           {/* Logo */}
           <div className="mb-8 lg:mb-10 px-2 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-[#1A1C23] border border-white/10 flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(0,201,255,0.1)]">
+            <div className="w-10 h-10 rounded-xl bg-white/5 backdrop-blur-lg border border-white/10 flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(0,201,255,0.15)]">
               {tenantData.logo_url ? <img src={tenantData.logo_url} alt="Logo" className="w-full h-full object-contain p-1" /> : <span className="text-[var(--aurora-3)] font-bold">{tenantData.name?.charAt(0)}</span>}
             </div>
             <h2
@@ -257,7 +257,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
 
       {/* Main Content */}
       <main className="flex-1 p-0 z-10 overflow-y-auto">
-        <div className={`w-full px-4 ${isImpersonating ? 'pt-10 mt-2 sm:mt-4' : 'mt-2 sm:mt-4'}`}>
+        <div className={`w-full max-w-7xl mx-auto px-4 ${isImpersonating ? 'pt-10 mt-2 sm:mt-4' : 'mt-2 sm:mt-4'}`}>
           <Suspense fallback={<div className="p-20 text-center"><div className="w-8 h-8 border-2 border-[var(--aurora-3)] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
             {activeTab === 'home' && <DashboardHome onNavigate={(tab) => { setActiveTab(tab); setIsSidebarOpen(false); }} />}
             {activeTab === 'profile' && <CompanyProfile onUpdate={fetchTenantData} />}

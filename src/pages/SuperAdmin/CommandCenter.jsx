@@ -15,6 +15,7 @@ const GlobalShiftView = React.lazy(() => import('./components/GlobalShiftView'))
 const GlobalFinance = React.lazy(() => import('./components/GlobalFinance'));
 const GlobalAudit = React.lazy(() => import('./components/GlobalAudit'));
 const SubAdminDashboard = React.lazy(() => import('../SubAdmin/SubAdminDashboard'));
+const DemoApproval = React.lazy(() => import('./components/DemoApproval'));
 
 const LSusp = ({ children }) => <Suspense fallback={<div className="flex items-center justify-center py-16"><Loader2 size={24} className="animate-spin text-[var(--aurora-3)]" /></div>}>{children}</Suspense>;
 
@@ -204,10 +205,16 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
             >
               📋 Global Audit
             </button>
+            <button 
+              onClick={() => setActiveTab('demos')}
+              className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'demos' ? 'bg-[var(--success)] text-black' : 'text-gray-500 hover:text-white'}`}
+            >
+              🎯 Demo
+            </button>
           </nav>
           {/* Mobile Tab Selector */}
           <div className="flex lg:hidden items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/5 overflow-x-auto w-full">
-            {['infrastructure', 'operations', 'shifts', 'finance', 'audit'].map(tab => (
+            {['infrastructure', 'operations', 'shifts', 'finance', 'audit', 'demos'].map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)}
                 className={`flex-shrink-0 px-4 py-3 rounded-lg text-[10px] sm:text-[9px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
                   activeTab === tab
@@ -215,11 +222,12 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
                       : tab === 'operations' ? 'bg-[var(--aurora-1)] text-black'
                       : tab === 'shifts' ? 'bg-[var(--warning)] text-black'
                       : tab === 'finance' ? 'bg-[var(--success)] text-black'
+                      : tab === 'demos' ? 'bg-[var(--success)] text-black'
                       : 'bg-[var(--danger)] text-white'
                     : 'text-gray-500'
                 }`}
               >
-                {tab === 'infrastructure' ? 'Infra' : tab === 'operations' ? 'Ops' : 'Jadwal'}
+                {tab === 'infrastructure' ? 'Infra' : tab === 'operations' ? 'Ops' : tab === 'demos' ? 'Demo' : 'Jadwal'}
               </button>
             ))}
           </div>
@@ -289,22 +297,26 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
             className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-12 gap-4 flex-1 z-10 items-start"
           >
             <div className="lg:col-span-8 flex flex-col gap-4">
-              <section className="glass-panel p-4 relative flex flex-col">
+              <section className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] relative flex flex-col overflow-hidden">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-[var(--aurora-3)]/5 rounded-full blur-[100px] pointer-events-none" />
                 <div className="relative z-20 mb-3">
                   <h2 className="font-serif text-lg tracking-wide flex items-center gap-3 text-white">
-                    <Globe size={20} className="text-[var(--aurora-3)] animate-pulse" /> Peta Pengawasan Global
+                    <span className="w-8 h-8 rounded-lg bg-[var(--aurora-3)]/10 flex items-center justify-center shadow-[0_0_12px_rgba(0,201,255,0.2)]"><Globe size={16} className="text-[var(--aurora-3)]" /></span>
+                    Peta Pengawasan Global
                   </h2>
                   <p className="text-[9px] text-gray-500 uppercase tracking-[0.3em] mt-1 font-black">Live Satellite Infrastructure</p>
                 </div>
-                <div className="flex-1 rounded-2xl lg:rounded-3xl overflow-hidden border border-white/10 relative min-h-[300px]">
+                <div className="flex-1 rounded-2xl lg:rounded-3xl overflow-hidden border border-white/10 relative min-h-[300px] bg-black/20">
                   <LSusp><GlobalMap /></LSusp>
                 </div>
               </section>
-              <section className="glass-panel p-4">
+              <section className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-48 h-48 bg-[var(--aurora-1)]/5 rounded-full blur-[100px] pointer-events-none" />
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="font-serif text-lg tracking-wide flex items-center gap-3">
-                      <Activity size={20} className="text-[var(--aurora-1)]" /> Analitik Pertumbuhan
+                      <span className="w-8 h-8 rounded-lg bg-[var(--aurora-1)]/10 flex items-center justify-center shadow-[0_0_12px_rgba(142,45,226,0.2)]"><Activity size={16} className="text-[var(--aurora-1)]" /></span>
+                      Analitik Pertumbuhan
                     </h2>
                     <p className="text-[9px] text-gray-500 uppercase tracking-[0.3em] mt-1 font-black">Real-time Business Intelligence</p>
                   </div>
@@ -313,17 +325,29 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
               </section>
             </div>
             <div className="lg:col-span-4 flex flex-col gap-4">
-              <section className="glass-panel p-4 border border-[var(--warning)]/30 bg-[var(--warning)]/[0.02]">
-                <h2 className="font-serif text-lg tracking-wide mb-4 flex items-center gap-3 text-[var(--warning)]"><ShieldCheck size={20} /> Otorisasi Export</h2>
+              <section className="bg-white/5 backdrop-blur-lg border border-amber-500/30 rounded-2xl p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--warning)]/5 rounded-full blur-[80px] pointer-events-none" />
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent pointer-events-none" />
+                <h2 className="font-serif text-lg tracking-wide mb-4 flex items-center gap-3 text-amber-400">
+                  <span className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shadow-[0_0_12px_rgba(251,191,36,0.2)]"><ShieldCheck size={16} className="text-amber-400" /></span>
+                  Otorisasi Export
+                </h2>
                 <p className="text-xs text-gray-400 leading-relaxed">
                   Export HRIS memakai role profil Supabase dan RLS database. PIN deterministik dan master bypass sudah dinonaktifkan untuk mode rilis.
                 </p>
+                <div className="mt-4 w-full h-px bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent" />
               </section>
-              <section className="glass-panel p-4 flex-1 flex flex-col overflow-visible min-h-[350px]">
+              <section className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] flex-1 flex flex-col overflow-visible min-h-[350px] relative">
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent pointer-events-none" />
                 <LSusp><SaaSManagement onImpersonate={onImpersonate} searchQuery={searchQuery} /></LSusp>
               </section>
-              <section className="glass-panel p-4 border border-[var(--danger)]/30">
-                <h2 className="font-serif text-lg tracking-wide mb-4 flex items-center gap-3 text-[var(--danger)]"><ShieldAlert size={20} /> Audit Keamanan</h2>
+              <section className="bg-white/5 backdrop-blur-lg border border-rose-500/30 rounded-2xl p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-[80px] pointer-events-none" />
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-rose-500/40 to-transparent pointer-events-none" />
+                <h2 className="font-serif text-lg tracking-wide mb-4 flex items-center gap-3 text-rose-400">
+                  <span className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center shadow-[0_0_12px_rgba(244,63,94,0.2)]"><ShieldAlert size={16} className="text-rose-400" /></span>
+                  Audit Keamanan
+                </h2>
                 <LSusp><SecurityAudit searchQuery={searchQuery} /></LSusp>
               </section>
             </div>
@@ -347,6 +371,11 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
         {activeTab === 'audit' && (
           <motion.div key="audit" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="flex-1 z-10">
             <LSusp><GlobalAudit /></LSusp>
+          </motion.div>
+        )}
+        {activeTab === 'demos' && (
+          <motion.div key="demos" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 z-10">
+            <LSusp><DemoApproval searchQuery={searchQuery} /></LSusp>
           </motion.div>
         )}
       </AnimatePresence>

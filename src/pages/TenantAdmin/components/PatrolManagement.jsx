@@ -231,19 +231,19 @@ const PatrolManagement = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Nama Checkpoint')}</label>
-              <input name="name" required className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Pos Utama" />
+              <input name="name" required  placeholder="Pos Utama"  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Deskripsi Lokasi')}</label>
-              <input name="location_description" className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Dekat pintu masuk utama" />
+              <input name="location_description"  placeholder="Dekat pintu masuk utama"  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Latitude')}</label>
-              <input name="latitude" type="number" step="any" className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="-6.2088" />
+              <input name="latitude" type="number" step="any"  placeholder="-6.2088"  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Longitude')}</label>
-              <input name="longitude" type="number" step="any" className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="106.8456" />
+              <input name="longitude" type="number" step="any"  placeholder="106.8456"  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
           </div>
           <div className="flex gap-2 pt-2">
@@ -330,11 +330,11 @@ const PatrolManagement = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Nama Route')}</label>
-              <input name="name" required className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Route Pagi" />
+              <input name="name" required  placeholder="Route Pagi"  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Estimasi Durasi (menit)')}</label>
-              <input name="estimated_duration" type="number" className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="30" />
+              <input name="estimated_duration" type="number"  placeholder="30"  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
           </div>
           <div>

@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Download, AlertCircle, CheckCircle2, Loader2, CalendarDays, FileSpreadsheet, Users, X, Briefcase, UserPlus } from 'lucide-react';
+import { Upload, Download, AlertCircle, CheckCircle2, Loader2, CalendarDays, FileSpreadsheet, Users, X, UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
+import { useTranslation } from 'react-i18next';
 
 const parseCSVLine = (line) => {
   const result = [];
   let current = '', inQuotes = false;
   for (let i = 0; i < line.length; i++) {
-    const c = line[i];
+    const c = line.charAt(i);
     if (c === '"') inQuotes = !inQuotes;
     else if (c === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
     else current += c;
@@ -20,6 +21,7 @@ const parseCSVLine = (line) => {
 const daysInMonth = (month, year) => new Date(year, month, 0).getDate();
 
 const ScheduleUpload = () => {
+  const { t, i18n } = useTranslation();
   const [step, setStep] = useState('idle');
   const [tenantId, setTenantId] = useState(null);
   const [existingEmp, setExistingEmp] = useState([]);
@@ -60,7 +62,7 @@ const ScheduleUpload = () => {
 
   const generateTemplate = () => {
     const totalDays = daysInMonth(selectedMonth, selectedYear);
-    const headers = ['NIK', 'Nama', 'Jabatan', 'Project', 'Divisi', 'Mode'];
+    const headers = [t('scheduleUpload.nikCol'), t('scheduleUpload.nameCol'), t('scheduleUpload.positionCol'), 'Project', 'Divisi', 'Mode'];
     for (let i = 1; i <= totalDays; i++) headers.push(`Tgl_${i}`);
 
     const example = [
@@ -89,29 +91,30 @@ const ScheduleUpload = () => {
       try {
         const text = ev.target.result;
         const lines = text.split('\n').filter(l => l.trim());
-        if (lines.length < 2) { toast('CSV minimal 2 baris.', 'error'); return; }
+        if (lines.length < 2) { toast(t('scheduleUpload.toastMinLines'), 'error'); return; }
 
-        const headers = parseCSVLine(lines[0]);
+        const headers = parseCSVLine(lines.at(0));
         // Expected format: NIK, Nama, Jabatan, Project, Divisi, Mode, Tgl_1, Tgl_2, ...
         const modeColIdx = 5;
         const dateLabels = headers.slice(6);
 
         const rows = [];
         for (let i = 1; i < lines.length; i++) {
-          const cells = parseCSVLine(lines[i]);
+          const cells = parseCSVLine(lines.at(i));
           if (cells.length < 7) continue;
           const schedules = [];
           for (let j = 6; j < cells.length && j - 6 < dateLabels.length; j++) {
-            if (cells[j]) schedules.push({ day: dateLabels[j - 6], code: cells[j].toUpperCase() });
+            const cellVal = cells.at(j);
+            if (cellVal) schedules.push({ day: dateLabels.at(j - 6), code: cellVal.toUpperCase() });
           }
-          const rawMode = (cells[modeColIdx] || '').toUpperCase();
+          const rawMode = (cells.at(modeColIdx) || '').toUpperCase();
           const validModes = ['WFO','WFH','WFA'];
           rows.push({
-            nik: cells[0],
-            nama: cells[1],
-            jabatan: cells[2],
-            projectName: cells[3] || '',
-            divisionName: cells[4] || '',
+            nik: cells.at(0),
+            nama: cells.at(1),
+            jabatan: cells.at(2),
+            projectName: cells.at(3) || '',
+            divisionName: cells.at(4) || '',
             workMode: validModes.includes(rawMode) ? rawMode : 'WFO',
             schedules
           });
@@ -120,7 +123,7 @@ const ScheduleUpload = () => {
         setPreview({ headers: dateLabels, rows });
         setStep('parsed');
       } catch (err) {
-        toast('Gagal parse CSV: ' + err.message, 'error');
+        toast(t('scheduleUpload.toastParseFail') + err.message, 'error');
       }
     };
     reader.readAsText(f);
@@ -156,8 +159,12 @@ const ScheduleUpload = () => {
 
   const executeImport = async () => {
     setIsProcessing(true);
-    const shiftByCode = {};
-    shifts.forEach(s => { shiftByCode[s.shift_code.toUpperCase()] = s; });
+    const shiftByCode = new Map();
+    shifts.forEach(s => {
+      if (s.shift_code) {
+        shiftByCode.set(s.shift_code.toUpperCase(), s);
+      }
+    });
 
     const stats = { created: 0, updated: 0, assigned: 0, inserted: 0, errors: [] };
 
@@ -172,7 +179,7 @@ const ScheduleUpload = () => {
               full_name: row.nama, position: row.jabatan,
               role: 'EMPLOYEE', attendance_access: true
             }]).select('id, nip, full_name, position').single();
-          if (createErr) throw new Error(`Gagal buat profile: ${createErr.message}`);
+          if (createErr) throw new Error(t('scheduleUpload.toastCreateProfileFail', { message: createErr.message }));
           emp = newEmp; existingEmp.push(newEmp); stats.created++;
         } else {
           const updates = {};
@@ -180,7 +187,7 @@ const ScheduleUpload = () => {
           if (row.jabatan && row.jabatan !== emp.position) updates.position = row.jabatan;
           if (Object.keys(updates).length > 0) {
             const { error: updErr } = await supabase.from('profiles').update(updates).eq('id', emp.id);
-            if (updErr) throw new Error(`Gagal update ${row.nik}: ${updErr.message}`);
+            if (updErr) throw new Error(t('scheduleUpload.toastUpdateProfileFail', { nik: row.nik, message: updErr.message }));
             Object.assign(emp, updates); stats.updated++;
           }
         }
@@ -200,9 +207,9 @@ const ScheduleUpload = () => {
         const toUpsert = [];
         for (const s of row.schedules) {
           const date = getDateFromDay(s.day);
-          if (!date) { stats.errors.push(`${row.nik}: format tanggal salah (${s.day})`); continue; }
-          const shift = shiftByCode[s.code];
-          if (!shift) { stats.errors.push(`${row.nik} - ${date}: kode shift "${s.code}" tidak dikenal`); continue; }
+          if (!date) { stats.errors.push(t('scheduleUpload.errDateFormat', { nik: row.nik, day: s.day })); continue; }
+          const shift = shiftByCode.get(s.code);
+          if (!shift) { stats.errors.push(t('scheduleUpload.errUnknownShift', { nik: row.nik, date, code: s.code })); continue; }
           toUpsert.push({ tenant_id: tenantId, user_id: emp.id, shift_id: shift.id, date, work_mode: row.workMode });
         }
         if (toUpsert.length > 0) {
@@ -212,7 +219,7 @@ const ScheduleUpload = () => {
           stats.inserted += toUpsert.length;
         }
       } catch (e) {
-        stats.errors.push(`${row.nik}: ${e.message}`);
+        stats.errors.push(t('scheduleUpload.errRow', { nik: row.nik, message: e.message }));
       }
     }
 
@@ -232,10 +239,10 @@ const ScheduleUpload = () => {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-serif font-bold text-white tracking-wide flex items-center gap-2">
-            <CalendarDays className="text-[var(--aurora-1)]" /> Upload Jadwal Bulanan
+            <CalendarDays className="text-[var(--aurora-1)]" /> {t('scheduleUpload.title')}
           </h2>
           <p className="text-gray-400 text-sm mt-1">
-            Upload CSV. NIK baru akan otomatis dibuatkan profile + jadwal. Data <strong>Nama</strong> & <strong>Jabatan</strong> tersinkron ke profil pegawai.
+            {t('scheduleUpload.subtitle')}
           </p>
         </div>
       </div>
@@ -244,50 +251,50 @@ const ScheduleUpload = () => {
         <div className="lg:col-span-1 space-y-4">
           <div className="glass-panel p-6 border border-white/5">
             <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-              <CalendarDays size={16} className="text-[var(--aurora-3)]" /> Periode Jadwal
+              <CalendarDays size={16} className="text-[var(--aurora-3)]" /> {t('scheduleUpload.periodTitle')}
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">Bulan</label>
+                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">{t('scheduleUpload.month')}</label>
                 <select value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))}
-                  className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-3 py-3 text-white text-sm outline-none focus:border-[var(--aurora-1)]">
+                   className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-3 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                   {Array.from({length:12}, (_,i) => (
-                    <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString('id', {month:'long'})}</option>
+                    <option key={i+1} value={i+1}>{new Date(2000, i).toLocaleString(i18n.language === 'id' ? 'id' : 'en', {month:'long'})}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">Tahun</label>
+                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">{t('scheduleUpload.year')}</label>
                 <select value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}
-                  className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-3 py-3 text-white text-sm outline-none focus:border-[var(--aurora-1)]">
+                   className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-3 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                   {[2024,2025,2026,2027,2028].map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               </div>
             </div>
-            <div className="mt-4 text-[10px] text-gray-500">{daysInMonth(selectedMonth, selectedYear)} hari</div>
+            <div className="mt-4 text-[10px] text-gray-500">{daysInMonth(selectedMonth, selectedYear)} {t('scheduleUpload.days')}</div>
           </div>
 
           <div className="glass-panel p-6 border border-[var(--success)]/20 bg-[var(--success)]/5">
             <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-              <FileSpreadsheet size={16} className="text-[var(--success)]" /> Template CSV
+              <FileSpreadsheet size={16} className="text-[var(--success)]" /> {t('scheduleUpload.templateTitle')}
             </h3>
             <p className="text-[10px] text-gray-400 mb-3">
-              Format: <code className="text-[var(--success)]">NIK, Nama, Jabatan, Project, Divisi, Mode, Tgl_1, Tgl_2, ...</code>
+              {t('scheduleUpload.format')} <code className="text-[var(--success)]">NIK, Nama, Jabatan, Project, Divisi, Mode, Tgl_1, Tgl_2, ...</code>
             </p>
             <p className="text-[9px] text-gray-500 mb-3">
-              NIK baru <strong className="text-[var(--aurora-3)]">auto-create profile</strong> + jadwal langsung masuk. Mode: WFO/WFH/WFA.</p>
+              {t('scheduleUpload.templateNote')}</p>
             <button onClick={generateTemplate}
               className="w-full py-3 rounded-xl bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/30 hover:bg-[var(--success)] hover:text-black text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
-              <Download size={14} /> Download Template
+              <Download size={14} /> {t('scheduleUpload.downloadTemplate')}
             </button>
           </div>
 
           <div className="glass-panel p-6 border border-white/5">
             <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-              <Users size={16} className="text-[var(--aurora-1)]" /> Referensi
+              <Users size={16} className="text-[var(--aurora-1)]" /> {t('scheduleUpload.reference')}
             </h3>
-            <p className="text-[10px] text-gray-400 mb-1">{existingEmp.length} pegawai existing</p>
-            <p className="text-[10px] text-gray-400 mb-3">{shifts.length} kode shift</p>
+            <p className="text-[10px] text-gray-400 mb-1">{existingEmp.length} {t('scheduleUpload.existingEmployees')}</p>
+            <p className="text-[10px] text-gray-400 mb-3">{shifts.length} {t('scheduleUpload.shiftCodes')}</p>
             <div className="flex flex-wrap gap-1.5">
               {shifts.slice(0, 8).map(s => (
                 <span key={s.id} className="px-2 py-0.5 bg-white/5 rounded text-[9px] font-mono text-gray-400 border border-white/5">
@@ -305,13 +312,13 @@ const ScheduleUpload = () => {
               onDragOver={e => e.preventDefault()}
               onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) { handleFile({ target: { files: [f] } }); } }}>
               <Upload size={48} className="mx-auto text-gray-600 mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Upload File CSV</h3>
-              <p className="text-sm text-gray-400 mb-1">Drag & drop atau klik untuk pilih</p>
-              <p className="text-[10px] text-gray-600 mb-6">Format: NIK, Nama, Jabatan, Project, Divisi, Mode, Tgl_1, Tgl_2, ...</p>
+              <h3 className="text-lg font-bold text-white mb-2">{t('scheduleUpload.uploadTitle')}</h3>
+              <p className="text-sm text-gray-400 mb-1">{t('scheduleUpload.dragDrop')}</p>
+              <p className="text-[10px] text-gray-600 mb-6">{t('scheduleUpload.formatPlaceholder')}</p>
               <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} className="hidden" />
               <button onClick={() => fileRef.current?.click()}
                 className="px-8 py-4 rounded-2xl bg-gradient-to-r from-[var(--aurora-1)] to-[#1E90FF] text-white font-bold tracking-widest hover:opacity-90 transition-all">
-                Pilih File CSV
+                {t('scheduleUpload.selectFile')}
               </button>
             </div>
           )}
@@ -322,18 +329,18 @@ const ScheduleUpload = () => {
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                      <CheckCircle2 size={20} className="text-[var(--success)]" /> Preview Data
+                      <CheckCircle2 size={20} className="text-[var(--success)]" /> {t('scheduleUpload.previewTitle')}
                     </h3>
-                    <p className="text-xs text-gray-400 mt-1">{preview.rows.length} karyawan • {preview.headers.length} hari</p>
+                    <p className="text-xs text-gray-400 mt-1">{t('scheduleUpload.previewMeta', { employees: preview.rows.length, days: preview.headers.length })}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button onClick={reset} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-400 text-xs hover:text-white transition-colors flex items-center gap-1 whitespace-nowrap">
-                      <X size={14} /> Batal
+                      <X size={14} /> {t('scheduleUpload.cancel')}
                     </button>
                     <button onClick={executeImport} disabled={isProcessing}
                       className="px-6 py-2 rounded-xl bg-gradient-to-r from-[var(--success)] to-emerald-500 text-white text-xs font-bold tracking-widest hover:opacity-90 transition-all flex items-center gap-2 disabled:opacity-50 shadow-[0_0_20px_rgba(0,255,135,0.2)]">
                       {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                      {isProcessing ? 'Memproses...' : 'Mulai Injeksi'}
+                      {isProcessing ? t('scheduleUpload.processing') : t('scheduleUpload.startImport')}
                     </button>
                   </div>
                 </div>
@@ -342,11 +349,11 @@ const ScheduleUpload = () => {
                   <table className="w-full text-left text-xs">
                     <thead className="bg-white/5 text-gray-400 uppercase tracking-widest sticky top-0">
                       <tr>
-                        <th className="p-3 font-semibold text-white">NIK</th>
-                        <th className="p-3 font-semibold text-[var(--aurora-3)]">Nama</th>
-                        <th className="p-3 font-semibold text-[var(--aurora-1)]">Jabatan</th>
-                        <th className="p-3 font-semibold">Mode</th>
-                        <th className="p-3 font-semibold">Status</th>
+                        <th className="p-3 font-semibold text-white">{t('scheduleUpload.nikCol')}</th>
+                        <th className="p-3 font-semibold text-[var(--aurora-3)]">{t('scheduleUpload.nameCol')}</th>
+                        <th className="p-3 font-semibold text-[var(--aurora-1)]">{t('scheduleUpload.positionCol')}</th>
+                        <th className="p-3 font-semibold">{t('scheduleUpload.modeCol')}</th>
+                        <th className="p-3 font-semibold">{t('scheduleUpload.statusCol')}</th>
                         {preview.headers.slice(0, 8).map(h => (
                           <th key={h} className="p-3 font-semibold whitespace-nowrap">{h}</th>
                         ))}
@@ -373,11 +380,11 @@ const ScheduleUpload = () => {
                             <td className="p-3">
                               {exists ? (
                                 <span className="text-[10px] text-[var(--aurora-3)] flex items-center gap-1">
-                                  <CheckCircle2 size={10} /> Update
+                                  <CheckCircle2 size={10} /> {t('scheduleUpload.updateStatus')}
                                 </span>
                               ) : (
                                 <span className="text-[10px] text-[var(--warning)] flex items-center gap-1">
-                                  <UserPlus size={10} /> Baru
+                                  <UserPlus size={10} /> {t('scheduleUpload.newStatus')}
                                 </span>
                               )}
                             </td>
@@ -398,7 +405,7 @@ const ScheduleUpload = () => {
                   </table>
                 </div>
                 {(preview.rows.length > 15 || preview.headers.length > 8) && (
-                  <p className="text-[10px] text-gray-500 mt-2">Menampilkan sebagian. Total: {preview.rows.length} baris × {preview.headers.length} hari</p>
+                  <p className="text-[10px] text-gray-500 mt-2">{t('scheduleUpload.showingPartial', { totalRows: preview.rows.length, totalHeaders: preview.headers.length })}</p>
                 )}
               </div>
             </motion.div>
@@ -411,25 +418,25 @@ const ScheduleUpload = () => {
                   {results.errors.length === 0
                     ? <CheckCircle2 size={48} className="mx-auto text-[var(--success)] mb-3" />
                     : <AlertCircle size={48} className="mx-auto text-[var(--warning)] mb-3" />}
-                  <h3 className="text-xl font-bold text-white">Injeksi Selesai</h3>
+                  <h3 className="text-xl font-bold text-white">{t('scheduleUpload.importDone')}</h3>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                   <div className="bg-[var(--success)]/10 rounded-xl p-4 text-center border border-[var(--success)]/20">
                     <p className="text-2xl font-bold text-[var(--success)]">{results.inserted}</p>
-                    <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Jadwal</p>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">{t('scheduleUpload.schedulesCount')}</p>
                   </div>
                   <div className="bg-[var(--aurora-1)]/10 rounded-xl p-4 text-center border border-[var(--aurora-1)]/20">
                     <p className="text-2xl font-bold text-[var(--aurora-1)]">{results.updated}</p>
-                    <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Update</p>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">{t('scheduleUpload.updatesCount')}</p>
                   </div>
                   <div className="bg-[var(--warning)]/10 rounded-xl p-4 text-center border border-[var(--warning)]/20">
                     <p className="text-2xl font-bold text-[var(--warning)]">{results.created}</p>
-                    <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Profil Baru</p>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">{t('scheduleUpload.newProfilesCount')}</p>
                   </div>
                   <div className="bg-[var(--danger)]/10 rounded-xl p-4 text-center border border-[var(--danger)]/20">
                     <p className="text-2xl font-bold text-[var(--danger)]">{results.errors.length}</p>
-                    <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Error</p>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">{t('scheduleUpload.errorsCount')}</p>
                   </div>
                 </div>
 
@@ -438,13 +445,13 @@ const ScheduleUpload = () => {
                     {results.errors.slice(0, 20).map((err, i) => (
                       <div key={i} className="text-[11px] text-[var(--danger)] bg-[var(--danger)]/5 px-3 py-1.5 rounded-lg border border-[var(--danger)]/10">{err}</div>
                     ))}
-                    {results.errors.length > 20 && <p className="text-[10px] text-gray-500">...dan {results.errors.length - 20} error lainnya</p>}
+                    {results.errors.length > 20 && <p className="text-[10px] text-gray-500">{t('scheduleUpload.otherErrors', { count: results.errors.length - 20 })}</p>}
                   </div>
                 )}
 
                 <button onClick={reset}
                   className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold tracking-widest hover:bg-white/10 transition-all">
-                  Upload Lagi
+                  {t('scheduleUpload.uploadAgain')}
                 </button>
               </div>
             </motion.div>

@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Search, User, Briefcase, Calendar, Clock, DollarSign, FileText, ShieldCheck, Package, Star, ClipboardCheck, ChevronRight, Loader2, Phone, Mail, MapPin } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 
 const TABS = [
-  { id: 'profile', label: 'Profil', icon: <User size={14} /> },
-  { id: 'salary', label: 'Gaji', icon: <DollarSign size={14} /> },
-  { id: 'attendance', label: 'Absensi', icon: <Clock size={14} /> },
-  { id: 'assets', label: 'Aset', icon: <Package size={14} /> },
-  { id: 'reviews', label: 'Kinerja', icon: <Star size={14} /> },
-  { id: 'onboarding', label: 'Onboarding', icon: <ClipboardCheck size={14} /> },
+  { id: 'profile', labelKey: 'profileView.tabs.profile', icon: <User size={14} /> },
+  { id: 'salary', labelKey: 'profileView.tabs.salary', icon: <DollarSign size={14} /> },
+  { id: 'attendance', labelKey: 'profileView.tabs.attendance', icon: <Clock size={14} /> },
+  { id: 'assets', labelKey: 'profileView.tabs.assets', icon: <Package size={14} /> },
+  { id: 'reviews', labelKey: 'profileView.tabs.reviews', icon: <Star size={14} /> },
+  { id: 'onboarding', labelKey: 'profileView.tabs.onboarding', icon: <ClipboardCheck size={14} /> },
 ];
 
 const EmployeeProfileView = () => {
+  const { t, i18n } = useTranslation();
   const [employees, setEmployees] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState(null);
@@ -84,15 +86,15 @@ const EmployeeProfileView = () => {
   return (
     <div className="glass-panel p-8">
       <div className="border-b border-white/10 pb-6 mb-8">
-        <h2 className="text-2xl font-serif font-bold text-white">Profil Karyawan (360°)</h2>
-        <p className="text-sm text-gray-400 mt-1">Lihat semua data karyawan dalam satu halaman</p>
+        <h2 className="text-2xl font-serif font-bold text-white">{t('profileView.title')}</h2>
+        <p className="text-sm text-gray-400 mt-1">{t('profileView.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
           <div className="relative mb-4">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari karyawan..." className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-white text-xs outline-none focus:border-[var(--aurora-3)]" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('profileView.searchPlaceholder')} className="w-full bg-white/5 border border-white/20 rounded-xl pl-9 pr-3 py-2.5 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
           </div>
           <div className="space-y-1 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
             {filtered.map(e => (
@@ -123,10 +125,10 @@ const EmployeeProfileView = () => {
               </div>
 
               <div className="flex gap-1 mb-6 bg-white/5 p-1 rounded-xl overflow-x-auto">
-                {TABS.map(t => (
-                  <button key={t.id} onClick={() => setActiveTab(t.id)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white' : 'text-gray-500 hover:text-white'}`}>
-                    {t.icon} {t.label}
+                {TABS.map(tab => (
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white' : 'text-gray-500 hover:text-white'}`}>
+                    {tab.icon} {t(tab.labelKey)}
                   </button>
                 ))}
               </div>
@@ -135,14 +137,14 @@ const EmployeeProfileView = () => {
                 {activeTab === 'profile' && (
                   <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
-                      { label: 'Email', value: profileData.email, icon: <Mail size={12} /> },
-                      { label: 'No. HP', value: profileData.employee_hris_data?.mobile_phone || '-', icon: <Phone size={12} /> },
-                      { label: 'Alamat', value: profileData.employee_hris_data?.ktp_address || '-', icon: <MapPin size={12} /> },
-                      { label: 'NIP', value: profileData.nip, icon: <User size={12} /> },
-                      { label: 'Posisi', value: profileData.position || '-', icon: <Briefcase size={12} /> },
-                      { label: 'Role', value: profileData.role, icon: <ShieldCheck size={12} /> },
-                      { label: 'Tgl Lahir', value: profileData.birth_date ? new Date(profileData.birth_date).toLocaleDateString('id-ID') : '-', icon: <Calendar size={12} /> },
-                      { label: 'Gender', value: profileData.gender || '-', icon: <User size={12} /> },
+                      { label: t('profileView.fields.email'), value: profileData.email, icon: <Mail size={12} /> },
+                      { label: t('profileView.fields.phone'), value: profileData.employee_hris_data?.mobile_phone || '-', icon: <Phone size={12} /> },
+                      { label: t('profileView.fields.address'), value: profileData.employee_hris_data?.ktp_address || '-', icon: <MapPin size={12} /> },
+                      { label: t('profileView.fields.nip'), value: profileData.nip, icon: <User size={12} /> },
+                      { label: t('profileView.fields.position'), value: profileData.position || '-', icon: <Briefcase size={12} /> },
+                      { label: t('profileView.fields.role'), value: profileData.role, icon: <ShieldCheck size={12} /> },
+                      { label: t('profileView.fields.birthDate'), value: profileData.birth_date ? new Date(profileData.birth_date).toLocaleDateString(i18n.language === 'id' ? 'id-ID' : 'en-US') : '-', icon: <Calendar size={12} /> },
+                      { label: t('profileView.fields.gender'), value: profileData.gender || '-', icon: <User size={12} /> },
                     ].map((f, i) => (
                       <div key={i} className="bg-white/5 p-4 rounded-xl border border-white/5">
                         <p className="text-[9px] text-gray-500 uppercase tracking-widest flex items-center gap-1 mb-1">{f.icon} {f.label}</p>
@@ -157,16 +159,16 @@ const EmployeeProfileView = () => {
                     {employeeSalaries.filter(s => s.salary_components?.type === 'ALLOWANCE').map(s => (
                       <div key={s.id} className="flex justify-between p-4 bg-white/5 rounded-xl border border-white/10">
                         <span className="text-xs text-gray-300">{s.salary_components?.code} — {s.salary_components?.name}</span>
-                        <span className="text-xs font-bold font-mono text-[var(--success)]">Rp {Number(s.amount).toLocaleString()}</span>
+                        <span className="text-xs font-bold font-mono text-[var(--success)]">{t('profileView.currencySymbol')}{Number(s.amount).toLocaleString()}</span>
                       </div>
                     ))}
                     {employeeSalaries.filter(s => s.salary_components?.type === 'DEDUCTION').map(s => (
                       <div key={s.id} className="flex justify-between p-4 bg-white/5 rounded-xl border border-white/10">
                         <span className="text-xs text-gray-300">{s.salary_components?.code} — {s.salary_components?.name}</span>
-                        <span className="text-xs font-bold font-mono text-[var(--danger)]">Rp {Number(s.amount).toLocaleString()}</span>
+                        <span className="text-xs font-bold font-mono text-[var(--danger)]">{t('profileView.currencySymbol')}{Number(s.amount).toLocaleString()}</span>
                       </div>
                     ))}
-                    {!employeeSalaries.length && <p className="text-gray-500 text-xs text-center py-8">Belum ada data gaji</p>}
+                    {!employeeSalaries.length && <p className="text-gray-500 text-xs text-center py-8">{t('profileView.noSalary')}</p>}
                   </motion.div>
                 )}
 
@@ -180,11 +182,11 @@ const EmployeeProfileView = () => {
                         </div>
                         <div className="flex items-center gap-3">
                           <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${a.status === 'ONTIME' ? 'bg-[var(--success)]/10 text-[var(--success)]' : a.status === 'LATE' ? 'bg-[var(--warning)]/10 text-[var(--warning)]' : 'bg-[var(--danger)]/10 text-[var(--danger)]'}`}>{a.status}</span>
-                          <span className="text-[10px] text-gray-500">{new Date(a.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} {new Date(a.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-[10px] text-gray-500">{new Date(a.timestamp).toLocaleDateString(i18n.language === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' })} {new Date(a.timestamp).toLocaleTimeString(i18n.language === 'id' ? 'id-ID' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                       </div>
                     ))}
-                    {!attendanceData.length && <p className="text-gray-500 text-xs text-center py-8">Belum ada data absensi</p>}
+                    {!attendanceData.length && <p className="text-gray-500 text-xs text-center py-8">{t('profileView.noAttendance')}</p>}
                   </motion.div>
                 )}
 
@@ -199,7 +201,7 @@ const EmployeeProfileView = () => {
                         <span className={`px-3 py-1 rounded-full text-[9px] font-bold border ${a.status === 'ASSIGNED' ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' : a.status === 'MAINTENANCE' ? 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30' : 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30'}`}>{a.status}</span>
                       </div>
                     ))}
-                    {!assetsData.length && <p className="text-gray-500 text-xs text-center py-8">Tidak ada aset ditugaskan</p>}
+                    {!assetsData.length && <p className="text-gray-500 text-xs text-center py-8">{t('profileView.noAssets')}</p>}
                   </motion.div>
                 )}
 
@@ -211,27 +213,27 @@ const EmployeeProfileView = () => {
                           <p className="text-xs font-bold text-white">{r.period_label}</p>
                           <span className={`text-lg font-bold font-mono ${(r.final_score || 0) >= 85 ? 'text-[var(--success)]' : (r.final_score || 0) >= 70 ? 'text-[var(--warning)]' : 'text-[var(--danger)]'}`}>{r.final_score || '-'}</span>
                         </div>
-                        <p className="text-[9px] text-gray-500">KPI: {r.kpi_score} • Perilaku: {r.behavioral_score} • Status: {r.status}</p>
+                        <p className="text-[9px] text-gray-500">{t('profileView.kpi')}{r.kpi_score} • {t('profileView.behavior')}{r.behavioral_score} • {t('profileView.status')}{r.status}</p>
                       </div>
                     ))}
-                    {!reviewsData.length && <p className="text-gray-500 text-xs text-center py-8">Belum ada review kinerja</p>}
+                    {!reviewsData.length && <p className="text-gray-500 text-xs text-center py-8">{t('profileView.noReviews')}</p>}
                   </motion.div>
                 )}
 
                 {activeTab === 'onboarding' && (
                   <motion.div key="onboarding" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
-                    {onboardingData.map(t => (
-                      <div key={t.id} className="flex items-center gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${t.is_completed ? 'bg-[var(--success)] border-[var(--success)]' : 'border-gray-500'}`}>
-                          {t.is_completed && <div className="w-2 h-2 bg-white rounded-full" />}
+                    {onboardingData.map(task => (
+                      <div key={task.id} className="flex items-center gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${task.is_completed ? 'bg-[var(--success)] border-[var(--success)]' : 'border-gray-500'}`}>
+                          {task.is_completed && <div className="w-2 h-2 bg-white rounded-full" />}
                         </div>
                         <div className="flex-1">
-                          <p className={`text-xs ${t.is_completed ? 'text-gray-500 line-through' : 'text-white font-bold'}`}>{t.task_name}</p>
-                          {t.completed_at && <p className="text-[9px] text-gray-500">{new Date(t.completed_at).toLocaleDateString('id-ID')}</p>}
+                          <p className={`text-xs ${task.is_completed ? 'text-gray-500 line-through' : 'text-white font-bold'}`}>{task.task_name}</p>
+                          {task.completed_at && <p className="text-[9px] text-gray-500">{new Date(task.completed_at).toLocaleDateString(i18n.language === 'id' ? 'id-ID' : 'en-US')}</p>}
                         </div>
                       </div>
                     ))}
-                    {!onboardingData.length && <p className="text-gray-500 text-xs text-center py-8">Belum ada tugas onboarding</p>}
+                    {!onboardingData.length && <p className="text-gray-500 text-xs text-center py-8">{t('profileView.noOnboarding')}</p>}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -239,7 +241,7 @@ const EmployeeProfileView = () => {
           ) : (
             <div className="flex flex-col items-center justify-center h-96 text-gray-500">
               <User size={48} className="mb-4 opacity-30" />
-              <p className="text-sm">Pilih karyawan untuk melihat profil lengkap</p>
+              <p className="text-sm">{t('profileView.selectEmployee')}</p>
             </div>
           )}
         </div>

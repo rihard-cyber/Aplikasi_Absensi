@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Megaphone, Send, Trash2, Clock, Globe, Building } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import LoadingSkeleton from '../../../components/LoadingSkeleton';
@@ -13,6 +14,7 @@ const BroadcastCenter = () => {
   const [tenantId, setTenantId] = useState(null);
   const toast = useToast();
   const confirm = useConfirm();
+  const { t } = useTranslation();
 
   // Form State
   const [title, setTitle] = useState('');
@@ -140,7 +142,7 @@ const BroadcastCenter = () => {
           <h2 className="text-2xl font-serif font-bold text-white tracking-wide flex items-center gap-2">
             <Megaphone className="text-[var(--aurora-1)]" /> Pusat Pengumuman
           </h2>
-          <p className="text-gray-400 text-sm mt-1">Siarkan informasi penting ke seluruh atau sebagian pegawai secara Real-Time.</p>
+          <p className="text-gray-400 text-sm mt-1">{t('broadcast.subtitle')}</p>
         </div>
       </div>
 
@@ -148,11 +150,11 @@ const BroadcastCenter = () => {
         
         {/* Composer Form */}
         <div className="lg:col-span-1 glass-panel p-6 border border-white/5 h-fit sticky top-6">
-          <h3 className="text-lg font-bold text-white mb-6">Tulis Pengumuman</h3>
+          <h3 className="text-lg font-bold text-white mb-6">{t('broadcast.writeAnnouncement')}</h3>
           <form onSubmit={handleBroadcast} className="space-y-4">
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-widest font-bold block mb-2">Target Audience</label>
-              <select value={targetProject} onChange={e => setTargetProject(e.target.value)} className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-1)] transition-colors">
+              <label className="text-xs text-gray-400 uppercase tracking-widest font-bold block mb-2">{t('broadcast.targetAudience')}</label>
+              <select value={targetProject} onChange={e => setTargetProject(e.target.value)}  className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                 <option value="ALL">🌐 Semua Pegawai (Global)</option>
                 {projects.map(p => (
                   <option key={p.id} value={p.id}>🏢 {p.code ? `[${p.code}] ` : ''}{p.name}</option>
@@ -161,13 +163,13 @@ const BroadcastCenter = () => {
             </div>
             
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-widest font-bold block mb-2">Judul Pengumuman</label>
-              <input required value={title} onChange={e => setTitle(e.target.value)} type="text" maxLength={100} className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-1)] transition-colors" placeholder="Contoh: Info Libur Nasional" />
+              <label className="text-xs text-gray-400 uppercase tracking-widest font-bold block mb-2">{t('broadcast.announcementTitle')}</label>
+              <input required value={title} onChange={e => setTitle(e.target.value)} type="text" maxLength={100}  placeholder="Contoh: Info Libur Nasional"  className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
 
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-widest font-bold block mb-2">Isi Pesan</label>
-              <textarea required value={message} onChange={e => setMessage(e.target.value)} className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-1)] transition-colors resize-none h-32" placeholder="Ketik pesan pengumuman di sini..."></textarea>
+              <label className="text-xs text-gray-400 uppercase tracking-widest font-bold block mb-2">{t('broadcast.messageContent')}</label>
+              <textarea required value={message} onChange={e => setMessage(e.target.value)}  placeholder="Ketik pesan pengumuman di sini..." className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors resize-none h-32 placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" ></textarea>
             </div>
 
             <button disabled={isSubmitting} type="submit" className="w-full py-3 mt-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[#1E90FF] text-white font-bold tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50">
@@ -178,12 +180,12 @@ const BroadcastCenter = () => {
 
         {/* Broadcast History */}
         <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-lg font-bold text-white mb-4">Riwayat Pengumuman</h3>
+          <h3 className="text-lg font-bold text-white mb-4">{t('broadcast.history')}</h3>
           
           {announcements.length === 0 ? (
             <div className="glass-panel p-10 text-center flex flex-col items-center">
               <Megaphone size={48} className="text-gray-600 mb-4" />
-              <p className="text-gray-400">Belum ada pengumuman yang disiarkan.</p>
+              <p className="text-gray-400">{t('broadcast.noAnnouncement')}</p>
             </div>
           ) : announcements.map(a => (
             <div key={a.id} className={`glass-panel p-5 border transition-colors ${a.is_active ? 'border-[var(--aurora-1)]/30' : 'border-white/5 opacity-60'}`}>
@@ -195,7 +197,7 @@ const BroadcastCenter = () => {
                     ) : (
                       <span className="px-2 py-0.5 bg-[var(--aurora-1)]/10 text-[var(--aurora-1)] text-[10px] font-bold uppercase rounded flex items-center gap-1"><Globe size={10} /> Global</span>
                     )}
-                    {!a.is_active && <span className="px-2 py-0.5 bg-gray-500/20 text-gray-400 text-[10px] font-bold uppercase rounded">Diarsipkan</span>}
+                    {!a.is_active && <span className="px-2 py-0.5 bg-gray-500/20 text-gray-400 text-[10px] font-bold uppercase rounded">{t('broadcast.archived')}</span>}
                   </div>
                   <h4 className="text-lg font-bold text-white mb-1">{a.title}</h4>
                   <p className="text-sm text-gray-400 whitespace-pre-wrap leading-relaxed">{a.content}</p>

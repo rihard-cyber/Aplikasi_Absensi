@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Plus, Save, X, Edit3, Trash2, Building2, Truck, Wrench, CheckCircle2, XCircle, LogIn, LogOut, CalendarDays, Loader2, Users, Clock, ToggleLeft, ToggleRight, Image } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { safeGet } from '../../../utils/safeAccess';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { sendNotification, notifyAdminsInTenant, NOTIF_TYPES } from '../../../utils/notificationEngine';
 
 const FACILITY_TYPES = [
-  { value: 'room', label: 'Ruangan', icon: <Building2 size={14} /> },
-  { value: 'vehicle', label: 'Kendaraan', icon: <Truck size={14} /> },
-  { value: 'equipment', label: 'Peralatan', icon: <Wrench size={14} /> },
+  { value: 'room', labelKey: 'facility.form.room', icon: <Building2 size={14} /> },
+  { value: 'vehicle', labelKey: 'facility.form.vehicle', icon: <Truck size={14} /> },
+  { value: 'equipment', labelKey: 'facility.form.equipment', icon: <Wrench size={14} /> },
 ];
 
 const BookingStatusBadge = ({ status }) => {
+  const { t } = useTranslation();
   const styles = {
     PENDING: 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30',
     APPROVED: 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30',
@@ -19,10 +22,13 @@ const BookingStatusBadge = ({ status }) => {
     CHECKED_IN: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
     CHECKED_OUT: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
   };
-  return <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${styles[status] || 'bg-white/5 text-gray-400 border-white/10'}`}>{status}</span>;
+  const badgeClass = safeGet(styles, status) || 'bg-white/5 text-gray-400 border-white/10';
+  const label = t('facility.filters.' + status?.toLowerCase()) || status;
+  return <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${badgeClass}`}>{label}</span>;
 };
 
 const FacilityBooking = () => {
+  const { t } = useTranslation();
   const [tab, setTab] = useState('facilities');
   const [facilities, setFacilities] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -81,17 +87,17 @@ const FacilityBooking = () => {
   };
 
   const handleSave = async () => {
-    if (!form.name) { toast('Nama fasilitas wajib', 'error'); return; }
+    if (!form.name) { toast(t('facility.toast.nameRequired'), 'error'); return; }
     try {
       let parsedFacilities = [];
-      try { if (form.facilities_json) parsedFacilities = JSON.parse(form.facilities_json); } catch { toast('Format facilities JSON tidak valid', 'error'); return; }
+      try { if (form.facilities_json) parsedFacilities = JSON.parse(form.facilities_json); } catch { toast(t('facility.toast.invalidJson'), 'error'); return; }
       const payload = { tenant_id: tenantId, name: form.name, type: form.type, capacity: form.capacity ? Number(form.capacity) : null, facilities: parsedFacilities, location: form.location || null, photo_url: form.photo_url || null, is_active: form.is_active };
       if (editingId) {
         await supabase.from('facilities').update(payload).eq('id', editingId);
-        toast('Fasilitas diperbarui', 'success');
+        toast(t('facility.toast.updated'), 'success');
       } else {
         await supabase.from('facilities').insert(payload);
-        toast('Fasilitas ditambahkan', 'success');
+        toast(t('facility.toast.added'), 'success');
       }
       setShowForm(false);
       fetchAll();
@@ -100,7 +106,7 @@ const FacilityBooking = () => {
 
   const toggleActive = async (fac) => {
     await supabase.from('facilities').update({ is_active: !fac.is_active }).eq('id', fac.id);
-    toast(`Fasilitas ${fac.is_active ? 'dinonaktifkan' : 'diaktifkan'}`, 'success');
+    toast(`${t('facility.tabs.facilities')} ${fac.is_active ? t('facility.toast.disabled') : t('facility.toast.enabled')}`, 'success');
     fetchAll();
   };
 
@@ -112,14 +118,14 @@ const FacilityBooking = () => {
     if (status === 'CHECKED_OUT') update.checked_out_at = new Date().toISOString();
     if (status === 'APPROVED') update.approved_at = new Date().toISOString();
     await supabase.from('booking_requests').update(update).eq('id', id);
-    toast(`Booking ${status === 'APPROVED' ? 'disetujui' : status === 'REJECTED' ? 'ditolak' : status === 'CHECKED_IN' ? 'check-in' : 'check-out'} berhasil`, 'success');
+    toast(t('facility.toast.bookingActionSuccess'), 'success');
     const booking = bookings.find(b => b.id === id);
     const facilityName = booking?.facilities?.name || '';
     if (status === 'APPROVED') {
-      sendNotification({ userId: booking.user_id, type: NOTIF_TYPES.BOOKING_APPROVED, title: 'Booking Disetujui: ' + facilityName, body: booking.purpose?.substring(0,100), link: '/booking' });
+      sendNotification({ userId: booking.user_id, type: NOTIF_TYPES.BOOKING_APPROVED, title: t('facility.toast.bookingNotifyApproved') + facilityName, body: booking.purpose?.substring(0,100), link: '/booking' });
     }
     if (status === 'REJECTED') {
-      sendNotification({ userId: booking.user_id, type: NOTIF_TYPES.BOOKING_REJECTED, title: 'Booking Ditolak: ' + facilityName, body: booking.purpose?.substring(0,100), link: '/booking' });
+      sendNotification({ userId: booking.user_id, type: NOTIF_TYPES.BOOKING_REJECTED, title: t('facility.toast.bookingNotifyRejected') + facilityName, body: booking.purpose?.substring(0,100), link: '/booking' });
     }
     fetchAll();
   };
@@ -150,30 +156,30 @@ const FacilityBooking = () => {
     bookingsByDate[day].push(b);
   });
 
-  const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-
   const tabs = [
-    { key: 'facilities', label: 'Fasilitas', icon: <Building2 size={14} /> },
-    { key: 'bookings', label: 'Pemesanan', icon: <Clock size={14} /> },
-    { key: 'calendar', label: 'Kalender', icon: <CalendarDays size={14} /> },
+    { key: 'facilities', label: t('facility.tabs.facilities'), icon: <Building2 size={14} /> },
+    { key: 'bookings', label: t('facility.tabs.bookings'), icon: <Clock size={14} /> },
+    { key: 'calendar', label: t('facility.tabs.calendar'), icon: <CalendarDays size={14} /> },
   ];
 
   return (
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-6">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Fasilitas & Pemesanan</h2>
-          <p className="text-sm text-gray-400 mt-1">{facilities.length} fasilitas • {todayBookings.length} pemakaian hari ini • {utilizationRate}% utilisasi</p>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('facility.title')}</h2>
+          <p className="text-sm text-gray-400 mt-1">
+            {t('facility.subtitle', { count: facilities.length, today: todayBookings.length, rate: utilizationRate })}
+          </p>
         </div>
         {tab === 'facilities' && (
-          <button onClick={openNew} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> Tambah Fasilitas</button>
+          <button onClick={openNew} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> {t('facility.addFacility')}</button>
         )}
       </div>
 
       <div className="flex gap-1 mb-6 bg-white/5 rounded-xl p-1 w-fit">
-        {tabs.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${tab === t.key ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
-            {t.icon} {t.label}
+        {tabs.map(tabItem => (
+          <button key={tabItem.key} onClick={() => setTab(tabItem.key)} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${tab === tabItem.key ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
+            {tabItem.icon} {tabItem.label}
           </button>
         ))}
       </div>
@@ -182,46 +188,46 @@ const FacilityBooking = () => {
         <>
           <div className="relative mb-6">
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari fasilitas, tipe, lokasi..." className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('facility.searchPlaceholder')} className="w-full bg-white/5 border border-white/20 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
           </div>
 
           {showForm && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-6 bg-white/5 rounded-2xl border border-white/10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Nama Fasilitas</label>
-                  <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Ruang Meeting A" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('facility.form.name')}</label>
+                  <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder={t('facility.form.namePlaceholder')} className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tipe</label>
-                  <select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
-                    {FACILITY_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('facility.form.type')}</label>
+                  <select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                    {FACILITY_TYPES.map(typeItem => <option key={typeItem.value} value={typeItem.value}>{t(typeItem.labelKey)}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Kapasitas</label>
-                  <input type="number" value={form.capacity} onChange={e => setForm({...form, capacity: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="10" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('facility.form.capacity')}</label>
+                  <input type="number" value={form.capacity} onChange={e => setForm({...form, capacity: e.target.value})} placeholder={t('facility.form.capacityPlaceholder')} className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Lokasi</label>
-                  <input value={form.location} onChange={e => setForm({...form, location: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Lantai 2" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('facility.form.location')}</label>
+                  <input value={form.location} onChange={e => setForm({...form, location: e.target.value})} placeholder={t('facility.form.locationPlaceholder')} className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Fasilitas (JSON Array)</label>
-                  <input value={form.facilities_json} onChange={e => setForm({...form, facilities_json: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder='["projector","tv","ac"]' />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('facility.form.facilitiesJson')}</label>
+                  <input value={form.facilities_json} onChange={e => setForm({...form, facilities_json: e.target.value})} placeholder={t('facility.form.facilitiesJsonPlaceholder')} className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">URL Foto</label>
-                  <input value={form.photo_url} onChange={e => setForm({...form, photo_url: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="https://..." />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('facility.form.photoUrl')}</label>
+                  <input value={form.photo_url} onChange={e => setForm({...form, photo_url: e.target.value})} placeholder={t('facility.form.photoUrlPlaceholder')} className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
               </div>
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-white/5 hover:bg-white/5 mb-4 w-fit">
                 <input type="checkbox" checked={form.is_active} onChange={e => setForm({...form, is_active: e.target.checked})} className="w-4 h-4" />
-                <span className="text-xs text-gray-300">Aktif</span>
+                <span className="text-xs text-gray-300">{t('facility.form.active')}</span>
               </label>
               <div className="flex gap-3">
-                <button onClick={handleSave} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold flex items-center gap-2"><Save size={14} /> Simpan</button>
-                <button onClick={() => setShowForm(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold"><X size={14} /> Batal</button>
+                <button onClick={handleSave} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold flex items-center gap-2"><Save size={14} /> {t('facility.form.save')}</button>
+                <button onClick={() => setShowForm(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold"><X size={14} /> {t('facility.form.cancel')}</button>
               </div>
             </motion.div>
           )}
@@ -232,15 +238,15 @@ const FacilityBooking = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400">
-                      {FACILITY_TYPES.find(t => t.value === f.type)?.icon || <Building2 size={18} />}
+                      {FACILITY_TYPES.find(typeItem => typeItem.value === f.type)?.icon || <Building2 size={18} />}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-white">{f.name}</span>
-                        {!f.is_active && <span className="text-[8px] px-1.5 py-0.5 rounded bg-gray-500/10 text-gray-400 font-bold">NONAKTIF</span>}
+                        {!f.is_active && <span className="text-[8px] px-1.5 py-0.5 rounded bg-gray-500/10 text-gray-400 font-bold">{t('facility.status.inactive')}</span>}
                       </div>
                       <div className="flex items-center gap-3 text-[9px] text-gray-500 mt-0.5">
-                        <span>{FACILITY_TYPES.find(t => t.value === f.type)?.label}</span>
+                        <span>{t(FACILITY_TYPES.find(typeItem => typeItem.value === f.type)?.labelKey)}</span>
                         {f.capacity && <span><Users size={9} className="inline mr-0.5" />{f.capacity} orang</span>}
                         {f.location && <span>{f.location}</span>}
                         {f.facilities?.length > 0 && <span>{f.facilities.join(', ')}</span>}
@@ -252,12 +258,12 @@ const FacilityBooking = () => {
                       {f.is_active ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
                     </button>
                     <button onClick={() => openEdit(f)} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white"><Edit3 size={12} /></button>
-                    <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${f.is_active ? 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30' : 'bg-gray-500/10 text-gray-400 border-gray-500/30'}`}>{f.is_active ? 'AKTIF' : 'NONAKTIF'}</span>
+                    <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${f.is_active ? 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30' : 'bg-gray-500/10 text-gray-400 border-gray-500/30'}`}>{f.is_active ? t('facility.status.active') : t('facility.status.inactive')}</span>
                   </div>
                 </div>
               </div>
             ))}
-            {!filteredFacilities.length && <p className="text-center text-gray-500 py-8 text-sm">Belum ada fasilitas</p>}
+            {!filteredFacilities.length && <p className="text-center text-gray-500 py-8 text-sm">{t('facility.noFacility')}</p>}
           </div>
         </>
       )}
@@ -267,7 +273,7 @@ const FacilityBooking = () => {
           <div className="flex flex-wrap gap-2 mb-6">
             {['ALL', 'PENDING', 'APPROVED', 'CHECKED_IN', 'CHECKED_OUT', 'REJECTED'].map(s => (
               <button key={s} onClick={() => setBookingFilter(s)} className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest border transition-all ${bookingFilter === s ? 'bg-white/10 border-white/20 text-white' : 'bg-transparent border-transparent text-gray-500 hover:text-white'}`}>
-                {s === 'ALL' ? 'Semua' : s}
+                {s === 'ALL' ? t('facility.filters.all') : t('facility.filters.' + s.toLowerCase())}
               </button>
             ))}
           </div>
@@ -293,29 +299,29 @@ const FacilityBooking = () => {
                           <span>{b.booking_date}</span>
                           {b.start_time && <span>{b.start_time?.substring(0, 5)} - {b.end_time?.substring(0, 5)}</span>}
                         </div>
-                        {b.purpose && <p className="text-[9px] text-gray-500 italic mt-0.5">"{b.purpose}"</p>}
+                        {b.purpose && <p className="text-[9px] text-gray-500 italic mt-0.5">&quot;{b.purpose}&quot;</p>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <BookingStatusBadge status={b.status} />
                       {b.status === 'PENDING' && (
                         <>
-                          <button onClick={() => handleBookingAction(b.id, 'APPROVED')} className="p-2 rounded-lg bg-[var(--success)]/10 text-[var(--success)] hover:bg-[var(--success)]/20" title="Setujui"><CheckCircle2 size={14} /></button>
-                          <button onClick={() => handleBookingAction(b.id, 'REJECTED')} className="p-2 rounded-lg bg-[var(--danger)]/10 text-[var(--danger)] hover:bg-[var(--danger)]/20" title="Tolak"><XCircle size={14} /></button>
+                          <button onClick={() => handleBookingAction(b.id, 'APPROVED')} className="p-2 rounded-lg bg-[var(--success)]/10 text-[var(--success)] hover:bg-[var(--success)]/20" title={t('facility.filters.approved')}><CheckCircle2 size={14} /></button>
+                          <button onClick={() => handleBookingAction(b.id, 'REJECTED')} className="p-2 rounded-lg bg-[var(--danger)]/10 text-[var(--danger)] hover:bg-[var(--danger)]/20" title={t('facility.filters.rejected')}><XCircle size={14} /></button>
                         </>
                       )}
                       {b.status === 'APPROVED' && (
-                        <button onClick={() => handleBookingAction(b.id, 'CHECKED_IN')} className="p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20" title="Check-In"><LogIn size={14} /></button>
+                        <button onClick={() => handleBookingAction(b.id, 'CHECKED_IN')} className="p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20" title={t('facility.filters.checkedIn')}><LogIn size={14} /></button>
                       )}
                       {b.status === 'CHECKED_IN' && (
-                        <button onClick={() => handleBookingAction(b.id, 'CHECKED_OUT')} className="p-2 rounded-lg bg-gray-500/10 text-gray-400 hover:bg-gray-500/20" title="Check-Out"><LogOut size={14} /></button>
+                        <button onClick={() => handleBookingAction(b.id, 'CHECKED_OUT')} className="p-2 rounded-lg bg-gray-500/10 text-gray-400 hover:bg-gray-500/20" title={t('facility.filters.checkedOut')}><LogOut size={14} /></button>
                       )}
                     </div>
                   </div>
                 </div>
               );
             })}
-            {!filteredBookings.length && <p className="text-center text-gray-500 py-8 text-sm">Tidak ada pemesanan</p>}
+            {!filteredBookings.length && <p className="text-center text-gray-500 py-8 text-sm">{t('facility.noBooking')}</p>}
           </div>
         </>
       )}
@@ -324,13 +330,13 @@ const FacilityBooking = () => {
         <>
           <div className="flex flex-wrap items-center gap-4 mb-6">
             <button onClick={() => { if (calendarMonth === 0) { setCalendarMonth(11); setCalendarYear(calendarYear - 1); } else setCalendarMonth(calendarMonth - 1); }} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 flex-shrink-0">&lt;</button>
-            <span className="text-lg font-bold text-white min-w-0 sm:min-w-[160px] text-center">{MONTHS[calendarMonth]} {calendarYear}</span>
+            <span className="text-lg font-bold text-white min-w-0 sm:min-w-[160px] text-center">{t('months.' + calendarMonth)} {calendarYear}</span>
             <button onClick={() => { if (calendarMonth === 11) { setCalendarMonth(0); setCalendarYear(calendarYear + 1); } else setCalendarMonth(calendarMonth + 1); }} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 flex-shrink-0">&gt;</button>
-            <button onClick={() => { setCalendarMonth(new Date().getMonth()); setCalendarYear(new Date().getFullYear()); }} className="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] text-gray-400 hover:text-white whitespace-nowrap">Hari Ini</button>
+            <button onClick={() => { setCalendarMonth(new Date().getMonth()); setCalendarYear(new Date().getFullYear()); }} className="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] text-gray-400 hover:text-white whitespace-nowrap">{t('facility.today')}</button>
           </div>
           <div className="grid grid-cols-7 gap-1 mb-6">
-            {['Min','Sen','Sel','Rab','Kam','Jum','Sab'].map(d => (
-              <div key={d} className="text-center text-[9px] text-gray-500 uppercase tracking-widest font-bold py-2">{d}</div>
+            {['sun','mon','tue','wed','thu','fri','sat'].map(dayCode => (
+              <div key={dayCode} className="text-center text-[9px] text-gray-500 uppercase tracking-widest font-bold py-2">{t('facility.days.' + dayCode)}</div>
             ))}
             {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} />)}
             {Array.from({ length: daysInMonth }).map((_, i) => {

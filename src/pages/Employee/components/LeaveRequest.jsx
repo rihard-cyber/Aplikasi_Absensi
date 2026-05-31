@@ -26,7 +26,7 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
 
   // Delegate to sub-components BEFORE hooks
   if (category === 'salary') {
-    return <div><button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition-colors"><ArrowLeft size={18} /> Kembali</button><PayslipView onBack={onBack} /></div>;
+    return     <div className="w-full"><button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition-colors"><ArrowLeft size={18} /> {t('Kembali')}</button><PayslipView onBack={onBack} /></div>;
   }
   if (category === 'loan') {
     return <LoanRequest onBack={onBack} />;
@@ -44,33 +44,33 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
   // CATEGORY CONFIGURATION
   const config = new Map([
     ['leave', {
-      title: "Izin & Cuti",
+      title: t("Izin & Cuti"),
       icon: <Calendar />,
       types: [
-        "Surat Tugas", "Izin Pelatihan", "Izin Tidak Masuk Kerja", "Izin Khusus", "Izin Pulang Awal",
-        "Izin Berobat", "Izin Datang Terlambat", "Cuti Pernikahan", "Cuti Melahirkan",
-        "Keguguran, Khitan, Baptisan", "Cuti Bencana Alam / Kebanjiran / Musibah",
-        "Cuti Tahunan", "Cuti Sakit", "Lupa Absen", "Perjalanan Dinas"
+        t("Surat Tugas"), t("Izin Pelatihan"), t("Izin Tidak Masuk Kerja"), t("Izin Khusus"), t("Izin Pulang Awal"),
+        t("Izin Berobat"), t("Izin Datang Terlambat"), t("Cuti Pernikahan"), t("Cuti Melahirkan"),
+        t("Keguguran, Khitan, Baptisan"), t("Cuti Bencana Alam / Kebanjiran / Musibah"),
+        t("Cuti Tahunan"), t("Cuti Sakit"), t("Lupa Absen"), t("Perjalanan Dinas")
       ]
     }],
     ['lembur', {
-      title: "Lembur",
+      title: t("Lembur"),
       icon: <Zap />,
-      types: ["Lembur Hari Kerja", "Lembur Hari Libur", "Lembur Proyek Khusus"]
+      types: [t("Lembur Hari Kerja"), t("Lembur Hari Libur"), t("Lembur Proyek Khusus")]
     }],
     ['shift', {
-      title: "Tukar Shift",
+      title: t("Tukar Shift"),
       icon: <RefreshCcw />,
-      types: ["Tukar Shift Pagi-Malam", "Ganti Hari Libur"]
+      types: [t("Tukar Shift Pagi-Malam"), t("Ganti Hari Libur")]
     }],
     ['req-absen', {
-      title: "Request Absen",
+      title: t("Request Absen"),
       icon: <CheckCircleIcon />,
-      types: ["Lupa Tapping", "Mesin Error", "Dinas Luar"]
+      types: [t("Lupa Tapping"), t("Mesin Error"), t("Dinas Luar")]
     }],
-    ['salary', { title: "Slip Gaji", icon: <Wallet />, types: ["Download Slip Mei 2026", "Download Slip April 2026"] }],
-    ['contract', { title: "PKWT / Kontrak", icon: <FileText />, types: ["View Kontrak Aktif"] }],
-    ['overtime', { title: "Overtime", icon: <TrendingUp />, types: ["Pengajuan Overtime"] }]
+    ['salary', { title: t("Slip Gaji"), icon: <Wallet />, types: [t("Download Slip Mei 2026"), t("Download Slip April 2026")] }],
+    ['contract', { title: t("PKWT / Kontrak"), icon: <FileText />, types: [t("View Kontrak Aktif")] }],
+    ['overtime', { title: t("Overtime"), icon: <TrendingUp />, types: [t("Pengajuan Overtime")] }]
   ]);
 
   const currentConfig = config.get(category) || config.get('leave');
@@ -177,7 +177,7 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
     setIsSubmitting(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) { toast('Sesi habis, silakan login ulang', 'error'); setIsSubmitting(false); return; }
+      if (!session?.user?.id) { toast(t('Sesi habis, silakan login ulang'), 'error'); setIsSubmitting(false); return; }
       const { data: userProfile } = await supabase.from('profiles').select('id, tenant_id').eq('auth_id', session.user.id).maybeSingle();
 
       let fileUrl = null;
@@ -220,9 +220,9 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col gap-6 pb-24 relative min-h-[60vh]"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full flex flex-col gap-6 pb-24 relative min-h-[60vh]"
     >
       {/* HEADER */}
       <div className="flex items-center justify-between">
@@ -253,9 +253,9 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
             className="space-y-4"
           >
             <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
-              <StatusChip label="Semua" active={filterStatus === 'ALL'} count={history.length} onClick={() => setFilterStatus('ALL')} />
-              <StatusChip label="Menunggu" color="var(--warning)" active={filterStatus === 'PENDING'} count={history.filter(h => h.status === 'PENDING').length} onClick={() => setFilterStatus('PENDING')} />
-              <StatusChip label="Disetujui" color="var(--success)" active={filterStatus === 'APPROVED'} count={history.filter(h => h.status === 'APPROVED').length} onClick={() => setFilterStatus('APPROVED')} />
+              <StatusChip label={t("Semua")} active={filterStatus === 'ALL'} count={history.length} onClick={() => setFilterStatus('ALL')} />
+              <StatusChip label={t("Menunggu")} color="var(--warning)" active={filterStatus === 'PENDING'} count={history.filter(h => h.status === 'PENDING').length} onClick={() => setFilterStatus('PENDING')} />
+              <StatusChip label={t("Disetujui")} color="var(--success)" active={filterStatus === 'APPROVED'} count={history.filter(h => h.status === 'APPROVED').length} onClick={() => setFilterStatus('APPROVED')} />
             </div>
 
             {history.length === 0 ? (
@@ -306,7 +306,7 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
                           onClick={(e) => { e.stopPropagation(); window.open(item.file_url, '_blank'); }}
                           className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--aurora-3)]/10 border border-[var(--aurora-3)]/30 text-[var(--aurora-3)] text-[10px] font-bold hover:bg-[var(--aurora-3)] hover:text-black transition-all shrink-0 ml-4"
                         >
-                          <Eye size={12} /> Lihat
+                          <Eye size={12} /> {t("Lihat")}
                         </button>
                       )}
                     </div>
@@ -323,37 +323,37 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
             <div className="glass-panel p-8 rounded-[40px] border border-white/5 space-y-6 bg-white/[0.02]">
               <div className="flex items-center gap-3 mb-2">
                 <FileText className="text-[var(--aurora-3)]" size={20} />
-                <h3 className="text-lg font-serif font-bold text-white tracking-wide">Formulir Pengajuan</h3>
+                <h3 className="text-lg font-serif font-bold text-white tracking-wide">{t("Formulir Pengajuan")}</h3>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Jenis Pengajuan</label>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t("Jenis Pengajuan")}</label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)] transition-all"
-                  >
+                    
+                   className="w-full bg-white/5 border border-white/20 rounded-2xl py-4 px-4 text-xs text-white outline-none transition-all duration-300 placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                     {currentConfig.types.map(t => <option key={t} value={t} className="bg-[#0B0C10]">{t}</option>)}
                   </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Tanggal Mulai</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t("Tanggal Mulai")}</label>
                     <input
                       type="date" required value={formData.startDate}
                       onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]"
-                    />
+                      
+                     className="w-full bg-white/5 border border-white/20 rounded-2xl py-4 px-4 text-xs text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Tanggal Selesai</label>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t("Tanggal Selesai")}</label>
                     <input
                       type="date" required value={formData.endDate}
                       onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]"
-                    />
+                      
+                     className="w-full bg-white/5 border border-white/20 rounded-2xl py-4 px-4 text-xs text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                   </div>
                 </div>
 
@@ -361,20 +361,20 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
                 {(category === 'overtime' || category === 'lembur') && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Jam Mulai</label>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t("Jam Mulai")}</label>
                       <input
                         type="time" required value={formData.startTime}
                         onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]"
-                      />
+                        
+                       className="w-full bg-white/5 border border-white/20 rounded-2xl py-4 px-4 text-xs text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Jam Selesai</label>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t("Jam Selesai")}</label>
                       <input
                         type="time" required value={formData.endTime}
                         onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]"
-                      />
+                        
+                       className="w-full bg-white/5 border border-white/20 rounded-2xl py-4 px-4 text-xs text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                     </div>
                   </div>
                 )}
@@ -382,33 +382,33 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
                 {/* SHIFT EXCHANGE SPECIFIC FIELDS */}
                 {category === 'shift' && (
                   <div className="space-y-4 bg-[var(--aurora-3)]/5 border border-[var(--aurora-3)]/20 p-5 rounded-3xl">
-                    <p className="text-xs font-bold text-[var(--aurora-3)] uppercase tracking-widest flex items-center gap-2"><RefreshCcw size={14}/> Info Tukar Shift</p>
+                    <p className="text-xs font-bold text-[var(--aurora-3)] uppercase tracking-widest flex items-center gap-2"><RefreshCcw size={14}/> {t("Info Tukar Shift")}</p>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Tukar dengan Karyawan</label>
-                      <select value={shiftSwapData.target_user_id} onChange={e => setShiftSwapData({...shiftSwapData, target_user_id: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]">
-                        <option value="">Pilih Rekan Seproject...</option>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t("Tukar dengan Karyawan")}</label>
+                      <select value={shiftSwapData.target_user_id} onChange={e => setShiftSwapData({...shiftSwapData, target_user_id: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-2xl py-4 px-4 text-xs text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                        <option value="">{t("Pilih Rekan Seproject...")}</option>
                         {colleagues.map(c => <option key={c.auth_id} value={c.auth_id} className="bg-[#0B0C10]">{c.full_name}</option>)}
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Tanggal Shift yang Ditukar (Milik Rekan)</label>
-                      <input type="date" value={shiftSwapData.target_date} onChange={e => setShiftSwapData({...shiftSwapData, target_date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]"/>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t("Tanggal Shift yang Ditukar (Milik Rekan)")}</label>
+                      <input type="date" value={shiftSwapData.target_date} onChange={e => setShiftSwapData({...shiftSwapData, target_date: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-2xl py-4 px-4 text-xs text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                     </div>
                   </div>
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Keterangan / Alasan</label>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t("Keterangan / Alasan")}</label>
                   <textarea
-                    rows="4" required placeholder="Tuliskan detail pengajuan Anda..."
+                    rows="4" required placeholder={t("Tuliskan detail pengajuan Anda...")}
                     value={formData.reason}
                     onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)] resize-none"
-                  />
+                    
+                   className="w-full bg-white/5 border border-white/20 rounded-2xl py-4 px-4 text-xs text-white outline-none resize-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Lampiran Dokumen</label>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t("Lampiran Dokumen")}</label>
                   <label className="p-8 border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center gap-2 hover:border-[var(--aurora-3)]/50 transition-all cursor-pointer bg-white/[0.01] group">
                     <input
                       type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
@@ -416,7 +416,7 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
                     />
                     <ImageIcon size={32} className="text-gray-600 group-hover:text-[var(--aurora-3)]" />
                     <p className="text-[10px] text-center text-gray-500 uppercase font-bold tracking-tighter">
-                      {formData.file ? formData.file.name : 'Upload Lampiran'}
+                      {formData.file ? formData.file.name : t('Upload Lampiran')}
                     </p>
                   </label>
                 </div>
@@ -425,7 +425,7 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
                   {showSuccess ? (
                     <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="w-full py-4 rounded-2xl bg-[var(--success)]/20 text-[var(--success)] flex items-center justify-center gap-3 border border-[var(--success)]/30">
                       <CheckCircle2 size={20} />
-                      <span className="text-xs font-bold uppercase tracking-widest">Berhasil Diajukan</span>
+                      <span className="text-xs font-bold uppercase tracking-widest">{t("Berhasil Diajukan")}</span>
                     </motion.div>
                   ) : (
                     <div className="flex gap-3">
@@ -433,13 +433,13 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
                         type="button" onClick={() => setView('history')}
                         className="flex-1 py-4 rounded-2xl bg-white/5 border border-white/10 text-gray-400 font-bold uppercase tracking-widest text-[10px]"
                       >
-                        Batal
+                        {t("Batal")}
                       </button>
                       <button
                         type="submit" disabled={isSubmitting}
                         className="flex-[2] py-4 rounded-2xl bg-gradient-to-r from-[var(--aurora-2)] to-[var(--aurora-3)] text-white font-bold uppercase tracking-widest text-[10px] shadow-[0_15px_30px_rgba(0,201,255,0.2)] flex items-center justify-center gap-3"
                       >
-                        {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <>Ajukan <Send size={14} /></>}
+                        {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <>{t("Ajukan")} <Send size={14} /></>}
                       </button>
                     </div>
                   )}
@@ -454,11 +454,19 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
 };
 
 const StatusBadge = ({ status }) => {
-  const colors = { PENDING: 'var(--warning)', APPROVED: 'var(--success)', REJECTED: 'var(--danger)' };
-  const labels = { PENDING: 'MENUNGGU', APPROVED: 'DISETUJUI', REJECTED: 'DITOLAK' };
+  const colors = new Map([
+    ['PENDING', 'var(--warning)'],
+    ['APPROVED', 'var(--success)'],
+    ['REJECTED', 'var(--danger)']
+  ]);
+  const labels = new Map([
+    ['PENDING', t('MENUNGGU')],
+    ['APPROVED', t('DISETUJUI')],
+    ['REJECTED', t('DITOLAK')]
+  ]);
   return (
-    <span className="text-[8px] font-black px-2 py-1 rounded bg-black/40 uppercase tracking-tighter" style={{ color: colors[status] || 'white' }}>
-      {labels[status] || status}
+    <span className="text-[8px] font-black px-2 py-1 rounded bg-black/40 uppercase tracking-tighter" style={{ color: colors.get(status) || 'white' }}>
+      {labels.get(status) || status}
     </span>
   );
 };

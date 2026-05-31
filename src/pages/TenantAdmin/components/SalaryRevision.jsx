@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, TrendingUp, CheckCircle2, XCircle, Plus, Save, User, Loader2, DollarSign, Calendar, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Search, Plus, Save, X } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
+import { useTranslation } from 'react-i18next';
 
 const SalaryRevision = () => {
+  const { t } = useTranslation();
   const [revisions, setRevisions] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [tenantId, setTenantId] = useState(null);
@@ -46,7 +48,7 @@ const SalaryRevision = () => {
   };
 
   const handleSubmit = async () => {
-    if (!form.user_id || !form.new_amount || !form.reason) { toast('Lengkapi semua field', 'error'); return; }
+    if (!form.user_id || !form.new_amount || !form.reason) { toast(t('salaryRevision.toastFillAll'), 'error'); return; }
     setSaving(true);
     const { data: { session } } = await supabase.auth.getSession();
     const { data: admin } = await supabase.from('profiles').select('id').eq('auth_id', session.user.id).maybeSingle();
@@ -66,11 +68,11 @@ const SalaryRevision = () => {
         component_id: (await supabase.from('salary_components').select('id').eq('tenant_id', tenantId).eq('code', 'GP').single()).data?.id,
         amount: Number(form.new_amount), effective_date: new Date().toISOString().split('T')[0]
       }, { onConflict: 'user_id,component_id,effective_date' });
-      toast('Perubahan gaji berhasil!', 'success');
+      toast(t('salaryRevision.toastSuccess'), 'success');
       setShowForm(false);
       setForm({ user_id: '', new_amount: '', reason: '', effective_date: '' });
       fetchData();
-    } catch (e) { toast('Gagal: ' + e.message, 'error'); }
+    } catch (e) { toast(t('salaryRevision.toastFailed') + e.message, 'error'); }
     finally { setSaving(false); }
   };
 
@@ -83,16 +85,16 @@ const SalaryRevision = () => {
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-8">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Riwayat Perubahan Gaji</h2>
-          <p className="text-sm text-gray-400 mt-1">Track kenaikan gaji, promosi, dan penyesuaian</p>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('salaryRevision.title')}</h2>
+          <p className="text-sm text-gray-400 mt-1">{t('salaryRevision.subtitle')}</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> Perubahan Baru</button>
+        <button onClick={() => setShowForm(true)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> {t('salaryRevision.newRevision')}</button>
       </div>
 
       <div className="flex gap-4 mb-6 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari karyawan..." className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-9 pr-3 py-3 text-white text-xs outline-none focus:border-[var(--aurora-3)]" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('salaryRevision.searchPlaceholder')}   className="w-full bg-white/5 border border-white/20 rounded-xl pl-9 pr-3 py-3 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
         </div>
         {['ALL','APPROVED','PENDING','REJECTED'].map(s => (
           <button key={s} onClick={() => setFilterStatus(s)} className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${filterStatus === s ? 'bg-white/10 border-[var(--aurora-3)]/30 text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}>{s}</button>
@@ -103,25 +105,25 @@ const SalaryRevision = () => {
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-6 bg-white/5 rounded-2xl border border-white/10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Karyawan</label>
-              <select value={form.user_id} onChange={e => selectEmployee(e.target.value)} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
-                <option value="">Pilih karyawan</option>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('salaryRevision.employee')}</label>
+              <select value={form.user_id} onChange={e => selectEmployee(e.target.value)}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                <option value="">{t('salaryRevision.selectEmployee')}</option>
                 {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} — {e.nip}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tanggal Efektif</label>
-              <input type="date" value={form.effective_date} onChange={e => setForm({...form, effective_date: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('salaryRevision.effectiveDate')}</label>
+              <input type="date" value={form.effective_date} onChange={e => setForm({...form, effective_date: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Gaji Saat Ini</label>
-              <div className="bg-white/5 rounded-xl px-4 py-3 text-white font-mono font-bold border border-white/10">Rp {prevAmount.toLocaleString()}</div>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('salaryRevision.currentSalary')}</label>
+              <div className="bg-white/5 rounded-xl px-4 py-3 text-white font-mono font-bold border border-white/10">{t('salaryRevision.rpSymbol')} {prevAmount.toLocaleString()}</div>
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Gaji Baru</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('salaryRevision.newSalary')}</label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Rp</span>
-                <input type="number" value={form.new_amount} onChange={e => setForm({...form, new_amount: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{t('salaryRevision.rpSymbol')}</span>
+                <input type="number" value={form.new_amount} onChange={e => setForm({...form, new_amount: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               {form.new_amount && prevAmount > 0 && (
                 <p className={`text-[10px] mt-1 font-bold ${Number(form.new_amount) > prevAmount ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
@@ -130,13 +132,13 @@ const SalaryRevision = () => {
               )}
             </div>
             <div className="md:col-span-2">
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Alasan Perubahan</label>
-              <input value={form.reason} onChange={e => setForm({...form, reason: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Promosi jabatan, kenaikan tahunan, penyesuaian UMR..." />
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('salaryRevision.changeReason')}</label>
+              <input value={form.reason} onChange={e => setForm({...form, reason: e.target.value})}  placeholder={t('salaryRevision.placeholderReason')}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
           </div>
           <div className="flex gap-3">
-            <button onClick={handleSubmit} disabled={saving} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold flex items-center gap-2 disabled:opacity-50"><Save size={14} /> Simpan Perubahan</button>
-            <button onClick={() => setShowForm(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold"><X size={14} /> Batal</button>
+            <button onClick={handleSubmit} disabled={saving} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold flex items-center gap-2 disabled:opacity-50"><Save size={14} /> {t('salaryRevision.saveChange')}</button>
+            <button onClick={() => setShowForm(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold"><X size={14} /> {t('salaryRevision.cancel')}</button>
           </div>
         </motion.div>
       )}
@@ -159,22 +161,22 @@ const SalaryRevision = () => {
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-400 font-mono line-through">Rp {Number(r.previous_amount).toLocaleString()}</span>
-                    <span className={`text-xl font-bold font-mono ${isUp ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>Rp {Number(r.new_amount).toLocaleString()}</span>
+                    <span className="text-sm text-gray-400 font-mono line-through">{t('salaryRevision.rpSymbol')} {Number(r.previous_amount).toLocaleString()}</span>
+                    <span className={`text-xl font-bold font-mono ${isUp ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>{t('salaryRevision.rpSymbol')} {Number(r.new_amount).toLocaleString()}</span>
                   </div>
-                  <span className={`text-[10px] font-bold ${isUp ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                  <span className={`text-[10px] font-bold ${isUp ? 'text-[var(--success)]' : 'text(--danger)]'}`}>
                     {isUp ? '↑' : '↓'} {Math.abs(Number(r.change_amount)).toLocaleString()} ({Math.abs(Number(r.change_percent))}%)
                   </span>
                 </div>
               </div>
               <div className="flex items-center justify-end mt-3 pt-3 border-t border-white/5 gap-3">
                 <span className={`px-3 py-1 rounded-full text-[9px] font-bold border ${r.status === 'APPROVED' ? 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30' : r.status === 'REJECTED' ? 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/30' : 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30'}`}>{r.status}</span>
-                {r.approver?.full_name && <span className="text-[9px] text-gray-500">oleh {r.approver.full_name}</span>}
+                {r.approver?.full_name && <span className="text-[9px] text-gray-500">{t('salaryRevision.approvedBy', { name: r.approver.full_name })}</span>}
               </div>
             </div>
           );
         })}
-        {!filtered.length && <p className="text-center text-gray-500 py-8">Belum ada riwayat perubahan gaji</p>}
+        {!filtered.length && <p className="text-center text-gray-500 py-8">{t('salaryRevision.noHistory')}</p>}
       </div>
     </div>
   );

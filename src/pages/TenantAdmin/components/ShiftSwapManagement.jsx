@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Search, CheckCircle2, XCircle, Filter, Clock, RefreshCw, Loader2 } from 'lucide-react';
+import { Search, CheckCircle2, XCircle, Clock, RefreshCw, Loader2 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { logAudit } from '../../../utils/auditLogger';
 import { sendNotification, NOTIF_TYPES } from '../../../utils/notificationEngine';
+import { useTranslation } from 'react-i18next';
 
 const ShiftSwapManagement = () => {
+  const { t } = useTranslation();
   const [swaps, setSwaps] = useState([]);
   const [tenantId, setTenantId] = useState(null);
   const [filter, setFilter] = useState('pending');
@@ -64,12 +65,12 @@ const ShiftSwapManagement = () => {
       }
 
       await supabase.from('shift_swaps').update({ status: newStatus }).eq('id', swap.id);
-      toast(`Swap ${newStatus === 'approved' ? 'disetujui' : 'ditolak'}`, newStatus === 'approved' ? 'success' : 'error');
+      toast(newStatus === 'approved' ? t('shiftSwap.toastApproved') : t('shiftSwap.toastRejected'), newStatus === 'approved' ? 'success' : 'error');
       logAudit(newStatus === 'approved' ? 'APPROVE_SHIFT_SWAP' : 'REJECT_SHIFT_SWAP', { swap_id: swap.id });
-      if (newStatus === 'approved') sendNotification({ userId: swap.from_employee, type: NOTIF_TYPES.SHIFT_SWAP_APPROVED, title: 'Tukar Shift Disetujui', body: 'Permintaan tukar shift tanggal ' + (swap.swap_date || '') + ' disetujui', link: '/shift-swap' });
-      if (newStatus === 'rejected') sendNotification({ userId: swap.from_employee, type: NOTIF_TYPES.SHIFT_SWAP_REJECTED, title: 'Tukar Shift Ditolak', body: 'Permintaan tukar shift tanggal ' + (swap.swap_date || '') + ' ditolak', link: '/shift-swap' });
+      if (newStatus === 'approved') sendNotification({ userId: swap.from_employee, type: NOTIF_TYPES.SHIFT_SWAP_APPROVED, title: t('shiftSwap.notifTitleApproved'), body: t('shiftSwap.notifBodyApproved', { date: swap.swap_date || '' }), link: '/shift-swap' });
+      if (newStatus === 'rejected') sendNotification({ userId: swap.from_employee, type: NOTIF_TYPES.SHIFT_SWAP_REJECTED, title: t('shiftSwap.notifTitleRejected'), body: t('shiftSwap.notifBodyRejected', { date: swap.swap_date || '' }), link: '/shift-swap' });
       fetchData();
-    } catch (e) { toast('Gagal: ' + e.message, 'error'); }
+    } catch (e) { toast(t('shiftSwap.toastFailed') + e.message, 'error'); }
     finally { setProcessing(null); }
   };
 
@@ -79,24 +80,31 @@ const ShiftSwapManagement = () => {
     s.swap_date?.includes(search)
   );
 
-  const statusStyles = { pending: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30', approved: 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30', rejected: 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/30' };
+  const getStatusStyle = (status) => {
+    if (status === 'pending') return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30';
+    if (status === 'approved') return 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30';
+    if (status === 'rejected') return 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/30';
+    return '';
+  };
 
   return (
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-8">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Shift Swap Management</h2>
-          <p className="text-sm text-gray-400 mt-1">{swaps.filter(s => s.status === 'pending').length} pending • {swaps.length} total permintaan</p>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('shiftSwap.title')}</h2>
+          <p className="text-sm text-gray-400 mt-1">
+            {t('shiftSwap.subtitle', { pending: swaps.filter(s => s.status === 'pending').length, total: swaps.length })}
+          </p>
         </div>
       </div>
 
       <div className="flex gap-4 mb-6 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari karyawan..." className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('shiftSwap.searchPlaceholder')}   className="w-full bg-white/5 border border-white/20 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
         </div>
         {['pending', 'approved', 'rejected', 'ALL'].map(s => (
-          <button key={s} onClick={() => setFilter(s)} className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${filter === s ? 'bg-white/10 border-[var(--aurora-3)]/30 text-white' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>{s === 'ALL' ? 'Semua' : s}</button>
+          <button key={s} onClick={() => setFilter(s)} className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${filter === s ? 'bg-white/10 border-[var(--aurora-3)]/30 text-white' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>{s === 'ALL' ? t('shiftSwap.all') : t(`shiftSwap.${s}`)}</button>
         ))}
       </div>
 
@@ -117,9 +125,9 @@ const ShiftSwapManagement = () => {
                   <div className="flex items-center gap-2 text-[9px] text-gray-500 mt-0.5">
                     <span className="flex items-center gap-1"><Clock size={10} /> {swap.swap_date}</span>
                     <span>•</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest border ${statusStyles[swap.status]}`}>{swap.status}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest border ${getStatusStyle(swap.status)}`}>{t(`shiftSwap.${swap.status}`)}</span>
                   </div>
-                  {swap.reason && <p className="text-[10px] text-gray-400 italic mt-1">"{swap.reason}"</p>}
+                  {swap.reason && <p className="text-[10px] text-gray-400 italic mt-1">&quot;{swap.reason}&quot;</p>}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -127,25 +135,25 @@ const ShiftSwapManagement = () => {
                   <>
                     <button onClick={() => handleAction(swap, 'approved')} disabled={processing === swap.id}
                       className="px-4 py-2 rounded-xl bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/30 text-[10px] font-bold flex items-center gap-1 hover:bg-[var(--success)]/20 disabled:opacity-50">
-                      {processing === swap.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />} Setujui
+                      {processing === swap.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />} {t('shiftSwap.approveBtn')}
                     </button>
                     <button onClick={() => handleAction(swap, 'rejected')} disabled={processing === swap.id}
                       className="px-4 py-2 rounded-xl bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/30 text-[10px] font-bold flex items-center gap-1 hover:bg-[var(--danger)]/20 disabled:opacity-50">
-                      <XCircle size={12} /> Tolak
+                      <XCircle size={12} /> {t('shiftSwap.rejectBtn')}
                     </button>
                   </>
                 )}
                 {swap.status === 'approved' && (
-                  <span className="text-[10px] text-[var(--success)] flex items-center gap-1"><CheckCircle2 size={12} /> Disetujui</span>
+                  <span className="text-[10px] text-[var(--success)] flex items-center gap-1"><CheckCircle2 size={12} /> {t('shiftSwap.approvedBadge')}</span>
                 )}
                 {swap.status === 'rejected' && (
-                  <span className="text-[10px] text-[var(--danger)] flex items-center gap-1"><XCircle size={12} /> Ditolak</span>
+                  <span className="text-[10px] text-[var(--danger)] flex items-center gap-1"><XCircle size={12} /> {t('shiftSwap.rejectedBadge')}</span>
                 )}
               </div>
             </div>
           </div>
         ))}
-        {!filtered.length && <p className="text-center text-gray-500 py-8 text-sm">Tidak ada data swap</p>}
+        {!filtered.length && <p className="text-center text-gray-500 py-8 text-sm">{t('shiftSwap.noData')}</p>}
       </div>
     </div>
   );

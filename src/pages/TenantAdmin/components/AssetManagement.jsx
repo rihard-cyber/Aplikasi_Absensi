@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Laptop, Smartphone, Shirt, Truck, Wrench, Plus, Save, X, Edit3, Trash2, User, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { safeGet } from '../../../utils/safeAccess';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
@@ -29,6 +31,7 @@ const AssetManagement = () => {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ asset_code: '', asset_name: '', category: 'LAPTOP', brand: '', model: '', serial_number: '', purchase_price: '', assigned_to: '', status: 'AVAILABLE', notes: '' });
   const toast = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => { fetchData(); }, []);
 
@@ -99,70 +102,70 @@ const AssetManagement = () => {
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-8">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Manajemen Aset</h2>
-          <p className="text-sm text-gray-400 mt-1">{assets.length} aset • {assignCount} dipakai • Rp{Math.round(totalValue / 1000000)}jt total nilai</p>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('asset.title')}</h2>
+          <p className="text-sm text-gray-400 mt-1">{t('asset.summary', { count: assets.length, assigned: assignCount, total: Math.round(totalValue / 1000000) })}</p>
         </div>
-        <button onClick={openNew} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> Tambah Aset</button>
+        <button onClick={openNew} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> {t('asset.addAsset')}</button>
       </div>
 
       <div className="relative mb-6">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari aset, kode, pemilik, serial..." className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('asset.searchPlaceholder')}   className="w-full bg-white/5 border border-white/20 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
       </div>
 
       {showForm && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-6 bg-white/5 rounded-2xl border border-white/10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Kode Aset</label>
-              <input value={form.asset_code} onChange={e => setForm({...form, asset_code: e.target.value.toUpperCase()})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="LAP-001" />
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('asset.code')}</label>
+              <input value={form.asset_code} onChange={e => setForm({...form, asset_code: e.target.value.toUpperCase()})}  placeholder="LAP-001"  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Nama Aset</label>
-              <input value={form.asset_name} onChange={e => setForm({...form, asset_name: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Laptop Dell XPS 15" />
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('asset.name')}</label>
+              <input value={form.asset_name} onChange={e => setForm({...form, asset_name: e.target.value})}  placeholder="Laptop Dell XPS 15"  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Kategori</label>
-              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('asset.category')}</label>
+              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                 {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Merek</label>
-              <input value={form.brand} onChange={e => setForm({...form, brand: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('asset.brand')}</label>
+              <input value={form.brand} onChange={e => setForm({...form, brand: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Model / Tipe</label>
-              <input value={form.model} onChange={e => setForm({...form, model: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('asset.model')}</label>
+              <input value={form.model} onChange={e => setForm({...form, model: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Serial Number</label>
-              <input value={form.serial_number} onChange={e => setForm({...form, serial_number: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('asset.serialNumber')}</label>
+              <input value={form.serial_number} onChange={e => setForm({...form, serial_number: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Harga Beli (Rp)</label>
-              <input type="number" value={form.purchase_price} onChange={e => setForm({...form, purchase_price: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('asset.purchasePrice')}</label>
+              <input type="number" value={form.purchase_price} onChange={e => setForm({...form, purchase_price: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Ditugaskan Ke</label>
-              <select value={form.assigned_to} onChange={e => setForm({...form, assigned_to: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
-                <option value="">— Tidak ditugaskan —</option>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('asset.assignedTo')}</label>
+              <select value={form.assigned_to} onChange={e => setForm({...form, assigned_to: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                <option value="">{t('asset.unassigned', '— Tidak ditugaskan —')}</option>
                 {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} ({e.nip})</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Status</label>
-              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
-                <option value="AVAILABLE">Tersedia</option>
-                <option value="ASSIGNED">Dipinjamkan</option>
-                <option value="MAINTENANCE">Perbaikan</option>
-                <option value="RETIRED">Pensiun</option>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('asset.status')}</label>
+              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                <option value="AVAILABLE">{t('asset.available')}</option>
+                <option value="ASSIGNED">{t('asset.assigned')}</option>
+                <option value="MAINTENANCE">{t('asset.maintenance')}</option>
+                <option value="RETIRED">{t('asset.retired')}</option>
               </select>
             </div>
           </div>
           <div className="flex gap-3">
-            <button onClick={handleSave} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold flex items-center gap-2"><Save size={14} /> Simpan</button>
-            <button onClick={() => setShowForm(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold"><X size={14} /> Batal</button>
+            <button onClick={handleSave} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold flex items-center gap-2"><Save size={14} /> {t('asset.save')}</button>
+            <button onClick={() => setShowForm(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold"><X size={14} /> {t('asset.cancel')}</button>
           </div>
         </motion.div>
       )}
@@ -193,14 +196,14 @@ const AssetManagement = () => {
                     <User size={10} /> {a.profiles.full_name}
                   </div>
                 )}
-                <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${STATUS_STYLES[a.status]}`}>{a.status}</span>
+                <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${safeGet(STATUS_STYLES, a.status)}`}>{a.status}</span>
                 <button onClick={() => openEdit(a)} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white"><Edit3 size={12} /></button>
                 <button onClick={() => handleDelete(a.id)} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-[var(--danger)]"><Trash2 size={12} /></button>
               </div>
             </div>
           </div>
         ))}
-        {!filtered.length && <p className="text-center text-gray-500 py-8 text-sm">Belum ada aset terdaftar</p>}
+        {!filtered.length && <p className="text-center text-gray-500 py-8 text-sm">{t('asset.noAssets')}</p>}
       </div>
     </div>
   );

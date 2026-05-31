@@ -261,10 +261,10 @@ const PayslipView = ({ onBack }) => {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6 pb-8">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full flex flex-col gap-6 pb-8">
       {onBack && (
         <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors w-fit mb-2">
-          <ArrowLeft size={18} /> Kembali
+          <ArrowLeft size={18} /> {t('Kembali')}
         </button>
       )}
       <div className="glass-panel p-6 text-center relative overflow-hidden">
@@ -276,7 +276,7 @@ const PayslipView = ({ onBack }) => {
         <p className="text-xs text-gray-400 mt-1">{profile?.full_name} • {profile?.nip}</p>
 
         <select value={selectedPeriod?.id} onChange={e => handlePeriodChange(periods.find(p => p.id === e.target.value))}
-          className="mt-4 bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)] w-full">
+           className="mt-4 bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none w-full placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
           {periods.map(p => (
             <option key={p.id} value={p.id}>{monthName(p.period_month)} {p.period_year} — {p.status}</option>
           ))}
@@ -351,10 +351,10 @@ const PayslipView = ({ onBack }) => {
 
           <div className="flex gap-3">
             <button onClick={handlePrint} className="flex-1 py-4 rounded-2xl bg-white/10 text-white font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 border border-white/10 hover:bg-white/20 transition-all">
-              <Printer size={16} /> Cetak / PDF
+              <Printer size={16} /> {t('Cetak / PDF')}
             </button>
             <button onClick={handleDownload} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg hover:shadow-purple-500/30 transition-all">
-              <Download size={16} /> Download TXT
+              <Download size={16} /> {t('Download TXT')}
             </button>
           </div>
         </>

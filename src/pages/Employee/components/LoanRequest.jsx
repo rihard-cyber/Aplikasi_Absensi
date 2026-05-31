@@ -48,7 +48,7 @@ const LoanRequest = ({ onBack }) => {
   const t = (s) => s;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6 pb-8">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full flex flex-col gap-6 pb-8">
       <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors w-fit"><ArrowLeft size={18} /> Kembali</button>
 
       <div className="glass-panel p-6">
@@ -66,13 +66,13 @@ const LoanRequest = ({ onBack }) => {
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Jumlah Pinjaman')}</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">Rp</span>
-              <input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" placeholder="1000000" />
+              <input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})}  placeholder="1000000"  className="w-full bg-white/5 border border-white/20 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Cicilan (bulan)')}</label>
-              <select value={form.installments} onChange={e => setForm({...form, installments: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+              <select value={form.installments} onChange={e => setForm({...form, installments: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                 {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => <option key={n} value={n}>{n}x</option>)}
               </select>
             </div>
@@ -85,7 +85,7 @@ const LoanRequest = ({ onBack }) => {
           </div>
           <div>
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tujuan')}</label>
-            <input value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" placeholder="Pembelian laptop, renovasi rumah, dll" />
+            <input value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})}  placeholder="Pembelian laptop, renovasi rumah, dll"  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
           </div>
           <button onClick={handleSubmit} disabled={submitting} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg disabled:opacity-50">
             {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Ajukan Pinjaman

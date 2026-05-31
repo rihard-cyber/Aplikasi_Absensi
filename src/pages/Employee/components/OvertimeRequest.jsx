@@ -117,7 +117,7 @@ const OvertimeRequest = ({ onBack }) => {
           <div>
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Tanggal Lembur')}</label>
             <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})}
-              className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)] transition-colors" />
+                className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none transition-colors placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
           </div>
           <div>
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Jenis Lembur')}</label>
@@ -135,12 +135,12 @@ const OvertimeRequest = ({ onBack }) => {
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Jam Mulai')}</label>
               <input type="time" value={form.start_time} onChange={e => setForm({...form, start_time: e.target.value})}
-                className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)]" />
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Jam Selesai')}</label>
               <input type="time" value={form.end_time} onChange={e => setForm({...form, end_time: e.target.value})}
-                className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)]" />
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
           </div>
           {form.start_time && form.end_time && (
@@ -153,7 +153,7 @@ const OvertimeRequest = ({ onBack }) => {
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Alasan / Keterangan')}</label>
             <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3}
               placeholder="Jelaskan alasan lembur..."
-              className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)] resize-none text-sm" />
+                className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none resize-none text-sm placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
           </div>
           <button onClick={submitRequest} disabled={submitting}
             className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-sm flex items-center justify-center gap-2 hover:shadow-lg transition-all disabled:opacity-50">

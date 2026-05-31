@@ -159,7 +159,7 @@ const DailyTaskPlan = ({ onBack }) => {
     <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      className="flex flex-col gap-6 pb-24"
+      className="w-full flex flex-col gap-6 pb-24"
     >
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -259,8 +259,8 @@ const DailyTaskPlan = ({ onBack }) => {
                     value={task.title}
                     onChange={e => updateTask(idx, 'title', e.target.value)}
                     placeholder="Deskripsi singkat tugas"
-                    className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-2.5 text-white text-xs outline-none focus:border-[var(--aurora-3)]"
-                  />
+                    
+                   className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-2.5 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
                   <label className="text-[9px] text-gray-500 uppercase tracking-widest font-bold block mb-1">{t('Deskripsi')}</label>
@@ -269,8 +269,8 @@ const DailyTaskPlan = ({ onBack }) => {
                     value={task.description}
                     onChange={e => updateTask(idx, 'description', e.target.value)}
                     placeholder="Detail pekerjaan yang akan dilakukan"
-                    className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-2.5 text-white text-xs outline-none focus:border-[var(--aurora-3)] resize-none"
-                  />
+                    
+                   className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-2.5 text-white text-xs outline-none resize-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div className="w-1/2">
                   <label className="text-[9px] text-gray-500 uppercase tracking-widest font-bold block mb-1">{t('Estimasi Jam')}</label>
@@ -281,8 +281,8 @@ const DailyTaskPlan = ({ onBack }) => {
                     step={0.5}
                     value={task.estimated_hours}
                     onChange={e => updateTask(idx, 'estimated_hours', parseFloat(e.target.value) || 1)}
-                    className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-2.5 text-white text-xs outline-none focus:border-[var(--aurora-3)]"
-                  />
+                    
+                   className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-2.5 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
               </motion.div>
             ))}

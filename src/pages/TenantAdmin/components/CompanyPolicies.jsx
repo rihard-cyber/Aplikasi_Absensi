@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Plus, FileText, Search, Download, Eye, Edit3, Trash2, Save, X, Loader2, Upload, BookOpen } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
@@ -26,6 +27,7 @@ const CompanyPolicies = () => {
   const [form, setForm] = useState({ title: '', category: 'GENERAL', content: '', file: null, version: '1.0' });
   const [viewingId, setViewingId] = useState(null);
   const toast = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => { fetchPolicies(); }, []);
 
@@ -104,7 +106,7 @@ const CompanyPolicies = () => {
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-8">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Knowledge Base & Kebijakan</h2>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('policies.title')}</h2>
           <p className="text-sm text-gray-400 mt-1">{policies.length} dokumen • {policies.filter(p => p.is_active).length} aktif</p>
         </div>
         <button onClick={openNew} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> Tambah Dokumen</button>
@@ -113,9 +115,9 @@ const CompanyPolicies = () => {
       <div className="flex gap-3 mb-6 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari dokumen..." className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-white text-xs outline-none focus:border-[var(--aurora-3)]" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari dokumen..."   className="w-full bg-white/5 border border-white/20 rounded-xl pl-9 pr-3 py-2.5 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
         </div>
-        <button onClick={() => setFilterCat('ALL')} className={`px-3 py-2 rounded-xl text-[10px] font-bold border transition-all ${filterCat === 'ALL' ? 'bg-white/10 border-[var(--aurora-3)]/30 text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}>Semua</button>
+        <button onClick={() => setFilterCat('ALL')} className={`px-3 py-2 rounded-xl text-[10px] font-bold border transition-all ${filterCat === 'ALL' ? 'bg-white/10 border-[var(--aurora-3)]/30 text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}>{t('policies.all')}</button>
         {CATEGORIES.map(c => (
           <button key={c.value} onClick={() => setFilterCat(c.value)} className={`px-3 py-2 rounded-xl text-[10px] font-bold border transition-all ${filterCat === c.value ? 'bg-white/10 border-[var(--aurora-3)]/30 text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}>{c.icon} {c.label.split(' ')[0]}</button>
         ))}
@@ -125,25 +127,25 @@ const CompanyPolicies = () => {
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-6 bg-white/5 rounded-2xl border border-white/10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="md:col-span-2">
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Judul</label>
-              <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" placeholder="Contoh: Kebijakan Cuti Tahunan" />
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('policies.documentTitle')}</label>
+              <input value={form.title} onChange={e => setForm({...form, title: e.target.value})}  placeholder="Contoh: Kebijakan Cuti Tahunan"  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Kategori</label>
-              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('policies.category')}</label>
+              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                 {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.icon} {c.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Versi</label>
-              <input value={form.version} onChange={e => setForm({...form, version: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="1.0" />
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('policies.version')}</label>
+              <input value={form.version} onChange={e => setForm({...form, version: e.target.value})}  placeholder="1.0"  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Konten / Deskripsi</label>
-              <textarea value={form.content} onChange={e => setForm({...form, content: e.target.value})} rows={4} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" placeholder="Tulis konten kebijakan di sini..." />
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('policies.content')}</label>
+              <textarea value={form.content} onChange={e => setForm({...form, content: e.target.value})} rows={4}  placeholder="Tulis konten kebijakan di sini..."  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">File Pendukung (PDF/Gambar)</label>
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('policies.supportingFile')}</label>
               <label className="flex items-center gap-3 p-4 bg-white/5 border border-dashed border-white/20 rounded-xl cursor-pointer hover:bg-white/10">
                 <Upload size={18} className="text-gray-400" />
                 <span className="text-xs text-gray-400">{form.file ? form.file.name : 'Upload file...'}</span>
@@ -179,7 +181,7 @@ const CompanyPolicies = () => {
                 </div>
               </button>
             ))}
-            {!filtered.length && <p className="text-gray-500 text-xs text-center py-8">Belum ada dokumen</p>}
+            {!filtered.length && <p className="text-gray-500 text-xs text-center py-8">{t('policies.noDocument')}</p>}
           </div>
         </div>
 
@@ -209,7 +211,7 @@ const CompanyPolicies = () => {
                       {doc.content}
                     </div>
                   )}
-                  {!doc.content && !doc.file_url && <p className="text-gray-500 text-xs">Tidak ada konten</p>}
+                  {!doc.content && !doc.file_url && <p className="text-gray-500 text-xs">{t('policies.noContent')}</p>}
                 </div>
               );
             })()}

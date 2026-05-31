@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, UserPlus, Trash2, CheckCircle2, Search, Loader2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { useConfirm } from '../../../components/ConfirmDialog';
 
 const PermissionManager = () => {
+  const { t } = useTranslation();
   const [subAdmins, setSubAdmins] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,10 +46,10 @@ const PermissionManager = () => {
 
       // Fetch Sub-Admins
       let query = supabase
-        .from('profiles')
-        .select('id, full_name, role, nip, operational_access, projects(name), divisions(name)')
-        .eq('operational_access', true)
-        .in('role', ['SUB_ADMIN', 'TENANT_ADMIN']);
+         .from('profiles')
+         .select('id, full_name, role, nip, operational_access, projects(name), divisions(name)')
+         .eq('operational_access', true)
+         .in('role', ['SUB_ADMIN', 'TENANT_ADMIN']);
       if (tenantId) query = query.eq('tenant_id', tenantId);
       const { data: admins } = await query.order('full_name');
       if (admins) setSubAdmins(admins);
@@ -72,9 +74,9 @@ const PermissionManager = () => {
     setFoundEmployee(null);
     try {
       let query = supabase
-        .from('profiles')
-        .select('id, nip, full_name, project_id, division_id')
-        .eq('nip', searchNik);
+         .from('profiles')
+         .select('id, nip, full_name, project_id, division_id')
+         .eq('nip', searchNik);
       if (tenantId) query = query.eq('tenant_id', tenantId);
       const { data } = await query.maybeSingle();
       
@@ -83,7 +85,7 @@ const PermissionManager = () => {
         setSelectedProjectId(data.project_id || '');
         setSelectedDivisionId(data.division_id || '');
       } else {
-        toast('Karyawan tidak ditemukan!', 'error');
+        toast(t('permissions.notFound'), 'error');
       }
     } catch (e) {
       console.error(e);
@@ -97,17 +99,17 @@ const PermissionManager = () => {
     setIsSubmitting(true);
     try {
       const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          role: 'SUB_ADMIN', 
-          operational_access: true,
-          project_id: selectedProjectId || null,
-          division_id: selectedDivisionId || null
-        })
-        .eq('id', foundEmployee.id);
+         .from('profiles')
+         .update({ 
+           role: 'SUB_ADMIN', 
+           operational_access: true,
+           project_id: selectedProjectId || null,
+           division_id: selectedDivisionId || null
+         })
+         .eq('id', foundEmployee.id);
       
       if (!error) {
-        toast(`${foundEmployee.full_name} berhasil diberikan otoritas sub-admin.`, 'success');
+        toast(t('permissions.grantSuccess', { name: foundEmployee.full_name }), 'success');
         setIsAddModalOpen(false);
         setFoundEmployee(null);
         setSearchNik('');
@@ -116,23 +118,23 @@ const PermissionManager = () => {
         throw error;
       }
     } catch (e) {
-      toast("Gagal memberikan otoritas: " + e.message, 'error');
+      toast(t('permissions.grantFail') + e.message, 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleRevoke = async (adminId, name) => {
-    const ok = await confirm(`Cabut otoritas admin untuk ${name}? Karyawan ini akan kembali menjadi Employee biasa.`, 'Cabut Otoritas');
+    const ok = await confirm(t('permissions.revokeConfirmMsg', { name }), t('permissions.revokeConfirmTitle'));
     if (!ok) return;
     try {
       const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          role: 'EMPLOYEE', 
-          operational_access: false 
-        })
-        .eq('id', adminId);
+         .from('profiles')
+         .update({ 
+           role: 'EMPLOYEE', 
+           operational_access: false 
+         })
+         .eq('id', adminId);
       
       if (!error) {
         fetchInitialData();
@@ -151,14 +153,14 @@ const PermissionManager = () => {
     <div className="flex flex-col gap-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white/5 p-6 rounded-[32px] border border-white/10">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-wide">Permission Manager</h2>
-          <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Delegasikan Otoritas Pengelolaan Tim</p>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-wide">{t('permissions.title')}</h2>
+          <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">{t('permissions.subtitle')}</p>
         </div>
         <button 
           onClick={() => setIsAddModalOpen(true)}
           className="bg-[var(--aurora-1)] text-white px-6 py-3 rounded-2xl flex items-center gap-2 font-bold text-sm hover:shadow-[0_0_20px_rgba(142,45,226,0.4)] transition-all whitespace-nowrap"
         >
-          <UserPlus size={18} /> Tambah Sub-Admin
+          <UserPlus size={18} /> {t('permissions.addSubAdmin')}
         </button>
       </div>
 
@@ -168,11 +170,10 @@ const PermissionManager = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
             <input 
               type="text" 
-              placeholder="Cari nama atau NIK..." 
+              placeholder={t('permissions.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#0B0C10] border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-white outline-none focus:border-[var(--aurora-1)]" 
-            />
+              className="w-full bg-[#0B0C10] border border-white/20 rounded-xl py-3 pl-12 pr-4 text-sm text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
           </div>
         </div>
 
@@ -180,18 +181,18 @@ const PermissionManager = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-white/5 text-[10px] text-gray-500 uppercase tracking-widest">
-                <th className="p-6 font-medium">Nama Karyawan</th>
-                <th className="p-6 font-medium">Cakupan Otoritas</th>
-                <th className="p-6 font-medium">Ijin Akses</th>
-                <th className="p-6 font-medium">Status</th>
-                <th className="p-6 font-medium text-right">Aksi</th>
+                <th className="p-6 font-medium">{t('permissions.employeeNameCol')}</th>
+                <th className="p-6 font-medium">{t('permissions.authorityScopeCol')}</th>
+                <th className="p-6 font-medium">{t('permissions.accessPermissionCol')}</th>
+                <th className="p-6 font-medium">{t('permissions.statusCol')}</th>
+                <th className="p-6 font-medium text-right">{t('permissions.actionCol')}</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr><td colSpan="5" className="p-10"><div className="w-full glass-panel p-6 border border-white/5 animate-pulse space-y-4"><div className="h-4 bg-white/10 rounded w-1/4" /><div className="h-3 bg-white/5 rounded w-1/3" /><div className="h-3 bg-white/5 rounded w-1/2" /></div></td></tr>
               ) : filteredAdmins.length === 0 ? (
-                <tr><td colSpan="5" className="p-10 text-center text-gray-500 italic">{(() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })() ? 'SUPER ADMIN PREVIEW — Tidak ada tenant terpilih. Silakan pilih tenant untuk mengelola otoritas.' : 'Tidak ada Sub-Admin ditemukan.'}</td></tr>
+                <tr><td colSpan="5" className="p-10 text-center text-gray-500 italic">{(() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })() ? t('permissions.superAdminPreview') : t('permissions.noSubAdmin')}</td></tr>
               ) : filteredAdmins.map((admin) => (
                 <tr key={admin.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
                   <td className="p-6">
@@ -210,29 +211,29 @@ const PermissionManager = () => {
                   <td className="p-6">
                     <div className="space-y-1">
                       <span className="px-2 py-0.5 rounded-lg bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] text-[10px] font-bold border border-[var(--aurora-3)]/20">
-                        {admin.projects?.name || 'SEMUA PROJECT'}
+                        {admin.projects?.name || t('permissions.allProject')}
                       </span>
                       {admin.divisions?.name && (
-                        <p className="text-[9px] text-gray-500 mt-1">Divisi: {admin.divisions.name}</p>
+                        <p className="text-[9px] text-gray-500 mt-1">{t('permissions.divisionPrefix')}{admin.divisions.name}</p>
                       )}
                     </div>
                   </td>
                   <td className="p-6">
                     <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
-                      {admin.role === 'TENANT_ADMIN' ? 'Full Control' : 'Validator & Monitoring'}
+                      {admin.role === 'TENANT_ADMIN' ? t('permissions.fullControl') : t('permissions.validatorMonitor')}
                     </span>
                   </td>
                   <td className="p-6">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-[var(--success)] shadow-[0_0_8px_var(--success)]" />
-                      <span className="text-xs text-[var(--success)] font-medium">Active</span>
+                      <span className="text-xs text-[var(--success)] font-medium">{t('permissions.active')}</span>
                     </div>
                   </td>
                   <td className="p-6 text-right space-x-3">
                     <button 
                       onClick={() => handleRevoke(admin.id, admin.full_name)}
                       className="text-gray-500 hover:text-[var(--danger)] transition-colors p-2 hover:bg-[var(--danger)]/10 rounded-lg"
-                      title="Cabut Otoritas"
+                      title={t('permissions.revokeConfirmTitle')}
                     >
                       <Trash2 size={18} />
                     </button>
@@ -258,27 +259,26 @@ const PermissionManager = () => {
               className="relative w-full max-w-md glass-panel p-8 rounded-[40px] border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] max-h-[85vh] overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xl font-serif font-bold text-white">Delegasi Otoritas</h3>
+                <h3 className="text-xl font-serif font-bold text-white">{t('permissions.delegateAuthority')}</h3>
                 <button onClick={() => setIsAddModalOpen(false)} className="p-2 text-gray-500 hover:text-white transition-colors"><X size={20}/></button>
               </div>
 
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Cari Karyawan (NIK)</label>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('permissions.searchNik')}</label>
                   <div className="flex gap-2">
                     <input 
                       type="text" 
-                      placeholder="Masukkan NIK..." 
+                      placeholder={t('permissions.enterNik')}
                       value={searchNik}
                       onChange={(e) => setSearchNik(e.target.value)}
-                      className="flex-1 bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-1)]"
-                    />
+                      className="flex-1 bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                     <button 
                       onClick={handleSearchEmployee}
                       disabled={isSearching}
                       className="px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-[var(--aurora-3)]"
                     >
-                      {isSearching ? <Loader2 size={16} className="animate-spin" /> : 'CARI'}
+                      {isSearching ? t('permissions.searching') : t('permissions.searchBtn')}
                     </button>
                   </div>
                 </div>
@@ -297,27 +297,25 @@ const PermissionManager = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Cakupan Project</label>
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('permissions.scopeProject')}</label>
                         <select 
                           value={selectedProjectId}
                           onChange={(e) => {
                             setSelectedProjectId(e.target.value);
                             setSelectedDivisionId('');
                           }}
-                          className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-xs outline-none focus:border-[var(--aurora-3)]"
-                        >
-                          <option value="">-- Semua Project --</option>
+                          className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                          <option value="">-- {t('permissions.allProject')} --</option>
                           {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Cakupan Divisi</label>
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('permissions.scopeDivision')}</label>
                         <select 
                           value={selectedDivisionId}
                           onChange={(e) => setSelectedDivisionId(e.target.value)}
-                          className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-xs outline-none focus:border-[var(--aurora-3)]"
-                        >
-                          <option value="">-- Semua Divisi --</option>
+                          className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                          <option value="">-- {t('permissions.allDivision')} --</option>
                           {divisions.filter(d => !selectedProjectId || d.project_id === selectedProjectId).map(d => (
                             <option key={d.id} value={d.id}>{d.name}</option>
                           ))}
@@ -330,7 +328,7 @@ const PermissionManager = () => {
                       disabled={isSubmitting}
                       className="w-full py-4 bg-[var(--aurora-1)] hover:bg-[#8E2DE2] text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-[0_0_20px_rgba(142,45,226,0.3)] flex items-center justify-center gap-2"
                     >
-                      {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : 'BERIKAN OTORITAS ADMIN'}
+                      {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : t('permissions.grantBtn')}
                     </button>
                   </motion.div>
                 )}
@@ -347,12 +345,12 @@ const PermissionManager = () => {
               <Shield size={24} />
             </div>
             <div>
-              <h4 className="font-bold text-white">Log Keamanan</h4>
-              <p className="text-xs text-gray-500">Audit perubahan otoritas tim</p>
+              <h4 className="font-bold text-white">{t('permissions.securityLog')}</h4>
+              <p className="text-xs text-gray-500">{t('permissions.securityLogDesc')}</p>
             </div>
           </div>
           <button className="w-full py-3 rounded-xl border border-white/10 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-all">
-            Lihat Audit Trail
+            {t('permissions.viewAudit')}
           </button>
         </div>
 
@@ -362,12 +360,12 @@ const PermissionManager = () => {
               <CheckCircle2 size={24} />
             </div>
             <div>
-              <h4 className="font-bold text-white">Status Sinkron</h4>
-              <p className="text-xs text-gray-500">Otoritas terikat RLS database</p>
+              <h4 className="font-bold text-white">{t('permissions.syncStatus')}</h4>
+              <p className="text-xs text-gray-500">{t('permissions.syncStatusDesc')}</p>
             </div>
           </div>
           <div className="w-full py-3 rounded-xl bg-white/5 text-center text-[10px] font-bold uppercase tracking-widest text-[var(--success)]">
-            DATABASE SECURED
+            {t('permissions.dbSecured')}
           </div>
         </div>
       </div>

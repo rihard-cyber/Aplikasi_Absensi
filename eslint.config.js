@@ -2,6 +2,9 @@ import js from '@eslint/js';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
+import i18next from 'eslint-plugin-i18next';
+import i18nText from 'eslint-plugin-i18n-text';
+import reactIntl from 'eslint-plugin-react-intl';
 
 const browserGlobals = {
   AbortController: 'readonly',
@@ -63,6 +66,9 @@ export default [
       react,
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
+      i18next,
+      'i18n-text': i18nText,
+      'react-intl': reactIntl,
     },
     settings: {
       react: { version: 'detect' },

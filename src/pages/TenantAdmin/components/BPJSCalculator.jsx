@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import { safeGet } from '../../../utils/safeAccess';
 import {
   Calculator, Shield, Heart, ChevronDown, ChevronUp,
   RefreshCw, Download, Info, CheckCircle2, Users, Building2
@@ -44,7 +46,7 @@ const calcBPJS = (wage, jkkRiskLevel = 0) => {
   const r = BPJS_RATES;
   const wageKes = Math.min(wage, r.kesehatan.bpjskes.max_wage);
   const wageJP = Math.min(wage, r.ketenagakerjaan.jp.max_wage);
-  const jkkRate = r.ketenagakerjaan.jkk.employer_rates[jkkRiskLevel];
+  const jkkRate = safeGet(r.ketenagakerjaan.jkk.employer_rates, jkkRiskLevel);
 
   return {
     jkk:    { emp: 0, erl: wage * jkkRate / 100, rate_emp: 0, rate_erl: jkkRate },
@@ -77,6 +79,7 @@ const BPJSCalculator = () => {
   const [bulkResults, setBulkResults] = useState([]);
   const [loadingEmps, setLoadingEmps] = useState(false);
   const [expandedEmp, setExpandedEmp] = useState(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Auto calculate on wage/jkk change
@@ -113,8 +116,9 @@ const BPJSCalculator = () => {
     if (!e.bpjs) return acc;
     const keys = ['jkk', 'jkm', 'jht', 'jp', 'bpjskes'];
     keys.forEach(k => {
-      acc.emp += e.bpjs[k].emp;
-      acc.erl += e.bpjs[k].erl;
+      const bpjsItem = safeGet(e.bpjs, k);
+      acc.emp += bpjsItem.emp;
+      acc.erl += bpjsItem.erl;
     });
     return acc;
   }, { emp: 0, erl: 0 });
@@ -123,7 +127,7 @@ const BPJSCalculator = () => {
     if (mode === 'single' && result) {
       const rows = [
         ['Komponen', 'Tarif Karyawan (%)', 'Potongan Karyawan (Rp)', 'Tarif Perusahaan (%)', 'Kontribusi Perusahaan (Rp)'],
-        ['JKK', 0, 0, BPJS_RATES.ketenagakerjaan.jkk.employer_rates[jkkLevel], result.jkk.erl],
+        ['JKK', 0, 0, safeGet(BPJS_RATES.ketenagakerjaan.jkk.employer_rates, jkkLevel), result.jkk.erl],
         ['JKM', 0, 0, BPJS_RATES.ketenagakerjaan.jkm.employer, result.jkm.erl],
         ['JHT', BPJS_RATES.ketenagakerjaan.jht.employee, result.jht.emp, BPJS_RATES.ketenagakerjaan.jht.employer, result.jht.erl],
         ['JP', BPJS_RATES.ketenagakerjaan.jp.employee, result.jp.emp, BPJS_RATES.ketenagakerjaan.jp.employer, result.jp.erl],
@@ -137,8 +141,8 @@ const BPJSCalculator = () => {
       const rows = [['Nama', 'NIP', 'Gaji', 'Potongan Karyawan', 'Kontribusi Perusahaan', 'Total']];
       bulkResults.forEach(e => {
         if (!e.bpjs) return;
-        const emp = ['jkk','jkm','jht','jp','bpjskes'].reduce((s, k) => s + e.bpjs[k].emp, 0);
-        const erl = ['jkk','jkm','jht','jp','bpjskes'].reduce((s, k) => s + e.bpjs[k].erl, 0);
+        const emp = ['jkk','jkm','jht','jp','bpjskes'].reduce((s, k) => s + safeGet(e.bpjs, k).emp, 0);
+        const erl = ['jkk','jkm','jht','jp','bpjskes'].reduce((s, k) => s + safeGet(e.bpjs, k).erl, 0);
         rows.push([e.full_name, e.nip, e.salary, Math.round(emp), Math.round(erl), Math.round(emp + erl)]);
       });
       const csv = rows.map(r => r.join(',')).join('\n');
@@ -180,19 +184,19 @@ const BPJSCalculator = () => {
           {/* Input Panel */}
           <div className="lg:col-span-1 space-y-4">
             <div className="glass-panel p-5 border border-white/5 rounded-2xl space-y-4">
-              <h3 className="text-sm font-bold text-white">Parameter Kalkulasi</h3>
+              <h3 className="text-sm font-bold text-white">{t('bpjs.params')}</h3>
 
               <div>
-                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">Gaji / Upah Pokok</label>
+                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">{t('bpjs.basicSalary')}</label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold">Rp</span>
                   <input
                     type="text"
                     value={wageInput}
                     onChange={e => setWageInput(e.target.value.replace(/\D/g, ''))}
-                    className="w-full bg-[#0B0C10] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white font-mono text-sm outline-none focus:border-[var(--success)]"
+                    
                     placeholder="5000000"
-                  />
+                   className="w-full bg-[#0B0C10] border border-white/20 rounded-xl pl-10 pr-4 py-3 text-white font-mono text-sm outline-none focus:border-[var(--success)] placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div className="flex gap-2 mt-2">
                   {[3000000, 5000000, 8000000, 12000000].map(v => (
@@ -205,9 +209,9 @@ const BPJSCalculator = () => {
               </div>
 
               <div>
-                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">Tingkat Risiko Pekerjaan (JKK)</label>
+                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">{t('bpjs.riskLevel')}</label>
                 <select value={jkkLevel} onChange={e => setJkkLevel(parseInt(e.target.value))}
-                  className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--success)]">
+                   className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--success)] placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                   {RISK_LEVELS.map((r, i) => <option key={i} value={i} className="bg-[#0B0C10]">{r.label}</option>)}
                 </select>
               </div>
@@ -229,15 +233,15 @@ const BPJSCalculator = () => {
             {r && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="glass-panel p-4 rounded-2xl border border-[var(--aurora-3)]/20 text-center">
-                  <p className="text-[9px] text-gray-500 uppercase tracking-widest mb-1">Potongan Gaji</p>
+                  <p className="text-[9px] text-gray-500 uppercase tracking-widest mb-1">{t('bpjs.deductions')}</p>
                   <p className="text-lg font-black text-[var(--aurora-3)]">{fmt(totalEmp)}</p>
                 </div>
                 <div className="glass-panel p-4 rounded-2xl border border-[var(--aurora-1)]/20 text-center">
-                  <p className="text-[9px] text-gray-500 uppercase tracking-widest mb-1">Beban Perusahaan</p>
+                  <p className="text-[9px] text-gray-500 uppercase tracking-widest mb-1">{t('bpjs.companyBurden')}</p>
                   <p className="text-lg font-black text-[var(--aurora-1)]">{fmt(totalErl)}</p>
                 </div>
                 <div className="col-span-2 glass-panel p-4 rounded-2xl border border-[var(--success)]/20 text-center">
-                  <p className="text-[9px] text-gray-500 uppercase tracking-widest mb-1">Total BPJS per Bulan</p>
+                  <p className="text-[9px] text-gray-500 uppercase tracking-widest mb-1">{t('bpjs.totalBpjsMonthly')}</p>
                   <p className="text-xl font-black text-[var(--success)]">{fmt(totalEmp + totalErl)}</p>
                 </div>
               </div>
@@ -267,11 +271,11 @@ const BPJSCalculator = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-white/10">
-                      <th className="px-4 py-2 text-left text-[9px] text-gray-500 uppercase tracking-widest">Komponen</th>
+                      <th className="px-4 py-2 text-left text-[9px] text-gray-500 uppercase tracking-widest">{t('bpjs.component')}</th>
                       <th className="px-4 py-2 text-center text-[9px] text-[var(--aurora-3)] uppercase tracking-widest">% Pegawai</th>
-                      <th className="px-4 py-2 text-right text-[9px] text-[var(--aurora-3)] uppercase tracking-widest">Potongan</th>
+                      <th className="px-4 py-2 text-right text-[9px] text-[var(--aurora-3)] uppercase tracking-widest">{t('bpjs.deduction')}</th>
                       <th className="px-4 py-2 text-center text-[9px] text-[var(--aurora-1)] uppercase tracking-widest">% Perusahaan</th>
-                      <th className="px-4 py-2 text-right text-[9px] text-[var(--aurora-1)] uppercase tracking-widest">Kontribusi</th>
+                      <th className="px-4 py-2 text-right text-[9px] text-[var(--aurora-1)] uppercase tracking-widest">{t('bpjs.contribution')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -296,18 +300,18 @@ const BPJSCalculator = () => {
 
                 {/* Total Row */}
                 <div className="p-4 bg-white/5 border-t border-white/10 flex justify-between items-center">
-                  <span className="text-sm font-bold text-white">TOTAL</span>
+                  <span className="text-sm font-bold text-white">{t('bpjs.total')}</span>
                   <div className="flex gap-6">
                     <div className="text-right">
-                      <p className="text-[9px] text-gray-500">Potongan Karyawan</p>
+                      <p className="text-[9px] text-gray-500">{t('bpjs.employeeDeduction')}</p>
                       <p className="text-sm font-black font-mono text-[var(--aurora-3)]">{fmt(totalEmp)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[9px] text-gray-500">Beban Perusahaan</p>
+                      <p className="text-[9px] text-gray-500">{t('bpjs.companyBurden')}</p>
                       <p className="text-sm font-black font-mono text-[var(--aurora-1)]">{fmt(totalErl)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[9px] text-gray-500">Grand Total</p>
+                      <p className="text-[9px] text-gray-500">{t('bpjs.grandTotal')}</p>
                       <p className="text-sm font-black font-mono text-[var(--success)]">{fmt(totalEmp + totalErl)}</p>
                     </div>
                   </div>
@@ -320,7 +324,7 @@ const BPJSCalculator = () => {
             ) : (
               <div className="glass-panel p-10 rounded-2xl border border-white/5 text-center">
                 <Calculator size={48} className="text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 text-sm">Masukkan gaji untuk melihat kalkulasi BPJS</p>
+                <p className="text-gray-500 text-sm">{t('bpjs.enterSalaryPrompt')}</p>
               </div>
             )}
           </div>
@@ -423,7 +427,7 @@ const BPJSCalculator = () => {
             {bulkResults.length === 0 && !loadingEmps && (
               <div className="p-10 text-center">
                 <Users size={40} className="text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-500 text-sm">Belum ada data karyawan dengan informasi gaji</p>
+                <p className="text-gray-500 text-sm">{t('bpjs.noEmployeeSalary')}</p>
               </div>
             )}
           </div>

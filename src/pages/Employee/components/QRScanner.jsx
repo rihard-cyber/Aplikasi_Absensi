@@ -113,8 +113,8 @@ const QRScanner = ({ onBack }) => {
   }, [profile, manualCode]);
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6 pb-8">
-      <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors w-fit"><ArrowLeft size={18} /> Kembali</button>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full flex flex-col gap-6 pb-8">
+      <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors w-fit"><ArrowLeft size={18} /> {t('Kembali')}</button>
 
       {/* Face Verification Modal */}
       <FaceVerificationModal
@@ -139,10 +139,10 @@ const QRScanner = ({ onBack }) => {
               <input value={manualCode} onChange={e => setManualCode(e.target.value)}
                 placeholder="Tempel URL atau kode QR di sini..."
                 onKeyDown={e => e.key === 'Enter' && handleManualSubmit()}
-                className="flex-1 bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+                  className="flex-1 bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               <button onClick={handleManualSubmit} disabled={status === 'scanning'}
                 className="px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs disabled:opacity-50">
-                {status === 'scanning' ? <Loader2 size={18} className="animate-spin" /> : 'Absen'}
+                {status === 'scanning' ? <Loader2 size={18} className="animate-spin" /> : t('Absen')}
               </button>
             </div>
             <p className="text-[9px] text-gray-600 mt-2 text-left">{t('Atau scan langsung dari kamera (jika tersedia)')}</p>
@@ -170,7 +170,7 @@ const QRScanner = ({ onBack }) => {
       </div>
 
       <div className="glass-panel p-5">
-        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Smartphone size={16} /> Cara Penggunaan</h3>
+        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2"><Smartphone size={16} /> {t('Cara Penggunaan')}</h3>
         <ol className="text-xs text-gray-400 space-y-2 list-decimal list-inside">
           <li>{t('Buka halaman QR Attendance di aplikasi')}</li>
           <li>{t('Scan QR code yang terpajang di lokasi kerja (pintu masuk, resepsionis)')}</li>
@@ -185,7 +185,7 @@ const QRScanner = ({ onBack }) => {
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md">
             <motion.div initial={{ y: 20 }} animate={{ y: 0 }} className="glass-panel p-10 text-center border border-[var(--success)]/30 shadow-[0_0_50px_rgba(0,255,135,0.2)]">
               <CheckCircle2 size={64} className="text-[var(--success)] mx-auto mb-4 drop-shadow-[0_0_20px_var(--success)]" />
-              <h3 className="text-xl font-serif font-bold text-white mb-2">Absensi Berhasil!</h3>
+              <h3 className="text-xl font-serif font-bold text-white mb-2">{t('Absensi Berhasil!')}</h3>
               <p className="text-sm text-gray-400">{profile?.full_name} — {new Date().toLocaleTimeString('id-ID')}</p>
             </motion.div>
           </motion.div>

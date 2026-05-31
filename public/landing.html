@@ -9,101 +9,62 @@
   <meta property="og:description" content="Dari absensi hingga slip gaji — semua dalam satu aplikasi. Setup 15 menit." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://sipresensi.com" />
-  <meta property="og:image" content="https://sipresensi.com/og-image.png" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="SI PRESENSI PRO MAX — HR & Payroll All-in-One" />
-  <meta name="twitter:description" content="Dari absensi hingga slip gaji — semua dalam satu aplikasi. Gratis 30 hari." />
   <meta name="theme-color" content="#0B0C10" />
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&display=swap" rel="preload" as="style" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%238E2DE2'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white' font-family='serif' font-weight='bold'>SP</text></svg>" />
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --bg: #0B0C10; --aurora-1: #8E2DE2; --aurora-3: #00C9FF;
-      --success: #00FF87; --danger: #FF0055; --warning: #FFD700;
-    }
-    body {
-      font-family: 'Inter', sans-serif; background: var(--bg); color: #F8FAFC;
-      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      text-align: center; padding: 2rem 1.5rem;
-      background-image: radial-gradient(circle at 20% 20%, rgba(142,45,226,0.1), transparent 40%), radial-gradient(circle at 80% 80%, rgba(0,201,255,0.1), transparent 40%);
-    }
-    .logo {
-      width: 64px; height: 64px; border-radius: 18px;
-      background: linear-gradient(135deg, var(--aurora-1), var(--aurora-3));
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Playfair Display', serif; font-weight: 700; font-size: 24px;
-      color: white; margin: 0 auto 1.25rem;
-      box-shadow: 0 0 40px rgba(142,45,226,0.3);
-    }
-    .badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border-radius: 999px;
-      background: rgba(0,255,135,0.1); border: 1px solid rgba(0,255,135,0.3);
-      color: var(--success); font-size: 10px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem;
-    }
-    h1 {
-      font-family: 'Playfair Display', serif; font-size: clamp(1.5rem, 5vw, 2.8rem);
-      line-height: 1.3; margin-bottom: 1rem;
-    }
-    h1 span { background: linear-gradient(135deg, var(--aurora-1), var(--aurora-3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    p { color: #94A3B8; font-size: clamp(0.85rem, 2vw, 1.05rem); max-width: 480px; line-height: 1.7; margin-bottom: 1.5rem; }
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 14px 28px; border-radius: 14px; font-weight: 700; font-size: 12px;
-      text-transform: uppercase; letter-spacing: 1px; text-decoration: none;
-      transition: all 0.3s ease; cursor: pointer; border: none;
-    }
-    .btn-primary { background: linear-gradient(135deg, var(--aurora-1), var(--aurora-3)); color: white; box-shadow: 0 0 30px rgba(142,45,226,0.3); }
-    .btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 50px rgba(142,45,226,0.5); }
-    .btn-outline { border: 1px solid rgba(255,255,255,0.2); color: white; background: transparent; }
-    .btn-outline:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.4); transform: scale(1.02); }
-    .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 2rem; }
-    .tagline { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; font-size: 11px; color: #666; margin-bottom: 2.5rem; }
-    .tagline span { display: flex; align-items: center; gap: 4px; }
-    .tagline span::before { content: '✓'; color: var(--success); font-weight: bold; }
-    .grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 8px; max-width: 560px; width: 100%; margin-bottom: 2.5rem;
-    }
-    .card {
-      padding: 12px 10px; border-radius: 12px;
-      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
-      font-size: 10px; color: #94A3B8; line-height: 1.4;
-    }
-    .card strong { color: white; display: block; margin-bottom: 2px; font-size: 11px; }
-    .app-link {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 16px 32px; border-radius: 16px;
-      background: linear-gradient(135deg, var(--aurora-1), var(--aurora-3));
-      color: white; font-weight: 700; font-size: 13px;
-      text-transform: uppercase; letter-spacing: 1px; text-decoration: none;
-      box-shadow: 0 0 40px rgba(142,45,226,0.4);
-      transition: all 0.3s ease; margin-bottom: 2rem;
-    }
-    .app-link:hover { transform: scale(1.05); box-shadow: 0 0 60px rgba(142,45,226,0.6); }
-    footer { font-size: 9px; color: #333; }
-    @media (max-width: 480px) { body { padding: 1.5rem 1rem; } .grid { grid-template-columns: repeat(2, 1fr); } }
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--bg:#0B0C10;--aurora-1:#8E2DE2;--aurora-3:#00C9FF;--success:#00FF87;--danger:#FF0055;--warning:#FFD700}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:#F8FAFC;min-height:100vh;text-align:center;padding:2rem 1.5rem;background-image:radial-gradient(circle at 20% 20%,rgba(142,45,226,0.08),transparent 40%),radial-gradient(circle at 80% 80%,rgba(0,201,255,0.08),transparent 40%)}
+    .logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--aurora-1),var(--aurora-3));display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:24px;color:white;margin:0 auto 1.25rem;box-shadow:0 0 40px rgba(142,45,226,0.3)}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:999px;background:rgba(0,255,135,0.1);border:1px solid rgba(0,255,135,0.3);color:var(--success);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:1.5rem}
+    h1{font-family:'Playfair Display',serif;font-size:clamp(1.5rem,5vw,2.8rem);line-height:1.3;margin-bottom:1rem}
+    h1 span{background:linear-gradient(135deg,var(--aurora-1),var(--aurora-3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    p.sub{color:#94A3B8;font-size:clamp(0.85rem,2vw,1.05rem);max-width:520px;line-height:1.7;margin:0 auto 2rem}
+    .btn-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:2rem}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:14px;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1px;text-decoration:none;transition:all .3s ease;cursor:pointer;border:none}
+    .btn-primary{background:linear-gradient(135deg,var(--aurora-1),var(--aurora-3));color:white;box-shadow:0 0 30px rgba(142,45,226,0.3)}
+    .btn-primary:hover{transform:scale(1.05);box-shadow:0 0 50px rgba(142,45,226,0.5)}
+    .btn-outline{border:1px solid rgba(255,255,255,0.2);color:white;background:transparent}
+    .btn-outline:hover{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.4);transform:scale(1.02)}
+    .btn-download{border:1px solid rgba(0,255,135,0.3);color:var(--success);background:rgba(0,255,135,0.05);margin:0 auto 0.5rem}
+    .btn-download:hover{background:rgba(0,255,135,0.1);border-color:var(--success)}
+    .section{border-top:1px solid rgba(255,255,255,0.06);padding-top:2.5rem;margin-top:2.5rem}
+    .section h2{font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:0.5rem}
+    .section p{color:#94A3B8;font-size:0.85rem;max-width:480px;margin:0 auto 1.5rem}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;max-width:600px;width:100%;margin:0 auto}
+    .card{padding:14px 12px;border-radius:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);font-size:10px;color:#94A3B8;line-height:1.5;text-align:center}
+    .card strong{color:white;display:block;margin-bottom:3px;font-size:11px}
+    .pricing{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;max-width:600px;margin:0 auto}
+    .plan{padding:20px 16px;border-radius:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);text-align:center}
+    .plan.featured{border-color:var(--aurora-1);background:rgba(142,45,226,0.08);box-shadow:0 0 30px rgba(142,45,226,0.1)}
+    .plan h3{font-size:13px;color:white;margin-bottom:4px}
+    .plan .price{font-size:22px;font-weight:800;color:white;margin:6px 0}
+    .plan .price small{font-size:10px;color:#94A3B8;font-weight:400}
+    .plan ul{list-style:none;font-size:10px;color:#94A3B8;line-height:2;margin-top:10px}
+    .plan ul li::before{content:'✓ ';color:var(--success)}
+    .plan .btn{margin-top:12px;padding:10px 20px;font-size:10px}
+    .tagline{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;font-size:11px;color:#666;margin-bottom:2rem}
+    .tagline span{display:flex;align-items:center;gap:4px}
+    .tagline span::before{content:'✓';color:var(--success);font-weight:bold}
+    .app-link{display:inline-flex;align-items:center;gap:8px;padding:16px 32px;border-radius:16px;background:linear-gradient(135deg,var(--aurora-1),var(--aurora-3));color:white;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1px;text-decoration:none;box-shadow:0 0 40px rgba(142,45,226,0.4);transition:all .3s ease;margin-bottom:1.5rem}
+    .app-link:hover{transform:scale(1.05);box-shadow:0 0 60px rgba(142,45,226,0.6)}
+    footer{font-size:9px;color:#333;margin-top:2rem}
+    @media(max-width:480px){body{padding:1.5rem 1rem}.grid{grid-template-columns:repeat(2,1fr)}.pricing{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
   <div class="logo">SP</div>
-  <div class="badge">✦ All-in-One HR & Payroll — Indonesia</div>
+  <div class="badge">&#10022; All-in-One HR & Payroll — Indonesia</div>
   <h1>Kelola Karyawan,<br />Payroll & Pajak dari <span>Satu Aplikasi</span></h1>
-  <p>Absensi GPS + Face Camera, payroll otomatis, BPJS, PPh 21, THR, pinjaman — semua terintegrasi. <strong style="color:white">Setup 15 menit, gratis 30 hari.</strong></p>
+  <p class="sub">Absensi GPS + Face Camera, payroll otomatis, BPJS, PPh 21, THR, pinjaman — semua terintegrasi. <strong style="color:white">Setup 15 menit, gratis 30 hari.</strong></p>
 
   <div class="btn-row">
-    <a href="#/" class="btn btn-primary">🚀 Buka Aplikasi</a>
-    <a href="#/" class="btn btn-outline">📱 Buka di HP</a>
-  </div>
-  <p style="font-size:11px; color:#666; margin-bottom:8px;">Atau download APK langsung:</p>
-  <div class="btn-row" style="margin-bottom:0.5rem;">
-    <a href="https://sipresensi.com/app-release.apk" class="btn btn-outline" style="font-size:10px; padding:10px 20px;">📲 Download APK Android</a>
+    <a href="./#/" class="btn btn-primary">Buka Aplikasi</a>
+    <a href="./#/login" class="btn btn-outline">Masuk</a>
   </div>
 
   <div class="tagline">
@@ -114,15 +75,54 @@
   </div>
 
   <div class="grid">
-    <div class="card"><strong>📸 Face Camera</strong>Anti-fake real-time</div>
-    <div class="card"><strong>📍 GPS Geofencing</strong>Absen di lokasi</div>
-    <div class="card"><strong>💰 Payroll Otomatis</strong>1 klik — 15 menit</div>
-    <div class="card"><strong>📋 PPh 21 &amp; BPJS</strong>Patuh regulasi</div>
-    <div class="card"><strong>📱 Slip Digital</strong>Download/print</div>
-    <div class="card"><strong>🔐 Device Binding</strong>Anti titip absen</div>
+    <div class="card"><strong>Face Camera</strong>Anti-fake real-time</div>
+    <div class="card"><strong>GPS Geofencing</strong>Absen di lokasi</div>
+    <div class="card"><strong>Payroll Otomatis</strong>1 klik — 15 menit</div>
+    <div class="card"><strong>PPh 21 & BPJS</strong>Patuh regulasi</div>
+    <div class="card"><strong>Slip Digital</strong>Download/print</div>
+    <div class="card"><strong>Device Binding</strong>Anti titip absen</div>
+    <div class="card"><strong>Multi-Level Approval</strong>Izin/cuti/tugas</div>
+    <div class="card"><strong>Shift Scheduler</strong>Auto rotasi</div>
+    <div class="card"><strong>Helpdesk</strong>Tracking tiket</div>
+    <div class="card"><strong>Security Patrol</strong>QR patroli</div>
+    <div class="card"><strong>Pinjaman</strong>Pengajuan online</div>
+    <div class="card"><strong>Lembur</strong>Hitung otomatis</div>
   </div>
 
-  <a href="#/" class="app-link">🔥 Mulai Gratis Sekarang</a>
+  <div class="section">
+    <h2>Pilih Paket</h2>
+    <p>Untuk perusahaan Indonesia — dari UKM hingga enterprise</p>
+    <div class="pricing">
+      <div class="plan">
+        <h3>Bronze</h3>
+        <div class="price">Gratis <small>/bulan</small></div>
+        <div style="font-size:10px;color:var(--success);font-weight:600">SELAMANYA</div>
+        <ul><li>10 karyawan</li><li>Absensi GPS</li><li>Slip gaji</li></ul>
+        <a href="./#/register" class="btn btn-outline">Daftar</a>
+      </div>
+      <div class="plan featured">
+        <h3>Gold</h3>
+        <div class="price">Rp10rb <small>/karyawan/bulan</small></div>
+        <div style="font-size:10px;color:var(--aurora-3);font-weight:600">PALING LARIS</div>
+        <ul><li>Payroll otomatis</li><li>BPJS + PPh 21</li><li>Shift scheduler</li></ul>
+        <a href="./#/register" class="btn btn-primary">Mulai</a>
+      </div>
+      <div class="plan">
+        <h3>Platinum</h3>
+        <div class="price">Rp7rb <small>/karyawan/bulan</small></div>
+        <div style="font-size:10px;color:var(--warning);font-weight:600">HEMAT BESAR</div>
+        <ul><li>Min 100 karyawan</li><li>Payroll + pajak</li><li>Dedicated support</li></ul>
+        <a href="./#/register" class="btn btn-outline">Hubungi</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <p style="font-size:11px;color:#666;margin-bottom:10px;">Download APK Android untuk instalasi langsung:</p>
+    <a href="https://sipresensi.com/app-release.apk" class="btn btn-download" style="display:inline-flex;margin-bottom:1rem;">Download APK Android</a>
+    <br />
+    <a href="./#/login" class="app-link">Mulai Gratis Sekarang</a>
+  </div>
 
   <footer>SI PRESENSI PRO MAX — By Richard Meha</footer>
 </body>

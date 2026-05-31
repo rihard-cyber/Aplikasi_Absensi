@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import { safeGet } from '../../../utils/safeAccess';
 import {
   Zap, CalendarDays, Users, RefreshCw, CheckCircle2, X, ChevronDown,
   Play, AlertCircle, Settings2, Repeat, ArrowRight, Loader2, Info, Shuffle
@@ -34,6 +36,7 @@ const dateRange = (startDate, days) => {
 const AutoShift = () => {
   const toast = useToast();
   const confirm = useConfirm();
+  const { t } = useTranslation();
 
   // Data
   const [tenantId, setTenantId] = useState(null);
@@ -141,10 +144,10 @@ const AutoShift = () => {
             shiftId = fixedShiftId;
           } else if (pattern === 'REPEATING') {
             // Cycle through the repeatingShifts array by day index
-            shiftId = repeatingShifts[dateIdx % repeatingShifts.length];
+            shiftId = safeGet(repeatingShifts, dateIdx % repeatingShifts.length);
           } else if (pattern === 'ROTATING') {
             // Each employee gets a different shift, rotating by empIdx + dateIdx
-            const assignment = rotatingAssignments[empIdx % rotatingAssignments.length];
+            const assignment = safeGet(rotatingAssignments, empIdx % rotatingAssignments.length);
             shiftId = assignment?.shiftId || fixedShiftId;
           }
 
@@ -319,8 +322,8 @@ const AutoShift = () => {
                   <select
                     value={selectedDivision}
                     onChange={e => setSelectedDivision(e.target.value)}
-                    className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]"
-                  >
+                    
+                   className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                     <option value="">-- Pilih Divisi --</option>
                     {divisions.map(d => <option key={d.id} value={d.id} className="bg-[#0B0C10]">{d.name}</option>)}
                   </select>
@@ -356,24 +359,24 @@ const AutoShift = () => {
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] text-gray-500 uppercase tracking-widest font-bold block mb-1.5">Mulai Dari</label>
+                <label className="text-[10px] text-gray-500 uppercase tracking-widest font-bold block mb-1.5">{t('autoShift.startFrom')}</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={e => setStartDate(e.target.value)}
-                  className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-[var(--aurora-1)]"
-                />
+                  
+                 className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               <div>
-                <label className="text-[10px] text-gray-500 uppercase tracking-widest font-bold block mb-1.5">Durasi (Hari)</label>
+                <label className="text-[10px] text-gray-500 uppercase tracking-widest font-bold block mb-1.5">{t('autoShift.duration')}</label>
                 <input
                   type="number"
                   value={durationDays}
                   min={1}
                   max={365}
                   onChange={e => setDurationDays(Math.max(1, Math.min(365, parseInt(e.target.value) || 1)))}
-                  className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm outline-none focus:border-[var(--aurora-1)]"
-                />
+                  
+                 className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
             </div>
             <div className="flex gap-2">
@@ -388,7 +391,7 @@ const AutoShift = () => {
               ))}
             </div>
             <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
-              <p className="text-xs text-white font-medium">Skip Sabtu & Minggu</p>
+              <p className="text-xs text-white font-medium">{t('autoShift.skipWeekend')}</p>
               <button
                 onClick={() => setSkipWeekends(!skipWeekends)}
                 className={`w-10 h-5 rounded-full transition-all relative ${skipWeekends ? 'bg-[var(--aurora-3)]' : 'bg-gray-700'}`}
@@ -401,8 +404,8 @@ const AutoShift = () => {
           {/* 3. Overwrite */}
           <div className="flex items-center justify-between p-4 glass-panel border border-white/5 rounded-2xl">
             <div>
-              <p className="text-sm font-bold text-white">Timpa Jadwal Existing</p>
-              <p className="text-[9px] text-gray-500 mt-0.5">Jika OFF, jadwal yang sudah ada akan dilewati</p>
+              <p className="text-sm font-bold text-white">{t('autoShift.overwriteExisting')}</p>
+              <p className="text-[9px] text-gray-500 mt-0.5">{t('autoShift.overwriteNote')}</p>
             </div>
             <button
               onClick={() => setOverwrite(!overwrite)}
@@ -444,12 +447,12 @@ const AutoShift = () => {
             {/* FIXED */}
             {pattern === 'FIXED' && (
               <div>
-                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">Shift Tetap</label>
+                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">{t('autoShift.fixedShift')}</label>
                 <select
                   value={fixedShiftId}
                   onChange={e => setFixedShiftId(e.target.value)}
-                  className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-1)]"
-                >
+                  
+                 className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                   {shifts.map(s => (
                     <option key={s.id} value={s.id} className="bg-[#0B0C10]">
                       [{s.shift_code}] {s.shift_name} {s.time_in ? `(${s.time_in.slice(0, 5)} - ${s.time_out.slice(0, 5)})` : '(OFF)'}
@@ -463,23 +466,23 @@ const AutoShift = () => {
             {pattern === 'REPEATING' && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Urutan Shift (Hari 1, 2, 3 ...)</label>
+                  <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">{t('autoShift.shiftOrder')}</label>
                   <button onClick={addRepeatingShift} className="text-[10px] text-[var(--aurora-3)] font-bold flex items-center gap-1 hover:text-white transition-colors">
                     + Tambah Hari
                   </button>
                 </div>
                 {repeatingShifts.map((sId, idx) => (
                   <div key={idx} className="flex items-center gap-2">
-                    <span className="text-[10px] text-gray-500 w-16 font-mono">Hari {(idx % 7) + 1} {DAYS_ID[(idx) % 7]}:</span>
+                    <span className="text-[10px] text-gray-500 w-16 font-mono">{t('autoShift.day')}{(idx % 7) + 1} {safeGet(DAYS_ID, (idx) % 7)}:</span>
                     <select
                       value={sId}
                       onChange={e => {
                         const updated = [...repeatingShifts];
-                        updated[idx] = e.target.value;
+                        updated.splice(idx, 1, e.target.value);
                         setRepeatingShifts(updated);
                       }}
-                      className="flex-1 bg-[#0B0C10] border border-white/10 rounded-lg px-3 py-2 text-white text-xs outline-none focus:border-[var(--aurora-3)]"
-                    >
+                      
+                     className="flex-1 bg-[#0B0C10] border border-white/20 rounded-lg px-3 py-2 text-white text-xs outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                       {shifts.map(s => <option key={s.id} value={s.id} className="bg-[#0B0C10]">[{s.shift_code}] {s.shift_name}</option>)}
                     </select>
                     {repeatingShifts.length > 1 && (
@@ -500,11 +503,11 @@ const AutoShift = () => {
             {pattern === 'ROTATING' && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Assign Shift per Karyawan</label>
+                  <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">{t('autoShift.assignPerEmployee')}</label>
                   <button
                     onClick={() => {
                       const emps = getTargetEmployees();
-                      setRotatingAssignments(emps.map((e, i) => ({ empId: e.id, empName: e.full_name, shiftId: shifts[i % shifts.length]?.id })));
+                      setRotatingAssignments(emps.map((e, i) => ({ empId: e.id, empName: e.full_name, shiftId: safeGet(shifts, i % shifts.length)?.id })));
                     }}
                     className="text-[10px] text-[var(--aurora-3)] font-bold hover:text-white transition-colors flex items-center gap-1"
                   >
@@ -513,7 +516,7 @@ const AutoShift = () => {
                 </div>
                 {rotatingAssignments.length === 0 && (
                   <div className="p-4 bg-white/3 rounded-xl border border-white/5 text-center">
-                    <p className="text-xs text-gray-500">Klik "Auto-distribute" untuk assign shift otomatis ke setiap karyawan</p>
+                    <p className="text-xs text-gray-500">{t('autoShift.autoDistributeNote')}</p>
                   </div>
                 )}
                 <div className="max-h-48 overflow-y-auto space-y-2 custom-scrollbar">
@@ -525,11 +528,11 @@ const AutoShift = () => {
                         value={a.shiftId || ''}
                         onChange={e => {
                           const updated = [...rotatingAssignments];
-                          updated[idx] = { ...updated[idx], shiftId: e.target.value };
+                          updated.splice(idx, 1, { ...safeGet(updated, idx), shiftId: e.target.value });
                           setRotatingAssignments(updated);
                         }}
-                        className="bg-[#0B0C10] border border-white/10 rounded-lg px-2 py-1.5 text-white text-xs outline-none focus:border-[var(--aurora-3)]"
-                      >
+                        
+                       className="bg-[#0B0C10] border border-white/20 rounded-lg px-2 py-1.5 text-white text-xs outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                         {shifts.map(s => <option key={s.id} value={s.id} className="bg-[#0B0C10]">[{s.shift_code}] {s.shift_name}</option>)}
                       </select>
                     </div>
@@ -566,7 +569,7 @@ const AutoShift = () => {
           {shifts.length === 0 && (
             <div className="flex items-center gap-2 p-3 bg-[var(--warning)]/10 border border-[var(--warning)]/20 rounded-xl">
               <AlertCircle size={14} className="text-[var(--warning)] flex-shrink-0" />
-              <p className="text-[10px] text-[var(--warning)]">Belum ada master shift. Buat shift terlebih dahulu di menu Kamus Shift.</p>
+              <p className="text-[10px] text-[var(--warning)]">{t('autoShift.noMasterShift')}</p>
             </div>
           )}
         </div>
@@ -590,7 +593,7 @@ const AutoShift = () => {
               {/* Preview Header */}
               <div className="p-6 border-b border-white/10 flex items-center justify-between flex-shrink-0">
                 <div>
-                  <h3 className="text-lg font-bold text-white">Preview Jadwal</h3>
+                  <h3 className="text-lg font-bold text-white">{t('autoShift.previewSchedule')}</h3>
                   <p className="text-xs text-gray-400 mt-0.5">{preview.length} baris akan disimpan</p>
                 </div>
                 <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-all">
@@ -613,7 +616,7 @@ const AutoShift = () => {
                       <tr key={i} className="hover:bg-white/3 transition-colors">
                         <td className="p-3 font-medium text-white truncate max-w-[120px]">{row.empName}</td>
                         <td className="p-3 font-mono text-gray-300">{row.date}</td>
-                        <td className="p-3 text-gray-400">{DAYS_ID[new Date(row.date + 'T00:00:00').getDay()]}</td>
+                        <td className="p-3 text-gray-400">{safeGet(DAYS_ID, new Date(row.date + 'T00:00:00').getDay())}</td>
                         <td className="p-3">
                           <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold"
                             style={{ background: `${['#8E2DE2', '#00C9FF', '#FFD700', '#FF0055'][i % 4]}20`, color: ['#8E2DE2', '#00C9FF', '#FFD700', '#FF0055'][i % 4] }}>

@@ -172,7 +172,7 @@ const ShiftSwapRequest = ({ onBack }) => {
           <div className="space-y-4">
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Pilih Kolega')}</label>
-              <select value={selectedColleague} onChange={e => handleColleagueSelect(e.target.value)} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)]">
+              <select value={selectedColleague} onChange={e => handleColleagueSelect(e.target.value)}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                 <option value="">— Pilih —</option>
                 {colleagues.map(c => <option key={c.id} value={c.id}>{c.full_name} ({c.nip})</option>)}
               </select>
@@ -190,7 +190,7 @@ const ShiftSwapRequest = ({ onBack }) => {
             )}
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Alasan')}</label>
-              <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)] resize-none" placeholder="Alasan pertukaran shift..." />
+              <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2}  placeholder="Alasan pertukaran shift..."  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none resize-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <button onClick={submitSwap} disabled={submitting || !selectedColleague}
               className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50">

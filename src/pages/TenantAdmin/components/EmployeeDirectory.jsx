@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Search, Phone, Mail, MapPin, ChevronRight } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
@@ -13,6 +14,7 @@ const EmployeeDirectory = () => {
   const [filterDivision, setFilterDivision] = useState('all');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const toast = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => { fetchData(); }, []);
 
@@ -64,21 +66,21 @@ const EmployeeDirectory = () => {
   return (
     <div className="glass-panel p-8">
       <div className="border-b border-white/10 pb-6 mb-8">
-        <h2 className="text-2xl font-serif font-bold text-white">Direktori Karyawan</h2>
-        <p className="text-sm text-gray-400 mt-1">{employees.length} karyawan terdaftar</p>
+        <h2 className="text-2xl font-serif font-bold text-white">{t('directory.title')}</h2>
+        <p className="text-sm text-gray-400 mt-1">{t('directory.summary', '{{count}} karyawan terdaftar', { count: employees.length })}</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama, NIP, posisi, email..." className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('directory.searchPlaceholder', 'Cari nama, NIP, posisi, email...')}   className="w-full bg-white/5 border border-white/20 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
         </div>
-        <select value={filterProject} onChange={e => { setFilterProject(e.target.value); setFilterDivision('all'); }} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none min-w-[150px]">
-          <option value="all">Semua Proyek</option>
+        <select value={filterProject} onChange={e => { setFilterProject(e.target.value); setFilterDivision('all'); }}  className="bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none min-w-[150px] transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+          <option value="all">{t('directory.allProjects', 'Semua Proyek')}</option>
           {projects.map(p => <option key={p.id} value={p.id}>{p.code ? `[${p.code}] ` : ''}{p.name}</option>)}
         </select>
-        <select value={filterDivision} onChange={e => setFilterDivision(e.target.value)} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none min-w-[150px]">
-          <option value="all">Semua Divisi</option>
+        <select value={filterDivision} onChange={e => setFilterDivision(e.target.value)}  className="bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none min-w-[150px] transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+          <option value="all">{t('directory.allDivisions', 'Semua Divisi')}</option>
           {filteredDivisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
       </div>
@@ -132,7 +134,7 @@ const EmployeeDirectory = () => {
           </motion.div>
         ))}
       </div>
-      {!filtered.length && <p className="text-center text-gray-500 py-12 text-sm">Tidak ada karyawan ditemukan</p>}
+      {!filtered.length && <p className="text-center text-gray-500 py-12 text-sm">{t('directory.noEmployees', 'Tidak ada karyawan ditemukan')}</p>}
     </div>
   );
 };

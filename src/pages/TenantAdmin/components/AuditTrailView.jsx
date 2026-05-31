@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, ShieldCheck } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../utils/supabaseClient';
 import LoadingSkeleton from '../../../components/LoadingSkeleton';
 
@@ -28,6 +29,7 @@ const AuditTrailView = () => {
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const { t } = useTranslation();
 
   const fetchLogs = useCallback(async () => {
     setIsLoading(true);
@@ -56,15 +58,15 @@ const AuditTrailView = () => {
           .select('id, full_name, nip')
           .in('id', userIds);
 
-        const userMap = {};
+        const userMap = new Map();
         if (users) users.forEach(u => {
-          userMap[u.id] = u.full_name + (u.nip ? ` (NIP: ${u.nip})` : '');
+          userMap.set(u.id, u.full_name + (u.nip ? ` (NIP: ${u.nip})` : ''));
         });
 
         const formatted = data.map(l => ({
           id: l.id?.substring(0, 8) || '-',
           date: formatDate(l.created_at),
-          user: userMap[l.user_id] || 'Sistem',
+          user: userMap.get(l.user_id) || 'Sistem',
           action: l.action || 'UNKNOWN',
           details: l.details || '-'
         }));
@@ -96,9 +98,9 @@ const AuditTrailView = () => {
       <div className="border-b border-white/10 pb-6 mb-8 flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-serif font-bold text-white flex items-center gap-3 tracking-wide">
-            <ShieldCheck size={28} className="text-[var(--aurora-3)] drop-shadow-[0_0_10px_rgba(0,201,255,0.8)]" /> Jejak Audit Sistem
+            <ShieldCheck size={28} className="text-[var(--aurora-3)] drop-shadow-[0_0_10px_rgba(0,201,255,0.8)]" /> {t('audit.title')}
           </h2>
-          <p className="text-sm text-gray-400 mt-2 font-sans tracking-wide">Catatan permanen dari modifikasi data penting.</p>
+          <p className="text-sm text-gray-400 mt-2 font-sans tracking-wide">{t('audit.description')}</p>
         </div>
       </div>
 
@@ -109,12 +111,12 @@ const AuditTrailView = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari berdasarkan Pengguna, Aksi, atau Detail..."
-            className="w-full pl-12 pr-4 py-3 bg-[#1A1C23] border border-white/10 rounded-xl text-white light-bloom-input focus:border-[var(--aurora-3)] outline-none"
-          />
+            placeholder={t('audit.searchPlaceholder')}
+            
+           className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white light-bloom-input outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
         </div>
         <button className="flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-gray-300 hover:bg-white/10 transition-colors">
-          <Filter size={18} className="text-[var(--aurora-1)]" /> Filter Tanggal
+          <Filter size={18} className="text-[var(--aurora-1)]" /> {t('audit.filterDate')}
         </button>
       </div>
 
@@ -122,11 +124,11 @@ const AuditTrailView = () => {
         <table className="w-full text-left text-sm">
           <thead className="bg-white/5 text-gray-400 border-b border-white/10 uppercase tracking-widest text-xs">
             <tr>
-              <th className="p-5 font-semibold">Log ID</th>
-              <th className="p-5 font-semibold">Stempel Waktu</th>
-              <th className="p-5 font-semibold">Aktor</th>
-              <th className="p-5 font-semibold">Aksi</th>
-              <th className="p-5 font-semibold">Detail</th>
+              <th className="p-5 font-semibold">{t('audit.logId')}</th>
+              <th className="p-5 font-semibold">{t('audit.timestamp')}</th>
+              <th className="p-5 font-semibold">{t('audit.actor')}</th>
+              <th className="p-5 font-semibold">{t('audit.action')}</th>
+              <th className="p-5 font-semibold">{t('audit.details')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
@@ -139,7 +141,7 @@ const AuditTrailView = () => {
             ) : filteredLogs.length === 0 ? (
               <tr>
                 <td colSpan={5} className="p-10 text-center text-gray-500">
-                  {searchQuery ? 'Tidak ada hasil yang cocok.' : 'Belum ada data audit.'}
+                  {searchQuery ? t('audit.noMatch') : t('audit.noData')}
                 </td>
               </tr>
             ) : (

@@ -186,7 +186,7 @@ const PatrolScan = ({ onBack }) => {
   const totalRouteCps = routeCheckpoints.length;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6 pb-8">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full flex flex-col gap-6 pb-8">
       <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors w-fit"><ArrowLeft size={18} /> Kembali</button>
 
       {/* Route Progress */}
@@ -234,7 +234,7 @@ const PatrolScan = ({ onBack }) => {
               <input value={manualCode} onChange={e => setManualCode(e.target.value)}
                 placeholder="Tempel kode QR checkpoint..."
                 onKeyDown={e => e.key === 'Enter' && handleScan()}
-                className="flex-1 bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+                  className="flex-1 bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               <button onClick={() => handleScan()} disabled={status === 'scanning'}
                 className="px-5 py-3 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs disabled:opacity-50 flex items-center gap-1">
                 {status === 'scanning' ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />} Scan
@@ -301,7 +301,7 @@ const PatrolScan = ({ onBack }) => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Jenis Insiden')}</label>
-                  <input value={incidentForm.incident_type} onChange={e => setIncidentForm({...incidentForm, incident_type: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Misal: Kebakaran kecil, Pintu rusak" />
+                  <input value={incidentForm.incident_type} onChange={e => setIncidentForm({...incidentForm, incident_type: e.target.value})}  placeholder="Misal: Kebakaran kecil, Pintu rusak"  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
                   <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Severity')}</label>
@@ -314,7 +314,7 @@ const PatrolScan = ({ onBack }) => {
                 </div>
                 <div>
                   <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Deskripsi')}</label>
-                  <textarea value={incidentForm.description} onChange={e => setIncidentForm({...incidentForm, description: e.target.value})} rows={3} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none resize-none" placeholder="Jelaskan detail insiden..." />
+                  <textarea value={incidentForm.description} onChange={e => setIncidentForm({...incidentForm, description: e.target.value})} rows={3}  placeholder="Jelaskan detail insiden..."  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none resize-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
                   <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Foto (opsional)')}</label>
@@ -346,14 +346,14 @@ const PatrolScan = ({ onBack }) => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Petugas Pengganti')}</label>
-                  <select value={handoverForm.to_profile_id} onChange={e => setHandoverForm({...handoverForm, to_profile_id: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+                  <select value={handoverForm.to_profile_id} onChange={e => setHandoverForm({...handoverForm, to_profile_id: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                     <option value="">{t('Pilih petugas')}</option>
                     {guards.map(g => <option key={g.id} value={g.id}>{g.full_name} ({g.nip || '—'})</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Catatan (opsional)')}</label>
-                  <textarea value={handoverForm.notes} onChange={e => setHandoverForm({...handoverForm, notes: e.target.value})} rows={3} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none resize-none" placeholder="Catatan penting untuk petugas selanjutnya..." />
+                  <textarea value={handoverForm.notes} onChange={e => setHandoverForm({...handoverForm, notes: e.target.value})} rows={3}  placeholder="Catatan penting untuk petugas selanjutnya..."  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none resize-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div className="flex gap-2 pt-2">
                   <button onClick={submitHandover} disabled={submitting} className="flex-1 py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs flex items-center justify-center gap-2 disabled:opacity-50">

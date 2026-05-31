@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Plus, Save, X, Edit3, Package, AlertTriangle, Barcode, DollarSign, MapPin, TrendingUp, Box, ArrowUpDown, Loader2 } from 'lucide-react';
+import { Search, Plus, Save, X, Edit3, Package, AlertTriangle, Barcode, DollarSign, MapPin, TrendingUp, ArrowUpDown, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { logAudit } from '../../../utils/auditLogger';
 
 const TABS = [
-  { key: 'items', label: 'Items', icon: <Package size={14} /> },
-  { key: 'transactions', label: 'Transaksi', icon: <ArrowUpDown size={14} /> },
+  { key: 'items', labelKey: 'inventory.itemsTab', icon: <Package size={14} /> },
+  { key: 'transactions', labelKey: 'inventory.transactionsTab', icon: <ArrowUpDown size={14} /> },
 ];
 
 const CATEGORIES = [
@@ -15,6 +16,7 @@ const CATEGORIES = [
 ];
 
 const InventoryManagement = () => {
+  const { t } = useTranslation();
   const [tab, setTab] = useState('items');
   const [items, setItems] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -61,15 +63,15 @@ const InventoryManagement = () => {
   };
 
   const handleSave = async () => {
-    if (!form.name) { toast('Nama item wajib', 'error'); return; }
+    if (!form.name) { toast(t('inventory.requiredName'), 'error'); return; }
     try {
       const payload = { ...form, tenant_id: tenantId, quantity: Number(form.quantity), min_stock: Number(form.min_stock), price: form.price ? Number(form.price) : null };
       if (editingId) {
         await supabase.from('inventory_items').update(payload).eq('id', editingId);
-        toast('Item diperbarui', 'success');
+        toast(t('inventory.itemUpdated'), 'success');
       } else {
         await supabase.from('inventory_items').insert(payload);
-        toast('Item ditambahkan', 'success');
+        toast(t('inventory.itemAdded'), 'success');
       }
       logAudit(editingId ? 'UPDATE_INVENTORY_ITEM' : 'ADD_INVENTORY_ITEM', { name: form.name });
       setShowForm(false);
@@ -78,7 +80,7 @@ const InventoryManagement = () => {
   };
 
   const handleTxSubmit = async () => {
-    if (!txForm.item_id || !txForm.quantity) { toast('Lengkapi transaksi', 'error'); return; }
+    if (!txForm.item_id || !txForm.quantity) { toast(t('inventory.completeTx'), 'error'); return; }
     try {
       const qty = txForm.type === 'out' ? -Math.abs(Number(txForm.quantity)) : Math.abs(Number(txForm.quantity));
       await supabase.from('inventory_transactions').insert({
@@ -90,7 +92,7 @@ const InventoryManagement = () => {
         const newQty = (item.quantity || 0) + (txForm.type === 'in' ? Math.abs(Number(txForm.quantity)) : -Math.abs(Number(txForm.quantity)));
         await supabase.from('inventory_items').update({ quantity: Math.max(0, newQty) }).eq('id', txForm.item_id);
       }
-      toast('Transaksi dicatat', 'success');
+      toast(t('inventory.txRecorded'), 'success');
       setShowTxForm(false);
       setTxForm({ item_id: '', type: 'in', quantity: 1, reference: '', notes: '' });
       fetchData();
@@ -107,18 +109,18 @@ const InventoryManagement = () => {
     i.location?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const filteredTx = transactions.filter(t =>
-    t.inventory_items?.name?.toLowerCase().includes(search.toLowerCase()) ||
-    t.inventory_items?.sku?.toLowerCase().includes(search.toLowerCase()) ||
-    t.reference?.toLowerCase().includes(search.toLowerCase())
+  const filteredTx = transactions.filter(tx =>
+    tx.inventory_items?.name?.toLowerCase().includes(search.toLowerCase()) ||
+    tx.inventory_items?.sku?.toLowerCase().includes(search.toLowerCase()) ||
+    tx.reference?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-8">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Manajemen Inventori</h2>
-          <p className="text-sm text-gray-400 mt-1">{totalItems} item • Rp{Math.round(totalValue).toLocaleString()} total nilai • {lowStockCount} low stock</p>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('inventory.title')}</h2>
+          <p className="text-sm text-gray-400 mt-1">{t('inventory.summary', { count: totalItems, val: Math.round(totalValue).toLocaleString(), low: lowStockCount })}</p>
         </div>
       </div>
 
@@ -126,91 +128,91 @@ const InventoryManagement = () => {
         <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
           <Package size={18} className="text-[var(--aurora-3)] mb-2" />
           <p className="text-2xl font-bold text-white font-mono">{totalItems}</p>
-          <p className="text-[9px] text-gray-500 uppercase tracking-widest">Total Item</p>
+          <p className="text-[9px] text-gray-500 uppercase tracking-widest">{t('inventory.totalItem')}</p>
         </div>
         <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
           <DollarSign size={18} className="text-[var(--success)] mb-2" />
-          <p className="text-2xl font-bold text-white font-mono">Rp{Math.round(totalValue / 1000)}k</p>
-          <p className="text-[9px] text-gray-500 uppercase tracking-widest">Total Nilai</p>
+          <p className="text-2xl font-bold text-white font-mono">{t('bankExport.currencySymbol')}{Math.round(totalValue / 1000)}k</p>
+          <p className="text-[9px] text-gray-500 uppercase tracking-widest">{t('inventory.totalValue')}</p>
         </div>
         <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
           <AlertTriangle size={18} className={`mb-2 ${lowStockCount > 0 ? 'text-[var(--warning)]' : 'text-gray-500'}`} />
           <p className="text-2xl font-bold text-white font-mono">{lowStockCount}</p>
-          <p className="text-[9px] text-gray-500 uppercase tracking-widest">Low Stock</p>
+          <p className="text-[9px] text-gray-500 uppercase tracking-widest">{t('inventory.lowStock')}</p>
         </div>
       </div>
 
       <div className="flex gap-2 mb-6 flex-wrap">
-        {TABS.map(t => (
-          <button key={t.key} onClick={() => { setTab(t.key); setSearch(''); }}
-            className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all flex items-center gap-2 ${tab === t.key ? 'bg-white/10 border-[var(--aurora-3)]/30 text-white' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>
-            {t.icon} {t.label}
+        {TABS.map(tabItem => (
+          <button key={tabItem.key} onClick={() => { setTab(tabItem.key); setSearch(''); }}
+            className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all flex items-center gap-2 ${tab === tabItem.key ? 'bg-white/10 border-[var(--aurora-3)]/30 text-white' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}>
+            {tabItem.icon} {t(tabItem.labelKey)}
           </button>
         ))}
       </div>
 
       <div className="relative mb-6">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari item, SKU, lokasi..." className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('inventory.searchPlaceholder')} className="w-full bg-white/5 border border-white/20 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
       </div>
 
       {tab === 'items' && (
         <>
-          <button onClick={openNew} className="mb-6 px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2"><Plus size={16} /> Tambah Item</button>
+          <button onClick={openNew} className="mb-6 px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2"><Plus size={16} /> {t('inventory.addItem')}</button>
 
           {showForm && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-6 bg-white/5 rounded-2xl border border-white/10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Nama Item</label>
-                  <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Kertas A4" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.itemName')}</label>
+                  <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Kertas A4" className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">SKU</label>
-                  <input value={form.sku} onChange={e => setForm({...form, sku: e.target.value.toUpperCase()})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="KRT-A4-001" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.sku')}</label>
+                  <input value={form.sku} onChange={e => setForm({...form, sku: e.target.value.toUpperCase()})} placeholder="KRT-A4-001" className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Kategori</label>
-                  <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.category')}</label>
+                  <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                    {CATEGORIES.map(c => <option key={c} value={c}>{t('inventory.categories.' + c)}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Quantity</label>
-                  <input type="number" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.quantity')}</label>
+                  <input type="number" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Min. Stock</label>
-                  <input type="number" value={form.min_stock} onChange={e => setForm({...form, min_stock: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.minStock')}</label>
+                  <input type="number" value={form.min_stock} onChange={e => setForm({...form, min_stock: e.target.value})} className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Unit</label>
-                  <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
-                    <option value="pcs">Pcs</option>
-                    <option value="box">Box</option>
-                    <option value="pack">Pack</option>
-                    <option value="kg">Kg</option>
-                    <option value="liter">Liter</option>
-                    <option value="meter">Meter</option>
-                    <option value="unit">Unit</option>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.unit')}</label>
+                  <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                    <option value="pcs">{t('inventory.units.pcs')}</option>
+                    <option value="box">{t('inventory.units.box')}</option>
+                    <option value="pack">{t('inventory.units.pack')}</option>
+                    <option value="kg">{t('inventory.units.kg')}</option>
+                    <option value="liter">{t('inventory.units.liter')}</option>
+                    <option value="meter">{t('inventory.units.meter')}</option>
+                    <option value="unit">{t('inventory.units.unit')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Lokasi</label>
-                  <input value={form.location} onChange={e => setForm({...form, location: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Gudang A - Rak 3" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.location')}</label>
+                  <input value={form.location} onChange={e => setForm({...form, location: e.target.value})} placeholder="Gudang A - Rak 3" className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Barcode</label>
-                  <input value={form.barcode} onChange={e => setForm({...form, barcode: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="8991234567890" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.barcode')}</label>
+                  <input value={form.barcode} onChange={e => setForm({...form, barcode: e.target.value})} placeholder="8991234567890" className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Harga Satuan (Rp)</label>
-                  <input type="number" value={form.price} onChange={e => setForm({...form, price: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="50000" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.unitPrice')}</label>
+                  <input type="number" value={form.price} onChange={e => setForm({...form, price: e.target.value})} placeholder="50000" className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
               </div>
               <div className="flex gap-3">
-                <button onClick={handleSave} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold flex items-center gap-2"><Save size={14} /> Simpan</button>
-                <button onClick={() => setShowForm(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold"><X size={14} /> Batal</button>
+                <button onClick={handleSave} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold flex items-center gap-2"><Save size={14} /> {t('inventory.save')}</button>
+                <button onClick={() => setShowForm(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold"><X size={14} /> {t('inventory.cancel')}</button>
               </div>
             </motion.div>
           )}
@@ -231,17 +233,17 @@ const InventoryManagement = () => {
                           {item.sku && <span className="text-[9px] font-mono text-gray-500">{item.sku}</span>}
                         </div>
                         <div className="flex items-center gap-3 text-[9px] text-gray-500 mt-0.5 flex-wrap">
-                          {item.category && <span>{item.category}</span>}
+                          {item.category && <span>{t('inventory.categories.' + item.category)}</span>}
                           {item.location && <span className="flex items-center gap-1"><MapPin size={10} /> {item.location}</span>}
                           {item.barcode && <span className="flex items-center gap-1"><Barcode size={10} /> {item.barcode}</span>}
-                          {item.price > 0 && <span>Rp{Number(item.price).toLocaleString()}/{item.unit}</span>}
+                          {item.price > 0 && <span>{t('bankExport.currencySymbol')}{Number(item.price).toLocaleString()}/{t('inventory.units.' + item.unit)}</span>}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <p className={`text-lg font-bold font-mono ${isLow ? 'text-[var(--warning)]' : 'text-white'}`}>{item.quantity || 0}</p>
-                        <p className="text-[9px] text-gray-500">{item.unit} {isLow ? `(min: ${item.min_stock})` : ''}</p>
+                        <p className="text-[9px] text-gray-500">{t('inventory.units.' + item.unit)} {isLow ? `(min: ${item.min_stock})` : ''}</p>
                       </div>
                       <button onClick={() => openEdit(item)} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white"><Edit3 size={12} /></button>
                     </div>
@@ -249,52 +251,52 @@ const InventoryManagement = () => {
                 </div>
               );
             })}
-            {!filteredItems.length && <p className="text-center text-gray-500 py-8 text-sm">Belum ada item inventori</p>}
+            {!filteredItems.length && <p className="text-center text-gray-500 py-8 text-sm">{t('inventory.noItem')}</p>}
           </div>
         </>
       )}
 
       {tab === 'transactions' && (
         <>
-          <button onClick={() => setShowTxForm(true)} className="mb-6 px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2"><Plus size={16} /> Catat Transaksi</button>
+          <button onClick={() => setShowTxForm(true)} className="mb-6 px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2"><Plus size={16} /> {t('inventory.recordTx')}</button>
 
           {showTxForm && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-6 bg-white/5 rounded-2xl border border-white/10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Item</label>
-                  <select value={txForm.item_id} onChange={e => setTxForm({...txForm, item_id: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.item')}</label>
+                  <select value={txForm.item_id} onChange={e => setTxForm({...txForm, item_id: e.target.value})} className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                     <option value="">— Pilih —</option>
-                    {items.map(i => <option key={i.id} value={i.id}>{i.name} ({i.sku || i.category}) - stock: {i.quantity}</option>)}
+                    {items.map(i => <option key={i.id} value={i.id}>{i.name} ({i.sku || t('inventory.categories.' + i.category)}) - stock: {i.quantity}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tipe</label>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.type')}</label>
                   <div className="flex gap-2">
-                    {['in', 'out'].map(t => (
-                      <button key={t} onClick={() => setTxForm({...txForm, type: t})}
-                        className={`flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all ${txForm.type === t ? (t === 'in' ? 'bg-[var(--success)]/10 border-[var(--success)]/30 text-[var(--success)]' : 'bg-[var(--danger)]/10 border-[var(--danger)]/30 text-[var(--danger)]') : 'bg-white/5 border-white/10 text-gray-500'}`}>
-                        {t === 'in' ? 'Stock In' : 'Stock Out'}
+                    {['in', 'out'].map(txType => (
+                      <button key={txType} onClick={() => setTxForm({...txForm, type: txType})}
+                        className={`flex-1 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all ${txForm.type === txType ? (txType === 'in' ? 'bg-[var(--success)]/10 border-[var(--success)]/30 text-[var(--success)]' : 'bg-[var(--danger)]/10 border-[var(--danger)]/30 text-[var(--danger)]') : 'bg-white/5 border-white/10 text-gray-500'}`}>
+                        {txType === 'in' ? t('inventory.stockIn') : t('inventory.stockOut')}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Quantity</label>
-                  <input type="number" value={txForm.quantity} onChange={e => setTxForm({...txForm, quantity: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" min="1" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.quantity')}</label>
+                  <input type="number" value={txForm.quantity} onChange={e => setTxForm({...txForm, quantity: e.target.value})} min="1" className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Referensi</label>
-                  <input value={txForm.reference} onChange={e => setTxForm({...txForm, reference: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="PO-001 / Bon 123" />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.reference')}</label>
+                  <input value={txForm.reference} onChange={e => setTxForm({...txForm, reference: e.target.value})} placeholder="PO-001 / Bon 123" className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Catatan</label>
-                  <input value={txForm.notes} onChange={e => setTxForm({...txForm, notes: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" placeholder="Catatan..." />
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('inventory.notes')}</label>
+                  <input value={txForm.notes} onChange={e => setTxForm({...txForm, notes: e.target.value})} placeholder="Catatan..." className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                 </div>
               </div>
               <div className="flex gap-3">
-                <button onClick={handleTxSubmit} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold flex items-center gap-2"><Save size={14} /> Simpan Transaksi</button>
-                <button onClick={() => setShowTxForm(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold"><X size={14} /> Batal</button>
+                <button onClick={handleTxSubmit} className="px-6 py-3 rounded-xl bg-[var(--success)] text-black text-xs font-bold flex items-center gap-2"><Save size={14} /> {t('inventory.saveTx')}</button>
+                <button onClick={() => setShowTxForm(false)} className="px-6 py-3 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold"><X size={14} /> {t('inventory.cancel')}</button>
               </div>
             </motion.div>
           )}
@@ -310,10 +312,10 @@ const InventoryManagement = () => {
                     <div>
                       <p className="text-sm font-bold text-white">{tx.inventory_items?.name}</p>
                       <div className="flex items-center gap-2 text-[9px] text-gray-500 mt-0.5">
-                        <span className={tx.type === 'in' ? 'text-[var(--success)]' : 'text-[var(--danger)]'}>{tx.type === 'in' ? 'Stock In' : 'Stock Out'}</span>
+                        <span className={tx.type === 'in' ? 'text-[var(--success)]' : 'text-[var(--danger)]'}>{tx.type === 'in' ? t('inventory.stockIn') : t('inventory.stockOut')}</span>
                         <span>•</span>
                         <span>{new Date(tx.created_at).toLocaleDateString()}</span>
-                        {tx.reference && <><span>•</span><span>Ref: {tx.reference}</span></>}
+                        {tx.reference && <><span>•</span><span>{t('inventory.refPrefix')}{tx.reference}</span></>}
                       </div>
                     </div>
                   </div>
@@ -326,7 +328,7 @@ const InventoryManagement = () => {
                 </div>
               </div>
             ))}
-            {!filteredTx.length && <p className="text-center text-gray-500 py-8 text-sm">Belum ada transaksi</p>}
+            {!filteredTx.length && <p className="text-center text-gray-500 py-8 text-sm">{t('inventory.noTx')}</p>}
           </div>
         </>
       )}

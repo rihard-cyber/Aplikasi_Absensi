@@ -317,8 +317,8 @@ const OCRScanner = () => {
               </div>
               <textarea
                 readOnly value={rawText}
-                className="w-full h-40 bg-[#0B0C10] border border-white/10 rounded-xl p-3 text-gray-300 text-[10px] font-mono resize-none outline-none custom-scrollbar"
-              />
+                
+               className="w-full h-40 bg-[#0B0C10] border border-white/20 rounded-xl p-3 text-gray-300 text-[10px] font-mono resize-none outline-none custom-scrollbar placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
           )}
         </div>

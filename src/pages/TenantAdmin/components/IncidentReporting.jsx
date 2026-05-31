@@ -202,13 +202,13 @@ const IncidentReporting = ({ onBack }) => {
       <div className="flex flex-wrap gap-2 mb-6">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('Cari...')} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('Cari...')}   className="w-full bg-white/5 border border-white/20 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
         </div>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-2 text-white text-xs outline-none">
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}  className="bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white text-xs outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
           <option value="ALL">{t('Semua Status')}</option>
           {Array.from(STATUS_STYLES.keys()).map(s => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select value={filterSeverity} onChange={e => setFilterSeverity(e.target.value)} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-2 text-white text-xs outline-none">
+        <select value={filterSeverity} onChange={e => setFilterSeverity(e.target.value)}  className="bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white text-xs outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
           <option value="ALL">{t('Semua Severity')}</option>
           {Array.from(SEVERITY_STYLES.keys()).map(s => <option key={s} value={s}>{s}</option>)}
         </select>
@@ -244,7 +244,7 @@ const IncidentReporting = ({ onBack }) => {
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Lokasi')}</label>
               <div className="relative">
                 <MapPin size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-                <input value={form.location} onChange={e => setForm({...form, location: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none" placeholder={t('Gedung A Lantai 3')} />
+                <input value={form.location} onChange={e => setForm({...form, location: e.target.value})}  placeholder={t('Gedung A Lantai 3')}  className="w-full bg-white/5 border border-white/20 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
             </div>
             <div>
@@ -290,7 +290,7 @@ const IncidentReporting = ({ onBack }) => {
             </div>
             <div className="md:col-span-2">
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Deskripsi')}</label>
-              <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none resize-none" placeholder={t('Jelaskan kronologi insiden...')} />
+              <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3}  placeholder={t('Jelaskan kronologi insiden...')}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none resize-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
           </div>
           <div className="flex gap-3">
@@ -350,18 +350,18 @@ const IncidentReporting = ({ onBack }) => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                   <div>
                     <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('PIC')}</label>
-                    <select value={actionForm.action_pic} onChange={e => setActionForm({...actionForm, action_pic: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-2 text-white text-sm outline-none">
+                    <select value={actionForm.action_pic} onChange={e => setActionForm({...actionForm, action_pic: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                       <option value="">— {t('Pilih')} —</option>
                       {profiles.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Deadline')}</label>
-                    <input type="date" value={actionForm.action_deadline} onChange={e => setActionForm({...actionForm, action_deadline: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-2 text-white text-sm outline-none" />
+                    <input type="date" value={actionForm.action_deadline} onChange={e => setActionForm({...actionForm, action_deadline: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tindakan')}</label>
-                    <input value={actionForm.corrective_action} onChange={e => setActionForm({...actionForm, corrective_action: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-2 text-white text-sm outline-none" placeholder={t('Tindakan...')} />
+                    <input value={actionForm.corrective_action} onChange={e => setActionForm({...actionForm, corrective_action: e.target.value})}  placeholder={t('Tindakan...')}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                   </div>
                 </div>
                 <button onClick={() => handleActionSubmit(inc.id)} className="px-4 py-2 rounded-xl bg-blue-500 text-white text-[10px] font-bold">{t('Simpan Tindakan')}</button>

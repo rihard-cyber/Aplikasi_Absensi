@@ -3,8 +3,10 @@ import { Plus, Trash2, ArrowDown, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
+import { useTranslation } from 'react-i18next';
 
 const ApprovalWorkflow = () => {
+  const { t } = useTranslation();
   const [stages, setStages] = useState([]);
   const [tenantId, setTenantId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -64,9 +66,9 @@ const ApprovalWorkflow = () => {
         if (error) throw error;
       }
       
-      toast("Alur persetujuan berhasil disimpan!", 'success');
+      toast(t('approval.saveSuccess'), 'success');
     } catch (e) {
-      toast("Gagal menyimpan alur: " + e.message, 'error');
+      toast(t('approval.saveFail') + e.message, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -92,17 +94,17 @@ const ApprovalWorkflow = () => {
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="border-b border-white/10 pb-6 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-wide">Alur Kerja Multi-Persetujuan</h2>
-          <p className="text-sm text-gray-400 mt-2 font-sans tracking-wide">Konfigurasikan hierarki persetujuan bertingkat untuk permintaan cuti dan lembur.</p>
+          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-wide">{t('approval.title')}</h2>
+          <p className="text-sm text-gray-400 mt-2 font-sans tracking-wide">{t('approval.subtitle')}</p>
         </div>
         <button onClick={handleSave} disabled={isSaving || isLoading} className="bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-2)] hover:from-[var(--aurora-2)] hover:to-[var(--aurora-3)] text-white px-6 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-all shadow-[0_0_20px_rgba(142,45,226,0.4)] hover:shadow-[0_0_30px_rgba(0,201,255,0.6)] disabled:opacity-50 whitespace-nowrap">
-          <Save size={18} /> {isSaving ? 'Menyimpan...' : 'Simpan Alur'}
+          <Save size={18} /> {isSaving ? t('approval.saving') : t('approval.saveButton')}
         </button>
       </div>
 
       <div className="flex flex-col gap-4">
         <div className="bg-[var(--aurora-1)]/10 border border-[var(--aurora-1)]/30 p-4 rounded-xl mb-6 text-sm text-[var(--aurora-3)] shadow-[0_0_15px_rgba(142,45,226,0.1)]">
-          <strong className="tracking-widest uppercase text-xs mr-2 text-white">Cara kerjanya:</strong> Permintaan akan diproses secara berurutan. Jika ditolak di tahap mana pun, permintaan akan langsung digagalkan.
+          <strong className="tracking-widest uppercase text-xs mr-2 text-white">{t('approval.howItWorks')}</strong> {t('approval.howItWorksDetail')}
         </div>
 
         <AnimatePresence>
@@ -121,26 +123,26 @@ const ApprovalWorkflow = () => {
                 </div>
                 
                 <div className="flex-1 z-10">
-                  <select value={stage.role} onChange={e => handleRoleChange(stage.id, e.target.value)} className="w-full bg-[#0B0C10] border border-white/10 rounded-lg p-3 text-white light-bloom-input transition-all outline-none appearance-none cursor-pointer">
-                    <option value="Supervisor">Supervisor</option>
-                    <option value="Department Head">Kepala Departemen</option>
-                    <option value="HR Manager">Manajer HR</option>
-                    <option value="Director">Direktur</option>
-                    <option value="Pilih Peran">Pilih Peran...</option>
+                  <select value={stage.role} onChange={e => handleRoleChange(stage.id, e.target.value)}  className="w-full bg-[#0B0C10] border border-white/20 rounded-lg p-3 text-white light-bloom-input transition-all duration-300 outline-none appearance-none cursor-pointer placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                    <option value="Supervisor">{t('approval.roleSupervisor')}</option>
+                    <option value="Department Head">{t('approval.roleDeptHead')}</option>
+                    <option value="HR Manager">{t('approval.roleHR')}</option>
+                    <option value="Director">{t('approval.roleDirector')}</option>
+                    <option value="Pilih Peran">{t('approval.roleSelectPlaceholder')}</option>
                   </select>
                 </div>
                 
                 <div className="w-32 sm:w-48 z-10">
-                  <select value={stage.requirement} onChange={e => handleReqChange(stage.id, e.target.value)} className="w-full bg-[#0B0C10] border border-white/10 rounded-lg p-3 text-white light-bloom-input transition-all outline-none appearance-none cursor-pointer">
-                    <option value="Wajib">Wajib</option>
-                    <option value="Opsional (Hanya Info)">Opsional (Hanya Info)</option>
+                  <select value={stage.requirement} onChange={e => handleReqChange(stage.id, e.target.value)}  className="w-full bg-[#0B0C10] border border-white/20 rounded-lg p-3 text-white light-bloom-input transition-all duration-300 outline-none appearance-none cursor-pointer placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                    <option value="Wajib">{t('approval.reqRequired')}</option>
+                    <option value="Opsional (Hanya Info)">{t('approval.reqOptional')}</option>
                   </select>
                 </div>
                 
                 <button 
                   onClick={() => removeStage(stage.id)}
                   className="p-3 text-[var(--danger)] hover:bg-[var(--danger)] hover:text-white rounded-xl transition-colors z-10"
-                  title="Hapus Tahap"
+                  title={t('approval.deleteStage')}
                 >
                   <Trash2 size={20} />
                 </button>
@@ -160,7 +162,7 @@ const ApprovalWorkflow = () => {
           onClick={addStage}
           className="mt-6 border-2 border-dashed border-white/20 text-gray-400 hover:text-white hover:border-[var(--aurora-3)] p-5 rounded-2xl flex items-center justify-center gap-3 transition-all font-medium hover:bg-white/5 hover:shadow-[0_0_20px_rgba(0,201,255,0.2)]"
         >
-          <Plus size={20} className="text-[var(--aurora-3)]" /> Tambah Tahap Persetujuan
+          <Plus size={20} className="text-[var(--aurora-3)]" /> {t('approval.addStage')}
         </button>
       </div>
     </div>

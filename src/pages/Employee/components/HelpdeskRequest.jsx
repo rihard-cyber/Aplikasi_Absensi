@@ -178,7 +178,7 @@ const HelpdeskRequest = ({ onBack }) => {
         <div className="space-y-4">
           <div>
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Kategori')}</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {CATEGORIES.map(c => (
                 <button key={c.value} onClick={() => setForm({...form, category: c.value})}
                   className={`p-3 rounded-xl border text-center transition-all ${form.category === c.value ? 'bg-[var(--aurora-3)]/20 border-[var(--aurora-3)] text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}>
@@ -203,13 +203,13 @@ const HelpdeskRequest = ({ onBack }) => {
           <div>
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Subjek')}</label>
             <input value={form.subject} onChange={e => setForm({...form, subject: e.target.value})}
-              className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)]" placeholder="Contoh: AC kantor mati" />
+               placeholder="Contoh: AC kantor mati"  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
           </div>
           <div>
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Deskripsi')}</label>
             <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={4}
               placeholder="Jelaskan masalah secara detail..."
-              className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[var(--aurora-3)] resize-none text-sm" />
+                className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none resize-none text-sm placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
           </div>
           <div>
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">{t('Foto (opsional, bisa lebih dari 1)')}</label>

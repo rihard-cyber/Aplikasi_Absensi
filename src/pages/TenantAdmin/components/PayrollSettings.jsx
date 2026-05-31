@@ -94,21 +94,21 @@ const PayrollSettings = () => {
             <h3 className="font-serif text-lg text-white flex items-center gap-2 border-l-2 border-[var(--aurora-3)] pl-3">Potongan BPJS</h3>
             <div>
               <label className="block text-xs text-gray-400 mb-2 uppercase tracking-wider">BPJS Kesehatan (%)</label>
-              <input type="number" name="bpjs_kesehatan" value={config.bpjs_kesehatan} onChange={handleChange} step="0.1" className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white outline-none focus:border-[var(--aurora-3)]" />
+              <input type="number" name="bpjs_kesehatan" value={config.bpjs_kesehatan} onChange={handleChange} step="0.1"   className="w-full bg-white/5 border border-white/20 rounded-lg p-3 text-white outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               <p className="text-[9px] text-gray-600 mt-1">Max gaji untuk BPJS Kes: Rp {config.bpjs_kesehatan_max?.toLocaleString()}</p>
             </div>
             <div>
               <label className="block text-xs text-gray-400 mb-2 uppercase tracking-wider">BPJS Ketenagakerjaan JHT (%)</label>
-              <input type="number" name="bpjs_ketenagakerjaan" value={config.bpjs_ketenagakerjaan} onChange={handleChange} step="0.1" className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white outline-none focus:border-[var(--aurora-3)]" />
+              <input type="number" name="bpjs_ketenagakerjaan" value={config.bpjs_ketenagakerjaan} onChange={handleChange} step="0.1"   className="w-full bg-white/5 border border-white/20 rounded-lg p-3 text-white outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Max BPJS Kesehatan</label>
-                <input type="number" name="bpjs_kesehatan_max" value={config.bpjs_kesehatan_max} onChange={handleChange} className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white text-sm outline-none" />
+                <input type="number" name="bpjs_kesehatan_max" value={config.bpjs_kesehatan_max} onChange={handleChange}   className="w-full bg-white/5 border border-white/20 rounded-lg p-3 text-white text-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               <div>
                 <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Max BPJS JHT/JP</label>
-                <input type="number" name="bpjs_jht_max" value={config.bpjs_jht_max} onChange={handleChange} className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white text-sm outline-none" />
+                <input type="number" name="bpjs_jht_max" value={config.bpjs_jht_max} onChange={handleChange}   className="w-full bg-white/5 border border-white/20 rounded-lg p-3 text-white text-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
             </div>
           </div>
@@ -132,21 +132,21 @@ const PayrollSettings = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Lembur Hari Kerja (x)</label>
-                <input type="number" name="overtime_rate_weekday" value={config.overtime_rate_weekday} onChange={handleChange} step="0.1" className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white outline-none focus:border-[var(--warning)]" />
+                <input type="number" name="overtime_rate_weekday" value={config.overtime_rate_weekday} onChange={handleChange} step="0.1"   className="w-full bg-white/5 border border-white/20 rounded-lg p-3 text-white outline-none focus:border-[var(--warning)] placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               <div>
                 <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Lembur Hari Libur (x)</label>
-                <input type="number" name="overtime_rate_holiday" value={config.overtime_rate_holiday} onChange={handleChange} step="0.1" className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white outline-none focus:border-[var(--warning)]" />
+                <input type="number" name="overtime_rate_holiday" value={config.overtime_rate_holiday} onChange={handleChange} step="0.1"   className="w-full bg-white/5 border border-white/20 rounded-lg p-3 text-white outline-none focus:border-[var(--warning)] placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider"><Moon size={12} /> Shift Malam (x)</label>
-                <input type="number" name="night_shift_rate" value={config.night_shift_rate} onChange={handleChange} step="0.1" className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white outline-none focus:border-[var(--warning)]" />
+                <input type="number" name="night_shift_rate" value={config.night_shift_rate} onChange={handleChange} step="0.1"   className="w-full bg-white/5 border border-white/20 rounded-lg p-3 text-white outline-none focus:border-[var(--warning)] placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               <div>
                 <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Metode Lembur</label>
-                <select name="overtime_calculation" value={config.overtime_calculation} onChange={handleChange} className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white outline-none">
+                <select name="overtime_calculation" value={config.overtime_calculation} onChange={handleChange}  className="w-full bg-white/5 border border-white/20 rounded-lg p-3 text-white outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                   <option value="daily">Harian</option>
                   <option value="weekly">Mingguan</option>
                 </select>
@@ -158,7 +158,7 @@ const PayrollSettings = () => {
             <h3 className="font-serif text-lg text-white flex items-center gap-2 border-l-2 border-[var(--danger)] pl-3">Denda & Penalti</h3>
             <div>
               <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Denda Terlambat (Rp/jam)</label>
-              <input type="number" name="late_penalty_fee" value={config.late_penalty_fee || 0} onChange={handleChange} className="w-full bg-[#1A1C23] border border-white/10 rounded-lg p-3 text-white outline-none focus:border-[var(--danger)]" />
+              <input type="number" name="late_penalty_fee" value={config.late_penalty_fee || 0} onChange={handleChange}   className="w-full bg-white/5 border border-white/20 rounded-lg p-3 text-white outline-none focus:border-[var(--danger)] placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
           </div>
         </div>

@@ -482,7 +482,7 @@ const EmployeeProfile = () => {
                 {pin.map((digit, i) => (
                   <input
                     key={i} id={`pin-${i}`} type="password" maxLength="1"
-                    className="w-10 h-12 bg-white/5 border border-white/10 rounded-lg text-center text-xl font-bold text-white focus:border-[var(--warning)] outline-none"
+                    className="w-10 h-12 bg-white/5 border border-white/20 rounded-lg text-center text-xl font-bold text-white outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-1 focus:ring-[#00C9FF]/30 hover:border-white/40"
                     value={digit}
                     onChange={(e) => {
                       const newPin = pin.map((d, idx) => idx === i ? e.target.value : d);
@@ -572,7 +572,7 @@ const EditField = ({ icon, label, value, onChange, type = "text" }) => (
       <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">{icon}</div>
       <input
         type={type}
-        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-white outline-none focus:border-[var(--aurora-3)] transition-all"
+        className="w-full bg-white/5 border border-white/20 rounded-xl py-3 pl-12 pr-4 text-sm text-white outline-none transition-all duration-300 placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

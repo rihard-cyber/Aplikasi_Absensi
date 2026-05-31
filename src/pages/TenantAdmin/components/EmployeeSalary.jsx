@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Save, Edit3, DollarSign, User, Filter } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { safeGet } from '../../../utils/safeAccess';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 
 const EmployeeSalary = () => {
+  const { t } = useTranslation();
   const [employees, setEmployees] = useState([]);
   const [components, setComponents] = useState([]);
   const [tenantId, setTenantId] = useState(null);
-  const [salaries, setSalaries] = useState({});
+  const [salaries, setSalaries] = useState(new Map());
   const [search, setSearch] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [editingAmounts, setEditingAmounts] = useState({});
@@ -41,10 +44,9 @@ const EmployeeSalary = () => {
     if (tid) q3 = q3.eq('tenant_id', tid);
     const { data: sals } = await q3;
     if (sals) {
-      const map = {};
+      const map = new Map();
       sals.forEach(s => {
-        if (!map[s.user_id]) map[s.user_id] = {};
-        map[s.user_id][s.component_id] = s;
+        map.set(`${s.user_id}_${s.component_id}`, s);
       });
       setSalaries(map);
     }
@@ -59,8 +61,8 @@ const EmployeeSalary = () => {
 
   const getAmount = (employeeId, componentId) => {
     const key = `${employeeId}_${componentId}`;
-    if (editingAmounts[key] !== undefined) return editingAmounts[key];
-    return salaries[employeeId]?.[componentId]?.amount || 0;
+    if (safeGet(editingAmounts, key) !== undefined) return safeGet(editingAmounts, key);
+    return salaries.get(key)?.amount || 0;
   };
 
   const handleSave = async (employeeId) => {
@@ -78,10 +80,10 @@ const EmployeeSalary = () => {
         const { error } = await supabase.from('employee_salaries').insert(entries);
         if (error) throw error;
       }
-      toast('Gaji berhasil disimpan', 'success');
+      toast(t('salary.saveSuccess'), 'success');
       init();
     } catch (e) {
-      toast('Gagal: ' + e.message, 'error');
+      toast(t('salary.saveFail') + e.message, 'error');
     }
   };
 
@@ -91,20 +93,20 @@ const EmployeeSalary = () => {
   );
 
   const groupedComponents = [
-    { label: 'Tunjangan', type: 'ALLOWANCE', items: components.filter(c => c.type === 'ALLOWANCE') },
-    { label: 'Potongan', type: 'DEDUCTION', items: components.filter(c => c.type === 'DEDUCTION') },
+    { label: t('salary.allowance'), type: 'ALLOWANCE', items: components.filter(c => c.type === 'ALLOWANCE') },
+    { label: t('salary.deduction'), type: 'DEDUCTION', items: components.filter(c => c.type === 'DEDUCTION') },
   ];
 
   return (
     <div className="glass-panel p-4 sm:p-6 lg:p-8">
       <div className="border-b border-white/10 pb-6 mb-8">
-        <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">Struktur Gaji Karyawan</h2>
-        <p className="text-sm text-gray-400 mt-1">Atur nominal gaji per komponen untuk setiap karyawan</p>
+        <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('salary.title')}</h2>
+        <p className="text-sm text-gray-400 mt-1">{t('salary.subtitle')}</p>
       </div>
 
       <div className="relative mb-6">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama atau NIP..." className="w-full bg-[#1A1C23] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t('salary.searchPlaceholder')} className="w-full bg-white/5 border border-white/20 rounded-xl pl-10 pr-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -121,7 +123,7 @@ const EmployeeSalary = () => {
               </div>
             </button>
           ))}
-          {!filtered.length && <p className="text-gray-500 text-xs italic text-center py-8">Tidak ada karyawan</p>}
+          {!filtered.length && <p className="text-gray-500 text-xs italic text-center py-8">{t('salary.noEmployee')}</p>}
         </div>
 
         <div className="lg:col-span-2">
@@ -135,7 +137,7 @@ const EmployeeSalary = () => {
                     <p className="text-xs text-gray-400">{selectedEmployee.nip} • {selectedEmployee.position || 'Staff'} • {selectedEmployee.role}</p>
                   </div>
                 </div>
-                <button onClick={() => handleSave(selectedEmployee.id)} className="px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Save size={16} /> Simpan Gaji</button>
+                <button onClick={() => handleSave(selectedEmployee.id)} className="px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Save size={16} /> {t('salary.saveSalary')}</button>
               </div>
 
               {groupedComponents.map(group => group.items.length > 0 && (
@@ -151,12 +153,12 @@ const EmployeeSalary = () => {
                             <span className="text-xs font-mono font-bold text-[var(--aurora-3)]">{c.code}</span>
                             <span className="text-sm text-white">{c.name}</span>
                           </div>
-                          <p className="text-[9px] text-gray-500 mt-0.5">{c.category} • {c.is_taxable ? 'Kena Pajak' : 'Non-Pajak'}</p>
+                          <p className="text-[9px] text-gray-500 mt-0.5">{c.category} • {c.is_taxable ? t('salary.taxable') : t('salary.nonTaxable')}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-gray-500">Rp</span>
+                          <span className="text-[10px] text-gray-500">{t('bankExport.currencySymbol').trim()}</span>
                           <input type="number" value={getAmount(selectedEmployee.id, c.id)} onChange={e => handleAmountChange(selectedEmployee.id, c.id, e.target.value)}
-                            className="w-32 bg-[#1A1C23] border border-white/10 rounded-lg px-3 py-2 text-white text-sm text-right outline-none focus:border-[var(--aurora-3)] font-mono" />
+                              className="w-32 bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-white text-sm text-right outline-none font-mono transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                         </div>
                       </div>
                     ))}
@@ -166,14 +168,14 @@ const EmployeeSalary = () => {
 
               <div className="p-4 bg-[var(--aurora-1)]/5 rounded-2xl border border-[var(--aurora-1)]/20 mt-4">
                 <p className="text-xs text-gray-400">
-                  Total Tunjangan: <span className="text-[var(--success)] font-bold font-mono">
-                    Rp {components.filter(c => c.type === 'ALLOWANCE').reduce((sum, c) => sum + Number(getAmount(selectedEmployee.id, c.id)), 0).toLocaleString()}
+                  {t('salary.totalAllowance')}: <span className="text-[var(--success)] font-bold font-mono">
+                    {t('bankExport.currencySymbol')}{components.filter(c => c.type === 'ALLOWANCE').reduce((sum, c) => sum + Number(getAmount(selectedEmployee.id, c.id)), 0).toLocaleString()}
                   </span>
-                  {' | '}Total Potongan: <span className="text-[var(--danger)] font-bold font-mono">
-                    Rp {components.filter(c => c.type === 'DEDUCTION').reduce((sum, c) => sum + Number(getAmount(selectedEmployee.id, c.id)), 0).toLocaleString()}
+                  {' | '}{t('salary.totalDeduction')}: <span className="text-[var(--danger)] font-bold font-mono">
+                    {t('bankExport.currencySymbol')}{components.filter(c => c.type === 'DEDUCTION').reduce((sum, c) => sum + Number(getAmount(selectedEmployee.id, c.id)), 0).toLocaleString()}
                   </span>
-                  {' | '}Take Home Pay: <span className="text-white font-bold font-mono">
-                    Rp {(components.filter(c => c.type === 'ALLOWANCE').reduce((sum, c) => sum + Number(getAmount(selectedEmployee.id, c.id)), 0) -
+                  {' | '}{t('salary.takeHomePay')}: <span className="text-white font-bold font-mono">
+                    {t('bankExport.currencySymbol')}{(components.filter(c => c.type === 'ALLOWANCE').reduce((sum, c) => sum + Number(getAmount(selectedEmployee.id, c.id)), 0) -
                       components.filter(c => c.type === 'DEDUCTION').reduce((sum, c) => sum + Number(getAmount(selectedEmployee.id, c.id)), 0)).toLocaleString()}
                   </span>
                 </p>
@@ -182,7 +184,7 @@ const EmployeeSalary = () => {
           ) : (
             <div className="flex flex-col items-center justify-center h-64 text-gray-500">
               <User size={48} className="mb-4 opacity-30" />
-              <p className="text-sm">Pilih karyawan untuk mengatur gaji</p>
+              <p className="text-sm">{t('salary.selectEmployee')}</p>
             </div>
           )}
         </div>

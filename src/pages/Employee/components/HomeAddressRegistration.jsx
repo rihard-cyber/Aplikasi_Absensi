@@ -117,7 +117,7 @@ const HomeAddressRegistration = ({ onBack }) => {
     <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      className="flex flex-col gap-6 pb-24"
+      className="w-full flex flex-col gap-6 pb-24"
     >
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -181,8 +181,8 @@ const HomeAddressRegistration = ({ onBack }) => {
             value={form.address}
             onChange={e => setForm({ ...form, address: e.target.value })}
             placeholder="Jl. Contoh No. 123, RT/RW, Kelurahan, Kecamatan, Kota, Provinsi"
-            className="w-full bg-[#0B0C10] border border-white/10 rounded-2xl px-4 py-3 text-white text-xs outline-none focus:border-[var(--aurora-3)] resize-none"
-          />
+            
+           className="w-full bg-[#0B0C10] border border-white/20 rounded-2xl px-4 py-3 text-white text-xs outline-none resize-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
         </div>
 
         {/* Coordinates */}
@@ -207,8 +207,8 @@ const HomeAddressRegistration = ({ onBack }) => {
                 value={form.latitude}
                 onChange={e => setForm({ ...form, latitude: e.target.value })}
                 placeholder="-6.2087634"
-                className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-2.5 text-white text-xs font-mono outline-none focus:border-[var(--aurora-3)]"
-              />
+                
+               className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-2.5 text-white text-xs font-mono outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
               <label className="text-[8px] text-gray-600 font-mono block mb-1">Longitude</label>
@@ -219,8 +219,8 @@ const HomeAddressRegistration = ({ onBack }) => {
                 value={form.longitude}
                 onChange={e => setForm({ ...form, longitude: e.target.value })}
                 placeholder="106.845599"
-                className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-2.5 text-white text-xs font-mono outline-none focus:border-[var(--aurora-3)]"
-              />
+                
+               className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-2.5 text-white text-xs font-mono outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
           </div>
         </div>

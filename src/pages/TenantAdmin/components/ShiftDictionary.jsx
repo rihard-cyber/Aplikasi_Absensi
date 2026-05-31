@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Plus, Trash2, CalendarDays, Moon, Sun, Briefcase } from 'lucide-react';
+import { Clock, Plus, Trash2, CalendarDays, Moon, Briefcase } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import LoadingSkeleton from '../../../components/LoadingSkeleton';
 import { useToast } from '../../../components/Toast';
 import { useConfirm } from '../../../components/ConfirmDialog';
+import { useTranslation } from 'react-i18next';
 
 const ShiftDictionary = () => {
+  const { t } = useTranslation();
   const [shifts, setShifts] = useState([]);
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -92,21 +94,21 @@ const ShiftDictionary = () => {
 
       setShifts([data[0], ...shifts]);
       setNewShift({ shift_code: '', shift_name: '', time_in: '08:00', time_out: '17:00', is_cross_day: false, project_id: 'ALL' });
-      toast('Kamus Shift berhasil ditambahkan!', 'success');
+      toast(t('shiftDict.toastSuccess'), 'success');
     } catch (e) {
-      toast('Gagal menambah shift. Pastikan Kode Shift unik!', 'error');
+      toast(t('shiftDict.toastAddFail'), 'error');
     }
   };
 
   const handleDelete = async (id) => {
-    const ok = await confirm('Yakin ingin menghapus shift ini? Karyawan yang menggunakan shift ini akan kehilangan referensi jadwal.', 'Hapus Shift');
+    const ok = await confirm(t('shiftDict.confirmDeleteMsg'), t('shiftDict.confirmDeleteTitle'));
     if (!ok) return;
     try {
       const { error } = await supabase.from('master_shifts').delete().eq('id', id);
       if (error) throw error;
       setShifts(shifts.filter(s => s.id !== id));
     } catch (e) {
-      toast('Gagal menghapus: ' + e.message, 'error');
+      toast(t('shiftDict.toastDeleteFail') + e.message, 'error');
     }
   };
 
@@ -117,63 +119,63 @@ const ShiftDictionary = () => {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-serif font-bold text-white tracking-wide flex items-center gap-2">
-            <CalendarDays className="text-[var(--aurora-1)]" /> Kamus Shift
+            <CalendarDays className="text-[var(--aurora-1)]" /> {t('shiftDict.title')}
           </h2>
-          <p className="text-gray-400 text-sm mt-1">Buat kode jadwal dinamis (R, PS, MS, OFF) untuk Excel Parser.</p>
+          <p className="text-gray-400 text-sm mt-1">{t('shiftDict.subtitle')}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Form Add Shift */}
         <div className="lg:col-span-1 glass-panel p-6 border border-white/5 h-fit sticky top-6">
-          <h3 className="text-lg font-bold text-white mb-6">Tambah Kode Shift</h3>
+          <h3 className="text-lg font-bold text-white mb-6">{t('shiftDict.addTitle')}</h3>
           <form onSubmit={handleAddShift} className="space-y-4">
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">Kode (Excel)</label>
-                <input required value={newShift.shift_code} onChange={e => setNewShift({...newShift, shift_code: e.target.value.toUpperCase()})} type="text" maxLength={10} className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-1)] uppercase" placeholder="Misal: MS" />
+                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">{t('shiftDict.codeLabel')}</label>
+                <input required value={newShift.shift_code} onChange={e => setNewShift({...newShift, shift_code: e.target.value.toUpperCase()})} type="text" maxLength={10}  placeholder={t('shiftDict.placeholderCode')}  className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none uppercase placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               <div>
-                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">Target Project</label>
+                <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">{t('shiftDict.targetProject')}</label>
                 <select value={newShift.project_id} onChange={e => setNewShift({...newShift, project_id: e.target.value})}
-                  className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-1)] disabled:opacity-50"
-                  disabled={projectsLoading}>
-                  <option value="ALL">🌐 Semua Project</option>
+                  
+                  disabled={projectsLoading} className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none disabled:opacity-50 placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                  <option value="ALL">{t('shiftDict.allProjects')}</option>
                   {projectsLoading ? (
-                    <option disabled className="bg-[#0B0C10] text-gray-500">Memuat...</option>
+                    <option disabled className="bg-[#0B0C10] text-gray-500">{t('shiftDict.loading')}</option>
                   ) : projects.length === 0 ? (
-                    <option disabled className="bg-[#0B0C10] text-gray-500">Belum ada project</option>
+                    <option disabled className="bg-[#0B0C10] text-gray-500">{t('shiftDict.noProjects')}</option>
                   ) : (
                     projects.map(p => <option key={p.id} value={p.id} className="bg-[#0B0C10]">🏢 {p.code ? `[${p.code}] ` : ''}{p.name}</option>)
                   )}
                 </select>
                 {projects.length === 0 && !projectsLoading && (
-                  <p className="text-[9px] text-gray-600 mt-1.5 ml-1">Buat project dulu di menu Manajemen Struktur</p>
+                  <p className="text-[9px] text-gray-600 mt-1.5 ml-1">{t('shiftDict.createProjectFirst')}</p>
                 )}
               </div>
             </div>
 
             <div>
-              <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">Nama Shift</label>
-              <input required value={newShift.shift_name} onChange={e => setNewShift({...newShift, shift_name: e.target.value})} type="text" className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-1)]" placeholder="Contoh: Malam Security" />
+              <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">{t('shiftDict.shiftName')}</label>
+              <input required value={newShift.shift_name} onChange={e => setNewShift({...newShift, shift_name: e.target.value})} type="text"  placeholder={t('shiftDict.placeholderName')}  className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] text-[var(--success)] uppercase tracking-widest font-bold block mb-2">Jam Masuk</label>
-                <input value={newShift.time_in} onChange={e => setNewShift({...newShift, time_in: e.target.value})} type="time" className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--success)]" />
+                <label className="text-[10px] text-[var(--success)] uppercase tracking-widest font-bold block mb-2">{t('shiftDict.timeIn')}</label>
+                <input value={newShift.time_in} onChange={e => setNewShift({...newShift, time_in: e.target.value})} type="time"   className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--success)] placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
               <div>
-                <label className="text-[10px] text-[var(--danger)] uppercase tracking-widest font-bold block mb-2">Jam Pulang</label>
-                <input value={newShift.time_out} onChange={e => setNewShift({...newShift, time_out: e.target.value})} type="time" className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--danger)]" />
+                <label className="text-[10px] text-[var(--danger)] uppercase tracking-widest font-bold block mb-2">{t('shiftDict.timeOut')}</label>
+                <input value={newShift.time_out} onChange={e => setNewShift({...newShift, time_out: e.target.value})} type="time"   className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--danger)] placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               </div>
             </div>
 
             <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 mt-2">
               <div>
-                <p className="text-sm font-bold text-white flex items-center gap-2"><Moon size={14} className="text-[var(--aurora-3)]"/> Shift Lintas Hari</p>
-                <p className="text-[9px] text-gray-400 mt-1">Aktifkan untuk Shift Malam (keluar besok paginya).</p>
+                <p className="text-sm font-bold text-white flex items-center gap-2"><Moon size={14} className="text-[var(--aurora-3)]"/> {t('shiftDict.crossDay')}</p>
+                <p className="text-[9px] text-gray-400 mt-1">{t('shiftDict.crossDayDesc')}</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" checked={newShift.is_cross_day} onChange={(e) => setNewShift({...newShift, is_cross_day: e.target.checked})} className="sr-only peer" />
@@ -182,7 +184,7 @@ const ShiftDictionary = () => {
             </div>
 
             <button type="submit" className="w-full py-3 mt-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[#1E90FF] text-white font-bold tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-              <Plus size={18} /> Simpan Shift
+              <Plus size={18} /> {t('shiftDict.saveShift')}
             </button>
           </form>
         </div>
@@ -192,7 +194,7 @@ const ShiftDictionary = () => {
           {shifts.length === 0 ? (
             <div className="glass-panel p-10 text-center flex flex-col items-center">
               <CalendarDays size={48} className="text-gray-600 mb-4" />
-              <p className="text-gray-400">Belum ada Kamus Shift.</p>
+              <p className="text-gray-400">{t('shiftDict.noShifts')}</p>
             </div>
           ) : shifts.map(s => (
             <div key={s.id} className={`glass-panel p-5 border transition-colors flex justify-between items-center gap-4 ${s.is_cross_day ? 'border-[var(--aurora-3)]/30' : 'border-white/5 hover:border-white/20'}`}>
@@ -202,7 +204,7 @@ const ShiftDictionary = () => {
                     {s.shift_code}
                   </span>
                   <h4 className="text-lg font-bold text-white">{s.shift_name}</h4>
-                  {s.is_cross_day && <span className="px-2 py-0.5 bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] text-[10px] font-bold uppercase rounded flex items-center gap-1"><Moon size={10} /> Cross-Day</span>}
+                  {s.is_cross_day && <span className="px-2 py-0.5 bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] text-[10px] font-bold uppercase rounded flex items-center gap-1"><Moon size={10} /> {t('shiftDict.crossDayBadge')}</span>}
                 </div>
                 
                 <div className="flex gap-4 mt-2">
@@ -212,7 +214,7 @@ const ShiftDictionary = () => {
                       <p className="text-xs text-gray-400 flex items-center gap-1"><Clock size={12} className="text-[var(--danger)]"/> OUT: <span className="font-mono text-white">{s.time_out.substring(0, 5)}</span></p>
                     </>
                   ) : (
-                    <p className="text-xs text-gray-500 font-bold tracking-widest uppercase">Hari Libur / OFF</p>
+                    <p className="text-xs text-gray-500 font-bold tracking-widest uppercase">{t('shiftDict.holidayOrOff')}</p>
                   )}
                   {s.project_id && <p className="text-xs text-gray-500 flex items-center gap-1"><Briefcase size={12} /> {s.projects?.code ? `[${s.projects.code}] ` : ''}{s.projects?.name}</p>}
                 </div>

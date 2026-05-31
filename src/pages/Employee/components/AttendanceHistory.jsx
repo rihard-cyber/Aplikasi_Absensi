@@ -64,9 +64,9 @@ const AttendanceHistory = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="flex flex-col gap-6 pb-32"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full flex flex-col gap-6 pb-32"
     >
       {/* Header & Stats Overview */}
       <div className="flex flex-col gap-4">

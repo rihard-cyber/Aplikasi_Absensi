@@ -166,8 +166,8 @@ const WifiGeofenceSettings = () => {
                 value={newZone.ssid}
                 onChange={e => setNewZone({ ...newZone, ssid: e.target.value })}
                 placeholder="Contoh: Kantor_WiFi"
-                className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]"
-              />
+                
+               className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
               <label className="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">
@@ -177,8 +177,8 @@ const WifiGeofenceSettings = () => {
                 value={newZone.bssid}
                 onChange={e => setNewZone({ ...newZone, bssid: e.target.value })}
                 placeholder="Contoh: AA:BB:CC:DD:EE:FF"
-                className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-mono outline-none focus:border-[var(--aurora-3)]"
-              />
+                
+               className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm font-mono outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
               <p className="text-[9px] text-gray-600 mt-1">BSSID lebih aman karena spesifik ke satu router fisik</p>
             </div>
             <div>
@@ -189,8 +189,8 @@ const WifiGeofenceSettings = () => {
                 value={newZone.description}
                 onChange={e => setNewZone({ ...newZone, description: e.target.value })}
                 placeholder="Contoh: Wi-Fi Lantai 2 Kantor Pusat"
-                className="w-full bg-[#0B0C10] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]"
-              />
+                
+               className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <button
               type="submit"

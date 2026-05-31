@@ -38,7 +38,7 @@ const ProfileEditor = ({ onBack }) => {
 
   const t = (s) => s;
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6 pb-8">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full flex flex-col gap-6 pb-8">
       <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors w-fit"><ArrowLeft size={18} /> Kembali</button>
 
       <div className="glass-panel p-6">
@@ -53,21 +53,21 @@ const ProfileEditor = ({ onBack }) => {
         <div className="space-y-4">
           <div>
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1 flex items-center gap-1"><User size={12} /> Nama Lengkap</label>
-            <input value={profile.full_name} onChange={e => setProfile({...profile, full_name: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+            <input value={profile.full_name} onChange={e => setProfile({...profile, full_name: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1 flex items-center gap-1"><Phone size={12} /> No. HP</label>
-              <input value={profile.phone} onChange={e => setProfile({...profile, phone: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+              <input value={profile.phone} onChange={e => setProfile({...profile, phone: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1 flex items-center gap-1"><Calendar size={12} /> Tanggal Lahir</label>
-              <input type="date" value={profile.birth_date} onChange={e => setProfile({...profile, birth_date: e.target.value})} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none" />
+              <input type="date" value={profile.birth_date} onChange={e => setProfile({...profile, birth_date: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
           </div>
           <div>
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1 flex items-center gap-1"><MapPin size={12} /> Alamat</label>
-            <textarea value={profile.address} onChange={e => setProfile({...profile, address: e.target.value})} rows={3} className="w-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[var(--aurora-3)]" />
+            <textarea value={profile.address} onChange={e => setProfile({...profile, address: e.target.value})} rows={3}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
           </div>
           <div>
             <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Jenis Kelamin')}</label>

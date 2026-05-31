@@ -120,7 +120,7 @@ const AttendanceCalendar = ({ onBack }) => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-2 mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
         {[
           { label: 'Hadir', value: stats.hadir, color: 'text-green-400' },
           { label: 'Telat', value: stats.telat, color: 'text-yellow-400' },

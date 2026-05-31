@@ -49,7 +49,7 @@ const validateField = (name, value, deps = {}) => {
 };
 
 // ─── Helper: render floating input ────────────────────────────
-const FloatingInput = ({ name, type = 'text', label, value, onChange, onBlur, leftIcon, rightIcon, error, borderColor, extraClass, touched }) => {
+const FloatingInput = ({ name, type = 'text', label, value, onChange, onBlur, onKeyDown, leftIcon, rightIcon, error, borderColor, extraClass, touched }) => {
   const hasError = error && touched?.[name];
   return (
     <div className="relative">
@@ -65,10 +65,12 @@ const FloatingInput = ({ name, type = 'text', label, value, onChange, onBlur, le
           value={value}
           onChange={onChange}
           onBlur={onBlur}
+          onKeyDown={onKeyDown}
           required
           placeholder=" "
           className={`peer w-full h-full bg-[#1A1C23] rounded-xl px-4 pt-4 pb-2 text-white outline-none transition-all shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]
             ${leftIcon ? 'pl-10' : ''}
+            ${rightIcon ? 'pr-10' : ''}
             ${hasError ? 'border-2 border-[var(--danger)]' : borderColor || 'border border-white/10 focus:border-[var(--aurora-3)]'}
           `}
         />
@@ -97,7 +99,7 @@ const AuthPortal = ({ onLogin }) => {
   const toast = useToast();
 
   // State management
-  const [mode, setMode] = useState('login'); // login, register, verify, owner, forgot-password
+  const [mode, setMode] = useState('login'); // login, register, verify, owner, forgot-password, demo, demo-success
   const [secretClickCount, setSecretClickCount] = useState(0);
   const [tenantBrand, setTenantBrand] = useState(null);
   const [biometricScan, setBiometricScan] = useState(0);
@@ -110,22 +112,24 @@ const AuthPortal = ({ onLogin }) => {
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Interactive Particles State & Generator
+  // Interactive Particles & Mouse Parallax
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const smoothMouseX = useSpring(mouseX, { stiffness: 50, damping: 20 });
   const smoothMouseY = useSpring(mouseY, { stiffness: 50, damping: 20 });
 
-  const [particles] = useState(() =>
-    Array.from({ length: 25 }).map(() => ({
+  const particlesRef = useRef(null);
+  if (!particlesRef.current) {
+    particlesRef.current = Array.from({ length: 25 }).map(() => ({
       id: Math.random(),
       size: Math.random() * 3 + 1,
       x: Math.random() * 100,
       y: Math.random() * 100,
       duration: Math.random() * 15 + 10,
       delay: Math.random() * 5,
-    }))
-  );
+    }));
+  }
+  const particles = particlesRef.current;
 
   const handleMouseMove = (e) => {
     const x = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -137,9 +141,9 @@ const AuthPortal = ({ onLogin }) => {
   // Form Data
   const [formData, setFormData] = useState({
     identifier: '', password: '', name: '', email: '', nip: '',
-    regPassword: '', otp: '', activationCode: '', phone: '',
+    regPassword: '', confirmPassword: '', otp: '', activationCode: '', phone: '',
+    companyName: '', employeeCount: '10', demoMessage: '',
   });
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isTenantReg, setIsTenantReg] = useState(false);
   const [deviceError, setDeviceError] = useState(false);
@@ -174,6 +178,7 @@ const AuthPortal = ({ onLogin }) => {
 
   // PERSISTENT SESSION & AUTO-LOGIN ROUTING
   useEffect(() => {
+    let cancelled = false;
     const checkSession = async () => {
       let session;
       try {
@@ -183,33 +188,33 @@ const AuthPortal = ({ onLogin }) => {
         toast('Gagal terhubung ke server. Cek koneksi atau restore database.', 'error');
         return;
       }
-      if (session) {
-        const { data: userProfile } = await supabase.from('profiles').select('*').eq('auth_id', session.user.id).maybeSingle();
+      if (!session || cancelled) return;
+      const { data: userProfile } = await supabase.from('profiles').select('*').eq('auth_id', session.user.id).maybeSingle();
 
-        if (userProfile) {
-          const role = userProfile?.role?.toUpperCase();
-          if (role === 'SUPER_ADMIN') {
-            sessionStorage.removeItem('god_key');
-            sessionStorage.setItem('super_admin_verified', 'true');
-            onLogin('SUPER_ADMIN');
-            navigate('/superadmin');
-          } else if (role === 'TENANT_ADMIN') {
-            sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
-            onLogin('TENANT_ADMIN');
-            navigate('/tenantadmin');
-          } else if (role === 'SUB_ADMIN') {
-            sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
-            onLogin('SUB_ADMIN');
-            navigate('/subadmin');
-          } else {
-            sessionStorage.setItem('operational_access', userProfile?.operational_access ? 'MEMILIKI AKSES' : 'TIDAK');
-            onLogin('EMPLOYEE');
-            navigate('/app');
-          }
+      if (userProfile && !cancelled) {
+        const role = userProfile?.role?.toUpperCase();
+        if (role === 'SUPER_ADMIN') {
+          sessionStorage.removeItem('god_key');
+          sessionStorage.setItem('super_admin_verified', 'true');
+          onLogin('SUPER_ADMIN');
+          navigate('/superadmin');
+        } else if (role === 'TENANT_ADMIN') {
+          sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
+          onLogin('TENANT_ADMIN');
+          navigate('/tenantadmin');
+        } else if (role === 'SUB_ADMIN') {
+          sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
+          onLogin('SUB_ADMIN');
+          navigate('/subadmin');
+        } else {
+          sessionStorage.setItem('operational_access', userProfile?.operational_access ? 'MEMILIKI AKSES' : 'TIDAK');
+          onLogin('EMPLOYEE');
+          navigate('/app');
         }
       }
     };
     checkSession();
+    return () => { cancelled = true; };
   }, [navigate, onLogin]);
 
   // Timer Effect
@@ -259,6 +264,48 @@ const AuthPortal = ({ onLogin }) => {
     if (error) throw new Error(`Gagal menyimpan profil: ${error.message}`);
   };
 
+  const handleSubmitDemoRequest = async () => {
+    if (!formData.name || formData.name.trim().length < 2) {
+      toast('Nama lengkap minimal 2 karakter', 'error');
+      return;
+    }
+    if (!formData.companyName || formData.companyName.trim().length < 2) {
+      toast('Nama perusahaan wajib diisi', 'error');
+      return;
+    }
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast('Email tidak valid', 'error');
+      return;
+    }
+    if (!formData.employeeCount || parseInt(formData.employeeCount) < 1) {
+      toast('Jumlah karyawan minimal 1', 'error');
+      return;
+    }
+
+    setIsSendingOTP(true);
+    try {
+      const { data, error } = await supabase.rpc('submit_demo_request', {
+        p_name: formData.name.trim(),
+        p_company_name: formData.companyName.trim(),
+        p_email: formData.email.trim(),
+        p_phone: formData.phone || null,
+        p_employee_count: parseInt(formData.employeeCount),
+        p_message: formData.demoMessage || null
+      });
+
+      if (error) throw error;
+      if (!data) throw new Error('Gagal mengirim pengajuan demo');
+
+      setMode('demo-success');
+      toast('Pengajuan demo berhasil dikirim!', 'success');
+    } catch (error) {
+      console.error('Demo request failed:', error);
+      toast(`Gagal: ${error.message}`, 'error');
+    } finally {
+      setIsSendingOTP(false);
+    }
+  };
+
   const handleSendOTP = async () => {
     // ── Validasi form ──────────────────────────────────
     const fieldsToValidate = [
@@ -266,7 +313,7 @@ const AuthPortal = ({ onLogin }) => {
       { name: 'email', value: formData.email },
       { name: 'regPassword', value: formData.regPassword },
       { name: 'activationCode', value: formData.activationCode },
-      { name: 'confirmPassword', value: confirmPassword, deps: { regPassword: formData.regPassword } },
+      { name: 'confirmPassword', value: formData.confirmPassword, deps: { regPassword: formData.regPassword } },
       { name: 'acceptTerms', value: acceptTerms },
       { name: 'phone', value: formData.phone },
     ];
@@ -425,6 +472,7 @@ const AuthPortal = ({ onLogin }) => {
         regPassword: () => validateField('regPassword', value),
         identifier: () => {},
         password: () => {},
+        confirmPassword: () => validateField('confirmPassword', value, { regPassword: formData.regPassword }),
       };
       if (fieldRules[name]) {
         const err = fieldRules[name]();
@@ -432,11 +480,9 @@ const AuthPortal = ({ onLogin }) => {
       }
     }
 
-    // Simulate adaptive branding
-    if (name === 'identifier' && value.toLowerCase().includes('provices')) {
+      // Adaptive branding hanya untuk domain/code perusahaan yang terdaftar
+    if (name === 'identifier' && value.includes('@') && value.toLowerCase().includes('provices')) {
       setTenantBrand({ name: 'PT. Provices Project', color: '#1E90FF' });
-    } else if (name === 'identifier' && value.toLowerCase().includes('owner')) {
-      setTenantBrand(null);
     } else if (value.length < 5) {
       setTenantBrand(null);
     }
@@ -520,6 +566,10 @@ const AuthPortal = ({ onLogin }) => {
     setErrors({});
 
     try {
+      if (!navigator.onLine) {
+        throw new Error('Tidak ada koneksi internet. Periksa koneksi Anda.');
+      }
+
       let loginEmail = formData.identifier;
 
       // Owner mode
@@ -561,7 +611,12 @@ const AuthPortal = ({ onLogin }) => {
 
       // 3. Check Device Binding (Karyawan Only)
       if (userProfile.role === 'EMPLOYEE') {
-        const currentDevice = await DeviceUtil.getId();
+        let currentDevice;
+        try {
+          currentDevice = await DeviceUtil.getId();
+        } catch {
+          throw new Error('Gagal membaca identitas perangkat. Pastikan izin aplikasi diberikan.');
+        }
 
         if (!userProfile.device_id) {
           await supabase.from('profiles').update({ device_id: currentDevice.identifier }).eq('id', userProfile.id);
@@ -662,7 +717,7 @@ const AuthPortal = ({ onLogin }) => {
       {/* Main Glassmorphism Card */}
       <motion.div
         layout
-        className={`w-full mx-4 ${mode === 'owner' ? 'card-running-light-god shadow-[0_0_50px_rgba(255,0,85,0.2)]' : 'card-running-light shadow-[0_0_50px_rgba(142,45,226,0.2)]'} z-10 relative gpu-accelerate`}
+        className={`w-full max-w-md lg:max-w-lg mx-4 ${mode === 'owner' ? 'card-running-light-god shadow-[0_0_50px_rgba(255,0,85,0.2)]' : 'card-running-light shadow-[0_0_50px_rgba(142,45,226,0.2)]'} z-10 relative gpu-accelerate`}
       >
         <div className="p-8 md:p-10 relative z-10">
           {/* Logo Area & Adaptive Branding */}
@@ -831,44 +886,27 @@ const AuthPortal = ({ onLogin }) => {
 
                   {/* ── Password Field ── */}
                   <motion.div variants={itemVariants}>
-                    <div className="relative">
-                      <div className={`relative h-14 ${errors.password && touched.password ? '' : ''}`}>
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          name="password"
-                          value={formData.password}
-                          onChange={handleInput}
-                          onBlur={() => { touchField('password'); validateAndSetError('password', formData.password); }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              executeLogin();
-                            }
-                          }}
-                          required
-                          placeholder=" "
-                          className={`peer w-full h-full bg-[#1A1C23] rounded-xl px-4 pt-4 pb-2 text-white outline-none transition-all shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]
-                            ${errors.password && touched.password ? 'border-2 border-[var(--danger)]' : 'border border-white/10 focus:border-[var(--aurora-3)]'}
-                          `}
-                        />
-                        <label className={`absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none
-                          peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-3)]
-                          peer-valid:top-1.5 peer-valid:text-xs
-                          ${errors.password && touched.password ? 'text-[var(--danger)]' : ''}
-                        `}>
-                          Kata Sandi
-                        </label>
+                    <FloatingInput
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      label="Kata Sandi"
+                      value={formData.password}
+                      onChange={handleInput}
+                      onBlur={() => { touchField('password'); validateAndSetError('password', formData.password); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') executeLogin(); }}
+                      error={errors.password}
+                      touched={touched}
+                      borderColor={errors.password && touched.password ? 'border-2 border-[var(--danger)]' : 'border border-white/10 focus:border-[var(--aurora-3)]'}
+                      rightIcon={
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                          className="text-gray-500 hover:text-gray-300 transition-colors"
                         >
                           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
-                      </div>
-                      {errors.password && touched.password && (
-                        <p className="text-[var(--danger)] text-[10px] mt-1 ml-1 font-medium">{errors.password}</p>
-                      )}
-                    </div>
+                      }
+                    />
                   </motion.div>
 
                   <motion.div variants={itemVariants} className="flex justify-between items-center">
@@ -904,6 +942,9 @@ const AuthPortal = ({ onLogin }) => {
                 <motion.div variants={itemVariants} className="mt-8 text-center">
                   <p className="text-sm text-gray-400">
                     Karyawan Baru? <button onClick={() => setMode('register')} className="text-[var(--aurora-1)] font-semibold hover:text-white transition-colors">Daftar Identitas</button>
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Ingin mencoba? <button onClick={() => setMode('demo')} className="text-[var(--aurora-3)] font-semibold hover:text-white transition-colors">Minta Demo</button>
                   </p>
                 </motion.div>
               </motion.div>
@@ -1048,80 +1089,50 @@ const AuthPortal = ({ onLogin }) => {
 
                   {/* ── Password ── */}
                   <motion.div variants={itemVariants}>
-                    <div className="relative">
-                      <div className={`relative h-14 ${errors.regPassword && touched.regPassword ? '' : ''}`}>
-                        <input
-                          type={showRegPassword ? 'text' : 'password'}
-                          name="regPassword"
-                          value={formData.regPassword}
-                          onChange={handleInput}
-                          onBlur={() => { touchField('regPassword'); validateAndSetError('regPassword', formData.regPassword); }}
-                          required
-                          placeholder=" "
-                          className={`peer w-full h-full bg-[#1A1C23] rounded-xl px-4 pt-4 pb-2 text-white outline-none transition-all
-                            ${errors.regPassword && touched.regPassword ? 'border-2 border-[var(--danger)]' : 'border border-white/10 focus:border-[var(--aurora-1)]'}
-                          `}
-                        />
-                        <label className={`absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none
-                          peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-1)]
-                          peer-valid:top-1.5 peer-valid:text-xs
-                          ${errors.regPassword && touched.regPassword ? 'text-[var(--danger)]' : ''}
-                        `}>
-                          Buat Kata Sandi
-                        </label>
+                    <FloatingInput
+                      name="regPassword"
+                      type={showRegPassword ? 'text' : 'password'}
+                      label="Buat Kata Sandi"
+                      value={formData.regPassword}
+                      onChange={handleInput}
+                      onBlur={() => { touchField('regPassword'); validateAndSetError('regPassword', formData.regPassword); }}
+                      error={errors.regPassword}
+                      touched={touched}
+                      borderColor={errors.regPassword && touched.regPassword ? 'border-2 border-[var(--danger)]' : 'border border-white/10 focus:border-[var(--aurora-1)]'}
+                      rightIcon={
                         <button
                           type="button"
                           onClick={() => setShowRegPassword(!showRegPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                          className="text-gray-500 hover:text-gray-300 transition-colors"
                         >
                           {showRegPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
-                      </div>
-                      {errors.regPassword && touched.regPassword && (
-                        <p className="text-[var(--danger)] text-[10px] mt-1 ml-1 font-medium">{errors.regPassword}</p>
-                      )}
-                    </div>
+                      }
+                    />
                   </motion.div>
 
-                  {/* ── Konfirmasi Password (baru) ── */}
+                  {/* ── Konfirmasi Password ── */}
                   <motion.div variants={itemVariants}>
-                    <div className="relative">
-                      <div className={`relative h-14 ${errors.confirmPassword && touched.confirmPassword ? '' : ''}`}>
-                        <input
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          name="confirmPassword"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          onBlur={() => {
-                            touchField('confirmPassword');
-                            const err = validateField('confirmPassword', confirmPassword, { regPassword: formData.regPassword });
-                            setErrors(prev => ({ ...prev, confirmPassword: err }));
-                          }}
-                          required
-                          placeholder=" "
-                          className={`peer w-full h-full bg-[#1A1C23] rounded-xl px-4 pt-4 pb-2 text-white outline-none transition-all
-                            ${errors.confirmPassword && touched.confirmPassword ? 'border-2 border-[var(--danger)]' : 'border border-white/10 focus:border-[var(--aurora-1)]'}
-                          `}
-                        />
-                        <label className={`absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none
-                          peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-1)]
-                          peer-valid:top-1.5 peer-valid:text-xs
-                          ${errors.confirmPassword && touched.confirmPassword ? 'text-[var(--danger)]' : ''}
-                        `}>
-                          Ulangi Kata Sandi
-                        </label>
+                    <FloatingInput
+                      name="confirmPassword"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      label="Ulangi Kata Sandi"
+                      value={formData.confirmPassword}
+                      onChange={handleInput}
+                      onBlur={() => { touchField('confirmPassword'); validateAndSetError('confirmPassword', formData.confirmPassword, { regPassword: formData.regPassword }); }}
+                      error={errors.confirmPassword}
+                      touched={touched}
+                      borderColor={errors.confirmPassword && touched.confirmPassword ? 'border-2 border-[var(--danger)]' : 'border border-white/10 focus:border-[var(--aurora-1)]'}
+                      rightIcon={
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                          className="text-gray-500 hover:text-gray-300 transition-colors"
                         >
                           {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
-                      </div>
-                      {errors.confirmPassword && touched.confirmPassword && (
-                        <p className="text-[var(--danger)] text-[10px] mt-1 ml-1 font-medium">{errors.confirmPassword}</p>
-                      )}
-                    </div>
+                      }
+                    />
                   </motion.div>
 
                   {/* ── Terms & Conditions (baru) ── */}
@@ -1223,6 +1234,131 @@ const AuthPortal = ({ onLogin }) => {
                 </motion.button>
 
                 <motion.button variants={itemVariants} onClick={() => setMode('register')} className="mt-6 text-sm text-gray-500 hover:text-white transition-colors">Kembali</motion.button>
+              </motion.div>
+            )}
+
+            {/* ---- DEMO REQUEST FORM ---- */}
+            {mode === 'demo' && !deviceError && (
+              <motion.div key="demo" variants={formVariants} initial="hidden" animate="show" exit={{ opacity: 0, x: -20 }}>
+                <div className="space-y-4">
+                  <motion.div variants={itemVariants} className="text-center mb-2">
+                    <h2 className="text-xl font-serif text-white mb-1">Minta Demo</h2>
+                    <p className="text-xs text-gray-400">Isi data perusahaan Anda, tim kami akan menghubungi Anda dalam 1x24 jam.</p>
+                  </motion.div>
+
+                  <motion.div variants={itemVariants}>
+                    <FloatingInput
+                      name="name"
+                      label="Nama Lengkap"
+                      value={formData.name}
+                      onChange={handleInput}
+                      error={errors.name}
+                      touched={touched}
+                      borderColor={errors.name && touched.name ? 'border-2 border-[var(--danger)]' : 'border border-white/10 focus:border-[var(--aurora-3)]'}
+                    />
+                  </motion.div>
+
+                  <motion.div variants={itemVariants}>
+                    <FloatingInput
+                      name="companyName"
+                      label="Nama Perusahaan / Instansi"
+                      value={formData.companyName}
+                      onChange={handleInput}
+                      borderColor="border border-white/10 focus:border-[var(--aurora-3)]"
+                    />
+                  </motion.div>
+
+                  <motion.div variants={itemVariants}>
+                    <FloatingInput
+                      name="email"
+                      type="email"
+                      label="Email Aktif"
+                      value={formData.email}
+                      onChange={handleInput}
+                      error={errors.email}
+                      touched={touched}
+                      borderColor={errors.email && touched.email ? 'border-2 border-[var(--danger)]' : 'border border-white/10 focus:border-[var(--aurora-3)]'}
+                    />
+                  </motion.div>
+
+                  <motion.div variants={itemVariants}>
+                    <FloatingInput
+                      name="phone"
+                      type="tel"
+                      label="Nomor WhatsApp (opsional)"
+                      value={formData.phone}
+                      onChange={handleInput}
+                      leftIcon={<MessageCircle size={16} />}
+                      borderColor="border border-white/10 focus:border-[var(--aurora-3)]"
+                    />
+                  </motion.div>
+
+                  <motion.div variants={itemVariants}>
+                    <FloatingInput
+                      name="employeeCount"
+                      type="number"
+                      label="Jumlah Karyawan"
+                      value={formData.employeeCount}
+                      onChange={handleInput}
+                      borderColor="border border-white/10 focus:border-[var(--aurora-3)]"
+                    />
+                  </motion.div>
+
+                  <motion.div variants={itemVariants}>
+                    <div className="relative h-24">
+                      <textarea
+                        name="demoMessage"
+                        value={formData.demoMessage}
+                        onChange={handleInput}
+                        placeholder=" "
+                        className="peer w-full h-full bg-[#1A1C23] rounded-xl px-4 pt-4 pb-2 text-white outline-none transition-all border border-white/10 focus:border-[var(--aurora-3)] resize-none shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]"
+                      />
+                      <label className="absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none
+                        peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-3)]
+                        peer-valid:top-1.5 peer-valid:text-xs
+                      ">
+                        Pesan Tambahan (opsional)
+                      </label>
+                    </div>
+                  </motion.div>
+
+                  <motion.button
+                    variants={itemVariants}
+                    onClick={handleSubmitDemoRequest}
+                    disabled={isSendingOTP}
+                    className="w-full mt-4 py-4 rounded-xl font-bold text-sm tracking-widest uppercase transition-all bg-[var(--aurora-3)] text-black hover:bg-[#00E5FF] shadow-[0_0_20px_rgba(0,201,255,0.3)] flex items-center justify-center gap-2"
+                  >
+                    {isSendingOTP ? <Loader2 size={18} className="animate-spin" /> : 'Kirim Pengajuan Demo'}
+                  </motion.button>
+                </div>
+                <motion.div variants={itemVariants} className="mt-8 text-center">
+                  <p className="text-sm text-gray-400">
+                    Sudah punya akun? <button onClick={() => setMode('login')} className="text-[var(--aurora-1)] font-semibold hover:text-white transition-colors">Masuk</button>
+                  </p>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {/* ---- DEMO SUCCESS STATE ---- */}
+            {mode === 'demo-success' && (
+              <motion.div key="demo-success" variants={formVariants} initial="hidden" animate="show" className="flex flex-col items-center">
+                <motion.div variants={itemVariants} className="w-20 h-20 rounded-full bg-[var(--success)]/20 flex items-center justify-center mb-6 relative">
+                  <div className="absolute inset-0 border border-[var(--success)] rounded-full animate-ping opacity-50"></div>
+                  <CheckCircle2 size={40} className="text-[var(--success)]" />
+                </motion.div>
+                <motion.h2 variants={itemVariants} className="text-xl font-serif text-white mb-2">Pengajuan Demo Terkirim!</motion.h2>
+                <motion.p variants={itemVariants} className="text-sm text-gray-400 mb-8 text-center leading-relaxed">
+                  Terima kasih, <span className="text-white font-semibold">{formData.name}</span>!
+                  <br />
+                  Tim SI PRESENSI akan menghubungi Anda di <span className="text-[var(--aurora-3)]">{formData.email}</span> dalam 1x24 jam untuk memberikan akses demo.
+                </motion.p>
+                <motion.button
+                  variants={itemVariants}
+                  onClick={() => { setMode('login'); setFormData(prev => ({ ...prev, name: '', companyName: '', email: '', phone: '', employeeCount: '10', demoMessage: '' })); }}
+                  className="w-full py-4 rounded-xl font-bold text-sm tracking-widest uppercase transition-all bg-[var(--aurora-1)] text-white hover:bg-[#A343F0] shadow-[0_0_20px_rgba(142,45,226,0.4)]"
+                >
+                  Kembali ke Login
+                </motion.button>
               </motion.div>
             )}
 

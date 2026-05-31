@@ -343,7 +343,7 @@ const PayrollRun = () => {
             <div className="flex flex-wrap gap-4 items-end">
               <div>
                 <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tipe Periode')}</label>
-                <select value={newPeriod.period_type} onChange={e => setNewPeriod({...newPeriod, period_type: e.target.value})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+                <select value={newPeriod.period_type} onChange={e => setNewPeriod({...newPeriod, period_type: e.target.value})}  className="bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                   <option value="monthly">{t('Bulanan')}</option>
                   <option value="custom">{t('Kustom (Tanggal)')}</option>
                 </select>
@@ -352,13 +352,13 @@ const PayrollRun = () => {
                 <>
                   <div>
                     <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Bulan')}</label>
-                    <select value={newPeriod.month} onChange={e => setNewPeriod({...newPeriod, month: Number(e.target.value)})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+                    <select value={newPeriod.month} onChange={e => setNewPeriod({...newPeriod, month: Number(e.target.value)})}  className="bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                       {MONTHS.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tahun')}</label>
-                    <select value={newPeriod.year} onChange={e => setNewPeriod({...newPeriod, year: Number(e.target.value)})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+                    <select value={newPeriod.year} onChange={e => setNewPeriod({...newPeriod, year: Number(e.target.value)})}  className="bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                       {[2024,2025,2026,2027,2028].map(y => <option key={y} value={y}>{y}</option>)}
                     </select>
                   </div>
@@ -367,15 +367,15 @@ const PayrollRun = () => {
                 <>
                   <div>
                     <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tanggal Mulai')}</label>
-                    <input type="date" value={newPeriod.start_date} onChange={e => setNewPeriod({...newPeriod, start_date: e.target.value})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none" />
+                    <input type="date" value={newPeriod.start_date} onChange={e => setNewPeriod({...newPeriod, start_date: e.target.value})}   className="bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tanggal Selesai')}</label>
-                    <input type="date" value={newPeriod.end_date} onChange={e => setNewPeriod({...newPeriod, end_date: e.target.value})} className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none" />
+                    <input type="date" value={newPeriod.end_date} onChange={e => setNewPeriod({...newPeriod, end_date: e.target.value})}   className="bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Label')}</label>
-                    <input type="text" value={newPeriod.label} onChange={e => setNewPeriod({...newPeriod, label: e.target.value})} placeholder="Contoh: Proyek A" className="bg-[#1A1C23] border border-white/10 rounded-xl px-4 py-3 text-white outline-none w-40" />
+                    <input type="text" value={newPeriod.label} onChange={e => setNewPeriod({...newPeriod, label: e.target.value})} placeholder="Contoh: Proyek A"   className="bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none w-40 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                   </div>
                 </>
               )}

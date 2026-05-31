@@ -249,7 +249,7 @@ const DocumentVault = () => {
             <div className="space-y-1.5">
               <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Status Pernikahan')}</label>
               <select name="marriage_status" value={formData.marriage_status} onChange={handleInputChange}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]">
+                 className="w-full bg-white/5 border border-white/20 rounded-2xl py-3.5 px-4 text-xs text-white outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                 <option value="TK" className="bg-[#0B0C10]">{t('Tidak Kawin')}</option>
                 <option value="K" className="bg-[#0B0C10]">{t('Kawin')}</option>
               </select>
@@ -257,7 +257,7 @@ const DocumentVault = () => {
             <div className="space-y-1.5">
               <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Jumlah Anak')}</label>
               <select name="children_count" value={formData.children_count} onChange={handleInputChange}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]">
+                 className="w-full bg-white/5 border border-white/20 rounded-2xl py-3.5 px-4 text-xs text-white outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
                 {[0, 1, 2, 3].map(n => <option key={n} value={n} className="bg-[#0B0C10]">{n} {t('Anak')}</option>)}
               </select>
             </div>
@@ -282,7 +282,7 @@ const DocumentVault = () => {
           <div className="space-y-1.5">
             <label className="text-[9px] font-bold text-gray-500 uppercase tracking-widest ml-1">{t('Tingkat Pendidikan')}</label>
             <select name="education_level" value={formData.education_level} onChange={handleInputChange}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)]">
+               className="w-full bg-white/5 border border-white/20 rounded-2xl py-3.5 px-4 text-xs text-white outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-[#00C9FF]/30 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
               {['SMA', 'D1', 'D3', 'S1', 'S2', 'S3'].map(l => <option key={l} value={l}>{l}</option>)}
             </select>
           </div>
@@ -344,7 +344,7 @@ const DocumentVault = () => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-6 pb-24 max-w-2xl mx-auto">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full flex flex-col gap-6 pb-24 max-w-2xl mx-auto">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[var(--aurora-3)]">
@@ -399,7 +399,7 @@ const DocumentVault = () => {
         )}
 
         {view === 'form' && activeCategory && (
-          <motion.div key="form" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="flex flex-col gap-6">
+          <motion.div key="form" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="w-full flex flex-col gap-6">
             <div className="flex items-center gap-4 p-4 glass-panel rounded-3xl border border-white/10 bg-white/[0.02]">
               <button onClick={() => { setActiveCategory(null); setView('categories'); }} className="p-2 hover:bg-white/5 rounded-xl text-gray-500">
                 <ChevronRight className="rotate-180" size={20} />
@@ -497,7 +497,7 @@ const SmartInput = ({ label, type = 'text', name, value, onChange, placeholder, 
       onChange={onChange}
       placeholder={placeholder}
       maxLength={maxLength}
-      className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 px-4 text-xs text-white outline-none focus:border-[var(--aurora-3)] placeholder:text-gray-700 transition-all shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]" />
+        className="w-full bg-white/5 border border-white/20 rounded-2xl py-3.5 px-4 text-xs text-white outline-none placeholder:text-gray-400 transition-all duration-300 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] focus:ring-2 focus:ring-[#00C9FF]/30 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
   </div>
 );
 
