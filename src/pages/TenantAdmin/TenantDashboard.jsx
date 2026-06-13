@@ -323,6 +323,10 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
                 {modules.helpdesk && <button onClick={() => go('helpdesk')} className={NAV_BTN(activeTab === 'helpdesk')}><Headphones size={18} /><span className="text-sm">Helpdesk Tiket</span></button>}
                 {modules.work_order && <button onClick={() => go('work-order')} className={NAV_BTN(activeTab === 'work-order')}><Hammer size={18} /><span className="text-sm">Work Order Maintenance</span></button>}
                 {modules.patrol && <button onClick={() => go('patrol')} className={NAV_BTN(activeTab === 'patrol')}><Route size={18} /><span className="text-sm">Patroli Satpam</span></button>}
+                <button onClick={() => { setIsSidebarOpen(false); navigate('/jdc'); }} className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-400 hover:bg-[var(--aurora-3)]/10 hover:text-[var(--aurora-3)] border border-dashed border-white/5 hover:border-[var(--aurora-3)]/30">
+                  <ShieldCheck size={18} />
+                  <span className="text-sm font-bold">Aplikasi JDC (100%)</span>
+                </button>
                 {modules.visitor && <button onClick={() => go('visitor')} className={NAV_BTN(activeTab === 'visitor')}><UserCheck size={18} /><span className="text-sm">Manajemen Tamu</span></button>}
                 {modules.booking && <button onClick={() => go('facility-booking')} className={NAV_BTN(activeTab === 'facility-booking')}><DoorOpen size={18} /><span className="text-sm">Booking Fasilitas</span></button>}
                 {modules.incident && <button onClick={() => go('incident')} className={NAV_BTN(activeTab === 'incident')}><AlertTriangle size={18} /><span className="text-sm">Laporan Insiden (K3)</span></button>}

@@ -22,6 +22,7 @@ const SubAdminDashboard = lazy(() => import('./pages/SubAdmin/SubAdminDashboard'
 const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
 const QRScanner = lazy(() => import('./pages/Employee/components/QRScanner'));
 const PublicServicePortal = lazy(() => import('./pages/PublicPortal/PublicServicePortal'));
+const JDCApp = lazy(() => import('./jdc/App'));
 
 const DASHBOARD_ROUTES = ['/app', '/tenantadmin', '/superadmin', '/subadmin'];
 const EXIT_ROUTES = ['/', '/login'];
@@ -443,6 +444,14 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
               isAuthenticated && (['SUB_ADMIN', 'TENANT_ADMIN', 'SUPER_ADMIN'].includes(userRole))
                 ? <SubAdminDashboard onCycleRole={handleCycleRole} />
                 : isAuthenticated ? <Navigate to="/" replace />
+                : <Navigate to="/login" replace />
+            }
+          />
+
+          {/* JDC SECURITY SYSTEM */}
+          <Route path="/jdc" element={
+              isAuthenticated
+                ? <PageTransition><JDCApp /></PageTransition>
                 : <Navigate to="/login" replace />
             }
           />
