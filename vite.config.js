@@ -14,6 +14,14 @@ export default defineConfig({
   resolve: {
     preserveSymlinks: true,
   },
+  optimizeDeps: {
+    entries: [
+      'index.html',
+      'src/**/*.{js,ts,jsx,tsx}',
+      '!**/android/**',
+      '!**/dist/**'
+    ]
+  },
   build: {
     rollupOptions: {
       output: {
