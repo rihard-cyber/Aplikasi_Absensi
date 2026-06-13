@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
-import { Fingerprint, Smartphone, AlertCircle, CheckCircle2, ChevronRight, Loader2, Eye, EyeOff, MessageCircle, User, Lock, Key } from 'lucide-react';
+import { Fingerprint, Smartphone, AlertCircle, CheckCircle2, ChevronRight, Loader2, Eye, EyeOff, MessageCircle, User, Lock, Key, ClipboardList, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DeviceUtil } from '../../utils/deviceUtil';
 import { supabase } from '../../utils/supabaseClient';
@@ -749,11 +749,86 @@ const AuthPortal = ({ onLogin }) => {
         ))}
       </div>
 
-      {/* Main Glassmorphism Card */}
-      <motion.div
-        className="login-container animate-fade-in"
-      >
-        <div className="login-card">
+      {/* Main Glassmorphism Wrapper */}
+      <div className="login-wrapper animate-fade-in">
+        {/* Left Section: Branding & HUD */}
+        <div className="login-branding-section">
+          <div className="relative w-full flex flex-col items-start z-10">
+            <span className="text-[9px] text-[var(--aurora-3)] uppercase tracking-[0.3em] font-extrabold mb-3 bg-[var(--aurora-3)]/10 px-3 py-1.5 rounded-full border border-[var(--aurora-3)]/20 shadow-[0_0_15px_rgba(0,201,255,0.15)] flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--aurora-3)] animate-pulse"></span>
+              SECURITY CORE PLATFORM
+            </span>
+            
+            <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight mb-3 font-sans">
+              Sistem Manajemen Pengamanan JDC
+            </h1>
+            <p className="text-xs text-gray-400 max-w-sm mb-8 font-sans leading-relaxed">
+              Portal keamanan pintar terintegrasi untuk pengelolaan absensi, patroli checkpoint, laporan mutasi, dan penanganan insiden.
+            </p>
+
+            {/* Feature List */}
+            <div className="space-y-5 mb-8 w-full max-w-sm">
+              <div className="flex items-center gap-3.5 group">
+                <div className="w-9 h-9 rounded-xl bg-[var(--aurora-3)]/10 flex items-center justify-center border border-[var(--aurora-3)]/15 text-[var(--aurora-3)] shadow-[0_0_15px_rgba(0,201,255,0.05)] transition-all group-hover:scale-105 group-hover:border-[var(--aurora-3)]/30">
+                  <Smartphone size={16} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white transition-colors group-hover:text-[var(--aurora-3)]">Absensi GPS & Swafoto</h4>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Pencatatan kehadiran akurat berbasis geofencing dan face verification</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3.5 group">
+                <div className="w-9 h-9 rounded-xl bg-[var(--aurora-1)]/10 flex items-center justify-center border border-[var(--aurora-1)]/15 text-[var(--aurora-1)] shadow-[0_0_15px_rgba(142,45,226,0.05)] transition-all group-hover:scale-105 group-hover:border-[var(--aurora-1)]/30">
+                  <Fingerprint size={16} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white transition-colors group-hover:text-[var(--aurora-1)]">Patroli Guard Tour</h4>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Pemantauan titik checkpoints dengan scan QR code terenkripsi</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3.5 group">
+                <div className="w-9 h-9 rounded-xl bg-[#10B981]/10 flex items-center justify-center border border-[#10B981]/15 text-[#10B981] shadow-[0_0_15px_rgba(16,185,129,0.05)] transition-all group-hover:scale-105 group-hover:border-[#10B981]/30">
+                  <ClipboardList size={16} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white transition-colors group-hover:text-[#10B981]">Buku Mutasi Digital</h4>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Pencatatan mutasi jaga dan serah terima dinas real-time</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3.5 group">
+                <div className="w-9 h-9 rounded-xl bg-[var(--warning)]/10 flex items-center justify-center border border-[var(--warning)]/20 text-[var(--warning)] shadow-[0_0_15px_rgba(245,158,11,0.05)] transition-all group-hover:scale-105 group-hover:border-[var(--warning)]/30">
+                  <Shield size={16} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white transition-colors group-hover:text-[var(--warning)]">Temuan & Tiket Helpdesk</h4>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Laporan kerusakan dan keluhan fasilitas langsung dari lapangan</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Status Info */}
+            <div className="flex items-center gap-2 bg-white/5 border border-white/5 px-4 py-2.5 rounded-2xl text-[10px] text-gray-400 select-none backdrop-blur-md">
+              <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse shadow-[0_0_10px_#10B981]"></span>
+              <span>Sistem Aktif & Terlindungi (SaaS Core v3.0)</span>
+            </div>
+          </div>
+
+          {/* Glowing Animated Circular HUD in Branding Section */}
+          <div className="absolute right-[-15%] bottom-[-15%] opacity-15 pointer-events-none select-none z-0">
+            <div className="w-[500px] h-[500px] rounded-full border border-dashed border-[var(--aurora-3)] animate-[spin_60s_linear_infinite] flex items-center justify-center">
+              <div className="w-[440px] h-[440px] rounded-full border border-dashed border-[var(--aurora-1)] animate-[spin_40s_linear_infinite_reverse] flex items-center justify-center">
+                <div className="w-[380px] h-[380px] rounded-full border border-dashed border-[var(--aurora-3)] animate-[spin_20s_linear_infinite]"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Section: Form Card */}
+        <div className="login-form-section">
+          <div className="login-card">
           {/* Logo Area & Adaptive Branding */}
           <div className="login-header cursor-pointer" onClick={handleLogoClick}>
             <div className="login-logo-ring">
@@ -1391,7 +1466,8 @@ const AuthPortal = ({ onLogin }) => {
 
           </AnimatePresence>
         </div>
-      </motion.div>
+      </div>
+    </div>
 
       {/* Cursive Signature Watermark */}
       <div className="absolute bottom-4 left-0 right-0 z-10 pointer-events-none flex justify-center">
