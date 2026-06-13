@@ -8,6 +8,7 @@ import HRISExportWrapper from '../../components/HRISExportWrapper';
 import { useSFX } from '../../utils/useSFX';
 import { useConfirm } from '../../components/ConfirmDialog';
 import DeveloperWatermark from '../../components/DeveloperWatermark';
+import GlobalHeader from '../../components/GlobalHeader';
 
 const GlobalMap = React.lazy(() => import('./components/GlobalMap'));
 const LuxuryMetrics = React.lazy(() => import('./components/LuxuryMetrics'));
