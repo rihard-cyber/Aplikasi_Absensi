@@ -1063,41 +1063,36 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
         </AnimatePresence>
       </div>
 
-      {/* Floating Dock Navigation Bar */}
-      <div className={`fixed bottom-6 w-full px-0 flex justify-center z-50 safe-bottom transition-transform duration-300 ease-in-out ${isNavVisible ? 'translate-y-0' : 'translate-y-[150%]'}`}>
-        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-full px-6 py-3 mx-4 flex items-center justify-between w-full max-w-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
-          {[
-            { id: 'home', icon: Home },
-            { id: 'history', icon: Clock },
-            { id: 'absensi', icon: Fingerprint, center: true },
-            { id: 'docs', icon: FileText },
-            { id: 'profile', icon: User },
-          ].map((item) => (
-            <motion.button
+      {/* Bottom Navigation Bar */}
+      <div className={`bottom-nav ${isNavVisible ? 'translate-y-0' : 'translate-y-[150%]'}`}>
+        {[
+          { id: 'home', label: 'Home', icon: Home },
+          { id: 'history', label: 'Riwayat', icon: Clock },
+          { id: 'absensi', label: 'Presensi', icon: Fingerprint, center: true },
+          { id: 'docs', label: 'Dokumen', icon: FileText },
+          { id: 'profile', label: 'Profil', icon: User },
+        ].map((item) => {
+          const isActive = activeTab === item.id;
+          return (
+            <button
               key={item.id}
               onClick={() => {
                 if (window.navigator?.vibrate) window.navigator.vibrate(40);
                 setActiveTab(item.id);
                 setActiveSubView(null);
               }}
-              whileHover={{ y: -5 }}
-              whileTap={{ scale: 0.9 }}
-              className={`relative ${item.center
-                ? 'bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] w-14 h-14 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_rgba(142,45,226,0.5)] -mt-8 border-4 border-[#0B0C10]'
-                : `p-3 rounded-full transition-colors ${activeTab === item.id ? 'text-[var(--aurora-3)]' : 'text-gray-500'}`
-                }`}
+              className={item.center 
+                ? 'bottom-nav-btn-center' 
+                : `bottom-nav-btn ${isActive ? 'active' : ''}`
+              }
             >
-              <item.icon size={item.center ? 28 : 22} />
-              {activeTab === item.id && !item.center && (
-                <motion.div
-                  layoutId="activeNav"
-                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[var(--aurora-3)] shadow-[0_0_8px_var(--aurora-3)]"
-                />
-              )}
-            </motion.button>
-          ))}
-        </div>
+              <item.icon size={item.center ? 26 : 20} />
+              {!item.center && <span>{item.label}</span>}
+            </button>
+          );
+        })}
       </div>
+
 
       {/* Copyright Watermark */}
       <div className="fixed bottom-1 w-full pointer-events-none z-40 safe-bottom flex flex-col items-center">

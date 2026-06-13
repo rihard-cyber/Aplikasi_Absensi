@@ -169,67 +169,65 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
       {createPortal(
         <AnimatePresence>
           {showGodMenu && (
-            <div className="fixed inset-0 z-[9999] overflow-y-auto">
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
               {/* Backdrop */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/85 backdrop-blur-md"
+                className="absolute inset-0 bg-black/85 backdrop-blur-md"
                 onClick={() => setShowGodMenu(false)}
               />
               
-              {/* Menu Panel Wrapper */}
-              <div className="flex min-h-screen items-start sm:items-center justify-center p-4 relative z-10 pointer-events-none">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                  transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-                  className="relative z-20 w-full max-w-sm pointer-events-auto"
-                >
-                  <div className="glass-panel p-6 sm:p-8 border border-[var(--warning)]/40 shadow-[0_0_80px_rgba(255,215,0,0.3)]">
-                    <div className="text-center mb-8">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--warning)]/10 border border-[var(--warning)]/30 mb-4">
-                        <Zap size={14} className="text-[var(--warning)] animate-pulse" />
-                        <span className="text-[10px] text-[var(--warning)] uppercase tracking-widest font-black">Authority Override</span>
-                      </div>
-                      <h2 className="font-serif text-2xl text-white tracking-wide">Navigasi Kilat</h2>
-                      <p className="text-[10px] text-gray-500 mt-2 uppercase tracking-widest">Sistem Kendali Pusat</p>
+              {/* Menu Panel */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+                className="relative z-10 w-full max-w-sm overflow-y-auto max-h-[90vh] custom-scrollbar"
+              >
+                <div className="glass-panel p-6 sm:p-8 border border-[var(--warning)]/40 shadow-[0_0_80px_rgba(255,215,0,0.3)]">
+                  <div className="text-center mb-8">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--warning)]/10 border border-[var(--warning)]/30 mb-4">
+                      <Zap size={14} className="text-[var(--warning)] animate-pulse" />
+                      <span className="text-[10px] text-[var(--warning)] uppercase tracking-widest font-black">Authority Override</span>
                     </div>
-
-                    <div className="space-y-4">
-                      {navItems.map((item) => (
-                        <motion.button
-                          key={item.role}
-                          whileHover={{ scale: 1.02, x: 4 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => handleGodNavigate(item.role)}
-                          className="w-full flex items-center gap-5 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all group"
-                        >
-                          <div
-                            className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                            style={{ background: `${item.color}20`, color: item.color, boxShadow: `0 0 20px ${item.color}40` }}
-                          >
-                            <item.icon size={22} />
-                          </div>
-                          <div className="text-left">
-                            <p className="font-bold text-sm text-white tracking-wide">{item.label}</p>
-                            <p className="text-[10px] text-gray-400 mt-1 leading-tight opacity-70">{item.desc}</p>
-                          </div>
-                        </motion.button>
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={() => setShowGodMenu(false)}
-                      className="w-full mt-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-gray-500 hover:text-white hover:bg-white/10 text-[10px] font-black uppercase tracking-[0.2em] transition-all"
-                    >
-                      Tutup Sesi
-                    </button>
+                    <h2 className="font-serif text-2xl text-white tracking-wide">Navigasi Kilat</h2>
+                    <p className="text-[10px] text-gray-500 mt-2 uppercase tracking-widest">Sistem Kendali Pusat</p>
                   </div>
-                </motion.div>
-              </div>
+
+                  <div className="space-y-4">
+                    {navItems.map((item) => (
+                      <motion.button
+                        key={item.role}
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleGodNavigate(item.role)}
+                        className="w-full flex items-center gap-5 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all group"
+                      >
+                        <div
+                          className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                          style={{ background: `${item.color}20`, color: item.color, boxShadow: `0 0 20px ${item.color}40` }}
+                        >
+                          <item.icon size={22} />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-bold text-sm text-white tracking-wide">{item.label}</p>
+                          <p className="text-[10px] text-gray-400 mt-1 leading-tight opacity-70">{item.desc}</p>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setShowGodMenu(false)}
+                    className="w-full mt-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-gray-500 hover:text-white hover:bg-white/10 text-[10px] font-black uppercase tracking-[0.2em] transition-all"
+                  >
+                    Tutup Sesi
+                  </button>
+                </div>
+              </motion.div>
             </div>
           )}
         </AnimatePresence>,

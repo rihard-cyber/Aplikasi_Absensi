@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
-import { Fingerprint, Smartphone, AlertCircle, CheckCircle2, ChevronRight, Loader2, Eye, EyeOff, MessageCircle } from 'lucide-react';
+import { Fingerprint, Smartphone, AlertCircle, CheckCircle2, ChevronRight, Loader2, Eye, EyeOff, MessageCircle, User, Lock, Key } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DeviceUtil } from '../../utils/deviceUtil';
 import { supabase } from '../../utils/supabaseClient';
@@ -51,14 +51,25 @@ const validateField = (name, value, deps = {}) => {
 // ─── Helper: render floating input ────────────────────────────
 const FloatingInput = ({ name, type = 'text', label, value, onChange, onBlur, onKeyDown, leftIcon, rightIcon, error, borderColor, extraClass, touched }) => {
   const hasError = error && touched?.[name];
+  
+  let displayLeftIcon = leftIcon;
+  if (!displayLeftIcon) {
+    if (name === 'identifier' || name === 'name' || name === 'email') {
+      displayLeftIcon = <User size={16} />;
+    } else if (name === 'password' || name === 'confirmPassword' || name === 'regPassword') {
+      displayLeftIcon = <Lock size={16} />;
+    } else if (name === 'activationCode') {
+      displayLeftIcon = <Key size={16} />;
+    } else if (name === 'nip' || name === 'phone') {
+      displayLeftIcon = <Smartphone size={16} />;
+    }
+  }
+
   return (
-    <div className="relative">
-      <div className={`relative h-14 ${extraClass || ''}`}>
-        {leftIcon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 text-gray-500">
-            {leftIcon}
-          </div>
-        )}
+    <div className="login-field">
+      {label && <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{label}</label>}
+      <div className={`login-input-wrap ${hasError ? 'border-[var(--danger)]' : ''} ${extraClass || ''}`}>
+        {displayLeftIcon && <div className="text-gray-500 shrink-0 flex items-center">{displayLeftIcon}</div>}
         <input
           type={type}
           name={name}
@@ -66,30 +77,12 @@ const FloatingInput = ({ name, type = 'text', label, value, onChange, onBlur, on
           onChange={onChange}
           onBlur={onBlur}
           onKeyDown={onKeyDown}
-          required
-          placeholder=" "
-          className={`peer w-full h-full bg-[#1A1C23] rounded-xl px-4 pt-4 pb-2 text-white outline-none transition-all shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]
-            ${leftIcon ? 'pl-10' : ''}
-            ${rightIcon ? 'pr-10' : ''}
-            ${hasError ? 'border-2 border-[var(--danger)]' : borderColor || 'border border-white/10 focus:border-[var(--aurora-3)]'}
-          `}
+          placeholder={`Masukkan ${label}...`}
+          className="flex-1 bg-transparent border-none outline-none text-white text-sm"
         />
-        <label style={{ left: leftIcon ? '2.5rem' : '1rem' }} className="absolute top-4 text-gray-500 text-sm transition-all pointer-events-none
-          peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-3)]
-          peer-valid:top-1.5 peer-valid:text-xs
-          ${hasError ? 'text-[var(--danger)]' : ''}
-        ">
-          {label}
-        </label>
-        {rightIcon && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
-            {rightIcon}
-          </div>
-        )}
+        {rightIcon && <div className="shrink-0 flex items-center">{rightIcon}</div>}
       </div>
-      {hasError && (
-        <p className="text-[var(--danger)] text-[10px] mt-1 ml-1 font-medium">{error}</p>
-      )}
+      {hasError && <p className="text-[var(--danger)] text-[10px] mt-1 ml-1 font-medium">{error}</p>}
     </div>
   );
 };
@@ -688,7 +681,12 @@ const AuthPortal = ({ onLogin }) => {
   // ─── Helper: render floating input ────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[var(--bg-darker)] flex flex-col items-center justify-center relative overflow-hidden font-sans px-0" onMouseMove={handleMouseMove}>
+    <div className="login-page" onMouseMove={handleMouseMove}>
+      <div className="login-bg-animation">
+        <div className="login-grid"></div>
+        <div className="login-scanline"></div>
+      </div>
+
       {/* Drifting Neon Blobs */}
       <div className="absolute inset-0 pointer-events-none opacity-40 z-0">
         <motion.div
@@ -714,33 +712,39 @@ const AuthPortal = ({ onLogin }) => {
           />
         ))}
       </div>
+
       {/* Main Glassmorphism Card */}
       <motion.div
         layout
-        className={`w-full max-w-md lg:max-w-lg mx-4 ${mode === 'owner' ? 'card-running-light-god shadow-[0_0_50px_rgba(255,0,85,0.2)]' : 'card-running-light shadow-[0_0_50px_rgba(142,45,226,0.2)]'} z-10 relative gpu-accelerate`}
+        className="login-container animate-fade-in"
       >
-        <div className="p-8 md:p-10 relative z-10">
+        <div className="login-card">
           {/* Logo Area & Adaptive Branding */}
-          <div className="text-center mb-10 relative cursor-pointer" onClick={handleLogoClick}>
+          <div className="login-header cursor-pointer" onClick={handleLogoClick}>
+            <div className="login-logo-ring">
+              <div className="w-full h-full bg-gradient-to-br from-[var(--aurora-3)] to-[var(--aurora-1)] rounded-full flex items-center justify-center font-serif font-bold text-white text-xl shadow-[0_0_15px_rgba(0,201,255,0.4)]">
+                SP
+              </div>
+            </div>
             <AnimatePresence mode="wait">
               {tenantBrand ? (
                 <motion.div key="tenant" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
-                  <h1 className="text-3xl font-serif font-bold text-white tracking-wide">{tenantBrand.name}</h1>
-                  <p className="text-[var(--aurora-3)] text-xs mt-2 uppercase tracking-widest">Portal Perusahaan</p>
+                  <h1 className="login-title">{tenantBrand.name}</h1>
+                  <p className="login-subtitle">Portal Perusahaan</p>
                 </motion.div>
               ) : mode === 'owner' ? (
                 <motion.div key="owner" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}>
-                  <h1 className="text-3xl font-serif font-bold bg-clip-text text-transparent bg-gradient-to-r from-[var(--danger)] to-[var(--warning)]">
+                  <h1 className="login-title" style={{ background: 'linear-gradient(135deg, var(--danger) 0%, var(--warning) 100%)', WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                     AKUN ADMIN
                   </h1>
-                  <p className="text-gray-400 text-xs mt-2 uppercase tracking-widest">Akses Super Admin</p>
+                  <p className="login-subtitle">Akses Super Admin</p>
                 </motion.div>
               ) : (
                 <motion.div key="default" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <h1 className="text-3xl font-serif font-bold text-white tracking-wide">
+                  <h1 className="login-title">
                     SI PRESENSI
                   </h1>
-                  <p className="text-gray-400 text-xs mt-2 uppercase tracking-widest">Sistem Identitas Tunggal</p>
+                  <p className="login-subtitle">Sistem Identitas Tunggal</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -778,32 +782,31 @@ const AuthPortal = ({ onLogin }) => {
             {/* ---- OWNER BIOMETRIC STATE ---- */}
             {mode === 'owner' && !deviceError && (
               <motion.div key="owner-login" variants={formVariants} initial="hidden" animate="show" className="flex flex-col items-center">
-                <motion.div variants={itemVariants} className="w-full relative mb-8">
-                  <div className="relative h-14 w-full">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInput}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          executeLogin();
-                        }
-                      }}
-                      placeholder=" "
-                      className="peer w-full h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 pt-4 pb-2 text-white outline-none focus:border-[var(--danger)] transition-all"
-                    />
-                    <label className="absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--danger)] peer-valid:top-1.5 peer-valid:text-xs">
-                      Kredensial Admin
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
+                <motion.div variants={itemVariants} className="w-full mb-8">
+                  <FloatingInput
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    label="Kredensial Admin"
+                    value={formData.password}
+                    onChange={handleInput}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        executeLogin();
+                      }
+                    }}
+                    error={errors.password}
+                    touched={{ password: true }}
+                    borderColor="border border-white/10 focus:border-[var(--danger)]"
+                    rightIcon={
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-gray-500 hover:text-gray-300 transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    }
+                  />
                 </motion.div>
 
                 <motion.div variants={itemVariants} className="flex items-center gap-4 w-full mb-8">
@@ -961,15 +964,17 @@ const AuthPortal = ({ onLogin }) => {
                     <p className="text-xs text-gray-400">Masukkan email Anda untuk menerima instruksi pemulihan.</p>
                   </motion.div>
 
-                  <motion.div variants={itemVariants} className="relative h-14">
-                    <input
-                      type="email" name="email" value={formData.email} onChange={handleInput} required
-                      placeholder=" "
-                      className="peer w-full h-full bg-[#1A1C23] border border-white/10 rounded-xl px-4 pt-4 pb-2 text-white outline-none focus:border-[var(--aurora-3)] transition-all"
+                  <motion.div variants={itemVariants}>
+                    <FloatingInput
+                      name="email"
+                      type="email"
+                      label="Email Terdaftar"
+                      value={formData.email}
+                      onChange={handleInput}
+                      error={errors.email}
+                      touched={{ email: true }}
+                      borderColor="border border-white/10 focus:border-[var(--aurora-3)]"
                     />
-                    <label className="absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-3)] peer-valid:top-1.5 peer-valid:text-xs">
-                      Email Terdaftar
-                    </label>
                   </motion.div>
 
                   <motion.button
@@ -1012,34 +1017,17 @@ const AuthPortal = ({ onLogin }) => {
                     />
                   </motion.div>
 
-                  {/* ── Kode Aktivasi ── */}
                   <motion.div variants={itemVariants}>
-                    <div className="relative">
-                      <div className={`relative h-14 ${errors.activationCode && touched.activationCode ? '' : ''}`}>
-                        <input
-                          type="text"
-                          name="activationCode"
-                          value={formData.activationCode}
-                          onChange={handleInput}
-                          onBlur={() => { touchField('activationCode'); validateAndSetError('activationCode', formData.activationCode); }}
-                          required
-                          placeholder=" "
-                          className={`peer w-full h-full bg-[#1A1C23] rounded-xl px-4 pt-4 pb-2 text-white outline-none transition-all shadow-[0_0_10px_rgba(255,165,0,0.1)]
-                            ${isTenantReg ? 'border-[var(--warning)]/30 focus:border-[var(--warning)]' : 'border-[var(--aurora-3)]/30 focus:border-[var(--aurora-3)]'}
-                            ${errors.activationCode && touched.activationCode ? 'border-2 border-[var(--danger)]' : ''}
-                          `}
-                        />
-                        <label className={`absolute left-4 top-4 text-[10px] font-black uppercase tracking-widest transition-all pointer-events-none
-                          peer-focus:top-1.5 peer-focus:text-[8px] peer-valid:top-1.5 peer-valid:text-[8px]
-                          ${errors.activationCode && touched.activationCode ? 'text-[var(--danger)]' : isTenantReg ? 'text-[var(--warning)]' : 'text-[var(--aurora-3)]'}
-                        `}>
-                          {isTenantReg ? 'Kode Lisensi Tenant (Prefix: ADM-)' : 'Kode Aktivasi Karyawan (Prefix: SI-)'}
-                        </label>
-                      </div>
-                      {errors.activationCode && touched.activationCode && (
-                        <p className="text-[var(--danger)] text-[10px] mt-1 ml-1 font-medium">{errors.activationCode}</p>
-                      )}
-                    </div>
+                    <FloatingInput
+                      name="activationCode"
+                      label={isTenantReg ? 'Kode Lisensi Tenant (Prefix: ADM-)' : 'Kode Aktivasi Karyawan (Prefix: SI-)'}
+                      value={formData.activationCode}
+                      onChange={handleInput}
+                      onBlur={() => { touchField('activationCode'); validateAndSetError('activationCode', formData.activationCode); }}
+                      error={errors.activationCode}
+                      touched={touched}
+                      borderColor={errors.activationCode && touched.activationCode ? 'border-2 border-[var(--danger)]' : isTenantReg ? 'border border-[var(--warning)]/30 focus:border-[var(--warning)]' : 'border border-[var(--aurora-3)]/30 focus:border-[var(--aurora-3)]'}
+                    />
                   </motion.div>
 
                   {/* ── NIP (Karyawan only) ── */}
@@ -1306,22 +1294,15 @@ const AuthPortal = ({ onLogin }) => {
                     />
                   </motion.div>
 
-                  <motion.div variants={itemVariants}>
-                    <div className="relative h-24">
-                      <textarea
-                        name="demoMessage"
-                        value={formData.demoMessage}
-                        onChange={handleInput}
-                        placeholder=" "
-                        className="peer w-full h-full bg-[#1A1C23] rounded-xl px-4 pt-4 pb-2 text-white outline-none transition-all border border-white/10 focus:border-[var(--aurora-3)] resize-none shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]"
-                      />
-                      <label className="absolute left-4 top-4 text-gray-500 text-sm transition-all pointer-events-none
-                        peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-[var(--aurora-3)]
-                        peer-valid:top-1.5 peer-valid:text-xs
-                      ">
-                        Pesan Tambahan (opsional)
-                      </label>
-                    </div>
+                  <motion.div variants={itemVariants} className="flex flex-col gap-1.5">
+                    <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">Pesan Tambahan (opsional)</label>
+                    <textarea
+                      name="demoMessage"
+                      value={formData.demoMessage}
+                      onChange={handleInput}
+                      placeholder="Tulis pesan atau kebutuhan Anda..."
+                      className="w-full h-24 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-gray-600 focus:border-[var(--aurora-3)] focus:ring-2 focus:ring-[var(--aurora-3)]/25 resize-none"
+                    />
                   </motion.div>
 
                   <motion.button
