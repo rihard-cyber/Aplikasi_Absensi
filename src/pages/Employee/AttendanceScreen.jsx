@@ -34,6 +34,7 @@ import { showLocalNotification } from '../../utils/pushNotification';
 import { useToast } from '../../components/Toast';
 import { verifyFace } from '../../utils/faceVerification';
 import { checkWifiGeofence } from '../../utils/wifiGeofence';
+import { registerBackHandler } from '../../utils/navigation';
 
 /** @type {(s: string) => string} Passthrough i18n - app is monolingual Indonesian */
 const t = (s) => s;
@@ -741,6 +742,23 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
   const [activeSubView, setActiveSubView] = useState(() => {
     try { return sessionStorage.getItem('employee_active_subview') || null; } catch { return null; }
   });
+
+  // Handle layer-by-layer back button
+  useEffect(() => {
+    const unregister = registerBackHandler(() => {
+      if (activeSubView) {
+        setActiveSubView(null);
+        return true;
+      }
+      if (activeTab !== 'home') {
+        setActiveTab('home');
+        return true;
+      }
+      return false;
+    });
+    return unregister;
+  }, [activeSubView, activeTab]);
+
   const [clickCount, setClickCount] = useState(0);
   const [tenantName, setTenantName] = useState('Memuat...');
   const [structureName, setStructureName] = useState('PORTAL KARYAWAN');

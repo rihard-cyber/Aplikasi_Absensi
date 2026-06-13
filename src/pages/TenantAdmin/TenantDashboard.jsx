@@ -6,6 +6,7 @@ import ThemeToggle from '../../components/ThemeToggle';
 import DashboardHome from './components/DashboardHome';
 import CompanyProfile from './components/CompanyProfile';
 import SubAdminDashboard from '../SubAdmin/SubAdminDashboard';
+import { registerBackHandler } from '../../utils/navigation';
 
 const PayrollSettings = lazy(() => import('./components/PayrollSettings'));
 const ApprovalWorkflow = lazy(() => import('./components/ApprovalWorkflow'));
@@ -79,6 +80,18 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
   const [activeTab, setActiveTab] = useState(() => {
     try { return sessionStorage.getItem('tenant_active_tab') || 'home'; } catch { return 'home'; }
   });
+
+  // Handle layer-by-layer back button
+  useEffect(() => {
+    const unregister = registerBackHandler(() => {
+      if (activeTab !== 'home') {
+        setActiveTab('home');
+        return true;
+      }
+      return false;
+    });
+    return unregister;
+  }, [activeTab]);
   const [clickCount, setClickCount] = useState(0);
   const [tenantData, setTenantData] = useState({ name: 'Memuat...', logo_url: null });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

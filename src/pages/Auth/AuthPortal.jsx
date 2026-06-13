@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { DeviceUtil } from '../../utils/deviceUtil';
 import { supabase } from '../../utils/supabaseClient';
 import { useToast } from '../../components/Toast';
+import { registerBackHandler } from '../../utils/navigation';
 
 const OTP_LENGTH = 6;
 
@@ -93,6 +94,23 @@ const AuthPortal = ({ onLogin }) => {
 
   // State management
   const [mode, setMode] = useState('login'); // login, register, verify, owner, forgot-password, demo, demo-success
+
+  // Handle layer-by-layer back button
+  useEffect(() => {
+    const unregister = registerBackHandler(() => {
+      if (mode === 'verify') {
+        setMode('register');
+        return true;
+      }
+      if (mode !== 'login') {
+        setMode('login');
+        setFormData(prev => ({ ...prev, password: '' }));
+        return true;
+      }
+      return false;
+    });
+    return unregister;
+  }, [mode]);
   const [secretClickCount, setSecretClickCount] = useState(0);
   const [tenantBrand, setTenantBrand] = useState(null);
   const [biometricScan, setBiometricScan] = useState(0);
@@ -715,7 +733,6 @@ const AuthPortal = ({ onLogin }) => {
 
       {/* Main Glassmorphism Card */}
       <motion.div
-        layout
         className="login-container animate-fade-in"
       >
         <div className="login-card">

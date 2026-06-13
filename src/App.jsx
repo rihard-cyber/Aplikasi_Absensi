@@ -10,6 +10,7 @@ import { NotificationProvider } from './components/Notifications';
 import OfflineIndicator from './components/OfflineIndicator';
 import { supabase } from './utils/supabaseClient';
 import ErrorBoundary from './components/ErrorBoundary';
+import { executeBackHandlers } from './utils/navigation';
 
 const AttendanceScreen = lazy(() => import('./pages/Employee/AttendanceScreen'));
 const AuthPortal = lazy(() => import('./pages/Auth/AuthPortal'));
@@ -137,6 +138,12 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
 
   useEffect(() => {
     const onPopState = () => {
+      // 1. Run custom back handlers first
+      if (executeBackHandlers()) {
+        window.history.pushState(null, '', currentHashRef.current);
+        return;
+      }
+
       // User pressed back on a dashboard → restore state, show hint
       if (isDashboard && dashboardRef.current) {
         window.history.pushState(null, '', currentHashRef.current);
@@ -173,38 +180,64 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
     return () => window.removeEventListener('popstate', onPopState);
   }, [isDashboard, isExitRoute, dashboardRef, currentHashRef, showBackHint, triggerExit]);
 
-  // Handle the Capacitor native back event
+  // Handle native Android back button via Capacitor App plugin
   useEffect(() => {
-    const handler = () => {
-      if (isDashboard && dashboardRef.current) {
-        window.history.pushState(null, '', currentHashRef.current);
-        showBackHint();
-        setBackCount(prev => {
-          const next = prev + 1;
-          if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
-          backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
-          if (next >= 2) {
-            triggerExit();
-            return 0;
-          }
-          return next;
-        });
-      } else if (isExitRoute) {
-        setBackCount(prev => {
-          const next = prev + 1;
-          if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
-          backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
-          if (next >= 2) {
-            triggerExit();
-            return 0;
-          }
-          return next;
-        });
+    let backButtonSub;
+    
+    const initBackButton = async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        const { App: CapApp } = await import('@capacitor/app');
+        
+        if (Capacitor.isNativePlatform()) {
+          backButtonSub = CapApp.addListener('backButton', () => {
+            // 1. Run custom back handlers first
+            if (executeBackHandlers()) {
+              return;
+            }
+            
+            // 2. Standard exit/back logic
+            if (isDashboard && dashboardRef.current) {
+              showBackHint();
+              setBackCount(prev => {
+                const next = prev + 1;
+                if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
+                backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
+                if (next >= 2) {
+                  triggerExit();
+                  return 0;
+                }
+                return next;
+              });
+            } else if (isExitRoute) {
+              setBackCount(prev => {
+                const next = prev + 1;
+                if (backTimeoutRef.current) clearTimeout(backTimeoutRef.current);
+                backTimeoutRef.current = setTimeout(() => setBackCount(0), 2000);
+                if (next >= 2) {
+                  triggerExit();
+                  return 0;
+                }
+                return next;
+              });
+            } else {
+              window.history.back();
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Gagal inisialisasi tombol back native:", e);
       }
     };
-    window.addEventListener('app-go-back', handler);
-    return () => window.removeEventListener('app-go-back', handler);
-  }, [isDashboard, isExitRoute, dashboardRef, currentHashRef, showBackHint, triggerExit]);
+
+    initBackButton();
+    
+    return () => {
+      if (backButtonSub) {
+        backButtonSub.then(sub => sub.remove()).catch(() => {});
+      }
+    };
+  }, [isDashboard, isExitRoute, dashboardRef, showBackHint, triggerExit]);
 
   // Clean up hint
   useEffect(() => {

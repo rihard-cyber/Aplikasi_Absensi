@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/supabaseClient';
 import { downloadCSV } from '../../utils/downloadUtil';
 import { useToast } from '../../components/Toast';
+import { registerBackHandler } from '../../utils/navigation';
 
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
@@ -20,6 +21,18 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
   const [activeTab, setActiveTab] = useState(() => {
     try { return sessionStorage.getItem('subadmin_active_tab') || initialTab; } catch { return initialTab; }
   });
+
+  // Handle layer-by-layer back button
+  useEffect(() => {
+    const unregister = registerBackHandler(() => {
+      if (activeTab !== 'monitor') {
+        setActiveTab('monitor');
+        return true;
+      }
+      return false;
+    });
+    return unregister;
+  }, [activeTab]);
   const [isChecking, setIsChecking] = useState(true);
   const [myTenantId, setMyTenantId] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
