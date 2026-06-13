@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { Search, Plus, Save, X, User, LogIn, LogOut, Ban, Printer, QrCode, Calendar, Phone, Car, Building2, Download } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
@@ -201,61 +202,81 @@ const VisitorManagement = () => {
         </div>
       </div>
 
-      {showForm && (
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowForm(false)}>
-          <div className="w-full max-w-lg glass-panel p-8 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-serif font-bold text-white">{t('visitor.registerVisitorFormTitle')}</h3>
-              <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>
+      {createPortal(
+        <AnimatePresence>
+          {showForm && (
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }} 
+                className="fixed inset-0 bg-black/85 backdrop-blur-md" 
+                onClick={() => setShowForm(false)}
+              />
+              <div className="flex min-h-screen items-start sm:items-center justify-center p-4 relative z-10 pointer-events-none">
+                <motion.div 
+                  initial={{ scale: 0.9, opacity: 0, y: 30 }} 
+                  animate={{ scale: 1, opacity: 1, y: 0 }} 
+                  exit={{ scale: 0.9, opacity: 0, y: 30 }} 
+                  className="w-full max-w-lg glass-panel p-8 relative z-20 pointer-events-auto" 
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-serif font-bold text-white">{t('visitor.registerVisitorFormTitle')}</h3>
+                    <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-white expand-touch-target"><X size={20} /></button>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.host')}</label>
+                      <select value={form.host_id} onChange={e => setForm({...form, host_id: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                        <option value="">{t('visitor.selectHost')}</option>
+                        {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} ({e.nip})</option>)}
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.fullName')}</label>
+                        <input value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.company')}</label>
+                        <input value={form.company} onChange={e => setForm({...form, company: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.identityNumber')}</label>
+                        <input value={form.identity_number} onChange={e => setForm({...form, identity_number: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.phoneNumber')}</label>
+                        <input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.vehiclePlate')}</label>
+                        <input value={form.vehicle_plate} onChange={e => setForm({...form, vehicle_plate: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.visitDate')}</label>
+                        <input type="date" value={form.visit_date} onChange={e => setForm({...form, visit_date: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.purpose')}</label>
+                      <textarea value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})} rows={3}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                    </div>
+                    <button onClick={handleSave} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs flex items-center justify-center gap-2">
+                      <Save size={14} /> {t('visitor.registerButton')}
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.host')}</label>
-                <select value={form.host_id} onChange={e => setForm({...form, host_id: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
-                  <option value="">{t('visitor.selectHost')}</option>
-                  {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} ({e.nip})</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.fullName')}</label>
-                  <input value={form.full_name} onChange={e => setForm({...form, full_name: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.company')}</label>
-                  <input value={form.company} onChange={e => setForm({...form, company: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.identityNumber')}</label>
-                  <input value={form.identity_number} onChange={e => setForm({...form, identity_number: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.phoneNumber')}</label>
-                  <input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.vehiclePlate')}</label>
-                  <input value={form.vehicle_plate} onChange={e => setForm({...form, vehicle_plate: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.visitDate')}</label>
-                  <input type="date" value={form.visit_date} onChange={e => setForm({...form, visit_date: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('visitor.purpose')}</label>
-                <textarea value={form.purpose} onChange={e => setForm({...form, purpose: e.target.value})} rows={3}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-              </div>
-              <button onClick={handleSave} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs flex items-center justify-center gap-2">
-                <Save size={14} /> {t('visitor.registerButton')}
-              </button>
-            </div>
-          </div>
-        </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
 
       {qrData && (

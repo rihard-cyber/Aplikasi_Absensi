@@ -174,9 +174,9 @@ const CompanyPolicies = () => {
                       <p className="text-[9px] text-gray-500">{CATEGORIES.find(c => c.value === doc.category)?.label || doc.category} • v{doc.version}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                    <button onClick={(e) => { e.stopPropagation(); openEdit(doc); }} className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400"><Edit3 size={11} /></button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(doc.id); }} className="p-1.5 hover:bg-red-500/10 rounded-lg text-gray-400"><Trash2 size={11} /></button>
+                  <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
+                    <button onClick={(e) => { e.stopPropagation(); openEdit(doc); }} className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400 expand-touch-target"><Edit3 size={11} /></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(doc.id); }} className="p-1.5 hover:bg-red-500/10 rounded-lg text-gray-400 expand-touch-target"><Trash2 size={11} /></button>
                   </div>
                 </div>
               </button>

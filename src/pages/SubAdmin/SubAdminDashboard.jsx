@@ -411,6 +411,13 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
             </div>
           </div>
         )}
+        {!isEmbedded && (
+          <div className="developer-watermark opacity-40 mt-8 pb-4">
+            <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
+            <span className="watermark-text text-sm">Developer Richard Meha</span>
+            <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
+          </div>
+        )}
       </div>
     </div>
   );

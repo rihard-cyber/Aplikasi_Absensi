@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, X, AlertCircle, ShieldCheck, CheckCircle2, Loader2 } from 'lucide-react';
+import { Download, X, AlertCircle, ShieldCheck, CheckCircle2, Loader2, FileSpreadsheet, FileText } from 'lucide-react';
 import { downloadCSV } from '../utils/downloadUtil';
+import { exportTableToPdf } from '../utils/exportPdf';
 
 const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download Data', className = '', scope = 'tenant', canExport = false, role = 'EMPLOYEE' }) => {
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState('');
   const [exporting, setExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+  const [format, setFormat] = useState('pdf'); // 'csv' | 'pdf'
 
   const scopeMap = {
     superadmin: 'SEMUA TENANT (SUPER ADMIN PREVIEW)',
@@ -27,7 +29,41 @@ const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download 
 
     setExporting(true);
     await new Promise(r => setTimeout(r, 600));
-    downloadCSV(data, filename);
+
+    if (format === 'pdf') {
+      const columns = [
+        { header: 'NO', width: '5%' },
+        { header: 'NIP', width: '10%' },
+        { header: 'NAMA LENGKAP', width: '22%' },
+        { header: 'JABATAN', width: '15%' },
+        { header: 'PERUSAHAAN', width: '16%' },
+        { header: 'DIVISI', width: '14%' },
+        { header: 'EMAIL', width: '18%' }
+      ];
+      const rows = data.map((item, idx) => [
+        idx + 1,
+        item.NIP || '-',
+        item.Nama_Lengkap || '-',
+        item.Jabatan || '-',
+        item.Perusahaan || '-',
+        item.Divisi || '-',
+        item.Email || '-'
+      ]);
+      exportTableToPdf({
+        title: 'Laporan Database Kepegawaian HRIS',
+        subtitle: `Scope: ${scopeLabel}`,
+        columns,
+        rows,
+        fileName: filename,
+        meta: [
+          { label: 'Total Pegawai', value: data.length },
+          { label: 'Dibuat Oleh', value: role }
+        ]
+      });
+    } else {
+      downloadCSV(data, filename);
+    }
+
     setExportSuccess(true);
     setTimeout(() => { setShowModal(false); setExportSuccess(false); setExporting(false); }, 800);
   };
@@ -94,6 +130,27 @@ const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download 
                   ? 'Akun SUPER_ADMIN terverifikasi dari profil Supabase.'
                   : `Akses export untuk scope ${scopeLabel} sudah diverifikasi dari profil Supabase.`}
               </p>
+              
+              {/* Format Selector */}
+              <div className="flex justify-center gap-3 mb-6">
+                <button
+                  type="button"
+                  onClick={() => setFormat('pdf')}
+                  className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-2xl border text-xs transition-all ${format === 'pdf' ? 'border-[var(--aurora-3)] bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] shadow-[0_0_15px_rgba(0,201,255,0.2)]' : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/20'}`}
+                >
+                  <FileText size={20} />
+                  <span className="font-bold">Laporan PDF</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormat('csv')}
+                  className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-2xl border text-xs transition-all ${format === 'csv' ? 'border-[var(--success)] bg-[var(--success)]/10 text-[var(--success)] shadow-[0_0_15px_rgba(0,255,135,0.2)]' : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/20'}`}
+                >
+                  <FileSpreadsheet size={20} />
+                  <span className="font-bold">Database CSV</span>
+                </button>
+              </div>
+
               <div className="flex items-center justify-center gap-2 mb-6">
                 <span className="text-[10px] text-gray-500">🗂️ {data.length} pegawai</span>
                 {!data.length && <span className="text-[9px] text-[var(--warning)] bg-[var(--warning)]/10 px-2 py-0.5 rounded-full">⚠️ Database kosong</span>}
@@ -119,7 +176,7 @@ const SecureExportButton = ({ data, filename = 'Export_Data', label = 'Download 
                   {exporting ? (
                     <span className="flex items-center justify-center gap-2"><Loader2 size={16} className="animate-spin" /> Memproses...</span>
                   ) : (
-                    `Unduh ${data.length} Data`
+                    `Unduh ${data.length} Data (${format.toUpperCase()})`
                   )}
                 </button>
               )}

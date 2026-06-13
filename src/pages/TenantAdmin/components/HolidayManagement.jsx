@@ -124,7 +124,7 @@ const HolidayManagement = () => {
                       </p>
                     </div>
                   </div>
-                  <button onClick={() => handleDelete(h.id)} className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-[var(--danger)] transition-all"><Trash2 size={14} /></button>
+                  <button onClick={() => handleDelete(h.id)} className="p-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-[var(--danger)] transition-all expand-touch-target"><Trash2 size={14} /></button>
                 </div>
               );
             })}

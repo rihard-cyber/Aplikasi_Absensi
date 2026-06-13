@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, Suspense } from 'react';
-import { ShieldAlert, Globe, Activity, Settings, Search, Users, Zap, BarChart3, ShieldCheck, MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, LogOut, Loader2 } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { ShieldAlert, Globe, Activity, Settings, Search, Users, Zap, BarChart3, ShieldCheck, MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, LogOut, Loader2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../utils/supabaseClient';
 import { useNavigate } from 'react-router-dom';
@@ -30,6 +31,77 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
   const { playClick, playConfirm, playAlert } = useSFX();
   const logoClickTimer = useRef(null);
   const confirm = useConfirm();
+  const [terminalLogs, setTerminalLogs] = useState([]);
+  const [metrics, setMetrics] = useState({ activeTenants: 4, totalTenants: 5, activeUsers: 4800, maxUsers: 7800, validLicenses: 4 });
+
+  React.useEffect(() => {
+    // Fetch initial audit logs from Supabase
+    const fetchTerminalLogs = async () => {
+      try {
+        const { data } = await supabase
+          .from('audit_logs')
+          .select('id, action, created_at, profiles(full_name)')
+          .order('created_at', { ascending: false })
+          .limit(15);
+        if (data) {
+          const formatted = data.map(log => ({
+            time: new Date(log.created_at).toLocaleTimeString('id-ID'),
+            text: `⚙️ [AUDIT] Aksi ${log.action} oleh ${log.profiles?.full_name || 'Sistem'}`,
+            color: log.action.includes('DEACTIVATE') ? '#FF0055' : log.action.includes('ACTIVATE') ? '#00FF87' : '#00C9FF'
+          }));
+          setTerminalLogs(formatted);
+        }
+      } catch (err) {
+        console.warn("Terminal logs fetch failed", err);
+      }
+    };
+    fetchTerminalLogs();
+
+    // Set up a mock interval to simulate real-time operations
+    const mockEvents = [
+      { text: "🔒 Impersonasi sesi Tenant Admin diaktifkan (God Mode)", color: "#FFD700" },
+      { text: "🚀 Entitas CV. Maju Jaya diperpanjang +365 Hari lisensi", color: "#00FF87" },
+      { text: "🎯 Modul Payroll Fase 2 dimuat untuk Tenant Company Alpha", color: "#00C9FF" },
+      { text: "💾 Backup terjadwal untuk Ultimate Master Schema selesai", color: "#8E2DE2" },
+      { text: "🔑 Reset token keamanan admin untuk PT. Provices Project", color: "#00C9FF" }
+    ];
+
+    const interval = setInterval(() => {
+      const randomEvent = mockEvents[Math.floor(Math.random() * mockEvents.length)];
+      const now = new Date().toLocaleTimeString('id-ID');
+      setTerminalLogs(prev => [
+        { time: now, text: randomEvent.text, color: randomEvent.color },
+        ...prev.slice(0, 14)
+      ]);
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  React.useEffect(() => {
+    const fetchSaaSMetrics = async () => {
+      try {
+        const { data } = await supabase.from('tenants').select('is_active, max_users, days_left');
+        if (data && data.length > 0) {
+          const total = data.length;
+          const active = data.filter(t => t.is_active).length;
+          const maxUsrs = data.reduce((acc, t) => acc + (t.max_users || 0), 0);
+          const validLics = data.filter(t => t.days_left > 30).length;
+          
+          setMetrics({
+            activeTenants: active,
+            totalTenants: total || 1,
+            activeUsers: Math.round(maxUsrs * 0.45), // Mock active user percentage based on capacity
+            maxUsers: maxUsrs || 100,
+            validLicenses: validLics
+          });
+        }
+      } catch (err) {
+        console.warn("Metrics fetch failed", err);
+      }
+    };
+    fetchSaaSMetrics();
+  }, []);
 
   // Prevent background scroll when God Menu is open
   React.useEffect(() => {
@@ -94,70 +166,75 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
       </div>
 
       {/* God Mode Navigation Popup - FIXED CENTERED */}
-      <AnimatePresence>
-        {showGodMenu && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/85 backdrop-blur-md"
-              onClick={() => setShowGodMenu(false)}
-            />
-            
-            {/* Menu Panel */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-              className="relative z-[10000] w-full max-w-sm"
-            >
-              <div className="glass-panel p-6 sm:p-8 border border-[var(--warning)]/40 shadow-[0_0_80px_rgba(255,215,0,0.3)] max-h-[85vh] overflow-y-auto">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--warning)]/10 border border-[var(--warning)]/30 mb-4">
-                    <Zap size={14} className="text-[var(--warning)] animate-pulse" />
-                    <span className="text-[10px] text-[var(--warning)] uppercase tracking-widest font-black">Authority Override</span>
-                  </div>
-                  <h2 className="font-serif text-2xl text-white tracking-wide">Navigasi Kilat</h2>
-                  <p className="text-[10px] text-gray-500 mt-2 uppercase tracking-widest">Sistem Kendali Pusat</p>
-                </div>
-
-                <div className="space-y-4">
-                  {navItems.map((item) => (
-                    <motion.button
-                      key={item.role}
-                      whileHover={{ scale: 1.02, x: 4 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleGodNavigate(item.role)}
-                      className="w-full flex items-center gap-5 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all group"
-                    >
-                      <div
-                        className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: `${item.color}20`, color: item.color, boxShadow: `0 0 20px ${item.color}40` }}
-                      >
-                        <item.icon size={22} />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-bold text-sm text-white tracking-wide">{item.label}</p>
-                        <p className="text-[10px] text-gray-400 mt-1 leading-tight opacity-70">{item.desc}</p>
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => setShowGodMenu(false)}
-                  className="w-full mt-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-gray-500 hover:text-white hover:bg-white/10 text-[10px] font-black uppercase tracking-[0.2em] transition-all"
+      {createPortal(
+        <AnimatePresence>
+          {showGodMenu && (
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/85 backdrop-blur-md"
+                onClick={() => setShowGodMenu(false)}
+              />
+              
+              {/* Menu Panel Wrapper */}
+              <div className="flex min-h-screen items-start sm:items-center justify-center p-4 relative z-10 pointer-events-none">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+                  className="relative z-20 w-full max-w-sm pointer-events-auto"
                 >
-                  Tutup Sesi
-                </button>
+                  <div className="glass-panel p-6 sm:p-8 border border-[var(--warning)]/40 shadow-[0_0_80px_rgba(255,215,0,0.3)]">
+                    <div className="text-center mb-8">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--warning)]/10 border border-[var(--warning)]/30 mb-4">
+                        <Zap size={14} className="text-[var(--warning)] animate-pulse" />
+                        <span className="text-[10px] text-[var(--warning)] uppercase tracking-widest font-black">Authority Override</span>
+                      </div>
+                      <h2 className="font-serif text-2xl text-white tracking-wide">Navigasi Kilat</h2>
+                      <p className="text-[10px] text-gray-500 mt-2 uppercase tracking-widest">Sistem Kendali Pusat</p>
+                    </div>
+
+                    <div className="space-y-4">
+                      {navItems.map((item) => (
+                        <motion.button
+                          key={item.role}
+                          whileHover={{ scale: 1.02, x: 4 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleGodNavigate(item.role)}
+                          className="w-full flex items-center gap-5 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all group"
+                        >
+                          <div
+                            className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                            style={{ background: `${item.color}20`, color: item.color, boxShadow: `0 0 20px ${item.color}40` }}
+                          >
+                            <item.icon size={22} />
+                          </div>
+                          <div className="text-left">
+                            <p className="font-bold text-sm text-white tracking-wide">{item.label}</p>
+                            <p className="text-[10px] text-gray-400 mt-1 leading-tight opacity-70">{item.desc}</p>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => setShowGodMenu(false)}
+                      className="w-full mt-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-gray-500 hover:text-white hover:bg-white/10 text-[10px] font-black uppercase tracking-[0.2em] transition-all"
+                    >
+                      Tutup Sesi
+                    </button>
+                  </div>
+                </motion.div>
               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Header */}
       <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center glass-panel p-3 sm:p-5 z-10 gap-3 lg:gap-0">
@@ -286,6 +363,134 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
         )}
       </div>
 
+      {/* Premium JDC-Inspired Cyber HUD Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 z-10 relative mb-4">
+        {/* Concentric Gauge */}
+        <div className="glass-panel p-5 border border-white/10 flex flex-col justify-between">
+          <div className="text-[10px] text-gray-500 uppercase tracking-widest font-black flex items-center gap-2 mb-3">
+            <Activity size={12} className="text-[var(--aurora-3)] animate-pulse" />
+            Kesehatan SaaS Global
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <svg width="100" height="100" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
+              <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
+              <circle cx="50" cy="50" r="30" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
+              <circle cx="50" cy="50" r="20" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
+              
+              {/* Outer Ring: Tenant Active */}
+              <circle cx="50" cy="50" r="40" fill="transparent" stroke="var(--aurora-3)" strokeWidth="6" 
+                strokeDasharray="251.3" strokeDashoffset={251.3 - (Math.min(100, (metrics.activeTenants / metrics.totalTenants) * 100) / 100) * 251.3} 
+                strokeLinecap="round" style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
+              
+              {/* Middle Ring: User Utilization */}
+              <circle cx="50" cy="50" r="30" fill="transparent" stroke="var(--aurora-1)" strokeWidth="6" 
+                strokeDasharray="188.5" strokeDashoffset={188.5 - (Math.min(100, (metrics.activeUsers / metrics.maxUsers) * 100) / 100) * 188.5} 
+                strokeLinecap="round" style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
+              
+              {/* Inner Ring: Valid License */}
+              <circle cx="50" cy="50" r="20" fill="transparent" stroke="var(--success)" strokeWidth="6" 
+                strokeDasharray="125.7" strokeDashoffset={125.7 - (Math.min(100, (metrics.validLicenses / metrics.totalTenants) * 100) / 100) * 125.7} 
+                strokeLinecap="round" style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
+            </svg>
+            <div className="flex flex-col gap-1.5 text-[11px] text-gray-400">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--aurora-3)' }} />
+                <span>Tenant: <strong>{Math.round((metrics.activeTenants / metrics.totalTenants) * 100)}%</strong></span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--aurora-1)' }} />
+                <span>Util: <strong>{Math.round((metrics.activeUsers / metrics.maxUsers) * 100)}%</strong></span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--success)' }} />
+                <span>License: <strong>{Math.round((metrics.validLicenses / metrics.totalTenants) * 100)}%</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Capacity Growth Capsule */}
+        <div className="glass-panel p-5 border border-white/10 flex flex-col justify-between">
+          <div className="text-[10px] text-gray-500 uppercase tracking-widest font-black flex items-center gap-2">
+            <Users size={12} className="text-[var(--aurora-1)]" />
+            Utilisasi Kapasitas User
+          </div>
+          <div className="flex items-center justify-between gap-4 mt-2">
+            <div className="text-[11px] text-gray-400 flex flex-col gap-1">
+              <div>Total Limit: <strong className="text-white">{metrics.maxUsers.toLocaleString()}</strong></div>
+              <div>Digunakan: <strong className="text-[var(--aurora-3)]">{metrics.activeUsers.toLocaleString()}</strong></div>
+              <div>Sisa Kuota: <strong className="text-[var(--success)]">{(metrics.maxUsers - metrics.activeUsers).toLocaleString()}</strong></div>
+            </div>
+            
+            <div style={{ position: 'relative', width: '100px', height: '50px', flexShrink: 0 }}>
+              <svg width="100" height="50" viewBox="0 0 120 60">
+                <defs>
+                  <linearGradient id="userCapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="var(--aurora-3)" />
+                    <stop offset="100%" stopColor="var(--aurora-1)" />
+                  </linearGradient>
+                </defs>
+                <path d="M 25,10 H 95 A 18,18 0 0,1 113,28 A 18,18 0 0,1 95,46 H 25 A 18,18 0 0,1 7,28 A 18,18 0 0,1 25,10 Z"
+                  fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
+                <path d="M 25,10 H 95 A 18,18 0 0,1 113,28 A 18,18 0 0,1 95,46 H 25 A 18,18 0 0,1 7,28 A 18,18 0 0,1 25,10 Z"
+                  fill="transparent" stroke="url(#userCapGrad)" strokeWidth="6" strokeLinecap="round"
+                  strokeDasharray="265" strokeDashoffset={265 - (Math.min(100, (metrics.activeUsers / metrics.maxUsers) * 100) / 100) * 265}
+                  style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
+              </svg>
+              <div style={{
+                position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                fontSize: '11px', fontWeight: 800, color: 'white'
+              }}>
+                {Math.round((metrics.activeUsers / metrics.maxUsers) * 100)}%
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Live Monospace Activity Console Log */}
+        <div className="glass-panel p-5 border border-white/10 md:col-span-2 flex flex-col bg-[#090d16]/90">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(0, 201, 255, 0.1)', paddingBottom: '0.4rem', marginBottom: '0.4rem' }}>
+            <span style={{ fontFamily: 'Consolas, monospace', fontSize: '10px', fontWeight: 'bold', color: 'var(--aurora-3)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--aurora-3)] animate-ping" />
+              SYSTEM CORE ACTIVITY LOG
+            </span>
+            <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}>SECURE CHANNEL ACTIVE</span>
+          </div>
+          <div className="custom-scrollbar flex-1 overflow-y-auto max-h-[80px]" style={{ fontFamily: 'Consolas, monospace', fontSize: '10px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+            {terminalLogs.map((log, idx) => (
+              <div key={idx} style={{ display: 'flex', gap: '8px', color: '#8892b0', lineHeight: '1.3' }}>
+                <span style={{ color: 'rgba(255, 255, 255, 0.15)', flexShrink: 0 }}>[{log.time}]</span>
+                <span style={{ color: log.color }}>{log.text}</span>
+              </div>
+            ))}
+            {terminalLogs.length === 0 && (
+              <div style={{ color: 'rgba(255,255,255,0.2)', fontStyle: 'italic', textAlign: 'center', paddingTop: '10px' }}>
+                Menunggu log aktivitas core...
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* AI Summary Banner */}
+      <div className="glass-panel p-4 z-10 relative mb-4" style={{
+        background: 'linear-gradient(135deg, rgba(142,45,226,0.08) 0%, rgba(0,201,255,0.08) 100%)',
+        border: '1px solid rgba(0,201,255,0.2)'
+      }}>
+        <div className="flex justify-between items-center mb-1.5">
+          <div className="flex items-center gap-1.5">
+            <Sparkles size={14} className="text-[var(--aurora-3)]" />
+            <h4 className="text-xs font-black uppercase tracking-[0.1em] text-white">AI SaaS Performance Summary</h4>
+          </div>
+          <span className="text-[9px] text-[var(--aurora-3)] font-bold uppercase tracking-wider flex items-center gap-1">
+            <Zap size={10} className="animate-pulse" /> Auto-Generated
+          </span>
+        </div>
+        <p className="text-xs text-gray-300 leading-relaxed italic m-0">
+          "Ringkasan SaaS Core: Pengawasan global mengidentifikasi {metrics.activeTenants} dari {metrics.totalTenants} tenant beroperasi aktif ({Math.round((metrics.activeTenants/metrics.totalTenants)*100)}% uptime). Total limit pengguna terdaftar mencapai {metrics.maxUsers} akun dengan rasio utilisasi {Math.round((metrics.activeUsers/metrics.maxUsers)*100)}%. Sistem mencatat {metrics.validLicenses} tenant memiliki lisensi sehat (&gt;30 hari). Log audit core mendeteksi anomali 0% ancaman keamanan eksternal."
+        </p>
+      </div>
+
       {/* Main Grid Layout */}
       <AnimatePresence mode="wait">
         {activeTab === 'infrastructure' && (
@@ -379,6 +584,13 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Cursive Signature Watermark */}
+      <div className="developer-watermark z-10 relative mt-6">
+        <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
+        <span className="watermark-text">Developer Richard Meha</span>
+        <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Power, Crown, Building, Eye, ArrowUp, ChevronDown, ChevronUp, RefreshCcw, Shield, Plus, X, Globe, UserPlus, Phone, MapPin, Loader2, Copy, Star, CheckCircle2, Key } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Power, Crown, Building, Eye, ArrowUp, ChevronDown, ChevronUp, RefreshCcw, Shield, Plus, X, Globe, UserPlus, Phone, MapPin, Loader2, Copy, Star, CheckCircle2, Key, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSFX } from '../../../utils/useSFX';
 import { supabase } from '../../../utils/supabaseClient';
@@ -284,6 +285,23 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
     }
   };
 
+  const handleWhatsAppContact = (tenant) => {
+    playClick();
+    const phone = '6281234567890'; // Mock or default tenant administrator number
+    const message = encodeURIComponent(
+      `Halo Administrator ${tenant.name},\n\n` +
+      `Ini adalah pengingat otomatis dari Layanan Global SaaS HRIS.\n` +
+      `• Tier Anda: ${tenant.tier}\n` +
+      `• Sisa Lisensi: ${tenant.daysLeft} hari\n` +
+      `• Kapasitas Pengguna: ${tenant.users || 0}/${tenant.maxUsers || 100}\n\n` +
+      `Mohon segera memperpanjang lisensi Anda sebelum masa tenggang habis agar operasional kepegawaian tidak terganggu.\n\n` +
+      `Hormat Kami,\n` +
+      `Sistem Kendali Pusat`
+    );
+    const url = `https://wa.me/${phone}?text=${message}`;
+    window.open(url, '_blank', 'noopener');
+  };
+
   const handleImpersonate = (tenant) => {
     try { localStorage.setItem('impersonated_tenant', JSON.stringify(tenant)); } catch {}
     toast(`[GOD MODE: ON] Mengambil alih panel admin ${tenant.name}...`, 'success');
@@ -463,6 +481,12 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                             <Eye size={14} /> {t('Impersonate')}
                           </button>
                           <button
+                            onClick={(e) => { e.stopPropagation(); handleWhatsAppContact(tenant); }}
+                            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] border border-[var(--aurora-3)]/30 hover:bg-[var(--aurora-3)]/20 text-xs font-bold tracking-wide transition-all"
+                          >
+                            <MessageCircle size={14} /> {t('WhatsApp Hub')}
+                          </button>
+                          <button
                             onClick={(e) => { e.stopPropagation(); handleExtendLicense(tenant.id, tenant.daysLeft, tenant.name); }}
                             className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/30 hover:bg-[var(--success)]/20 text-xs font-bold tracking-wide transition-all"
                           >
@@ -541,99 +565,101 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
       </div>
 
       {/* Create Tenant Modal */}
-      <AnimatePresence>
-        {showCreateModal && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-6 pt-10 pb-10">
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              onClick={() => !isCreating && setShowCreateModal(false)} 
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
-            />
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 30 }} 
-              animate={{ scale: 1, opacity: 1, y: 0 }} 
-              exit={{ scale: 0.9, opacity: 0, y: 30 }} 
-              className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-[32px] w-[98%] sm:max-w-lg px-4 pt-4 pb-14 relative z-[210] overflow-y-auto max-h-[85vh] shadow-[0_0_80px_rgba(0,0,0,0.9)] custom-scrollbar"
-            >
-              <div className="absolute top-3 right-3">
-                <button disabled={isCreating} onClick={() => setShowCreateModal(false)} className="p-1.5 rounded-xl hover:bg-white/5 text-gray-500 hover:text-white transition-colors">
-                  <X size={18} />
-                </button>
+      {createPortal(
+        <AnimatePresence>
+          {showCreateModal && (
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }} 
+                onClick={() => !isCreating && setShowCreateModal(false)} 
+                className="fixed inset-0 bg-black/85 backdrop-blur-md" 
+              />
+              <div className="flex min-h-screen items-start sm:items-center justify-center p-2 sm:p-6 relative z-[210] pointer-events-none">
+                <motion.div 
+                  initial={{ scale: 0.9, opacity: 0, y: 30 }} 
+                  animate={{ scale: 1, opacity: 1, y: 0 }} 
+                  exit={{ scale: 0.9, opacity: 0, y: 30 }} 
+                  className="bg-[#12141A]/95 backdrop-blur-2xl border border-white/10 rounded-[32px] w-[98%] sm:max-w-lg px-6 py-8 shadow-[0_0_80px_rgba(0,0,0,0.9)] pointer-events-auto"
+                >
+                  <div className="absolute top-4 right-4 z-30">
+                    <button disabled={isCreating} onClick={() => setShowCreateModal(false)} className="p-2 rounded-xl hover:bg-white/5 text-gray-500 hover:text-white transition-colors expand-touch-target">
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--aurora-1)]/20 to-[var(--aurora-3)]/20 flex items-center justify-center text-[var(--aurora-1)] border border-white/5 shrink-0">
+                      <Globe size={20} />
+                    </div>
+                    <div>
+                      <h3 className="text-base sm:text-xl font-serif font-bold text-white leading-tight">{t('Onboarding Perusahaan Baru')}</h3>
+                      <p className="text-[8px] sm:text-[10px] text-[var(--aurora-3)] uppercase tracking-[0.2em] sm:tracking-[0.3em] font-black mt-0.5 sm:mt-1">{t('Strategic SaaS Expansion')}</p>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleCreateTenant} className="space-y-4">
+                    <div>
+                      <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Nama Resmi Entitas')}</label>
+                      <input required value={newTenant.name} onChange={e => setNewTenant({...newTenant, name: e.target.value})} type="text" 
+                        placeholder={t("Masukkan Nama Perusahaan...")}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all duration-300 placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Tier Subscription')}</label>
+                        <select value={newTenant.tier} onChange={e => setNewTenant({...newTenant, tier: e.target.value})} 
+                           className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all duration-300 appearance-none placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                          <option value="Bronze">{t('Bronze (Trial)')}</option><option value="Silver">{t('Silver')}</option>
+                          <option value="Gold">{t('Gold')}</option><option value="Enterprise">{t('Enterprise')}</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Limit User')}</label>
+                        <input type="number" value={newTenant.maxUsers} onChange={e => setNewTenant({...newTenant, maxUsers: e.target.value})} 
+                            className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all duration-300 placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[8px] text-gray-500 font-black uppercase tracking-[0.15em]">{t('Kode Aktivasi')}</span>
+                        <button type="button" onClick={generateCode} className="text-[8px] text-[var(--aurora-3)] font-black hover:underline tracking-wider">{t('GENERATE')}</button>
+                      </div>
+
+                      {generatedAdminCode ? (
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-3 bg-black/60 rounded-xl border border-[var(--warning)]/40">
+                          <span className="text-xs text-[var(--warning)] font-black uppercase tracking-wider mb-1 block">{t('Kode Admin Tenant')}</span>
+                          <span className="text-lg font-mono font-black text-[var(--warning)] tracking-[0.2em]">{generatedAdminCode}</span>
+                        </motion.div>
+                      ) : null}
+                      {generatedCode ? (
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-3 bg-black/60 rounded-xl border border-[var(--aurora-3)]/40">
+                          <span className="text-xs text-[var(--aurora-3)] font-black uppercase tracking-wider mb-1 block">{t('Kode Karyawan')}</span>
+                          <span className="text-lg font-mono font-black text-[var(--aurora-3)] tracking-[0.2em]">{generatedCode}</span>
+                        </motion.div>
+                      ) : (
+                        <div className="w-full py-3 bg-white/5 rounded-xl text-center text-[9px] text-gray-600 font-black uppercase tracking-[0.15em] border border-dashed border-white/10">{t('Klik Generate untuk membuat kode')}</div>
+                      )}
+                    </div>
+
+                    <button disabled={isCreating} type="submit" 
+                      className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[#00C9FF] text-white font-black tracking-[0.2em] uppercase shadow-[0_15px_35px_rgba(142,45,226,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-xs mt-4">
+                      {isCreating ? (
+                        <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> {t('MEMPROSES...')}</span>
+                      ) : (
+                        t('AKTIFKAN ENTITAS BARU')
+                      )}
+                    </button>
+                  </form>
+                </motion.div>
               </div>
-
-              <div className="h-14"></div> {/* Top Spacer: Inilah rahasia scroll atas mentok & estetik */}
-
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--aurora-1)]/20 to-[var(--aurora-3)]/20 flex items-center justify-center text-[var(--aurora-1)] border border-white/5 shrink-0">
-                  <Globe size={20} />
-                </div>
-                <div>
-                  <h3 className="text-base sm:text-xl font-serif font-bold text-white leading-tight">{t('Onboarding Perusahaan Baru')}</h3>
-                  <p className="text-[8px] sm:text-[10px] text-[var(--aurora-3)] uppercase tracking-[0.2em] sm:tracking-[0.3em] font-black mt-0.5 sm:mt-1">{t('Strategic SaaS Expansion')}</p>
-                </div>
-              </div>
-
-              <form onSubmit={handleCreateTenant} className="space-y-4">
-                <div>
-                  <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Nama Resmi Entitas')}</label>
-                  <input required value={newTenant.name} onChange={e => setNewTenant({...newTenant, name: e.target.value})} type="text" 
-                     
-                    placeholder={t("Masukkan Nama Perusahaan...")}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all duration-300 placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Tier Subscription')}</label>
-                    <select value={newTenant.tier} onChange={e => setNewTenant({...newTenant, tier: e.target.value})} 
-                       className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all duration-300 appearance-none placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
-                      <option value="Bronze">{t('Bronze (Trial)')}</option><option value="Silver">{t('Silver')}</option>
-                      <option value="Gold">{t('Gold')}</option><option value="Enterprise">{t('Enterprise')}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Limit User')}</label>
-                    <input type="number" value={newTenant.maxUsers} onChange={e => setNewTenant({...newTenant, maxUsers: e.target.value})} 
-                        className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all duration-300 placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-                  </div>
-                </div>
-
-                <div className="p-4 bg-white/[0.02] rounded-xl border border-white/5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[8px] text-gray-500 font-black uppercase tracking-[0.15em]">{t('Kode Aktivasi')}</span>
-                    <button type="button" onClick={generateCode} className="text-[8px] text-[var(--aurora-3)] font-black hover:underline tracking-wider">{t('GENERATE')}</button>
-                  </div>
-
-                  {generatedAdminCode ? (
-                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-3 bg-black/60 rounded-xl border border-[var(--warning)]/40">
-                      <span className="text-xs text-[var(--warning)] font-black uppercase tracking-wider mb-1 block">{t('Kode Admin Tenant')}</span>
-                      <span className="text-lg font-mono font-black text-[var(--warning)] tracking-[0.2em]">{generatedAdminCode}</span>
-                    </motion.div>
-                  ) : null}
-                  {generatedCode ? (
-                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-3 bg-black/60 rounded-xl border border-[var(--aurora-3)]/40">
-                      <span className="text-xs text-[var(--aurora-3)] font-black uppercase tracking-wider mb-1 block">{t('Kode Karyawan')}</span>
-                      <span className="text-lg font-mono font-black text-[var(--aurora-3)] tracking-[0.2em]">{generatedCode}</span>
-                    </motion.div>
-                  ) : (
-                    <div className="w-full py-3 bg-white/5 rounded-xl text-center text-[9px] text-gray-600 font-black uppercase tracking-[0.15em] border border-dashed border-white/10">{t('Klik Generate untuk membuat kode')}</div>
-                  )}
-                </div>
-
-                <button disabled={isCreating} type="submit" 
-                  className="w-full py-5 rounded-2xl bg-gradient-to-r from-[var(--aurora-1)] to-[#00C9FF] text-white font-black tracking-[0.2em] uppercase shadow-[0_15px_35px_rgba(142,45,226,0.4)] hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-xs mt-4">
-                  {isCreating ? (
-                    <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> {t('MEMPROSES...')}</span>
-                  ) : (
-                    t('AKTIFKAN ENTITAS BARU')
-                  )}
-                </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Back to Top */}
       <AnimatePresence>

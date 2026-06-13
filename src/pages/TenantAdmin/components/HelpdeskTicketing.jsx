@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Ticket, ChevronDown, ChevronUp, UserCheck, MessageSquare, Clock, CheckCircle2, XCircle, AlertCircle, Star, Loader2, Image, Search, BarChart3, Send, Headphones, Zap, Snowflake, Wifi, Trash2, HelpCircle, User, Plus } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
@@ -196,53 +197,69 @@ const HelpdeskTicketing = () => {
   const renderDetailModal = () => {
     if (!selectedTicket) return null;
     const t = selectedTicket;
-    return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => { setSelectedTicket(null); setResolutionNotes(''); }}>
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-6 max-w-xl w-full max-h-[85vh] overflow-y-auto shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]" onClick={e => e.stopPropagation()}>
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h3 className="text-lg font-bold text-white">{t.ticket_number}</h3>
-              <p className="text-xs text-gray-400 mt-1">{t.subject}</p>
+    return createPortal(
+      <div className="fixed inset-0 z-[9999] overflow-y-auto">
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          exit={{ opacity: 0 }} 
+          className="fixed inset-0 bg-black/85 backdrop-blur-md" 
+          onClick={() => { setSelectedTicket(null); setResolutionNotes(''); }}
+        />
+        <div className="flex min-h-screen items-start sm:items-center justify-center p-4 relative z-10 pointer-events-none">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0, y: 30 }} 
+            animate={{ scale: 1, opacity: 1, y: 0 }} 
+            exit={{ scale: 0.9, opacity: 0, y: 30 }} 
+            className="bg-[#12141A]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 max-w-xl w-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] relative z-20 pointer-events-auto" 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="text-lg font-bold text-white">{t.ticket_number}</h3>
+                <p className="text-xs text-gray-400 mt-1">{t.subject}</p>
+              </div>
+              <button onClick={() => { setSelectedTicket(null); setResolutionNotes(''); }} className="text-gray-500 hover:text-white p-2 hover:bg-white/5 rounded-xl transition-colors">✕</button>
             </div>
-            <button onClick={() => { setSelectedTicket(null); setResolutionNotes(''); }} className="text-gray-500 hover:text-white p-2 hover:bg-white/5 rounded-xl transition-colors">✕</button>
-          </div>
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Kategori</span>{renderCategoryBadge(t.category)}</div>
-            <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Prioritas</span>{renderPriorityBadge(t.priority)}</div>
-            <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Status</span>{renderStatusBadge(t.status)}</div>
-            <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Pengirim</span><span className="text-white font-bold">{t.submitter?.full_name || '-'}</span></div>
-            <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Ditugaskan Ke</span><span className="text-white font-bold">{t.assigned?.full_name || '—'}</span></div>
-            {t.sla_deadline && <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">SLA Deadline</span><span className={`font-bold ${new Date(t.sla_deadline) < new Date() ? 'text-rose-400' : 'text-emerald-400'}`}>{new Date(t.sla_deadline).toLocaleString('id-ID')}</span></div>}
-            {t.description && <div className="bg-white/5 p-3 rounded-xl"><span className="text-gray-400 block mb-1">Deskripsi</span><span className="text-white whitespace-pre-wrap">{t.description}</span></div>}
-            {t.resolution_notes && <div className="bg-white/5 p-3 rounded-xl"><span className="text-gray-400 block mb-1">Catatan Resolusi</span><span className="text-emerald-400 whitespace-pre-wrap">{t.resolution_notes}</span></div>}
-            {t.rating && <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Rating</span>{renderStars(t.rating)}</div>}
-            {t.photo_urls?.length > 0 && (
-              <div className="bg-white/5 p-3 rounded-xl">
-                <span className="text-gray-400 block mb-2 flex items-center gap-1"><Image size={14} /> Foto</span>
-                <div className="grid grid-cols-3 gap-2">
-                  {t.photo_urls.map((url, i) => (
-                    <a key={i} href={url} target="_blank" rel="noreferrer" className="aspect-square rounded-xl overflow-hidden bg-black/30 border border-white/10">
-                      <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover hover:scale-110 transition-transform" />
-                    </a>
-                  ))}
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Kategori</span>{renderCategoryBadge(t.category)}</div>
+              <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Prioritas</span>{renderPriorityBadge(t.priority)}</div>
+              <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Status</span>{renderStatusBadge(t.status)}</div>
+              <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Pengirim</span><span className="text-white font-bold">{t.submitter?.full_name || '-'}</span></div>
+              <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Ditugaskan Ke</span><span className="text-white font-bold">{t.assigned?.full_name || '—'}</span></div>
+              {t.sla_deadline && <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">SLA Deadline</span><span className={`font-bold ${new Date(t.sla_deadline) < new Date() ? 'text-rose-400' : 'text-emerald-400'}`}>{new Date(t.sla_deadline).toLocaleString('id-ID')}</span></div>}
+              {t.description && <div className="bg-white/5 p-3 rounded-xl"><span className="text-gray-400 block mb-1">Deskripsi</span><span className="text-white whitespace-pre-wrap">{t.description}</span></div>}
+              {t.resolution_notes && <div className="bg-white/5 p-3 rounded-xl"><span className="text-gray-400 block mb-1">Catatan Resolusi</span><span className="text-emerald-400 whitespace-pre-wrap">{t.resolution_notes}</span></div>}
+              {t.rating && <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Rating</span>{renderStars(t.rating)}</div>}
+              {t.photo_urls?.length > 0 && (
+                <div className="bg-white/5 p-3 rounded-xl">
+                  <span className="text-gray-400 block mb-2 flex items-center gap-1"><Image size={14} /> Foto</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {t.photo_urls.map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noreferrer" className="aspect-square rounded-xl overflow-hidden bg-black/30 border border-white/10">
+                        <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover hover:scale-110 transition-transform" />
+                      </a>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-            {t.status !== 'closed' && t.status !== 'resolved' && (
-              <div className="bg-white/5 p-3 rounded-xl">
-                <label className="text-gray-400 block mb-2 text-[10px] uppercase tracking-widest font-bold">Tambahkan Catatan Resolusi</label>
-                <textarea value={resolutionNotes} onChange={e => setResolutionNotes(e.target.value)} rows={3}  placeholder="Jelaskan solusi..."  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-emerald-400/30 resize-none transition-all duration-300 placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-                <button onClick={addResolutionNotes} disabled={submittingNotes || !resolutionNotes.trim()} className="mt-2 px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1 disabled:opacity-50 hover:bg-emerald-500/30 transition-all shadow-[0_0_10px_rgba(52,211,153,0.1)]">
-                  {submittingNotes ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />} Simpan & Resolve
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="flex gap-2 mt-6">
-            <button onClick={() => { setSelectedTicket(null); setResolutionNotes(''); }} className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 text-xs font-bold hover:bg-white/10 transition-all">Tutup</button>
-          </div>
-        </motion.div>
-      </motion.div>
+              )}
+              {t.status !== 'closed' && t.status !== 'resolved' && (
+                <div className="bg-white/5 p-3 rounded-xl">
+                  <label className="text-gray-400 block mb-2 text-[10px] uppercase tracking-widest font-bold">Tambahkan Catatan Resolusi</label>
+                  <textarea value={resolutionNotes} onChange={e => setResolutionNotes(e.target.value)} rows={3}  placeholder="Jelaskan solusi..."  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-emerald-400/30 resize-none transition-all duration-300 placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                  <button onClick={addResolutionNotes} disabled={submittingNotes || !resolutionNotes.trim()} className="mt-2 px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold flex items-center gap-1 disabled:opacity-50 hover:bg-emerald-500/30 transition-all shadow-[0_0_10px_rgba(52,211,153,0.1)]">
+                    {submittingNotes ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />} Simpan & Resolve
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => { setSelectedTicket(null); setResolutionNotes(''); }} className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 text-xs font-bold">Tutup</button>
+            </div>
+          </motion.div>
+        </div>
+      </div>,
+      document.body
     );
   };
 

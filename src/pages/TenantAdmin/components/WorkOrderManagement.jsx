@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, Save, X, Edit3, CheckCircle2, Loader2, Calendar, User, Wrench, ClipboardList, Image, PenTool, Package, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
@@ -167,51 +168,71 @@ const WorkOrderManagement = () => {
         </select>
       </div>
 
-      {showForm && (
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="fixed inset-0 z-[9999] overflow-y-auto bg-black/80 backdrop-blur-sm p-4 flex justify-center items-start" onClick={() => setShowForm(false)}>
-          <div className="w-full max-w-lg glass-panel p-8 my-auto relative" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-serif font-bold text-white">{editingId ? 'Edit' : 'Buat'} Work Order</h3>
-              <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>
+      {createPortal(
+        <AnimatePresence>
+          {showForm && (
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }} 
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm" 
+                onClick={() => setShowForm(false)}
+              />
+              <div className="flex min-h-screen items-start sm:items-center justify-center p-4 relative z-10 pointer-events-none">
+                <motion.div 
+                  initial={{ scale: 0.9, opacity: 0, y: 30 }} 
+                  animate={{ scale: 1, opacity: 1, y: 0 }} 
+                  exit={{ scale: 0.9, opacity: 0, y: 30 }} 
+                  className="w-full max-w-lg glass-panel p-8 relative z-20 pointer-events-auto" 
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-serif font-bold text-white">{editingId ? 'Edit' : 'Buat'} Work Order</h3>
+                    <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-white expand-touch-target"><X size={20} /></button>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Judul</label>
+                      <input value={form.title} onChange={e => setForm({...form, title: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tipe Pekerjaan</label>
+                        <select value={form.work_type} onChange={e => setForm({...form, work_type: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                          {WORK_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Jadwal</label>
+                        <input type="date" value={form.schedule_date} onChange={e => setForm({...form, schedule_date: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Assign Ke</label>
+                      <select value={form.assigned_to} onChange={e => setForm({...form, assigned_to: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                        <option value="">— Pilih Teknisi —</option>
+                        {technicians.map(t => <option key={t.id} value={t.id}>{t.full_name} ({t.nip})</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Helpdesk Ticket ID (opsional)</label>
+                      <input value={form.helpdesk_ticket_id} onChange={e => setForm({...form, helpdesk_ticket_id: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Deskripsi</label>
+                      <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                    </div>
+                    <button onClick={handleSave} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs flex items-center justify-center gap-2">
+                      <Save size={14} /> {editingId ? 'Update' : 'Buat'} Work Order
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Judul</label>
-                <input value={form.title} onChange={e => setForm({...form, title: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Tipe Pekerjaan</label>
-                  <select value={form.work_type} onChange={e => setForm({...form, work_type: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
-                    {WORK_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Jadwal</label>
-                  <input type="date" value={form.schedule_date} onChange={e => setForm({...form, schedule_date: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Assign Ke</label>
-                <select value={form.assigned_to} onChange={e => setForm({...form, assigned_to: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
-                  <option value="">— Pilih Teknisi —</option>
-                  {technicians.map(t => <option key={t.id} value={t.id}>{t.full_name} ({t.nip})</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Helpdesk Ticket ID (opsional)</label>
-                <input value={form.helpdesk_ticket_id} onChange={e => setForm({...form, helpdesk_ticket_id: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-              </div>
-              <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">Deskripsi</label>
-                <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-              </div>
-              <button onClick={handleSave} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs flex items-center justify-center gap-2">
-                <Save size={14} /> {editingId ? 'Update' : 'Buat'} Work Order
-              </button>
-            </div>
-          </div>
-        </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
 
       <div className="space-y-3">
@@ -245,136 +266,156 @@ const WorkOrderManagement = () => {
         {!filtered.length && <p className="text-center text-gray-500 py-8 text-sm">Belum ada work order</p>}
       </div>
 
-      {showDetail && selectedWO && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[9999] overflow-y-auto bg-black/80 backdrop-blur-sm p-4 flex justify-center items-start" onClick={() => setShowDetail(false)}>
-          <div className="w-full max-w-2xl glass-panel p-8 my-auto relative" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-serif font-bold text-white">{selectedWO.title}</h3>
-              <button onClick={() => setShowDetail(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>
-            </div>
+      {createPortal(
+        <AnimatePresence>
+          {showDetail && selectedWO && (
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }} 
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm" 
+                onClick={() => setShowDetail(false)}
+              />
+              <div className="flex min-h-screen items-start sm:items-center justify-center p-4 relative z-10 pointer-events-none">
+                <motion.div 
+                  initial={{ scale: 0.9, opacity: 0, y: 30 }} 
+                  animate={{ scale: 1, opacity: 1, y: 0 }} 
+                  exit={{ scale: 0.9, opacity: 0, y: 30 }} 
+                  className="w-full max-w-2xl glass-panel p-8 relative z-20 pointer-events-auto" 
+                  onClick={e => e.stopPropagation()}
+                >
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-serif font-bold text-white">{selectedWO.title}</h3>
+                  <button onClick={() => setShowDetail(false)} className="text-gray-500 hover:text-white expand-touch-target"><X size={20} /></button>
+                </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6 text-xs">
-              <div><span className="text-gray-500">Tipe:</span> <span className="text-white font-bold">{WORK_TYPES.find(t => t.value === selectedWO.work_type)?.label}</span></div>
-              <div><span className="text-gray-500">Status:</span> <span className="text-white font-bold">{selectedWO.status}</span></div>
-              {selectedWO.schedule_date && <div><span className="text-gray-500">Jadwal:</span> <span className="text-white">{selectedWO.schedule_date}</span></div>}
-              {selectedWO.profiles?.full_name && <div><span className="text-gray-500">Teknisi:</span> <span className="text-white">{selectedWO.profiles.full_name}</span></div>}
-            </div>
+                <div className="grid grid-cols-2 gap-4 mb-6 text-xs">
+                  <div><span className="text-gray-500">Tipe:</span> <span className="text-white font-bold">{WORK_TYPES.find(t => t.value === selectedWO.work_type)?.label}</span></div>
+                  <div><span className="text-gray-500">Status:</span> <span className="text-white font-bold">{selectedWO.status}</span></div>
+                  {selectedWO.schedule_date && <div><span className="text-gray-500">Jadwal:</span> <span className="text-white">{selectedWO.schedule_date}</span></div>}
+                  {selectedWO.profiles?.full_name && <div><span className="text-gray-500">Teknisi:</span> <span className="text-white">{selectedWO.profiles.full_name}</span></div>}
+                </div>
 
-            {selectedWO.description && (
-              <div className="mb-6 p-4 bg-black/20 rounded-xl border border-white/5">
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Deskripsi</p>
-                <p className="text-xs text-gray-300">{selectedWO.description}</p>
-              </div>
-            )}
-
-            {selectedWO.status !== 'COMPLETED' && (
-              <>
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Checklist</p>
-                    <button onClick={addChecklistItem} className="text-[10px] text-[var(--aurora-3)] flex items-center gap-1"><Plus size={12} /> Tambah</button>
+                {selectedWO.description && (
+                  <div className="mb-6 p-4 bg-black/20 rounded-xl border border-white/5">
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Deskripsi</p>
+                    <p className="text-xs text-gray-300">{selectedWO.description}</p>
                   </div>
-                  <div className="space-y-2">
-                    {checklistItems.map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
-                        <button onClick={() => toggleChecklistItem(idx)} className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${item.is_done ? 'bg-[var(--success)] border-[var(--success)] text-black' : 'border-white/20'}`}>
-                          {item.is_done && <CheckCircle2 size={12} />}
-                        </button>
-                        <input value={item.task} onChange={e => { const u = [...checklistItems]; u[idx] = { ...u[idx], task: e.target.value }; setChecklistItems(u); }} placeholder="Task..." className="flex-1 bg-transparent border-none text-xs text-white outline-none" />
+                )}
+
+                {selectedWO.status !== 'COMPLETED' && (
+                  <>
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Checklist</p>
+                        <button onClick={addChecklistItem} className="text-[10px] text-[var(--aurora-3)] flex items-center gap-1"><Plus size={12} /> Tambah</button>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Material Terpakai</p>
-                    <button onClick={addMaterial} className="text-[10px] text-[var(--aurora-3)] flex items-center gap-1"><Plus size={12} /> Tambah</button>
-                  </div>
-                  <div className="space-y-2">
-                    {materials.map((m, idx) => (
-                      <div key={idx} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
-                        <input value={m.item_name} onChange={e => { const u = [...materials]; u[idx] = { ...u[idx], item_name: e.target.value }; setMaterials(u); }} placeholder="Nama material..." className="flex-1 bg-transparent border-none text-xs text-white outline-none" />
-                        <input value={m.quantity} onChange={e => { const u = [...materials]; u[idx] = { ...u[idx], quantity: e.target.value }; setMaterials(u); }} placeholder="Qty"   className="w-20 bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-xs text-white outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                      <div className="space-y-2">
+                        {checklistItems.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+                            <button onClick={() => toggleChecklistItem(idx)} className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${item.is_done ? 'bg-[var(--success)] border-[var(--success)] text-black' : 'border-white/20'}`}>
+                              {item.is_done && <CheckCircle2 size={12} />}
+                            </button>
+                            <input value={item.task} onChange={e => { const u = [...checklistItems]; u[idx] = { ...u[idx], task: e.target.value }; setChecklistItems(u); }} placeholder="Task..." className="flex-1 bg-transparent border-none text-xs text-white outline-none" />
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-3">Foto Setelah</p>
-                  <label className="p-6 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center gap-2 hover:border-[var(--aurora-3)]/50 cursor-pointer bg-white/[0.01]">
-                    <input type="file" className="hidden" accept="image/*" onChange={e => { const file = e.target.files[0]; if (file) setPhotoAfter(URL.createObjectURL(file)); }} />
-                    <Image size={24} className="text-gray-600" />
-                    <p className="text-[10px] text-gray-500">{photoAfter ? 'Foto dipilih' : 'Upload foto setelah pekerjaan'}</p>
-                  </label>
-                  {photoAfter && <img src={photoAfter} alt="Preview" className="mt-3 rounded-xl max-h-48 object-cover" />}
-                </div>
-
-                <div className="mb-6">
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-3">Tanda Tangan Teknisi</p>
-                  <label className="p-6 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center gap-2 hover:border-[var(--aurora-3)]/50 cursor-pointer bg-white/[0.01]">
-                    <input type="file" className="hidden" accept="image/*" onChange={e => { const file = e.target.files[0]; if (file) setSignature(URL.createObjectURL(file)); }} />
-                    <PenTool size={24} className="text-gray-600" />
-                    <p className="text-[10px] text-gray-500">{signature ? 'Tanda tangan dipilih' : 'Upload tanda tangan'}</p>
-                  </label>
-                  {signature && <img src={signature} alt="Signature" className="mt-3 rounded-xl max-h-24 object-contain bg-white/5" />}
-                </div>
-
-                <button onClick={handleMarkComplete} className="w-full py-4 rounded-xl bg-[var(--success)] text-black font-bold text-xs flex items-center justify-center gap-2">
-                  <CheckCircle2 size={14} /> Mark Complete
-                </button>
-              </>
-            )}
-
-            {selectedWO.status === 'COMPLETED' && (
-              <div className="space-y-4">
-                {selectedWO.checklist_items?.length > 0 && (
-                  <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Checklist</p>
-                    <div className="space-y-1">
-                      {selectedWO.checklist_items.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-2 text-xs">
-                          <span className={`w-4 h-4 rounded flex items-center justify-center ${item.is_done ? 'bg-[var(--success)]/20 text-[var(--success)]' : 'bg-white/5 text-gray-500'}`}>
-                            {item.is_done ? <CheckCircle2 size={10} /> : <X size={10} />}
-                          </span>
-                          <span className={item.is_done ? 'text-white' : 'text-gray-500'}>{item.task}</span>
-                        </div>
-                      ))}
                     </div>
-                  </div>
-                )}
-                {selectedWO.materials_used?.length > 0 && (
-                  <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Material</p>
-                    <div className="space-y-1">
-                      {selectedWO.materials_used.map((m, idx) => (
-                        <div key={idx} className="text-xs text-gray-300 flex items-center gap-2">
-                          <Package size={10} /> {m.item_name} x{m.quantity}
-                        </div>
-                      ))}
+
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Material Terpakai</p>
+                        <button onClick={addMaterial} className="text-[10px] text-[var(--aurora-3)] flex items-center gap-1"><Plus size={12} /> Tambah</button>
+                      </div>
+                      <div className="space-y-2">
+                        {materials.map((m, idx) => (
+                          <div key={idx} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+                            <input value={m.item_name} onChange={e => { const u = [...materials]; u[idx] = { ...u[idx], item_name: e.target.value }; setMaterials(u); }} placeholder="Nama material..." className="flex-1 bg-transparent border-none text-xs text-white outline-none" />
+                            <input value={m.quantity} onChange={e => { const u = [...materials]; u[idx] = { ...u[idx], quantity: e.target.value }; setMaterials(u); }} placeholder="Qty"   className="w-20 bg-white/5 border border-white/20 rounded-lg px-3 py-2 text-xs text-white outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                          </div>
+                        ))}
+                      </div>
                     </div>
+
+                    <div className="mb-6">
+                      <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-3">Foto Setelah</p>
+                      <label className="p-6 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center gap-2 hover:border-[var(--aurora-3)]/50 cursor-pointer bg-white/[0.01]">
+                        <input type="file" className="hidden" accept="image/*" onChange={e => { const file = e.target.files[0]; if (file) setPhotoAfter(URL.createObjectURL(file)); }} />
+                        <Image size={24} className="text-gray-600" />
+                        <p className="text-[10px] text-gray-500">{photoAfter ? 'Foto dipilih' : 'Upload foto setelah pekerjaan'}</p>
+                      </label>
+                      {photoAfter && <img src={photoAfter} alt="Preview" className="mt-3 rounded-xl max-h-48 object-cover" />}
+                    </div>
+
+                    <div className="mb-6">
+                      <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-3">Tanda Tangan Teknisi</p>
+                      <label className="p-6 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center gap-2 hover:border-[var(--aurora-3)]/50 cursor-pointer bg-white/[0.01]">
+                        <input type="file" className="hidden" accept="image/*" onChange={e => { const file = e.target.files[0]; if (file) setSignature(URL.createObjectURL(file)); }} />
+                        <PenTool size={24} className="text-gray-600" />
+                        <p className="text-[10px] text-gray-500">{signature ? 'Tanda tangan dipilih' : 'Upload tanda tangan'}</p>
+                      </label>
+                      {signature && <img src={signature} alt="Signature" className="mt-3 rounded-xl max-h-24 object-contain bg-white/5" />}
+                    </div>
+
+                    <button onClick={handleMarkComplete} className="w-full py-4 rounded-xl bg-[var(--success)] text-black font-bold text-xs flex items-center justify-center gap-2">
+                      <CheckCircle2 size={14} /> Mark Complete
+                    </button>
+                  </>
+                )}
+
+                {selectedWO.status === 'COMPLETED' && (
+                  <div className="space-y-4">
+                    {selectedWO.checklist_items?.length > 0 && (
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Checklist</p>
+                        <div className="space-y-1">
+                          {selectedWO.checklist_items.map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-xs">
+                              <span className={`w-4 h-4 rounded flex items-center justify-center ${item.is_done ? 'bg-[var(--success)]/20 text-[var(--success)]' : 'bg-white/5 text-gray-500'}`}>
+                                {item.is_done ? <CheckCircle2 size={10} /> : <X size={10} />}
+                              </span>
+                              <span className={item.is_done ? 'text-white' : 'text-gray-500'}>{item.task}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {selectedWO.materials_used?.length > 0 && (
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Material</p>
+                        <div className="space-y-1">
+                          {selectedWO.materials_used.map((m, idx) => (
+                            <div key={idx} className="text-xs text-gray-300 flex items-center gap-2">
+                              <Package size={10} /> {m.item_name} x{m.quantity}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {selectedWO.photo_after && (
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Foto Setelah</p>
+                        <img src={selectedWO.photo_after} alt="After" className="rounded-xl max-h-48 object-cover" />
+                      </div>
+                    )}
+                    {selectedWO.technician_signature && (
+                      <div>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Tanda Tangan</p>
+                        <img src={selectedWO.technician_signature} alt="Signature" className="rounded-xl max-h-20 object-contain bg-white/5" />
+                      </div>
+                    )}
+                    {selectedWO.completed_at && (
+                      <p className="text-[10px] text-gray-500">Selesai: {new Date(selectedWO.completed_at).toLocaleString('id-ID')}</p>
+                    )}
                   </div>
                 )}
-                {selectedWO.photo_after && (
-                  <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Foto Setelah</p>
-                    <img src={selectedWO.photo_after} alt="After" className="rounded-xl max-h-48 object-cover" />
-                  </div>
-                )}
-                {selectedWO.technician_signature && (
-                  <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2">Tanda Tangan</p>
-                    <img src={selectedWO.technician_signature} alt="Signature" className="rounded-xl max-h-20 object-contain bg-white/5" />
-                  </div>
-                )}
-                {selectedWO.completed_at && (
-                  <p className="text-[10px] text-gray-500">Selesai: {new Date(selectedWO.completed_at).toLocaleString('id-ID')}</p>
-                )}
+                </motion.div>
               </div>
-            )}
-          </div>
-        </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
     </div>
   );

@@ -817,8 +817,10 @@ const AuthPortal = ({ onLogin }) => {
                   onPointerDown={() => setBiometricScan(5)}
                   onPointerUp={() => setBiometricScan(0)}
                   onPointerLeave={() => setBiometricScan(0)}
+                  onPointerCancel={() => setBiometricScan(0)}
+                  style={{ touchAction: 'none' }}
                   animate={{ boxShadow: biometricScan > 0 ? '0 0 50px rgba(255, 0, 85, 0.4)' : '0 0 0px rgba(255, 0, 85, 0)' }}
-                  className="w-32 h-32 rounded-full border-2 border-white/10 flex flex-col items-center justify-center relative group hover:border-[var(--warning)]/50 transition-all"
+                  className="w-32 h-32 rounded-full border-2 border-white/10 flex flex-col items-center justify-center relative group hover:border-[var(--warning)]/50 transition-all select-none"
                 >
                   <div
                     className="absolute bottom-0 left-0 right-0 bg-[var(--warning)]/20 rounded-b-full overflow-hidden"
@@ -1365,6 +1367,13 @@ const AuthPortal = ({ onLogin }) => {
           </AnimatePresence>
         </div>
       </motion.div>
+
+      {/* Cursive Signature Watermark */}
+      <div className="developer-watermark z-10 relative mt-6 opacity-60">
+        <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
+        <span className="watermark-text text-sm">Developer Richard Meha</span>
+        <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
+      </div>
     </div>
   );
 };

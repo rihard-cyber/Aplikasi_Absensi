@@ -223,7 +223,7 @@ const HelpdeskRequest = ({ onBack }) => {
                 {photoPreview.map((preview, idx) => (
                   <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden group border border-white/10">
                     <img src={preview} alt="" className="w-full h-full object-cover" />
-                    <button onClick={() => removePhoto(idx)} className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => removePhoto(idx)} className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity expand-touch-target">
                       <XCircle size={16} className="text-[var(--danger)]" />
                     </button>
                   </div>

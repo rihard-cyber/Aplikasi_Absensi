@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { safeGet } from '../../../utils/safeAccess';
 import { CalendarDays, Plus, Save, X, Edit3, Trash2, MapPin, Clock, Users, Loader2 } from 'lucide-react';
@@ -163,7 +164,7 @@ const CompanyEvents = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100">
+              <div className="flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100">
                 <button onClick={() => openEdit(ev)} className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400"><Edit3 size={12} /></button>
                 <button onClick={() => handleDelete(ev.id)} className="p-1.5 hover:bg-red-500/10 rounded-lg text-gray-400"><Trash2 size={12} /></button>
               </div>
@@ -173,52 +174,72 @@ const CompanyEvents = () => {
         {!filtered.length && <p className="text-gray-500 text-xs text-center py-4">{t('events.noEventThisMonth')}</p>}
       </div>
 
-      {showForm && (
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={() => setShowForm(false)}>
-          <div className="w-full max-w-md glass-panel p-8 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-serif font-bold text-white">{editingId ? 'Edit' : 'Tambah'} Acara</h3>
-              <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-white"><X size={20} /></button>
+      {createPortal(
+        <AnimatePresence>
+          {showForm && (
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }} 
+                className="fixed inset-0 bg-black/85 backdrop-blur-md" 
+                onClick={() => setShowForm(false)}
+              />
+              <div className="flex min-h-screen items-start sm:items-center justify-center p-4 relative z-10 pointer-events-none">
+                <motion.div 
+                  initial={{ scale: 0.9, opacity: 0, y: 30 }} 
+                  animate={{ scale: 1, opacity: 1, y: 0 }} 
+                  exit={{ scale: 0.9, opacity: 0, y: 30 }} 
+                  className="w-full max-w-md glass-panel p-8 relative z-20 pointer-events-auto" 
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-serif font-bold text-white">{editingId ? 'Edit' : 'Tambah'} Acara</h3>
+                    <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-white expand-touch-target"><X size={20} /></button>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.eventTitle')}</label>
+                      <input value={form.title} onChange={e => setForm({...form, title: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.date')}</label>
+                        <input type="date" value={form.event_date} onChange={e => setForm({...form, event_date: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.time')}</label>
+                        <input type="time" value={form.event_time} onChange={e => setForm({...form, event_time: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.category')}</label>
+                      <select value={form.category} onChange={e => setForm({...form, category: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                        {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.icon} {c.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.location')}</label>
+                      <input value={form.location} onChange={e => setForm({...form, location: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.description')}</label>
+                      <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                    </div>
+                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-white/5 hover:bg-white/5">
+                      <input type="checkbox" checked={form.is_mandatory} onChange={e => setForm({...form, is_mandatory: e.target.checked})} className="w-4 h-4" />
+                      <span className="text-xs text-gray-300">{t('events.requiredToAttend')}</span>
+                    </label>
+                    <button onClick={handleSave} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs flex items-center justify-center gap-2">
+                      <Save size={14} /> Simpan Acara
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.eventTitle')}</label>
-                <input value={form.title} onChange={e => setForm({...form, title: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.date')}</label>
-                  <input type="date" value={form.event_date} onChange={e => setForm({...form, event_date: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.time')}</label>
-                  <input type="time" value={form.event_time} onChange={e => setForm({...form, event_time: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.category')}</label>
-                <select value={form.category} onChange={e => setForm({...form, category: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
-                  {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.icon} {c.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.location')}</label>
-                <input value={form.location} onChange={e => setForm({...form, location: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-              </div>
-              <div>
-                <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('events.description')}</label>
-                <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={3}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-              </div>
-              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-white/5 hover:bg-white/5">
-                <input type="checkbox" checked={form.is_mandatory} onChange={e => setForm({...form, is_mandatory: e.target.checked})} className="w-4 h-4" />
-                <span className="text-xs text-gray-300">{t('events.requiredToAttend')}</span>
-              </label>
-              <button onClick={handleSave} className="w-full py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs flex items-center justify-center gap-2">
-                <Save size={14} /> Simpan Acara
-              </button>
-            </div>
-          </div>
-        </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
     </div>
   );

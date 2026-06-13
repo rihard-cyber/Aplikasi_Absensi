@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, ShieldAlert, Megaphone, Building2, ArrowLeft, Navigation, Camera, QrCode, LogIn, Circle, UserCircle, MapPinned } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -173,26 +173,34 @@ const ClockInTab = () => {
   }, []);
 
   // Initialize Camera
-  useEffect(() => {
-    let stream = null;
-    const startCamera = async () => {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      } catch (err) {
-        console.warn("Camera access denied or unavailable", err);
-        setCameraError('Kamera tidak dapat diakses. Pastikan izin kamera sudah diberikan di Pengaturan HP.');
+  const streamRef = useRef(null);
+
+  const startCamera = useCallback(async () => {
+    setCameraError('');
+    try {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
-    };
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.warn("Camera access denied or unavailable", err);
+      setCameraError('Kamera tidak dapat diakses. Pastikan izin kamera sudah diberikan di Pengaturan HP.');
+    }
+  }, []);
+
+  useEffect(() => {
     startCamera();
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
     };
-  }, []);
+  }, [startCamera]);
 
   // Trigger location check after workMode is known
   useEffect(() => {
@@ -519,7 +527,13 @@ const ClockInTab = () => {
                 <div className="w-10 h-10 rounded-2xl bg-rose-500/20 flex items-center justify-center mx-auto mb-2 shadow-[0_0_15px_rgba(255,61,0,0.3)]">
                   <Camera size={18} className="text-rose-400" />
                 </div>
-                <p className="text-[11px] text-gray-300">{cameraError}</p>
+                <p className="text-[11px] text-gray-300 mb-2">{cameraError}</p>
+                <button
+                  onClick={startCamera}
+                  className="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[10px] text-white font-bold transition-all uppercase tracking-wider pointer-events-auto"
+                >
+                  Coba Lagi
+                </button>
               </div>
             </div>
           )}
@@ -688,9 +702,11 @@ const ClockInTab = () => {
             onPointerDown={handleMasukClick}
             onPointerUp={() => setIsPressing(false)}
             onPointerLeave={() => setIsPressing(false)}
+            onPointerCancel={() => setIsPressing(false)}
             onClick={status === 'VERIFIED' ? handleReset : undefined}
             disabled={isOutRange && status === 'IDLE'}
-            className={`bg-gradient-to-r from-[#8E2DE2] to-[#00C9FF] text-white py-3 rounded-xl text-sm font-semibold hover:opacity-90 shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+            style={{ touchAction: 'none' }}
+            className={`bg-gradient-to-r from-[#8E2DE2] to-[#00C9FF] text-white py-3 rounded-xl text-sm font-semibold hover:opacity-90 shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 select-none ${
               isPressing ? 'scale-95 opacity-80' : ''
             } ${status === 'VERIFIED' ? 'ring-2 ring-[#B2FF59]/50' : ''}`}
           >
@@ -1084,8 +1100,12 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
       </div>
 
       {/* Copyright Watermark */}
-      <div className="fixed bottom-1 w-full pointer-events-none z-40 safe-bottom">
-        <p className="text-center text-[10px] text-gray-500/50 tracking-widest uppercase pb-2 w-full">© 2026 RICHARD MEHA - SI PRESENSI PRO MAX</p>
+      <div className="fixed bottom-1 w-full pointer-events-none z-40 safe-bottom flex flex-col items-center">
+        <div className="developer-watermark opacity-40 transform scale-75 origin-bottom">
+          <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
+          <span className="watermark-text">Developer Richard Meha</span>
+          <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
+        </div>
       </div>
 
     </div>

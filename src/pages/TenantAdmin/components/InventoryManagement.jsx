@@ -245,7 +245,7 @@ const InventoryManagement = () => {
                         <p className={`text-lg font-bold font-mono ${isLow ? 'text-[var(--warning)]' : 'text-white'}`}>{item.quantity || 0}</p>
                         <p className="text-[9px] text-gray-500">{t('inventory.units.' + item.unit)} {isLow ? `(min: ${item.min_stock})` : ''}</p>
                       </div>
-                      <button onClick={() => openEdit(item)} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white"><Edit3 size={12} /></button>
+                      <button onClick={() => openEdit(item)} className="p-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white expand-touch-target"><Edit3 size={12} /></button>
                     </div>
                   </div>
                 </div>

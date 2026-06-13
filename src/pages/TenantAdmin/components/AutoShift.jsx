@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { safeGet } from '../../../utils/safeAccess';
@@ -576,109 +577,112 @@ const AutoShift = () => {
       </div>
 
       {/* === PREVIEW MODAL === */}
-      <AnimatePresence>
-        {showPreview && preview && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
-          >
+      {createPortal(
+        <AnimatePresence>
+          {showPreview && preview && (
             <motion.div
-              initial={{ y: 80, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 80, opacity: 0 }}
-              className="w-full max-w-2xl glass-panel rounded-3xl overflow-hidden border border-white/10 flex flex-col max-h-[85vh]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
             >
-              {/* Preview Header */}
-              <div className="p-6 border-b border-white/10 flex items-center justify-between flex-shrink-0">
-                <div>
-                  <h3 className="text-lg font-bold text-white">{t('autoShift.previewSchedule')}</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">{preview.length} baris akan disimpan</p>
+              <motion.div
+                initial={{ y: 80, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 80, opacity: 0 }}
+                className="w-full max-w-2xl glass-panel rounded-3xl overflow-hidden border border-white/10 flex flex-col max-h-[85vh] z-[10000]"
+              >
+                {/* Preview Header */}
+                <div className="p-6 border-b border-white/10 flex items-center justify-between flex-shrink-0">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">{t('autoShift.previewSchedule')}</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">{preview.length} baris akan disimpan</p>
+                  </div>
+                  <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-all expand-touch-target">
+                    <X size={20} />
+                  </button>
                 </div>
-                <button onClick={() => setShowPreview(false)} className="p-2 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-all">
-                  <X size={20} />
-                </button>
-              </div>
 
-              {/* Preview Table */}
-              <div className="overflow-y-auto flex-1 custom-scrollbar">
-                <table className="w-full text-xs">
-                  <thead className="sticky top-0 bg-[#0B0C10]/95 backdrop-blur-sm border-b border-white/10">
-                    <tr>
-                      {['Karyawan', 'Tanggal', 'Hari', 'Shift', 'Jam'].map(h => (
-                        <th key={h} className="p-3 text-left text-[9px] uppercase tracking-widest font-bold text-gray-500">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {preview.slice(0, 200).map((row, i) => (
-                      <tr key={i} className="hover:bg-white/3 transition-colors">
-                        <td className="p-3 font-medium text-white truncate max-w-[120px]">{row.empName}</td>
-                        <td className="p-3 font-mono text-gray-300">{row.date}</td>
-                        <td className="p-3 text-gray-400">{safeGet(DAYS_ID, new Date(row.date + 'T00:00:00').getDay())}</td>
-                        <td className="p-3">
-                          <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold"
-                            style={{ background: `${['#8E2DE2', '#00C9FF', '#FFD700', '#FF0055'][i % 4]}20`, color: ['#8E2DE2', '#00C9FF', '#FFD700', '#FF0055'][i % 4] }}>
-                            {row.shiftCode}
-                          </span>
-                        </td>
-                        <td className="p-3 font-mono text-gray-400 text-[10px]">
-                          {row.timeIn ? `${row.timeIn.slice(0, 5)} - ${row.timeOut?.slice(0, 5)}` : 'OFF'}
-                        </td>
+                {/* Preview Table */}
+                <div className="overflow-y-auto flex-1 custom-scrollbar">
+                  <table className="w-full text-xs">
+                    <thead className="sticky top-0 bg-[#0B0C10]/95 backdrop-blur-sm border-b border-white/10">
+                      <tr>
+                        {['Karyawan', 'Tanggal', 'Hari', 'Shift', 'Jam'].map(h => (
+                          <th key={h} className="p-3 text-left text-[9px] uppercase tracking-widest font-bold text-gray-500">{h}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {preview.length > 200 && (
-                  <div className="p-4 text-center text-xs text-gray-500">
-                    ... dan {preview.length - 200} baris lainnya (semua akan disimpan)
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {preview.slice(0, 200).map((row, i) => (
+                        <tr key={i} className="hover:bg-white/3 transition-colors">
+                          <td className="p-3 font-medium text-white truncate max-w-[120px]">{row.empName}</td>
+                          <td className="p-3 font-mono text-gray-300">{row.date}</td>
+                          <td className="p-3 text-gray-400">{safeGet(DAYS_ID, new Date(row.date + 'T00:00:00').getDay())}</td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold"
+                              style={{ background: `${['#8E2DE2', '#00C9FF', '#FFD700', '#FF0055'][i % 4]}20`, color: ['#8E2DE2', '#00C9FF', '#FFD700', '#FF0055'][i % 4] }}>
+                              {row.shiftCode}
+                            </span>
+                          </td>
+                          <td className="p-3 font-mono text-gray-400 text-[10px]">
+                            {row.timeIn ? `${row.timeIn.slice(0, 5)} - ${row.timeOut?.slice(0, 5)}` : 'OFF'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {preview.length > 200 && (
+                    <div className="p-4 text-center text-xs text-gray-500">
+                      ... dan {preview.length - 200} baris lainnya (semua akan disimpan)
+                    </div>
+                  )}
+                </div>
+
+                {/* Save Button */}
+                <div className="p-5 border-t border-white/10 flex gap-3 flex-shrink-0">
+                  <button
+                    onClick={() => setShowPreview(false)}
+                    className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 font-bold text-sm hover:border-white/20 transition-all"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    id="auto-shift-save-btn"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-all"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Menyimpan {saveProgress}%...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={16} />
+                        Simpan {preview.length} Jadwal
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Progress bar */}
+                {saving && (
+                  <div className="h-1 bg-white/5 flex-shrink-0">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)]"
+                      animate={{ width: `${saveProgress}%` }}
+                      transition={{ duration: 0.3 }}
+                    />
                   </div>
                 )}
-              </div>
-
-              {/* Save Button */}
-              <div className="p-5 border-t border-white/10 flex gap-3 flex-shrink-0">
-                <button
-                  onClick={() => setShowPreview(false)}
-                  className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 font-bold text-sm hover:border-white/20 transition-all"
-                >
-                  Batal
-                </button>
-                <button
-                  id="auto-shift-save-btn"
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-all"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      Menyimpan {saveProgress}%...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 size={16} />
-                      Simpan {preview.length} Jadwal
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Progress bar */}
-              {saving && (
-                <div className="h-1 bg-white/5 flex-shrink-0">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)]"
-                    animate={{ width: `${saveProgress}%` }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-              )}
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

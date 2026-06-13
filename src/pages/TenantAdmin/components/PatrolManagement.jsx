@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Route, ClipboardList, AlertTriangle, Users, Plus, QrCode, GripVertical, Loader2, CheckCircle2, XCircle, Map, Clock, Search, Save, Trash2, ToggleLeft, ToggleRight, Eye, Printer, Download, X } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
@@ -280,41 +281,58 @@ const PatrolManagement = () => {
         ))}
         {!checkpoints.length && <p className="text-gray-500 text-sm col-span-full text-center py-8">{t('Belum ada checkpoint. Tambahkan sekarang!')}</p>}
       </div>
-      {selectedCheckpoint && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedCheckpoint(null)}>
-          <div className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-sm w-full text-center relative" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setSelectedCheckpoint(null)} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
-              <X size={18} />
-            </button>
-            <h3 className="text-lg font-bold text-white mb-4">{selectedCheckpoint.name}</h3>
-            
-            <div className="bg-white rounded-2xl p-4 w-fit mx-auto mb-4 border border-white/5 shadow-inner">
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(selectedCheckpoint.qr_code)}`} 
-                alt="QR Code" 
-                className="w-48 h-48 mx-auto"
-              />
-            </div>
-            
-            <p className="text-xs font-mono text-green-400 break-all bg-black/30 rounded-xl p-3 border border-white/5 mb-4">{selectedCheckpoint.qr_code}</p>
-            
-            <div className="flex gap-2">
-              <button 
-                onClick={() => downloadQRCode(selectedCheckpoint.qr_code, `checkpoint-${selectedCheckpoint.name}.png`)}
-                className="flex-1 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/5 hover:border-white/10 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+      {createPortal(
+        <AnimatePresence>
+          {selectedCheckpoint && (
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4" 
+              onClick={() => setSelectedCheckpoint(null)}
+            >
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                exit={{ opacity: 0, scale: 0.95 }} 
+                className="bg-[#1A1C23] border border-white/10 rounded-3xl p-6 max-w-sm w-full text-center relative shadow-2xl z-[10000]" 
+                onClick={e => e.stopPropagation()}
               >
-                <Download size={12} /> Download
-              </button>
-              
-              <button 
-                onClick={() => printQRCode(selectedCheckpoint.qr_code, selectedCheckpoint.name)}
-                className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] hover:opacity-90 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-[0_4px_12px_rgba(142,45,226,0.2)]"
-              >
-                <Printer size={12} /> Print QR
-              </button>
-            </div>
-          </div>
-        </motion.div>
+                <button onClick={() => setSelectedCheckpoint(null)} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors expand-touch-target">
+                  <X size={18} />
+                </button>
+                <h3 className="text-lg font-bold text-white mb-4">{selectedCheckpoint.name}</h3>
+                
+                <div className="bg-white rounded-2xl p-4 w-fit mx-auto mb-4 border border-white/5 shadow-inner">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(selectedCheckpoint.qr_code)}`} 
+                    alt="QR Code" 
+                    className="w-48 h-48 mx-auto"
+                  />
+                </div>
+                
+                <p className="text-xs font-mono text-green-400 break-all bg-black/30 rounded-xl p-3 border border-white/5 mb-4">{selectedCheckpoint.qr_code}</p>
+                
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => downloadQRCode(selectedCheckpoint.qr_code, `checkpoint-${selectedCheckpoint.name}.png`)}
+                    className="flex-1 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/5 hover:border-white/10 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+                  >
+                    <Download size={12} /> Download
+                  </button>
+                  
+                  <button 
+                    onClick={() => printQRCode(selectedCheckpoint.qr_code, selectedCheckpoint.name)}
+                    className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] hover:opacity-90 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-[0_4px_12px_rgba(142,45,226,0.2)]"
+                  >
+                    <Printer size={12} /> Print QR
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
     </div>
   );

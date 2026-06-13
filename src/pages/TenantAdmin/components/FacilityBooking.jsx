@@ -257,7 +257,7 @@ const FacilityBooking = () => {
                     <button onClick={() => toggleActive(f)} className={`p-1.5 rounded-lg transition-all ${f.is_active ? 'text-[var(--success)] hover:bg-[var(--success)]/10' : 'text-gray-500 hover:bg-white/10'}`}>
                       {f.is_active ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
                     </button>
-                    <button onClick={() => openEdit(f)} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white"><Edit3 size={12} /></button>
+                    <button onClick={() => openEdit(f)} className="p-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white expand-touch-target"><Edit3 size={12} /></button>
                     <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${f.is_active ? 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/30' : 'bg-gray-500/10 text-gray-400 border-gray-500/30'}`}>{f.is_active ? t('facility.status.active') : t('facility.status.inactive')}</span>
                   </div>
                 </div>

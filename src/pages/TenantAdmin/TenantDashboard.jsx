@@ -248,6 +248,12 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-[var(--danger)] hover:bg-[var(--danger)]/10">
               <LogOut size={18} /><span className="text-sm uppercase font-bold">Keluar</span>
             </button>
+            {/* Cursive Signature Watermark */}
+            <div className="developer-watermark opacity-50 transform scale-90 mt-2">
+              <span className="ornament">✧═════•❁❀❁•═════✧</span>
+              <span className="watermark-text text-sm">Developer Richard Meha</span>
+              <span className="ornament">✧═════•❁❀❁•═════✧</span>
+            </div>
           </div>
         </div>
       </aside>

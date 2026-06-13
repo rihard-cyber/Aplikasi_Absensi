@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, CheckCircle2, XCircle, FileText, Loader2, Search, Download, Printer, Upload, Camera } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
@@ -162,32 +163,48 @@ const OvertimeManagement = () => {
 
   const renderDetailModal = () => {
     if (!selected) return null;
-    return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
-        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h3 className="text-lg font-bold text-white">Detail Lembur</h3>
-              <p className="text-xs text-gray-500">{selected.profiles?.full_name}</p>
+    return createPortal(
+      <div className="fixed inset-0 z-[9999] overflow-y-auto">
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          exit={{ opacity: 0 }} 
+          className="fixed inset-0 bg-black/85 backdrop-blur-md" 
+          onClick={() => setSelected(null)}
+        />
+        <div className="flex min-h-screen items-start sm:items-center justify-center p-4 relative z-10 pointer-events-none">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0, y: 30 }} 
+            animate={{ scale: 1, opacity: 1, y: 0 }} 
+            exit={{ scale: 0.9, opacity: 0, y: 30 }} 
+            className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-lg w-full relative z-20 pointer-events-auto" 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="text-lg font-bold text-white">Detail Lembur</h3>
+                <p className="text-xs text-gray-500">{selected.profiles?.full_name}</p>
+              </div>
+              <button onClick={() => setSelected(null)} className="text-gray-500 hover:text-white p-2">✕</button>
             </div>
-            <button onClick={() => setSelected(null)} className="text-gray-500 hover:text-white p-2">✕</button>
-          </div>
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Tanggal</span><span className="text-white font-bold">{selected.date}</span></div>
-            <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Jenis</span>{getTypeBadge(selected.overtime_type)}</div>
-            <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Jam</span><span className="text-white font-bold">{selected.start_time?.substring(0,5)} - {selected.end_time?.substring(0,5)} ({selected.total_hours} jam)</span></div>
-            <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Status</span>{getStatusBadge(selected.status)}</div>
-            {selected.description && <div className="bg-white/5 p-3 rounded-xl"><span className="text-gray-400 block mb-1">Alasan</span><span className="text-white">{selected.description}</span></div>}
-            {selected.is_forced && <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Status Paksa</span><span className="text-[var(--danger)] font-bold">LEMBUR PAKSA ⚠️</span></div>}
-            {selected.is_forced && selected.replaced?.full_name && <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Menggantikan</span><span className="text-white font-bold">{selected.replaced.full_name}</span></div>}
-            {selected.forced_reason && <div className="bg-white/5 p-3 rounded-xl"><span className="text-gray-400 block mb-1">Alasan Paksa</span><span className="text-[var(--danger)]">{selected.forced_reason}</span></div>}
-          </div>
-          <div className="flex gap-2 mt-6">
-            <button onClick={() => { printForm(selected); setSelected(null); }} className="flex-1 px-4 py-3 rounded-xl bg-[var(--aurora-3)]/10 border border-[var(--aurora-3)]/30 text-[var(--aurora-3)] text-xs font-bold flex items-center justify-center gap-2"><Printer size={14} /> Cetak Form</button>
-            <button onClick={() => setSelected(null)} className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 text-xs font-bold">Tutup</button>
-          </div>
-        </motion.div>
-      </motion.div>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Tanggal</span><span className="text-white font-bold">{selected.date}</span></div>
+              <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Jenis</span>{getTypeBadge(selected.overtime_type)}</div>
+              <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Jam</span><span className="text-white font-bold">{selected.start_time?.substring(0,5)} - {selected.end_time?.substring(0,5)} ({selected.total_hours} jam)</span></div>
+              <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Status</span>{getStatusBadge(selected.status)}</div>
+              {selected.description && <div className="bg-white/5 p-3 rounded-xl"><span className="text-gray-400 block mb-1">Alasan</span><span className="text-white">{selected.description}</span></div>}
+              {selected.is_forced && <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Status Paksa</span><span className="text-[var(--danger)] font-bold">LEMBUR PAKSA ⚠️</span></div>}
+              {selected.is_forced && selected.replaced?.full_name && <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Menggantikan</span><span className="text-white font-bold">{selected.replaced.full_name}</span></div>}
+              {selected.forced_reason && <div className="bg-white/5 p-3 rounded-xl"><span className="text-gray-400 block mb-1">Alasan Paksa</span><span className="text-[var(--danger)]">{selected.forced_reason}</span></div>}
+            </div>
+            <div className="flex gap-2 mt-6">
+              <button onClick={() => { printForm(selected); setSelected(null); }} className="flex-1 px-4 py-3 rounded-xl bg-[var(--aurora-3)]/10 border border-[var(--aurora-3)]/30 text-[var(--aurora-3)] text-xs font-bold flex items-center justify-center gap-2"><Printer size={14} /> Cetak Form</button>
+              <button onClick={() => setSelected(null)} className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 text-xs font-bold">Tutup</button>
+            </div>
+          </motion.div>
+        </div>
+      </div>,
+      document.body
     );
   };
 
@@ -264,49 +281,67 @@ const OvertimeManagement = () => {
       )}
 
       <AnimatePresence>{renderDetailModal()}</AnimatePresence>
-      <AnimatePresence>{sigModal && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSigModal(null)}>
-          <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-md w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h3 className="text-lg font-bold text-white">Upload Tanda Tangan</h3>
-                <p className="text-xs text-gray-500">{sigModal.profiles?.full_name} — {sigModal.date}</p>
-              </div>
-              <button onClick={() => setSigModal(null)} className="text-gray-500 hover:text-white p-2">✕</button>
-            </div>
-            <div className="space-y-4">
-              {[
-                { key: 'employee', label: 'Karyawan', color: 'blue' },
-                { key: 'supervisor', label: 'Supervisor', color: 'green' },
-                { key: 'management', label: 'Manajemen Gedung', color: 'purple' },
-              ].map(({ key, label, color }) => (
-                <div key={key} className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-bold text-white">{label}</span>
-                    <button
-                      onClick={() => uploadSignature(key)}
-                      disabled={uploadingSig === key}
-                      className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border ${
-                        sigs[key] ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
-                      }`}
-                    >
-                      {uploadingSig === key ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
-                      {sigs[key] ? 'Ganti' : 'Upload'}
-                    </button>
+      <AnimatePresence>
+        {sigModal && createPortal(
+          <div className="fixed inset-0 z-[9999] overflow-y-auto">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/85 backdrop-blur-md" 
+              onClick={() => setSigModal(null)}
+            />
+            <div className="flex min-h-screen items-start sm:items-center justify-center p-4 relative z-10 pointer-events-none">
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0, y: 30 }} 
+                animate={{ scale: 1, opacity: 1, y: 0 }} 
+                exit={{ scale: 0.9, opacity: 0, y: 30 }}
+                className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-md w-full relative z-20 pointer-events-auto" 
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Upload Tanda Tangan</h3>
+                    <p className="text-xs text-gray-500">{sigModal.profiles?.full_name} — {sigModal.date}</p>
                   </div>
-                  {sigs[key] ? (
-                    <img src={sigs[key]} alt={label} className="h-16 object-contain bg-white/5 rounded-xl p-2" />
-                  ) : (
-                    <div className="h-16 flex items-center justify-center bg-white/5 rounded-xl border border-dashed border-white/10">
-                      <span className="text-[10px] text-gray-500">Belum diupload</span>
-                    </div>
-                  )}
+                  <button onClick={() => setSigModal(null)} className="text-gray-500 hover:text-white p-2">✕</button>
                 </div>
-              ))}
+                <div className="space-y-4">
+                  {[
+                    { key: 'employee', label: 'Karyawan', color: 'blue' },
+                    { key: 'supervisor', label: 'Supervisor', color: 'green' },
+                    { key: 'management', label: 'Manajemen Gedung', color: 'purple' },
+                  ].map(({ key, label, color }) => (
+                    <div key={key} className="bg-white/5 rounded-2xl p-4 border border-white/10">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-bold text-white">{label}</span>
+                        <button
+                          onClick={() => uploadSignature(key)}
+                          disabled={uploadingSig === key}
+                          className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border ${
+                            sigs[key] ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          {uploadingSig === key ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
+                          {sigs[key] ? 'Ganti' : 'Upload'}
+                        </button>
+                      </div>
+                      {sigs[key] ? (
+                        <img src={sigs[key]} alt={label} className="h-16 object-contain bg-white/5 rounded-xl p-2" />
+                      ) : (
+                        <div className="h-16 flex items-center justify-center bg-white/5 rounded-xl border border-dashed border-white/10">
+                          <span className="text-[10px] text-gray-500">Belum diupload</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
             </div>
-          </motion.div>
-        </motion.div>
-      )}</AnimatePresence>
+          </div>,
+          document.body
+        )}
+      </AnimatePresence>
     </div>
   );
 };

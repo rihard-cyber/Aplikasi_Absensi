@@ -1,5 +1,6 @@
 import { Geolocation } from '@capacitor/geolocation';
 import { Device } from '@capacitor/device';
+import { Camera } from '@capacitor/camera';
 
 export const requestAppPermissions = async () => {
   const results = [];
@@ -9,6 +10,13 @@ export const requestAppPermissions = async () => {
     results.push({ permission: 'location', granted: locPerm.location === 'granted' });
   } catch {
     results.push({ permission: 'location', granted: false });
+  }
+
+  try {
+    const camPerm = await Camera.requestPermissions();
+    results.push({ permission: 'camera', granted: camPerm.camera === 'granted' });
+  } catch {
+    results.push({ permission: 'camera', granted: false });
   }
 
   try {

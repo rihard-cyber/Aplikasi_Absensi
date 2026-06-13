@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, UserPlus, Trash2, CheckCircle2, Search, Loader2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -245,98 +246,103 @@ const PermissionManager = () => {
         </div>
       </div>
 
-      {/* ADD MODAL */}
-      <AnimatePresence>
-        {isAddModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setIsAddModalOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-md glass-panel p-8 rounded-[40px] border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] max-h-[85vh] overflow-y-auto"
-            >
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xl font-serif font-bold text-white">{t('permissions.delegateAuthority')}</h3>
-                <button onClick={() => setIsAddModalOpen(false)} className="p-2 text-gray-500 hover:text-white transition-colors"><X size={20}/></button>
-              </div>
-
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('permissions.searchNik')}</label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      placeholder={t('permissions.enterNik')}
-                      value={searchNik}
-                      onChange={(e) => setSearchNik(e.target.value)}
-                      className="flex-1 bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
-                    <button 
-                      onClick={handleSearchEmployee}
-                      disabled={isSearching}
-                      className="px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-[var(--aurora-3)]"
-                    >
-                      {isSearching ? t('permissions.searching') : t('permissions.searchBtn')}
-                    </button>
+      {createPortal(
+        <AnimatePresence>
+          {isAddModalOpen && (
+            <div className="fixed inset-0 z-[9999] overflow-y-auto">
+              <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={() => setIsAddModalOpen(false)}
+                className="fixed inset-0 bg-black/85 backdrop-blur-md"
+              />
+              <div className="flex min-h-screen items-start sm:items-center justify-center p-4 relative z-10 pointer-events-none">
+                <motion.div 
+                  initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                  className="relative w-full max-w-md glass-panel p-8 rounded-[40px] border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] pointer-events-auto"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className="flex justify-between items-center mb-8">
+                    <h3 className="text-xl font-serif font-bold text-white">{t('permissions.delegateAuthority')}</h3>
+                    <button onClick={() => setIsAddModalOpen(false)} className="p-2 text-gray-500 hover:text-white transition-colors expand-touch-target"><X size={20}/></button>
                   </div>
-                </div>
 
-                {foundEmployee && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                    <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
-                      <div className="w-12 h-12 rounded-full bg-[var(--aurora-1)]/20 flex items-center justify-center text-[var(--aurora-1)] font-bold">
-                        {foundEmployee.full_name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-bold text-white">{foundEmployee.full_name}</p>
-                        <p className="text-xs text-gray-500">{foundEmployee.nip}</p>
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('permissions.searchNik')}</label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          placeholder={t('permissions.enterNik')}
+                          value={searchNik}
+                          onChange={(e) => setSearchNik(e.target.value)}
+                          className="flex-1 bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                        <button 
+                          onClick={handleSearchEmployee}
+                          disabled={isSearching}
+                          className="px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-[var(--aurora-3)]"
+                        >
+                          {isSearching ? t('permissions.searching') : t('permissions.searchBtn')}
+                        </button>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('permissions.scopeProject')}</label>
-                        <select 
-                          value={selectedProjectId}
-                          onChange={(e) => {
-                            setSelectedProjectId(e.target.value);
-                            setSelectedDivisionId('');
-                          }}
-                          className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
-                          <option value="">-- {t('permissions.allProject')} --</option>
-                          {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('permissions.scopeDivision')}</label>
-                        <select 
-                          value={selectedDivisionId}
-                          onChange={(e) => setSelectedDivisionId(e.target.value)}
-                          className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
-                          <option value="">-- {t('permissions.allDivision')} --</option>
-                          {divisions.filter(d => !selectedProjectId || d.project_id === selectedProjectId).map(d => (
-                            <option key={d.id} value={d.id}>{d.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                    {foundEmployee && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                        <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                          <div className="w-12 h-12 rounded-full bg-[var(--aurora-1)]/20 flex items-center justify-center text-[var(--aurora-1)] font-bold">
+                            {foundEmployee.full_name.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-bold text-white">{foundEmployee.full_name}</p>
+                            <p className="text-xs text-gray-500">{foundEmployee.nip}</p>
+                          </div>
+                        </div>
 
-                    <button 
-                      onClick={handleAddSubAdmin}
-                      disabled={isSubmitting}
-                      className="w-full py-4 bg-[var(--aurora-1)] hover:bg-[#8E2DE2] text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-[0_0_20px_rgba(142,45,226,0.3)] flex items-center justify-center gap-2"
-                    >
-                      {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : t('permissions.grantBtn')}
-                    </button>
-                  </motion.div>
-                )}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('permissions.scopeProject')}</label>
+                            <select 
+                              value={selectedProjectId}
+                              onChange={(e) => {
+                                setSelectedProjectId(e.target.value);
+                                setSelectedDivisionId('');
+                              }}
+                              className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                              <option value="">-- {t('permissions.allProject')} --</option>
+                              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">{t('permissions.scopeDivision')}</label>
+                            <select 
+                              value={selectedDivisionId}
+                              onChange={(e) => setSelectedDivisionId(e.target.value)}
+                              className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                              <option value="">-- {t('permissions.allDivision')} --</option>
+                              {divisions.filter(d => !selectedProjectId || d.project_id === selectedProjectId).map(d => (
+                                <option key={d.id} value={d.id}>{d.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <button 
+                          onClick={handleAddSubAdmin}
+                          disabled={isSubmitting}
+                          className="w-full py-4 bg-[var(--aurora-1)] hover:bg-[#8E2DE2] text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-[0_0_20px_rgba(142,45,226,0.3)] flex items-center justify-center gap-2"
+                        >
+                          {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : t('permissions.grantBtn')}
+                        </button>
+                      </motion.div>
+                    )}
+                  </div>
+                </motion.div>
               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="glass-panel p-6 rounded-3xl border border-white/5">

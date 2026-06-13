@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, QrCode, Copy, Trash2, CheckCircle2, XCircle, Loader2, Eye, Printer, Download, X } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
@@ -248,58 +249,65 @@ const QRCodeManagement = () => {
       </div>
 
       {/* Visual QR Code Modal */}
-      {activeQRModal && (
-        <motion.div 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
-          onClick={() => setActiveQRModal(null)}
-        >
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }} 
-            animate={{ opacity: 1, scale: 1 }} 
-            className="bg-[#14151A] border border-white/10 rounded-3xl p-6 max-w-sm w-full text-center relative space-y-4 shadow-2xl" 
-            onClick={e => e.stopPropagation()}
-          >
-            <button 
-              onClick={() => setActiveQRModal(null)} 
-              className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+      {createPortal(
+        <AnimatePresence>
+          {activeQRModal && (
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+              onClick={() => setActiveQRModal(null)}
             >
-              <X size={18} />
-            </button>
-            
-            <h3 className="text-base font-bold text-white pt-2">{activeQRModal.title}</h3>
-            
-            <div className="bg-white rounded-2xl p-4 w-fit mx-auto border border-white/5 shadow-inner">
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeQRModal.url)}`} 
-                alt="QR Code" 
-                className="w-48 h-48 mx-auto"
-              />
-            </div>
-            
-            <div className="bg-black/40 border border-white/5 rounded-xl p-2.5 text-left">
-              <p className="text-[8px] text-gray-500 uppercase tracking-widest font-black mb-1">{t('qrCode.tokenUrlLabel')}</p>
-              <p className="font-mono text-[9px] text-gray-400 break-all select-all">{activeQRModal.url}</p>
-            </div>
-            
-            <div className="flex gap-2 pt-2">
-              <button 
-                onClick={() => downloadQRCode(activeQRModal.url, activeQRModal.filename)}
-                className="flex-1 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/5 hover:border-white/10 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                exit={{ opacity: 0, scale: 0.95 }} 
+                className="bg-[#14151A] border border-white/10 rounded-3xl p-6 max-w-sm w-full text-center relative space-y-4 shadow-2xl z-[10000]" 
+                onClick={e => e.stopPropagation()}
               >
-                <Download size={12} /> {t('qrCode.download')}
-              </button>
-              
-              <button 
-                onClick={() => printQRCode(activeQRModal.url, activeQRModal.title)}
-                className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] hover:opacity-90 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-[0_4px_12px_rgba(142,45,226,0.2)]"
-              >
-                <Printer size={12} /> {t('qrCode.printQR')}
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
+                <button 
+                  onClick={() => setActiveQRModal(null)} 
+                  className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors expand-touch-target"
+                >
+                  <X size={18} />
+                </button>
+                
+                <h3 className="text-base font-bold text-white pt-2">{activeQRModal.title}</h3>
+                
+                <div className="bg-white rounded-2xl p-4 w-fit mx-auto border border-white/5 shadow-inner">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(activeQRModal.url)}`} 
+                    alt="QR Code" 
+                    className="w-48 h-48 mx-auto"
+                  />
+                </div>
+                
+                <div className="bg-black/40 border border-white/5 rounded-xl p-2.5 text-left">
+                  <p className="text-[8px] text-gray-500 uppercase tracking-widest font-black mb-1">{t('qrCode.tokenUrlLabel')}</p>
+                  <p className="font-mono text-[9px] text-gray-400 break-all select-all">{activeQRModal.url}</p>
+                </div>
+                
+                <div className="flex gap-2 pt-2">
+                  <button 
+                    onClick={() => downloadQRCode(activeQRModal.url, activeQRModal.filename)}
+                    className="flex-1 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/5 hover:border-white/10 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+                  >
+                    <Download size={12} /> {t('qrCode.download')}
+                  </button>
+                  
+                  <button 
+                    onClick={() => printQRCode(activeQRModal.url, activeQRModal.title)}
+                    className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] hover:opacity-90 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-[0_4px_12px_rgba(142,45,226,0.2)]"
+                  >
+                    <Printer size={12} /> {t('qrCode.printQR')}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
     </div>
   );
