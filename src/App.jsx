@@ -27,23 +27,43 @@ const DASHBOARD_ROUTES = ['/app', '/tenantadmin', '/superadmin', '/subadmin'];
 const EXIT_ROUTES = ['/', '/login'];
 const t = (s) => s;
 
-const LoadingScreen = React.memo(() => (
-  <div className="fixed inset-0 bg-[#0B0C10] z-[99999] flex items-center justify-center">
-    <div className="flex flex-col items-center gap-6">
-      <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] p-[2px] shadow-[0_0_40px_rgba(142,45,226,0.4)] animate-pulse">
-        <div className="w-full h-full bg-[#0B0C10] rounded-[22px] flex items-center justify-center font-serif font-bold text-white text-lg relative overflow-hidden">
-          <span className="relative z-10">SP</span>
+const LoadingScreen = React.memo(() => {
+  const [logoUrl, setLogoUrl] = useState(null);
+
+  useEffect(() => {
+    try {
+      const url = localStorage.getItem('tenant_logo_url');
+      if (url) setLogoUrl(url);
+    } catch {}
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-[#0B0C10] z-[99999] flex items-center justify-center">
+      <div className="flex flex-col items-center gap-6">
+        <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] p-[2px] shadow-[0_0_40px_rgba(142,45,226,0.4)] animate-pulse">
+          <div className="w-full h-full bg-[#0B0C10] rounded-[22px] flex items-center justify-center font-serif font-bold text-white text-lg relative overflow-hidden">
+            {logoUrl ? (
+              <img 
+                src={logoUrl} 
+                alt="Logo" 
+                className="w-full h-full object-contain p-2 logo-3d-spin rounded-[22px]" 
+                onError={() => setLogoUrl(null)} 
+              />
+            ) : (
+              <span className="relative z-10 logo-3d-spin">SP</span>
+            )}
+          </div>
         </div>
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-full bg-[var(--aurora-1)] animate-bounce" style={{ animationDelay: '0s' }} />
+          <div className="w-2 h-2 rounded-full bg-[var(--aurora-3)] animate-bounce" style={{ animationDelay: '0.15s' }} />
+          <div className="w-2 h-2 rounded-full bg-[var(--aurora-1)] animate-bounce" style={{ animationDelay: '0.3s' }} />
+        </div>
+        <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold">{t('Memuat...')}</p>
       </div>
-      <div className="flex items-center gap-1">
-        <div className="w-2 h-2 rounded-full bg-[var(--aurora-1)] animate-bounce" style={{ animationDelay: '0s' }} />
-        <div className="w-2 h-2 rounded-full bg-[var(--aurora-3)] animate-bounce" style={{ animationDelay: '0.15s' }} />
-        <div className="w-2 h-2 rounded-full bg-[var(--aurora-1)] animate-bounce" style={{ animationDelay: '0.3s' }} />
-      </div>
-      <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-bold">{t('Memuat...')}</p>
     </div>
-  </div>
-));
+  );
+});
 
 const includeLanding = import.meta.env.VITE_INCLUDE_LANDING !== 'false';
 
@@ -270,6 +290,12 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
     if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
   };
 
+  useEffect(() => {
+    const handler = () => handleCycleRole();
+    window.addEventListener('cycle-impersonation-role', handler);
+    return () => window.removeEventListener('cycle-impersonation-role', handler);
+  }, [handleCycleRole]);
+
   const getDashboardRedirect = () => {
     if (userRole === 'SUPER_ADMIN') return '/superadmin';
     if (userRole === 'TENANT_ADMIN') return '/tenantadmin';
@@ -281,15 +307,6 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
 
   return (
     <>
-      {/* SUPER ADMIN PREVIEW INDICATOR */}
-      {originalRole === 'SUPER_ADMIN' && (
-        <div onClick={handleCycleRole}
-          className="fixed top-2 left-1/2 -translate-x-1/2 z-[9999] px-4 py-1 bg-[var(--danger)] text-white text-[10px] font-bold rounded-full shadow-[0_0_15px_rgba(255,0,85,0.5)] border border-white/20 animate-pulse cursor-pointer hover:bg-red-600 transition-colors active:scale-95 safe-top"
-          title={t("Klik untuk Pindah Dasbor")}
-        >
-          {t('SUPER ADMIN PREVIEW (TAP TO SWITCH)')}
-        </div>
-      )}
 
       {/* FLOATING BACK HINT */}
       <AnimatePresence>
@@ -420,19 +437,6 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
       {/* ROUTE LOADING BAR */}
       <RouteLoadingBar />
 
-      {/* GLOBAL BACK BUTTON — visible on dashboards, resets to home */}
-      {isDashboard && location.pathname === '/app' && (
-        <button onClick={() => {
-          // Emit a custom event that dashboard components can listen for
-          window.dispatchEvent(new CustomEvent('go-dashboard-home'));
-          toast('Kembali ke menu utama', 'info');
-        }}
-          className="fixed top-4 left-4 z-[9999] px-3 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center gap-1.5 text-white text-[10px] font-bold hover:bg-white/20 active:scale-90 transition-all safe-top"
-          title="Kembali ke menu utama"
-        >
-          <ChevronLeft size={14} /> Menu
-        </button>
-      )}
 
       {/* OFFLINE INDICATOR */}
       <OfflineIndicator />
@@ -496,6 +500,21 @@ function App() {
       setOriginalRole(null);
       clearClientAuthCache();
       return;
+    }
+    if (profile?.tenant_id) {
+      try {
+        const { data: tenant } = await supabase
+          .from('tenants')
+          .select('name, logo_url')
+          .eq('id', profile.tenant_id)
+          .maybeSingle();
+        if (tenant) {
+          if (tenant.logo_url) localStorage.setItem('tenant_logo_url', tenant.logo_url);
+          if (tenant.name) localStorage.setItem('tenant_name', tenant.name);
+        }
+      } catch (e) {
+        console.warn("Gagal sinkronisasi data logo tenant:", e);
+      }
     }
     applyProfileSession(profile);
   }, [applyProfileSession, clearClientAuthCache]);

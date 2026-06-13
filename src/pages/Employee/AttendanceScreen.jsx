@@ -33,8 +33,9 @@ import { enqueueAttendance, registerOnlineSyncListener, getQueueCount } from '..
 import { showLocalNotification } from '../../utils/pushNotification';
 import { useToast } from '../../components/Toast';
 import { verifyFace } from '../../utils/faceVerification';
-import { checkWifiGeofence } from '../../utils/wifiGeofence';
 import { registerBackHandler } from '../../utils/navigation';
+import GlobalHeader from '../../components/GlobalHeader';
+import DeveloperWatermark from '../../components/DeveloperWatermark';
 
 /** @type {(s: string) => string} Passthrough i18n - app is monolingual Indonesian */
 const t = (s) => s;
@@ -967,17 +968,16 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
   };
 
   return (
-    <div className="min-h-screen pb-24 pt-8 px-0 flex flex-col items-center relative overflow-hidden bg-[#0B0C10]">
+    <div className="min-h-screen pb-24 pt-0 flex flex-col items-center relative overflow-hidden bg-[#0B0C10] w-full">
+      {!activeSubView && (
+        <GlobalHeader title={activeTab === 'home' ? 'BERANDA' : activeTab === 'history' ? 'RIWAYAT PRESENSI' : activeTab === 'absensi' ? 'PRESENSI KARYAWAN' : activeTab === 'docs' ? 'DOKUMEN VAULT' : activeTab === 'profile' ? 'PROFIL SAYA' : 'PRESENSI'} />
+      )}
 
       <div className="absolute inset-0 pointer-events-none opacity-20 z-0">
         <div className="absolute top-0 left-0 w-full h-[30%] bg-gradient-to-b from-[var(--aurora-1)]/20 to-transparent"></div>
       </div>
 
-      {isGodMode && (
-        <motion.div initial={{ y: -50 }} animate={{ y: 0 }} className="fixed top-4 right-4 z-50 bg-rose-500/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-rose-500 text-white text-[10px] font-black tracking-widest flex items-center gap-2 shadow-[0_0_15px_rgba(255,0,85,0.5)] safe-top">
-          <ShieldAlert size={12} /> SUPER ADMIN PREVIEW ACTIVE
-        </motion.div>
-      )}
+
 
       {announcements.length > 0 && (
         <div className="w-full max-w-4xl mx-4 mb-4 bg-[var(--aurora-1)]/5 backdrop-blur-lg border border-[var(--aurora-1)]/20 rounded-xl overflow-hidden relative z-10 flex items-center px-3 py-2">
@@ -1114,11 +1114,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
 
       {/* Copyright Watermark */}
       <div className="fixed bottom-1 w-full pointer-events-none z-40 safe-bottom flex flex-col items-center">
-        <div className="developer-watermark opacity-40 transform scale-75 origin-bottom">
-          <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
-          <span className="watermark-text">Developer Richard Meha</span>
-          <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
-        </div>
+        <DeveloperWatermark />
       </div>
 
     </div>

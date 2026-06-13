@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Settings, FileText, CheckCircle, Activity, Calculator, BarChart3, ShieldCheck, Building2, Megaphone, CalendarDays, LogOut, XCircle, Upload, Fingerprint, Users, DollarSign, TrendingUp, Sun, Calendar, Star, Briefcase, Gift, ScrollText, PartyPopper, ClipboardList, QrCode, Activity as ActivityIcon, LineChart, UserCircle, Wallet, Layers, GitBranch, Landmark, ClipboardCheck, Image, Wrench, Zap, Wifi, Bot, ScanLine, Webhook, Headphones, Route, DoorOpen, UserCheck, Hammer, Truck, Package, AlertTriangle, Repeat, Home, MapPin } from 'lucide-react';
+import { Settings, FileText, CheckCircle, Activity, Calculator, BarChart3, ShieldCheck, Building2, Megaphone, CalendarDays, LogOut, XCircle, Upload, Fingerprint, Users, DollarSign, TrendingUp, Sun, Calendar, Star, Briefcase, Gift, ScrollText, PartyPopper, ClipboardList, QrCode, Activity as ActivityIcon, LineChart, UserCircle, Wallet, Layers, GitBranch, Landmark, ClipboardCheck, Image, Wrench, Zap, Wifi, Bot, ScanLine, Webhook, Headphones, Route, DoorOpen, UserCheck, Hammer, Truck, Package, AlertTriangle, Repeat, Home, MapPin, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../components/ConfirmDialog';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -7,6 +7,9 @@ import DashboardHome from './components/DashboardHome';
 import CompanyProfile from './components/CompanyProfile';
 import SubAdminDashboard from '../SubAdmin/SubAdminDashboard';
 import { registerBackHandler } from '../../utils/navigation';
+import { useNotifications } from '../../components/Notifications';
+import GlobalHeader from '../../components/GlobalHeader';
+import DeveloperWatermark from '../../components/DeveloperWatermark';
 
 const PayrollSettings = lazy(() => import('./components/PayrollSettings'));
 const ApprovalWorkflow = lazy(() => import('./components/ApprovalWorkflow'));
@@ -77,6 +80,7 @@ const NAV_BTN = (active) =>
 
 const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogout }) => {
   const navigate = useNavigate();
+  const { unreadCount, setShowPanel } = useNotifications();
   const [activeTab, setActiveTab] = useState(() => {
     try { return sessionStorage.getItem('tenant_active_tab') || 'home'; } catch { return 'home'; }
   });
@@ -109,7 +113,13 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
       const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('auth_id', session.user.id).maybeSingle();
       if (profile?.tenant_id) {
         const { data: tData } = await supabase.from('tenants').select('id, name, logo_url').eq('id', profile.tenant_id).maybeSingle();
-        if (tData) setTenantData(tData);
+        if (tData) {
+          setTenantData(tData);
+          try {
+            if (tData.logo_url) localStorage.setItem('tenant_logo_url', tData.logo_url);
+            if (tData.name) localStorage.setItem('tenant_name', tData.name);
+          } catch {}
+        }
       }
     } catch (e) { console.error('Gagal menarik data tenant', e); }
   };
@@ -125,16 +135,40 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
   const go = (tab) => { setActiveTab(tab); setIsSidebarOpen(false); };
   const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true' || isImpersonating; } catch { return isImpersonating; } })();
 
+  const getTabTitle = () => {
+    switch (activeTab) {
+      case 'home': return 'DASHBOARD';
+      case 'profile': return 'PROFIL PERUSAHAAN';
+      case 'employee-directory': return 'DIREKTORI KARYAWAN';
+      case 'monitoring': return 'MONITORING GLOBAL';
+      case 'structure': return 'MANAJEMEN STRUKTUR';
+      case 'shift': return 'ATURAN SHIFT';
+      case 'auto-shift': return 'JADWAL OTOMATIS';
+      case 'schedule': return 'UNGGAH JADWAL';
+      case 'schedule-calendar': return 'KALENDAR SHIFT';
+      case 'holidays': return 'HARI LIBUR';
+      case 'broadcast': return 'SIARAN INFORMASI';
+      case 'approval': return 'PERSETUJUAN';
+      case 'loans': return 'PINJAMAN';
+      case 'reimbursements': return 'REIMBURSEMENT';
+      case 'finance': return 'KEUANGAN';
+      case 'org-chart': return 'BAGAN ORGANISASI';
+      case 'performance': return 'KINERJA';
+      case 'assets': return 'ASET PERUSAHAAN';
+      case 'events': return 'KEGIATAN';
+      case 'policies': return 'KEBIJAKAN';
+      case 'payroll': return 'PENGATURAN PAYROLL';
+      case 'payroll-run': return 'PROSES PAYROLL';
+      case 'timesheet': return 'TIMESHEET';
+      case 'overtime': return 'LEMBUR';
+      case 'thr': return 'PERHITUNGAN THR';
+      case 'settings': return 'PENGATURAN UMUM';
+      default: return 'ADMIN PANEL';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--bg-darker)] flex text-white relative overflow-hidden">
-
-      {/* Mobile Sidebar Toggle */}
-      <button
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="lg:hidden fixed top-6 right-6 z-[100] w-12 h-12 rounded-2xl bg-[var(--aurora-3)]/20 border border-[var(--aurora-3)]/40 flex items-center justify-center text-[var(--aurora-3)] shadow-[0_0_20px_rgba(0,201,255,0.2)] backdrop-blur-md"
-      >
-        {isSidebarOpen ? <XCircle size={24} /> : <Settings size={24} />}
-      </button>
 
       {/* Background Blobs */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 z-0">
@@ -255,18 +289,15 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
           {/* Bottom Actions */}
           <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-2">
             <HRISExportWrapper tenantId={tenantData?.id} className="w-full justify-start py-3 border-none bg-white/5 hover:bg-[var(--danger)]/20 text-gray-400 hover:text-[var(--danger)]" label="Unduh Database HRIS" />
-            <button onClick={() => go('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-white/10 text-[var(--aurora-1)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+            <button onClick={() => go('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-white/10 text-[var(--aurora-3)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
               <Settings size={18} /><span className="text-sm">Pengaturan Umum</span>
             </button>
             <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-[var(--danger)] hover:bg-[var(--danger)]/10">
               <LogOut size={18} /><span className="text-sm uppercase font-bold">Keluar</span>
             </button>
-            {/* Cursive Signature Watermark */}
-            <div className="developer-watermark opacity-50 transform scale-90 mt-2">
-              <span className="ornament">✧═════•❁❀❁•═════✧</span>
-              <span className="watermark-text text-sm">Developer Richard Meha</span>
-              <span className="ornament">✧═════•❁❀❁•═════✧</span>
-            </div>
+
+            {/* Developer Watermark Signature */}
+            <DeveloperWatermark />
           </div>
         </div>
       </aside>
@@ -275,8 +306,13 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] lg:hidden" />}
 
       {/* Main Content */}
-      <main className="flex-1 p-0 z-10 overflow-y-auto">
-        <div className={`w-full max-w-7xl mx-auto px-4 ${isImpersonating ? 'pt-10 mt-2 sm:mt-4' : 'mt-2 sm:mt-4'}`}>
+      <main className="flex-1 p-0 z-10 overflow-y-auto flex flex-col">
+        <GlobalHeader 
+          title={getTabTitle()} 
+          onMenuClick={() => setIsSidebarOpen(true)} 
+          onSettingsClick={() => go('settings')}
+        />
+        <div className={`w-full max-w-7xl mx-auto px-4 flex-1 ${isImpersonating ? 'pt-10 mt-2 sm:mt-4' : 'mt-2 sm:mt-4'}`}>
           <Suspense fallback={<div className="p-20 text-center"><div className="w-8 h-8 border-2 border-[var(--aurora-3)] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
             {activeTab === 'home' && <DashboardHome onNavigate={(tab) => { setActiveTab(tab); setIsSidebarOpen(false); }} />}
             {activeTab === 'profile' && <CompanyProfile onUpdate={fetchTenantData} />}

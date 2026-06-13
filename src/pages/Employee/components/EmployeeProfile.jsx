@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LogOut, Settings, Smartphone, Key, ShieldCheck, ChevronRight,
-  RefreshCw, Palette, User, Lock, X, ShieldAlert, Fingerprint, Info, Loader2
+  RefreshCw, Palette, User, Lock, X, ShieldAlert, Fingerprint, Info, Loader2, Bell
 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { DeviceUtil } from '../../../utils/deviceUtil';
@@ -12,11 +12,15 @@ import { useConfirm } from '../../../components/ConfirmDialog';
 import { useToast } from '../../../components/Toast';
 import HRISDataForm from './HRISDataForm';
 import NotificationSettings from '../../../components/NotificationSettings';
+import { useNotifications } from '../../../components/Notifications';
+import { useTheme } from '../../../context/ThemeContext';
 
 const t = (s) => s;
 
 const EmployeeProfile = () => {
   const navigate = useNavigate();
+  const { unreadCount, setShowPanel } = useNotifications();
+  const { theme, toggleTheme } = useTheme();
   const [user, setUser] = useState({
     full_name: 'Memuat...',
     position: 'Staff',
@@ -334,9 +338,22 @@ const EmployeeProfile = () => {
               activeItem={activeItem}
               icon={<Palette size={20} />}
               title="Tema"
-              subtitle="Dark Luxury (Default)"
+              subtitle={
+                theme === 'light' ? 'Mode Terang' : 
+                theme === 'aurora' ? 'Mode Aurora' : 
+                theme === 'neon' ? 'Mode Neon' : 'Dark Luxury (Default)'
+              }
               color="var(--aurora-1)"
-              onClick={() => handleItemClick('theme', () => toast('Tema Dark Luxury adalah standar perusahaan.', 'info'))}
+              onClick={() => handleItemClick('theme', toggleTheme)}
+            />
+            <MenuItem
+              id="notifications"
+              activeItem={activeItem}
+              icon={<Bell size={20} />}
+              title="Notifikasi"
+              subtitle={unreadCount > 0 ? `${unreadCount} pesan belum dibaca` : 'Semua pesan sudah dibaca'}
+              color="var(--aurora-3)"
+              onClick={() => handleItemClick('notifications', () => setShowPanel(true))}
             />
           </div>
         </div>

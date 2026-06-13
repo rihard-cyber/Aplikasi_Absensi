@@ -6,6 +6,7 @@ import { DeviceUtil } from '../../utils/deviceUtil';
 import { supabase } from '../../utils/supabaseClient';
 import { useToast } from '../../components/Toast';
 import { registerBackHandler } from '../../utils/navigation';
+import DeveloperWatermark from '../../components/DeveloperWatermark';
 
 const OTP_LENGTH = 6;
 
@@ -739,9 +740,18 @@ const AuthPortal = ({ onLogin }) => {
           {/* Logo Area & Adaptive Branding */}
           <div className="login-header cursor-pointer" onClick={handleLogoClick}>
             <div className="login-logo-ring">
-              <div className="w-full h-full bg-gradient-to-br from-[var(--aurora-3)] to-[var(--aurora-1)] rounded-full flex items-center justify-center font-serif font-bold text-white text-xl shadow-[0_0_15px_rgba(0,201,255,0.4)]">
-                SP
-              </div>
+              {tenantBrand?.logo_url || localStorage.getItem('tenant_logo_url') ? (
+                <img 
+                  src={tenantBrand?.logo_url || localStorage.getItem('tenant_logo_url')} 
+                  alt="Logo" 
+                  className="w-full h-full object-contain p-2 logo-3d-spin rounded-full" 
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[var(--aurora-3)] to-[var(--aurora-1)] rounded-full flex items-center justify-center font-serif font-bold text-white text-xl shadow-[0_0_15px_rgba(0,201,255,0.4)] logo-3d-spin">
+                  SP
+                </div>
+              )}
             </div>
             <AnimatePresence mode="wait">
               {tenantBrand ? (
@@ -1367,11 +1377,7 @@ const AuthPortal = ({ onLogin }) => {
       </motion.div>
 
       {/* Cursive Signature Watermark */}
-      <div className="developer-watermark z-10 relative mt-6 opacity-60">
-        <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
-        <span className="watermark-text text-sm">Developer Richard Meha</span>
-        <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
-      </div>
+      <DeveloperWatermark />
     </div>
   );
 };

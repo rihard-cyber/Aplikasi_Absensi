@@ -579,33 +579,202 @@ a, button, input, select, textarea {
   touch-action: manipulation !important;
 }
 
-/* Developer Cursive Watermark */
+/* Developer Cursive Watermark - Clean subtle styling from JDC */
 .developer-watermark {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-top: 25px;
-  margin-bottom: 15px;
-  opacity: 0.85;
-  font-family: var(--font-sans);
+  gap: 0.35rem;
+  margin: 0.75rem auto 0.2rem;
+  opacity: 0.35;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  user-select: none;
+  pointer-events: none;
+  box-sizing: border-box;
 }
 
-.developer-watermark .ornament {
+.developer-watermark .ornament-line {
+  flex: 1;
+  min-width: 6px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--aurora-3), transparent);
+  opacity: 0.25;
+}
+
+.developer-watermark .ornament-symbol {
   color: var(--aurora-3);
-  font-size: 11px;
-  font-weight: bold;
+  font-size: 0.55rem;
   opacity: 0.5;
-  user-select: none;
+  flex-shrink: 0;
 }
 
 .developer-watermark .watermark-text {
-  font-family: 'Great Vibes', 'Brush Script MT', cursive;
-  font-size: 20px;
-  color: var(--text-primary);
-  font-weight: 500;
+  font-family: 'Great Vibes', cursive;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
   white-space: nowrap;
-  text-shadow: 0 0 10px rgba(0, 201, 255, 0.4);
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+
+/* ── JDC-Style Clean Header ── */
+.global-header-jdc {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 56px;
+}
+
+.global-header-jdc .header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.global-header-jdc .menu-toggle-btn-jdc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.global-header-jdc .menu-toggle-btn-jdc:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.global-header-jdc .header-logo-box-jdc {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(0, 201, 255, 0.2);
+}
+
+.global-header-jdc .header-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.global-header-jdc .header-page-title-jdc {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.global-header-jdc .header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.global-header-jdc .connectivity-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  box-shadow: 0 0 12px currentColor;
+}
+
+.global-header-jdc .online-jdc {
+  background: rgba(0, 255, 135, 0.15);
+  border: 1px solid rgba(0, 255, 135, 0.3);
+  color: var(--success);
+}
+
+.global-header-jdc .offline-jdc {
+  background: rgba(255, 0, 85, 0.15);
+  border: 1px solid rgba(255, 0, 85, 0.3);
+  color: var(--danger);
+}
+
+@media (max-width: 480px) {
+  .global-header-jdc .header-page-title-jdc {
+    max-width: 140px;
+    font-size: 0.8rem;
+  }
+}
+
+/* ── Logo 3D Spin Animation ── */
+@keyframes logo3d-spin {
+  0% {
+    transform: perspective(800px) rotateY(0deg) rotateX(0deg) translateY(0) scale(1);
+    filter: drop-shadow(0 0 20px rgba(0, 201, 255, 0.5));
+  }
+  20% {
+    transform: perspective(800px) rotateY(72deg) rotateX(3deg) translateY(-5px) scale(1.06);
+    filter: drop-shadow(12px 0 35px rgba(0, 201, 255, 0.7));
+  }
+  40% {
+    transform: perspective(800px) rotateY(144deg) rotateX(-3deg) translateY(0) scale(1.08);
+    filter: drop-shadow(0 8px 40px rgba(142, 45, 226, 0.5));
+  }
+  50% {
+    transform: perspective(800px) rotateY(180deg) rotateX(0deg) translateY(0) scale(1);
+    filter: drop-shadow(0 0 20px rgba(0, 201, 255, 0.5));
+  }
+  60% {
+    transform: perspective(800px) rotateY(216deg) rotateX(3deg) translateY(-5px) scale(1.06);
+    filter: drop-shadow(-12px 0 35px rgba(0, 201, 255, 0.7));
+  }
+  80% {
+    transform: perspective(800px) rotateY(288deg) rotateX(-3deg) translateY(0) scale(1.08);
+    filter: drop-shadow(0 8px 40px rgba(142, 45, 226, 0.5));
+  }
+  100% {
+    transform: perspective(800px) rotateY(360deg) rotateX(0deg) translateY(0) scale(1);
+    filter: drop-shadow(0 0 20px rgba(0, 201, 255, 0.5));
+  }
+}
+
+.logo-3d-spin {
+  animation: logo3d-spin 5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
 /* Custom premium scrollbar classes */
@@ -1023,6 +1192,15 @@ a, button, input, select, textarea {
   background: var(--aurora-3);
   border-radius: 0 0 4px 4px;
   box-shadow: 0 0 8px rgba(0, 201, 255, 0.5);
+}
+
+.bottom-nav-btn.active::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 8px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(0, 201, 255, 0.12) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .bottom-nav-btn-center {

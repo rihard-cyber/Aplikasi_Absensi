@@ -106,15 +106,6 @@ export const NotificationProvider = ({ children }) => {
     <NotificationContext.Provider value={{ notifications, unreadCount, showPanel, setShowPanel, refresh }}>
       {children}
 
-      <div className="fixed top-4 right-16 z-[9999] flex items-center gap-2">
-        <ThemeToggle />
-        <button onClick={() => setShowPanel(!showPanel)} className="relative w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all backdrop-blur-md">
-          <Bell size={18} />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[var(--danger)] text-white text-[8px] font-bold flex items-center justify-center shadow-lg">{unreadCount > 9 ? '9+' : unreadCount}</span>
-          )}
-        </button>
-      </div>
 
       <AnimatePresence>
         {showPanel && (

@@ -5,19 +5,24 @@ import {
   MoreVertical, ArrowLeftRight, ShieldAlert, Zap,
   BarChart3, Clock, AlertTriangle, FileSpreadsheet,
   ShieldCheck, CheckSquare, Eye, Trash2, Network, Building2,
-  Loader2, LogOut, Home, UserCheck, DollarSign, ClipboardList
+  Loader2, LogOut, Home, UserCheck, DollarSign, ClipboardList, Bell
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../utils/supabaseClient';
 import { downloadCSV } from '../../utils/downloadUtil';
 import { useToast } from '../../components/Toast';
 import { registerBackHandler } from '../../utils/navigation';
+import ThemeToggle from '../../components/ThemeToggle';
+import GlobalHeader from '../../components/GlobalHeader';
+import DeveloperWatermark from '../../components/DeveloperWatermark';
+import { useNotifications } from '../../components/Notifications';
 
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycleRole, onGodModeReturn }) => {
   const navigate = useNavigate();
   const toast = useToast();
+  const { unreadCount, setShowPanel } = useNotifications();
   const [activeTab, setActiveTab] = useState(() => {
     try { return sessionStorage.getItem('subadmin_active_tab') || initialTab; } catch { return initialTab; }
   });
@@ -250,25 +255,11 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
   ];
 
   return (
-    <div className={`min-h-screen bg-[#0B0C10] text-white ${isEmbedded ? '' : 'p-4 sm:p-6'} ${isImpersonating && !isEmbedded ? 'pt-10' : ''}`}>
-      <div className="max-w-6xl mx-auto">
-        {!isEmbedded && (
-          <header className="flex justify-between items-center mb-6 bg-white/5 p-4 sm:p-6 rounded-3xl border border-white/10">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-3">
-                <ShieldCheck className="text-[var(--aurora-3)]" /> 
-                Portal Operasional
-              </h1>
-              <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">Manajemen Otoritas & Monitoring</p>
-            </div>
-            <div className="flex gap-2">
-              {isGod && onCycleRole && (
-                <button onClick={onCycleRole} className="px-3 py-2 bg-[var(--danger)]/20 text-[var(--danger)] rounded-xl text-[10px] font-bold border border-[var(--danger)]/30 hover:bg-[var(--danger)]/30 transition-all">Ganti Role</button>
-              )}
-              <button onClick={() => navigate('/')} className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-bold border border-white/10 hover:bg-white/10 transition-all flex items-center gap-1"><Home size={14} /> Home</button>
-            </div>
-          </header>
-        )}
+    <div className={`min-h-screen bg-[#0B0C10] text-white flex flex-col ${isImpersonating && !isEmbedded ? 'pt-10' : ''}`}>
+      {!isEmbedded && (
+        <GlobalHeader title="PORTAL OPERASIONAL" onBack={() => navigate('/')} />
+      )}
+      <div className={`max-w-6xl mx-auto w-full flex-1 ${isEmbedded ? '' : 'p-4 sm:p-6'}`}>
 
         <nav className="flex flex-wrap gap-2 mb-6">
           {navItems.map(item => (
@@ -425,10 +416,11 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
           </div>
         )}
         {!isEmbedded && (
-          <div className="developer-watermark opacity-40 mt-8 pb-4">
-            <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
-            <span className="watermark-text text-sm">Developer Richard Meha</span>
-            <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
+          <div className="mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 pb-4">
+            <div className="text-[10px] text-gray-500 uppercase tracking-widest font-sans">
+              Portal Operasional Sub-Admin
+            </div>
+            <DeveloperWatermark />
           </div>
         )}
       </div>

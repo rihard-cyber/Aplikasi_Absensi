@@ -12,6 +12,7 @@ import {
   Shuffle, Home, Layers, Fingerprint, Wifi, Eye, ArrowRight
 } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
+import DeveloperWatermark from '../components/DeveloperWatermark';
 
 const publicAsset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 /** @type {(s: string) => string} Passthrough i18n - app is monolingual Indonesian */
@@ -1166,11 +1167,7 @@ const LandingPage = () => {
           <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex flex-col items-center gap-3 w-full md:w-auto md:items-start">
               <span className="text-[9px] text-gray-600 font-semibold">{i18n("SI PRESENSI PRO MAX. © 2026 Seluruh Hak Cipta Dilindungi.")}</span>
-              <div className="developer-watermark opacity-60 mt-1">
-                <span className="ornament">✧═════•❁❀❁•═════✧</span>
-                <span className="watermark-text text-sm">Developer Richard Meha</span>
-                <span className="ornament">✧═════•❁❀❁•═════✧</span>
-              </div>
+              <DeveloperWatermark />
             </div>
             <div className="flex items-center gap-6 text-[9px] text-gray-500 font-bold uppercase tracking-wider">
               <button onClick={() => navigate('/login')} className="hover:text-white transition-colors">{i18n("Portal Login")}</button>

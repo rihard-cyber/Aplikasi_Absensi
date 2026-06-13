@@ -212,11 +212,16 @@ export function exportTableToPdf({
             margin-bottom: 5px;
             opacity: 0.85;
           }
-          .developer-watermark .ornament {
+          .developer-watermark .ornament-line {
+            flex: 1;
+            height: 1px;
+            background: #6200ee;
+            opacity: 0.3;
+          }
+          .developer-watermark .ornament-symbol {
             color: #6200ee;
             font-size: 10px;
             font-weight: bold;
-            user-select: none;
           }
           .developer-watermark .watermark-text {
             font-family: 'Great Vibes', 'Brush Script MT', cursive;
@@ -245,9 +250,11 @@ export function exportTableToPdf({
             <tbody>${bodyHtml}</tbody>
           </table>
           <div class="developer-watermark">
-            <span class="ornament">✧══════════•❁❀❁•══════════✧</span>
+            <span class="ornament-line"></span>
+            <span class="ornament-symbol">❁❀❁</span>
             <span class="watermark-text">Developer Richard Meha</span>
-            <span class="ornament">✧══════════•❁❀❁•══════════✧</span>
+            <span class="ornament-symbol">❁❀❁</span>
+            <span class="ornament-line"></span>
           </div>
           <div class="print-footer">
             <span>${escapeHtml(footer)}</span>

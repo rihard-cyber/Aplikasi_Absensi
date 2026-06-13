@@ -341,19 +341,19 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
   return (
     <div className="flex flex-col gap-4 relative h-full">
       {/* Sticky Header */}
-      <div className="flex items-center justify-between sticky top-0 bg-[#0B0C10]/80 backdrop-blur-xl py-4 z-[30] border-b border-white/5 mb-2">
-        <div className="flex flex-col">
-          <h2 className="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
-            <span className="w-6 h-6 rounded-lg bg-[var(--aurora-1)]/10 flex items-center justify-center shadow-[0_0_8px_rgba(142,45,226,0.2)]"><Building size={12} className="text-[var(--aurora-1)]" /></span>
-            Manajemen Unit SaaS
+      <div className="flex flex-row items-center justify-between gap-3 sticky top-0 bg-[#0B0C10]/80 backdrop-blur-xl py-4 z-[30] border-b border-white/5 mb-2 flex-wrap">
+        <div className="flex flex-col min-w-0">
+          <h2 className="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-2 truncate">
+            <span className="w-6 h-6 rounded-lg bg-[var(--aurora-1)]/10 flex items-center justify-center shadow-[0_0_8px_rgba(142,45,226,0.2)] shrink-0"><Building size={12} className="text-[var(--aurora-1)]" /></span>
+            <span className="truncate">Manajemen Unit SaaS</span>
           </h2>
           <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">{filteredTenants.length} {t('Entitas Terdeteksi')}</p>
         </div>
         <button 
           onClick={() => { setShowCreateModal(true); playClick(); }}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-2xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[10px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(142,45,226,0.4)] hover:scale-105 transition-all active:scale-95"
+          className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[10px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(142,45,226,0.4)] hover:scale-105 transition-all active:scale-95 shrink-0"
         >
-          <Plus size={14} strokeWidth={3} /> {t('TAMBAH TENANT')}
+          <Plus size={12} strokeWidth={3} /> {t('TAMBAH TENANT')}
         </button>
       </div>
 
@@ -606,18 +606,23 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Tier Subscription')}</label>
-                      <select value={newTenant.tier} onChange={e => setNewTenant({...newTenant, tier: e.target.value})} 
-                         className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all duration-300 appearance-none placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
-                        <option value="Bronze">{t('Bronze (Trial)')}</option><option value="Silver">{t('Silver')}</option>
-                        <option value="Gold">{t('Gold')}</option><option value="Enterprise">{t('Enterprise')}</option>
-                      </select>
+                    <div className="flex flex-col">
+                      <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1 mb-1">{t('Tier')}</label>
+                      <div className="relative">
+                        <select value={newTenant.tier} onChange={e => setNewTenant({...newTenant, tier: e.target.value})} 
+                           className="w-full bg-white/5 border border-white/20 rounded-xl pl-4 pr-10 h-[46px] text-sm text-white outline-none transition-all duration-300 appearance-none placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                          <option value="Bronze" className="bg-[#12141A] text-white">{t('Bronze (Trial)')}</option>
+                          <option value="Silver" className="bg-[#12141A] text-white">{t('Silver')}</option>
+                          <option value="Gold" className="bg-[#12141A] text-white">{t('Gold')}</option>
+                          <option value="Enterprise" className="bg-[#12141A] text-white">{t('Enterprise')}</option>
+                        </select>
+                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1">{t('Limit User')}</label>
+                    <div className="flex flex-col">
+                      <label className="text-[9px] text-gray-500 uppercase tracking-widest font-black ml-1 mb-1">{t('Limit User')}</label>
                       <input type="number" value={newTenant.maxUsers} onChange={e => setNewTenant({...newTenant, maxUsers: e.target.value})} 
-                          className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all duration-300 placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                          className="w-full bg-white/5 border border-white/20 rounded-xl px-4 h-[46px] text-sm text-white outline-none transition-all duration-300 placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                     </div>
                   </div>
 

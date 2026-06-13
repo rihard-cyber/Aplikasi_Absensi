@@ -1,12 +1,13 @@
 import React, { useState, useRef, useCallback, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { ShieldAlert, Globe, Activity, Settings, Search, Users, Zap, BarChart3, ShieldCheck, MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, LogOut, Loader2, Sparkles } from 'lucide-react';
+import { ShieldAlert, Globe, Activity, Settings, Search, Users, Zap, BarChart3, ShieldCheck, MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, LogOut, Loader2, Sparkles, DollarSign, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../utils/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import HRISExportWrapper from '../../components/HRISExportWrapper';
 import { useSFX } from '../../utils/useSFX';
 import { useConfirm } from '../../components/ConfirmDialog';
+import DeveloperWatermark from '../../components/DeveloperWatermark';
 
 const GlobalMap = React.lazy(() => import('./components/GlobalMap'));
 const LuxuryMetrics = React.lazy(() => import('./components/LuxuryMetrics'));
@@ -24,6 +25,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
   const [activeTab, setActiveTab] = useState(() => {
     try { return sessionStorage.getItem('god_active_tab') || 'infrastructure'; } catch { return 'infrastructure'; }
   }); // infrastructure, operations
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [logoClickCount, setLogoClickCount] = useState(0);
   const [showGodMenu, setShowGodMenu] = useState(false);
@@ -157,8 +159,34 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
     { label: 'Dasbor Karyawan', icon: Users, role: 'EMPLOYEE', color: 'var(--aurora-3)', desc: 'Cek absensi & profil karyawan' },
   ];
 
+  const superNavItems = [
+    { key: 'infrastructure', label: 'Infrastructure', icon: Globe, color: 'var(--aurora-3)' },
+    { key: 'operations', label: 'Global Operations', icon: Activity, color: 'var(--aurora-1)' },
+    { key: 'shifts', label: 'Jadwal Global', icon: Clock, color: 'var(--warning)' },
+    { key: 'finance', label: 'Finance', icon: DollarSign, color: 'var(--success)' },
+    { key: 'audit', label: 'Global Audit', icon: FileText, color: 'var(--danger)' },
+    { key: 'demos', label: 'Demo', icon: Sparkles, color: 'var(--success)' },
+  ];
+
+  const SUPER_NAV_BTN = (active) =>
+    `flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${active
+      ? 'bg-white/10 text-[var(--aurora-3)] shadow-[0_0_10px_rgba(0,201,255,0.1)] border border-white/5 font-bold'
+      : 'text-gray-400 hover:bg-white/5 hover:text-white'}`;
+
+  const getTabTitle = () => {
+    switch (activeTab) {
+      case 'infrastructure': return 'SaaS Infrastructure';
+      case 'operations': return 'Global Operations';
+      case 'shifts': return 'Jadwal Global';
+      case 'finance': return 'Keuangan Global';
+      case 'audit': return 'Global Audit Trail';
+      case 'demos': return 'Demo & Uji Coba';
+      default: return 'Super Admin Panel';
+    }
+  };
+
   return (
-    <div className="min-h-screen p-3 flex flex-col gap-3 bg-[var(--bg-darker)] text-white relative overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--bg-darker)] flex text-white relative overflow-hidden">
       {/* Background Aurora */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 z-0">
         <div className="absolute top-[-20%] left-[20%] w-[40%] h-[40%] bg-[var(--aurora-2)] rounded-full blur-[150px]"></div>
@@ -234,105 +262,74 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
         document.body
       )}
 
-      {/* Header */}
-      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center glass-panel p-3 sm:p-5 z-10 gap-3 lg:gap-0">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3 lg:gap-10 w-full lg:w-auto">
-          <div
-            className="cursor-pointer select-none group active:scale-95"
-            onClick={() => onCycleRole && onCycleRole()}
-            title="Klik untuk Pindah Dasbor (God Mode)"
-          >
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-serif font-bold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] group-hover:from-[var(--warning)] group-hover:to-[var(--danger)] transition-all duration-300">
-              COMMAND CENTER
-            </h1>
-            <p className="text-[10px] sm:text-xs text-gray-400 mt-1 uppercase tracking-widest font-sans">Dasbor SaaS Global</p>
+      {/* Sidebar Drawer */}
+      <aside className={`fixed lg:relative top-0 left-0 z-[90] h-full lg:h-[calc(100vh-32px)] w-[85vw] max-w-sm lg:w-72 m-0 lg:m-4 transition-all duration-500 ease-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <div className="h-full bg-white/5 backdrop-blur-lg border border-white/10 p-6 flex flex-col gap-2 rounded-none lg:rounded-3xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+          {/* Logo */}
+          <div className="mb-8 lg:mb-10 px-2 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center font-serif font-bold text-white text-lg logo-3d-spin shadow-[0_0_15px_rgba(142,45,226,0.4)] shrink-0">
+              SA
+            </div>
+            <div className="min-w-0">
+              <h2 className="font-serif text-sm font-bold leading-tight tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 truncate">
+                COMMAND CENTER
+              </h2>
+              <span className="text-[8px] text-[var(--aurora-3)] uppercase tracking-widest font-black block mt-0.5">GLOBAL SAAS CONTROL</span>
+            </div>
           </div>
 
-          {/* God Mode Navigation Tabs - Desktop */}
-          <nav className="hidden lg:flex items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5">
-            <button 
-              onClick={() => setActiveTab('infrastructure')}
-              className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'infrastructure' ? 'bg-[var(--aurora-3)] text-black' : 'text-gray-500 hover:text-white'}`}
-            >
-              Infrastructure
-            </button>
-            <button 
-              onClick={() => setActiveTab('operations')}
-              className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'operations' ? 'bg-[var(--aurora-1)] text-black' : 'text-gray-500 hover:text-white'}`}
-            >
-              Global Operations
-            </button>
-            <button 
-              onClick={() => setActiveTab('shifts')}
-              className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'shifts' ? 'bg-[var(--warning)] text-black' : 'text-gray-500 hover:text-white'}`}
-            >
-              📅 Jadwal Global
-            </button>
-            <button 
-              onClick={() => setActiveTab('finance')}
-              className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'finance' ? 'bg-[var(--success)] text-black' : 'text-gray-500 hover:text-white'}`}
-            >
-              💰 Finance
-            </button>
-            <button 
-              onClick={() => setActiveTab('audit')}
-              className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'audit' ? 'bg-[var(--danger)] text-white' : 'text-gray-500 hover:text-white'}`}
-            >
-              📋 Global Audit
-            </button>
-            <button 
-              onClick={() => setActiveTab('demos')}
-              className={`px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeTab === 'demos' ? 'bg-[var(--success)] text-black' : 'text-gray-500 hover:text-white'}`}
-            >
-              🎯 Demo
-            </button>
-          </nav>
-          {/* Mobile Tab Selector */}
-          <div className="flex lg:hidden items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/5 overflow-x-auto w-full">
-            {['infrastructure', 'operations', 'shifts', 'finance', 'audit', 'demos'].map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`flex-shrink-0 px-4 py-3 rounded-lg text-[10px] sm:text-[9px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
-                  activeTab === tab
-                    ? tab === 'infrastructure' ? 'bg-[var(--aurora-3)] text-black'
-                      : tab === 'operations' ? 'bg-[var(--aurora-1)] text-black'
-                      : tab === 'shifts' ? 'bg-[var(--warning)] text-black'
-                      : tab === 'finance' ? 'bg-[var(--success)] text-black'
-                      : tab === 'demos' ? 'bg-[var(--success)] text-black'
-                      : 'bg-[var(--danger)] text-white'
-                    : 'text-gray-500'
-                }`}
-              >
-                {tab === 'infrastructure' ? 'Infra' : tab === 'operations' ? 'Ops' : tab === 'demos' ? 'Demo' : 'Jadwal'}
-              </button>
-            ))}
+          {/* Navigation Links */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-1 min-h-0">
+            {superNavItems.map((item) => {
+              const IconComp = item.icon;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => { setActiveTab(item.key); setIsSidebarOpen(false); playClick(); }}
+                  className={SUPER_NAV_BTN(activeTab === item.key)}
+                >
+                  <IconComp size={18} style={{ color: activeTab === item.key ? item.color : undefined }} />
+                  <span className="text-sm">{item.label}</span>
+                </button>
+              );
+            })}
           </div>
-        </div>
 
-        <div className="flex gap-2 sm:gap-4 items-center w-full lg:w-auto justify-end flex-wrap">
-          <HRISExportWrapper className="px-3 sm:px-4 py-2 rounded-xl border border-[var(--warning)]/30 hover:border-[var(--warning)]/50" label="Export" />
-          <button
-            onClick={() => playAlert()}
-            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/30 hover:bg-[var(--danger)] hover:text-white transition-all shadow-[0_0_15px_rgba(255,0,85,0.2)] text-[11px] sm:text-sm font-semibold"
-          >
-            <ShieldAlert size={14} className="sm:size-[16]" />
-            <span className="hidden sm:inline">Siaran</span>
-          </button>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl bg-white/5 text-gray-400 border border-white/10 hover:bg-[var(--danger)]/20 hover:text-[var(--danger)] hover:border-[var(--danger)]/50 transition-all text-[11px] sm:text-sm font-semibold"
-          >
-            <LogOut size={14} className="sm:size-[16]" />
-            <span className="hidden sm:inline">Keluar</span>
-          </button>
-          <div
-            onClick={handleLogoClick}
-            className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center font-bold shadow-[0_0_20px_rgba(142,45,226,0.6)] border border-white/20 cursor-pointer hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] transition-all text-[11px] sm:text-sm"
-            title="Klik untuk God Mode"
-          >
-            SA
+          {/* Bottom Actions */}
+          <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-2">
+            <HRISExportWrapper className="w-full justify-start py-3 border-none bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white" label="Export Database" />
+            <button
+              onClick={() => { setIsSidebarOpen(false); handleLogoClick(); }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-400 hover:bg-white/5 hover:text-[var(--warning)]"
+            >
+              <Zap size={18} className="text-[var(--warning)] animate-pulse" />
+              <span className="text-sm">Authority override</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-[var(--danger)] hover:bg-[var(--danger)]/10"
+            >
+              <LogOut size={18} />
+              <span className="text-sm uppercase font-bold">Keluar</span>
+            </button>
+            
+            {/* Developer Watermark Signature */}
+            <DeveloperWatermark />
           </div>
         </div>
-      </header>
+      </aside>
+
+      {/* Mobile Backdrop */}
+      {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] lg:hidden" />}
+
+      {/* Main Content Area */}
+      <main className="flex-1 p-0 z-10 overflow-y-auto flex flex-col">
+        <GlobalHeader 
+          title={getTabTitle()} 
+          onMenuClick={() => setIsSidebarOpen(true)} 
+          onSettingsClick={() => setShowGodMenu(true)} 
+        />
+        <div className="w-full max-w-7xl mx-auto px-4 flex-1 mt-2 sm:mt-4 flex flex-col gap-4 pb-10">
 
       {/* Global Search Bar */}
       <div className="relative z-10">
@@ -582,13 +579,8 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Cursive Signature Watermark */}
-      <div className="developer-watermark z-10 relative mt-6">
-        <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
-        <span className="watermark-text">Developer Richard Meha</span>
-        <span className="ornament">✧══════════•❁❀❁•══════════✧</span>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };
