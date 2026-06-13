@@ -29,13 +29,31 @@ const t = (s) => s;
 
 const LoadingScreen = React.memo(() => {
   const [logoUrl, setLogoUrl] = useState(null);
+  const [tenantName, setTenantName] = useState('ABSENSI');
 
   useEffect(() => {
     try {
       const url = localStorage.getItem('tenant_logo_url');
       if (url) setLogoUrl(url);
+      const name = localStorage.getItem('tenant_name');
+      if (name) setTenantName(name);
     } catch {}
   }, []);
+
+  const getLogoInitials = (name) => {
+    if (!name || name === 'Memuat...' || name === 'ABSENSI') return 'SP';
+    let clean = name.replace(/^(PT\.?|CV\.?|UD\.?)\s+/i, '').trim();
+    const words = clean.split(/\s+/)
+      .filter(w => !['dan', '&', 'of', 'the', 'bersama', 'jaya', 'indonesia'].includes(w.toLowerCase()));
+    if (words.length > 1) {
+      return words
+        .map(w => w.charAt(0))
+        .join('')
+        .substring(0, 3)
+        .toUpperCase();
+    }
+    return clean.substring(0, 2).toUpperCase();
+  };
 
   return (
     <div className="fixed inset-0 bg-[#0B0C10] z-[99999] flex items-center justify-center">
@@ -50,7 +68,7 @@ const LoadingScreen = React.memo(() => {
                 onError={() => setLogoUrl(null)} 
               />
             ) : (
-              <span className="relative z-10 logo-3d-spin">SP</span>
+              <span className="relative z-10 logo-3d-spin">{getLogoInitials(tenantName)}</span>
             )}
           </div>
         </div>

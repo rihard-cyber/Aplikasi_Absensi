@@ -7,6 +7,7 @@ import { supabase } from '../../utils/supabaseClient';
 import { useToast } from '../../components/Toast';
 import { registerBackHandler } from '../../utils/navigation';
 import DeveloperWatermark from '../../components/DeveloperWatermark';
+import DeveloperWatermarkBackground from '../../components/DeveloperWatermarkBackground';
 
 const OTP_LENGTH = 6;
 
@@ -87,6 +88,21 @@ const FloatingInput = ({ name, type = 'text', label, value, onChange, onBlur, on
       {hasError && <p className="text-[var(--danger)] text-[10px] mt-1 ml-1 font-medium">{error}</p>}
     </div>
   );
+};
+
+const getLogoInitials = (name) => {
+  if (!name || name === 'Memuat...' || name === 'ABSENSI') return 'SP';
+  let clean = name.replace(/^(PT\.?|CV\.?|UD\.?)\s+/i, '').trim();
+  const words = clean.split(/\s+/)
+    .filter(w => !['dan', '&', 'of', 'the', 'bersama', 'jaya', 'indonesia'].includes(w.toLowerCase()));
+  if (words.length > 1) {
+    return words
+      .map(w => w.charAt(0))
+      .join('')
+      .substring(0, 3)
+      .toUpperCase();
+  }
+  return clean.substring(0, 2).toUpperCase();
 };
 
 const AuthPortal = ({ onLogin }) => {
@@ -701,6 +717,7 @@ const AuthPortal = ({ onLogin }) => {
 
   return (
     <div className="login-page" onMouseMove={handleMouseMove}>
+      <DeveloperWatermarkBackground theme="dark" />
       <div className="login-bg-animation">
         <div className="login-grid"></div>
         <div className="login-scanline"></div>
@@ -749,7 +766,7 @@ const AuthPortal = ({ onLogin }) => {
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-[var(--aurora-3)] to-[var(--aurora-1)] rounded-full flex items-center justify-center font-serif font-bold text-white text-xl shadow-[0_0_15px_rgba(0,201,255,0.4)] logo-3d-spin">
-                  SP
+                  {getLogoInitials(tenantBrand?.name || localStorage.getItem('tenant_name') || 'SI PRESENSI')}
                 </div>
               )}
             </div>
@@ -1377,7 +1394,9 @@ const AuthPortal = ({ onLogin }) => {
       </motion.div>
 
       {/* Cursive Signature Watermark */}
-      <DeveloperWatermark />
+      <div className="absolute bottom-4 left-0 right-0 z-10 pointer-events-none flex justify-center">
+        <DeveloperWatermark />
+      </div>
     </div>
   );
 };

@@ -36,6 +36,7 @@ import { verifyFace } from '../../utils/faceVerification';
 import { registerBackHandler } from '../../utils/navigation';
 import GlobalHeader from '../../components/GlobalHeader';
 import DeveloperWatermark from '../../components/DeveloperWatermark';
+import DeveloperWatermarkBackground from '../../components/DeveloperWatermarkBackground';
 
 /** @type {(s: string) => string} Passthrough i18n - app is monolingual Indonesian */
 const t = (s) => s;
@@ -743,6 +744,19 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
   const [activeSubView, setActiveSubView] = useState(() => {
     try { return sessionStorage.getItem('employee_active_subview') || null; } catch { return null; }
   });
+  const [modules, setModules] = useState({
+    helpdesk: true,
+    work_order: true,
+    patrol: true,
+    visitor: true,
+    booking: true,
+    incident: true,
+    fleet: true,
+    inventory: true,
+    shift_swap: true,
+    hybrid_work: true,
+    payroll: true
+  });
 
   // Handle layer-by-layer back button
   useEffect(() => {
@@ -793,21 +807,20 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
   }, [activeSubView]);
 
   const [isNavVisible, setIsNavVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollYRef = useRef(0);
 
-  useEffect(() => {
-    const controlNavbar = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+  const controlNavbar = useCallback((e) => {
+    const currentScrollY = e.target.scrollTop;
+    const delta = currentScrollY - lastScrollYRef.current;
+    if (Math.abs(delta) > 10) {
+      if (delta > 0 && currentScrollY > 50) {
         setIsNavVisible(false);
-      } else if (currentScrollY < lastScrollY) {
+      } else {
         setIsNavVisible(true);
       }
-      setLastScrollY(currentScrollY);
-    };
-    window.addEventListener('scroll', controlNavbar, { passive: true });
-    return () => window.removeEventListener('scroll', controlNavbar);
-  }, [lastScrollY]);
+      lastScrollYRef.current = currentScrollY;
+    }
+  }, []);
 
   const confirm = useConfirm();
   const [userData, setUserData] = useState({ full_name: 'User', position: 'Staff', division: 'Division' });
@@ -913,6 +926,33 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
           }
 
           const tid = profile.tenant_id;
+          if (tid) {
+            try {
+              const { data: mData } = await supabase.from('tenant_modules').select('module_key, is_active').eq('tenant_id', tid);
+              if (mData && mData.length > 0) {
+                const modulesObj = {
+                  helpdesk: true,
+                  work_order: true,
+                  patrol: true,
+                  visitor: true,
+                  booking: true,
+                  incident: true,
+                  fleet: true,
+                  inventory: true,
+                  shift_swap: true,
+                  hybrid_work: true,
+                  payroll: true
+                };
+                mData.forEach(m => {
+                  modulesObj[m.module_key] = m.is_active;
+                });
+                setModules(modulesObj);
+              }
+            } catch (err) {
+              console.error("Gagal menarik module flags:", err);
+            }
+          }
+
           let tSettingsQuery = supabase.from('tenant_settings').select('*');
           if (tid) { tSettingsQuery = tSettingsQuery.eq('tenant_id', tid); }
           else if (isGodMode) { tSettingsQuery = tSettingsQuery.order('created_at').limit(1); }
@@ -968,7 +1008,8 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
   };
 
   return (
-    <div className="min-h-screen pb-24 pt-0 flex flex-col items-center relative overflow-hidden bg-[#0B0C10] w-full">
+    <div className="min-h-screen pb-24 pt-0 flex flex-col items-center relative overflow-hidden bg-[#0B0C10] w-full attendance-screen-layout">
+      <DeveloperWatermarkBackground theme="dark" />
       {!activeSubView && (
         <GlobalHeader title={activeTab === 'home' ? 'BERANDA' : activeTab === 'history' ? 'RIWAYAT PRESENSI' : activeTab === 'absensi' ? 'PRESENSI KARYAWAN' : activeTab === 'docs' ? 'DOKUMEN VAULT' : activeTab === 'profile' ? 'PROFIL SAYA' : 'PRESENSI'} />
       )}
@@ -1014,7 +1055,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
         </div>
       )}
 
-      <div className="w-full max-w-4xl flex-1 relative z-10 overflow-y-auto hide-scrollbar px-4">
+      <div className="w-full max-w-4xl flex-1 relative z-10 overflow-y-auto hide-scrollbar px-4" onScroll={controlNavbar}>
         <AnimatePresence mode="wait">
           {activeSubView === 'helpdesk' ? (
             <HelpdeskRequest key="helpdesk" onBack={() => setActiveSubView(null)} />
@@ -1068,6 +1109,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
               user={userData}
               stats={stats}
               companyInfo={companyInfo}
+              modules={modules}
             />
           ) : activeTab === 'absensi' ? (
             <ClockInTab key="absensi" />
@@ -1079,6 +1121,11 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
             <EmployeeProfile key="profile" />
           ) : null}
         </AnimatePresence>
+        
+        {/* Copyright Watermark inside scroll view */}
+        <div className="w-full py-6 flex flex-col items-center opacity-60 pointer-events-none">
+          <DeveloperWatermark />
+        </div>
       </div>
 
       {/* Bottom Navigation Bar */}
@@ -1105,17 +1152,13 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
               }
             >
               <item.icon size={item.center ? 26 : 20} />
-              {!item.center && <span>{item.label}</span>}
+              {!item.center && <span className={item.label.length > 8 ? 'text-long' : ''}>{item.label}</span>}
             </button>
           );
         })}
       </div>
 
 
-      {/* Copyright Watermark */}
-      <div className="fixed bottom-1 w-full pointer-events-none z-40 safe-bottom flex flex-col items-center">
-        <DeveloperWatermark />
-      </div>
 
     </div>
   );

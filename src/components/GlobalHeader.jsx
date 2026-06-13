@@ -1,13 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, ArrowLeft, Sun, Moon, Zap, Activity, Bell, Settings } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
-import { useNotifications } from './Notifications';
+import { Menu, ArrowLeft } from 'lucide-react';
 
-export default function GlobalHeader({ title, onMenuClick, onBack, onSettingsClick }) {
+const getShortName = (name) => {
+  if (!name || name === 'Memuat...') return 'ABSENSI';
+  // Remove common prefixes
+  let clean = name.replace(/^(PT\.?|CV\.?|UD\.?)\s+/i, '').trim();
+  if (clean.length > 10) {
+    const words = clean.split(/\s+/);
+    if (words.length > 1) {
+      const initials = words
+        .filter(w => !['dan', '&', 'of', 'the', 'bersama', 'jaya', 'indonesia'].includes(w.toLowerCase()))
+        .map(w => w.charAt(0))
+        .join('')
+        .toUpperCase();
+      if (initials.length >= 2) return initials;
+    }
+    return words[0].toUpperCase();
+  }
+  return clean.toUpperCase();
+};
+
+const getLogoInitials = (name) => {
+  if (!name || name === 'Memuat...' || name === 'ABSENSI') return 'AB';
+  let clean = name.replace(/^(PT\.?|CV\.?|UD\.?)\s+/i, '').trim();
+  const words = clean.split(/\s+/)
+    .filter(w => !['dan', '&', 'of', 'the', 'bersama', 'jaya', 'indonesia'].includes(w.toLowerCase()));
+  if (words.length > 1) {
+    return words
+      .map(w => w.charAt(0))
+      .join('')
+      .substring(0, 3)
+      .toUpperCase();
+  }
+  return clean.substring(0, 2).toUpperCase();
+};
+
+export default function GlobalHeader({ title, onMenuClick, onBack }) {
   const [logoUrl, setLogoUrl] = useState(null);
+  const [tenantName, setTenantName] = useState(() => {
+    try {
+      return localStorage.getItem('tenant_name') || 'ABSENSI';
+    } catch {
+      return 'ABSENSI';
+    }
+  });
   const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
-  const { theme, toggleTheme } = useTheme();
-  const { unreadCount, setShowPanel } = useNotifications();
   const [isImpersonating, setIsImpersonating] = useState(() => {
     try {
       return localStorage.getItem('original_role') === 'SUPER_ADMIN';
@@ -20,6 +57,9 @@ export default function GlobalHeader({ title, onMenuClick, onBack, onSettingsCli
     try {
       const url = localStorage.getItem('tenant_logo_url');
       if (url) setLogoUrl(url);
+
+      const name = localStorage.getItem('tenant_name');
+      if (name) setTenantName(name);
     } catch {}
 
     const handleOnline = () => setIsOnline(true);
@@ -28,11 +68,14 @@ export default function GlobalHeader({ title, onMenuClick, onBack, onSettingsCli
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Sync state changes periodically (for logo & impersonation)
+    // Sync state changes periodically (for logo & impersonation & tenant name)
     const interval = setInterval(() => {
       try {
         const url = localStorage.getItem('tenant_logo_url');
         if (url !== logoUrl) setLogoUrl(url);
+
+        const name = localStorage.getItem('tenant_name');
+        if (name && name !== tenantName) setTenantName(name);
 
         const imp = localStorage.getItem('original_role') === 'SUPER_ADMIN';
         if (imp !== isImpersonating) setIsImpersonating(imp);
@@ -44,117 +87,71 @@ export default function GlobalHeader({ title, onMenuClick, onBack, onSettingsCli
       window.removeEventListener('offline', handleOffline);
       clearInterval(interval);
     };
-  }, [logoUrl, isImpersonating]);
-
-  const getThemeIcon = () => {
-    switch (theme) {
-      case 'light': return <Sun size={16} className="text-orange-500 animate-pulse" />;
-      case 'aurora': return <Zap size={16} className="text-purple-400" />;
-      case 'neon': return <Activity size={16} className="text-cyan-400 animate-pulse" />;
-      default: return <Moon size={16} className="text-blue-400" />;
-    }
-  };
-
-  const getThemeLabel = () => {
-    switch (theme) {
-      case 'light': return 'Mode Terang';
-      case 'aurora': return 'Mode Aurora';
-      case 'neon': return 'Mode Neon';
-      default: return 'Mode Gelap';
-    }
-  };
+  }, [logoUrl, tenantName, isImpersonating]);
 
   return (
     <header className="global-header-jdc">
-      <div className="header-left">
-        {onBack ? (
-          <button onClick={onBack} className="menu-toggle-btn-jdc" aria-label="Kembali">
-            <ArrowLeft size={18} />
-          </button>
-        ) : onMenuClick ? (
-          <button onClick={onMenuClick} className="menu-toggle-btn-jdc" aria-label="Menu">
-            <Menu size={18} />
-          </button>
-        ) : null}
-        <div className="header-logo-box-jdc">
-          {logoUrl ? (
-            <img 
-              src={logoUrl} 
-              alt="Logo" 
-              className="logo-3d-spin w-full h-full object-contain p-0.5" 
-              onError={() => setLogoUrl(null)} 
-            />
+      {/* Row 1: Logo, App Name, Badges */}
+      <div className="header-top-row">
+        <div className="header-left">
+          {onBack ? (
+            <button onClick={onBack} className="menu-toggle-btn-jdc" aria-label="Kembali">
+              <ArrowLeft size={16} />
+            </button>
+          ) : onMenuClick ? (
+            <button onClick={onMenuClick} className="menu-toggle-btn-jdc menu-toggle-btn-jdc-hamburger" aria-label="Menu">
+              <Menu size={16} />
+            </button>
+          ) : null}
+          <div className="header-logo-box-jdc">
+            {logoUrl ? (
+              <img 
+                src={logoUrl} 
+                alt="Logo" 
+                className="logo-3d-spin w-full h-full object-contain p-0.5" 
+                onError={() => setLogoUrl(null)} 
+              />
+            ) : (
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-[var(--aurora-3)] to-[var(--aurora-1)] flex items-center justify-center font-serif font-bold text-white text-[15px] logo-3d-spin">
+                {getLogoInitials(tenantName)}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="header-right">
+          {isImpersonating && (
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('cycle-impersonation-role'))}
+              className="connectivity-badge bg-[var(--danger)]/15 border border-[var(--danger)]/30 text-[var(--danger)] animate-pulse font-bold tracking-wider select-none shrink-0"
+              title="Super Admin Impersonate"
+            >
+              <span>PREVIEW</span>
+            </button>
+          )}
+
+          {isOnline ? (
+            <span className="connectivity-badge online-jdc flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse shrink-0 shadow-[0_0_8px_var(--success)]" />
+              <span>ONLINE</span>
+            </span>
           ) : (
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--aurora-3)] to-[var(--aurora-1)] flex items-center justify-center font-serif font-bold text-white text-xs logo-3d-spin">
-              SP
-            </div>
+            <span className="connectivity-badge offline-jdc flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] shrink-0 shadow-[0_0_8px_var(--danger)]" />
+              <span>OFFLINE</span>
+            </span>
           )}
         </div>
       </div>
-      <div className="header-center">
-        <h1 className="header-page-title-jdc">{title}</h1>
-      </div>
-      <div className="header-right flex items-center gap-2">
-        {isImpersonating && (
-          <button 
-            onClick={() => window.dispatchEvent(new CustomEvent('cycle-impersonation-role'))}
-            className="connectivity-badge bg-[var(--danger)]/15 border border-[var(--danger)]/30 text-[var(--danger)] animate-pulse font-bold tracking-wider select-none shrink-0"
-            title="Super Admin Impersonate (Ketuk untuk Pindah Dasbor)"
-          >
-            <span>PREVIEW ACTIVE</span>
-          </button>
-        )}
-        
-        {/* Theme Toggle */}
-        <button 
-          onClick={toggleTheme}
-          className="menu-toggle-btn-jdc shrink-0"
-          title={getThemeLabel()}
-          aria-label="Toggle Theme"
-        >
-          {getThemeIcon()}
-        </button>
 
-        {/* Notifications Bell */}
-        <button 
-          onClick={() => setShowPanel(true)}
-          className="menu-toggle-btn-jdc relative shrink-0"
-          title="Notifikasi"
-          aria-label="Notifikasi"
-        >
-          <Bell size={16} className="text-gray-400 hover:text-white transition-colors" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--danger)] text-white text-[8px] font-bold flex items-center justify-center shadow-lg">
-              {unreadCount}
-            </span>
-          )}
-        </button>
-
-        {/* Settings Gear */}
-        {onSettingsClick && (
-          <button 
-            onClick={onSettingsClick}
-            className="menu-toggle-btn-jdc shrink-0"
-            title="Pengaturan"
-            aria-label="Pengaturan"
-          >
-            <Settings size={16} className="text-cyan-400 animate-[spin_8s_linear_infinite]" />
-          </button>
-        )}
-
-        {isOnline ? (
-          <span className="connectivity-badge online-jdc flex items-center gap-1.5 shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--success)] animate-pulse shrink-0 shadow-[0_0_8px_var(--success)]" />
-            <span className="hidden sm:inline">ONLINE</span>
-          </span>
-        ) : (
-          <span className="connectivity-badge offline-jdc flex items-center gap-1.5 shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] shrink-0 shadow-[0_0_8px_var(--danger)]" />
-            <span className="hidden sm:inline">OFFLINE</span>
-          </span>
-        )}
+      {/* Row 2: Page Title (Auto-shrinks if long) */}
+      <div className="header-bottom-row">
+        <h1 className={`header-page-title-jdc ${title.length > 20 ? 'text-xs-long' : ''}`}>
+          {title}
+        </h1>
       </div>
     </header>
   );
 }
+
 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Settings, FileText, CheckCircle, Activity, Calculator, BarChart3, ShieldCheck, Building2, Megaphone, CalendarDays, LogOut, XCircle, Upload, Fingerprint, Users, DollarSign, TrendingUp, Sun, Calendar, Star, Briefcase, Gift, ScrollText, PartyPopper, ClipboardList, QrCode, Activity as ActivityIcon, LineChart, UserCircle, Wallet, Layers, GitBranch, Landmark, ClipboardCheck, Image, Wrench, Zap, Wifi, Bot, ScanLine, Webhook, Headphones, Route, DoorOpen, UserCheck, Hammer, Truck, Package, AlertTriangle, Repeat, Home, MapPin, Bell } from 'lucide-react';
+import { Settings, FileText, CheckCircle, Activity, Calculator, BarChart3, ShieldCheck, Building2, Megaphone, CalendarDays, LogOut, XCircle, Upload, Fingerprint, Users, DollarSign, TrendingUp, Sun, Moon, Calendar, Star, Briefcase, Gift, ScrollText, PartyPopper, ClipboardList, QrCode, Activity as ActivityIcon, LineChart, UserCircle, Wallet, Layers, GitBranch, Landmark, ClipboardCheck, Image, Wrench, Zap, Wifi, Bot, ScanLine, Webhook, Headphones, Route, DoorOpen, UserCheck, Hammer, Truck, Package, AlertTriangle, Repeat, Home, MapPin, Bell, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../components/ConfirmDialog';
-import ThemeToggle from '../../components/ThemeToggle';
+import { useTheme } from '../../context/ThemeContext';
 import DashboardHome from './components/DashboardHome';
 import CompanyProfile from './components/CompanyProfile';
 import SubAdminDashboard from '../SubAdmin/SubAdminDashboard';
@@ -10,6 +10,16 @@ import { registerBackHandler } from '../../utils/navigation';
 import { useNotifications } from '../../components/Notifications';
 import GlobalHeader from '../../components/GlobalHeader';
 import DeveloperWatermark from '../../components/DeveloperWatermark';
+import BottomNav from '../../components/BottomNav';
+import DeveloperWatermarkBackground from '../../components/DeveloperWatermarkBackground';
+
+const bottomNavItems = [
+  { id: 'home', label: 'Beranda', icon: BarChart3 },
+  { id: 'monitoring', label: 'Monitor', icon: Activity },
+  { id: 'approval', label: 'Persetujuan', icon: ShieldCheck },
+  { id: 'employee-directory', label: 'Karyawan', icon: Users },
+  { id: 'menu', label: 'Menu', icon: Menu, isMenu: true }
+];
 
 const PayrollSettings = lazy(() => import('./components/PayrollSettings'));
 const ApprovalWorkflow = lazy(() => import('./components/ApprovalWorkflow'));
@@ -81,6 +91,26 @@ const NAV_BTN = (active) =>
 const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogout }) => {
   const navigate = useNavigate();
   const { unreadCount, setShowPanel } = useNotifications();
+  const { theme, toggleTheme } = useTheme();
+
+  const getThemeIcon = () => {
+    switch (theme) {
+      case 'light': return <Sun size={18} className="text-orange-500 animate-pulse" />;
+      case 'aurora': return <Zap size={18} className="text-purple-400" />;
+      case 'neon': return <ActivityIcon size={18} className="text-cyan-400 animate-pulse" />;
+      default: return <Moon size={18} className="text-blue-400" />;
+    }
+  };
+
+  const getThemeLabel = () => {
+    switch (theme) {
+      case 'light': return 'Mode Terang';
+      case 'aurora': return 'Mode Aurora';
+      case 'neon': return 'Mode Neon';
+      default: return 'Mode Gelap';
+    }
+  };
+
   const [activeTab, setActiveTab] = useState(() => {
     try { return sessionStorage.getItem('tenant_active_tab') || 'home'; } catch { return 'home'; }
   });
@@ -99,12 +129,90 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
   const [clickCount, setClickCount] = useState(0);
   const [tenantData, setTenantData] = useState({ name: 'Memuat...', logo_url: null });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [modules, setModules] = useState({
+    helpdesk: true,
+    work_order: true,
+    patrol: true,
+    visitor: true,
+    booking: true,
+    incident: true,
+    fleet: true,
+    inventory: true,
+    shift_swap: true,
+    hybrid_work: true,
+    payroll: true
+  });
   const confirm = useConfirm();
 
   useEffect(() => { fetchTenantData(); }, []);
   useEffect(() => {
     try { sessionStorage.setItem('tenant_active_tab', activeTab); } catch {}
   }, [activeTab]);
+
+  useEffect(() => {
+    const tabModuleMapping = {
+      'helpdesk': 'helpdesk',
+      'work-order': 'work_order',
+      'patrol': 'patrol',
+      'visitor': 'visitor',
+      'facility-booking': 'booking',
+      'incident': 'incident',
+      'fleet': 'fleet',
+      'inventory': 'inventory',
+      'work-mode-dashboard': 'hybrid_work',
+      'shift-swap': 'shift_swap',
+      'hybrid-work-settings': 'hybrid_work',
+      'finance': 'payroll',
+      'payroll': 'payroll',
+      'salary-components': 'payroll',
+      'salary-revision': 'payroll',
+      'employee-salary': 'payroll',
+      'payroll-run': 'payroll',
+      'timesheet': 'payroll',
+      'overtime': 'payroll',
+      'payroll-reports': 'payroll',
+      'tax-reports': 'payroll',
+      'bank-export': 'payroll',
+      'thr': 'payroll',
+      'bpjs-calculator': 'payroll',
+      'form-1721': 'payroll'
+    };
+    const mappedModule = tabModuleMapping[activeTab];
+    if (mappedModule && !modules[mappedModule]) {
+      setActiveTab('home');
+    }
+  }, [activeTab, modules]);
+
+  const fetchTenantModules = async (tenantId) => {
+    try {
+      const { data, error } = await supabase
+        .from('tenant_modules')
+        .select('module_key, is_active')
+        .eq('tenant_id', tenantId);
+      if (error) throw error;
+      if (data && data.length > 0) {
+        const modulesObj = {
+          helpdesk: true,
+          work_order: true,
+          patrol: true,
+          visitor: true,
+          booking: true,
+          incident: true,
+          fleet: true,
+          inventory: true,
+          shift_swap: true,
+          hybrid_work: true,
+          payroll: true
+        };
+        data.forEach(m => {
+          modulesObj[m.module_key] = m.is_active;
+        });
+        setModules(modulesObj);
+      }
+    } catch (err) {
+      console.error("Gagal menarik module flags:", err);
+    }
+  };
 
   const fetchTenantData = async () => {
     try {
@@ -120,6 +228,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             if (tData.name) localStorage.setItem('tenant_name', tData.name);
           } catch {}
         }
+        fetchTenantModules(profile.tenant_id);
       }
     } catch (e) { console.error('Gagal menarik data tenant', e); }
   };
@@ -169,6 +278,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
 
   return (
     <div className="min-h-screen bg-[var(--bg-darker)] flex text-white relative overflow-hidden">
+      <DeveloperWatermarkBackground theme="dark" />
 
       {/* Background Blobs */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 z-0">
@@ -207,23 +317,35 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             <button onClick={() => go('structure')} className={NAV_BTN(activeTab === 'structure')}><Building2 size={18} /><span className="text-sm">Manajemen Struktur</span></button>
 
             {/* ─── Helpdesk & Operasional ─── */}
-            <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Helpdesk & Operasional</p>
-            <button onClick={() => go('helpdesk')} className={NAV_BTN(activeTab === 'helpdesk')}><Headphones size={18} /><span className="text-sm">Helpdesk Tiket</span></button>
-            <button onClick={() => go('work-order')} className={NAV_BTN(activeTab === 'work-order')}><Hammer size={18} /><span className="text-sm">Work Order Maintenance</span></button>
-            <button onClick={() => go('patrol')} className={NAV_BTN(activeTab === 'patrol')}><Route size={18} /><span className="text-sm">Patroli Satpam</span></button>
-            <button onClick={() => go('visitor')} className={NAV_BTN(activeTab === 'visitor')}><UserCheck size={18} /><span className="text-sm">Manajemen Tamu</span></button>
-            <button onClick={() => go('facility-booking')} className={NAV_BTN(activeTab === 'facility-booking')}><DoorOpen size={18} /><span className="text-sm">Booking Fasilitas</span></button>
-            <button onClick={() => go('incident')} className={NAV_BTN(activeTab === 'incident')}><AlertTriangle size={18} /><span className="text-sm">Laporan Insiden (K3)</span></button>
+            {(modules.helpdesk || modules.work_order || modules.patrol || modules.visitor || modules.booking || modules.incident) && (
+              <>
+                <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Helpdesk & Operasional</p>
+                {modules.helpdesk && <button onClick={() => go('helpdesk')} className={NAV_BTN(activeTab === 'helpdesk')}><Headphones size={18} /><span className="text-sm">Helpdesk Tiket</span></button>}
+                {modules.work_order && <button onClick={() => go('work-order')} className={NAV_BTN(activeTab === 'work-order')}><Hammer size={18} /><span className="text-sm">Work Order Maintenance</span></button>}
+                {modules.patrol && <button onClick={() => go('patrol')} className={NAV_BTN(activeTab === 'patrol')}><Route size={18} /><span className="text-sm">Patroli Satpam</span></button>}
+                {modules.visitor && <button onClick={() => go('visitor')} className={NAV_BTN(activeTab === 'visitor')}><UserCheck size={18} /><span className="text-sm">Manajemen Tamu</span></button>}
+                {modules.booking && <button onClick={() => go('facility-booking')} className={NAV_BTN(activeTab === 'facility-booking')}><DoorOpen size={18} /><span className="text-sm">Booking Fasilitas</span></button>}
+                {modules.incident && <button onClick={() => go('incident')} className={NAV_BTN(activeTab === 'incident')}><AlertTriangle size={18} /><span className="text-sm">Laporan Insiden (K3)</span></button>}
+              </>
+            )}
 
             {/* ─── Logistik & Transport ─── */}
-            <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Logistik & Transport</p>
-            <button onClick={() => go('fleet')} className={NAV_BTN(activeTab === 'fleet')}><Truck size={18} /><span className="text-sm">Manajemen Kendaraan</span></button>
-            <button onClick={() => go('inventory')} className={NAV_BTN(activeTab === 'inventory')}><Package size={18} /><span className="text-sm">Inventaris & Stok</span></button>
+            {(modules.fleet || modules.inventory) && (
+              <>
+                <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Logistik & Transport</p>
+                {modules.fleet && <button onClick={() => go('fleet')} className={NAV_BTN(activeTab === 'fleet')}><Truck size={18} /><span className="text-sm">Manajemen Kendaraan</span></button>}
+                {modules.inventory && <button onClick={() => go('inventory')} className={NAV_BTN(activeTab === 'inventory')}><Package size={18} /><span className="text-sm">Inventaris & Stok</span></button>}
+              </>
+            )}
 
             {/* ─── Hybrid Work ─── */}
-            <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Hybrid Work</p>
-            <button onClick={() => go('work-mode-dashboard')} className={NAV_BTN(activeTab === 'work-mode-dashboard')}><Home size={18} /><span className="text-sm">Mode Kerja Hari Ini</span></button>
-            <button onClick={() => go('shift-swap')} className={NAV_BTN(activeTab === 'shift-swap')}><Repeat size={18} /><span className="text-sm">Tukar Shift</span></button>
+            {(modules.hybrid_work || modules.shift_swap) && (
+              <>
+                <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Hybrid Work</p>
+                {modules.hybrid_work && <button onClick={() => go('work-mode-dashboard')} className={NAV_BTN(activeTab === 'work-mode-dashboard')}><Home size={18} /><span className="text-sm">Mode Kerja Hari Ini</span></button>}
+                {modules.shift_swap && <button onClick={() => go('shift-swap')} className={NAV_BTN(activeTab === 'shift-swap')}><Repeat size={18} /><span className="text-sm">Tukar Shift</span></button>}
+              </>
+            )}
 
             {/* ─── Inovasi ─── */}
             <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Inovasi</p>
@@ -254,22 +376,25 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             <button onClick={() => go('employee-profile')} className={NAV_BTN(activeTab === 'employee-profile')}><UserCircle size={18} /><span className="text-sm">Profil Karyawan</span></button>
 
             {/* ─── Keuangan & Payroll ─── */}
-            <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Keuangan & Payroll</p>
-            <button onClick={() => go('finance')} className={NAV_BTN(activeTab === 'finance')}><TrendingUp size={18} /><span className="text-sm">Dashboard Keuangan</span></button>
-            <button onClick={() => go('payroll')} className={NAV_BTN(activeTab === 'payroll')}><Calculator size={18} /><span className="text-sm">Penggajian & Pajak</span></button>
-            <button onClick={() => go('salary-components')} className={NAV_BTN(activeTab === 'salary-components')}><Layers size={18} /><span className="text-sm">Komponen Gaji</span></button>
-            <button onClick={() => go('salary-revision')} className={NAV_BTN(activeTab === 'salary-revision')}><GitBranch size={18} /><span className="text-sm">Revisi Gaji</span></button>
-            <button onClick={() => go('employee-salary')} className={NAV_BTN(activeTab === 'employee-salary')}><Wallet size={18} /><span className="text-sm">Data Gaji Karyawan</span></button>
-            <button onClick={() => go('payroll-run')} className={NAV_BTN(activeTab === 'payroll-run')}><DollarSign size={18} /><span className="text-sm">Proses Penggajian</span></button>
-            <button onClick={() => go('timesheet')} className={NAV_BTN(activeTab === 'timesheet')}><CalendarDays size={18} /><span className="text-sm">Timesheet</span></button>
-            <button onClick={() => go('overtime')} className={NAV_BTN(activeTab === 'overtime')}><Zap size={18} /><span className="text-sm">Manajemen Lembur</span></button>
-            <button onClick={() => go('payroll-reports')} className={NAV_BTN(activeTab === 'payroll-reports')}><FileText size={18} /><span className="text-sm">Laporan Penggajian</span></button>
-            <button onClick={() => go('tax-reports')} className={NAV_BTN(activeTab === 'tax-reports')}><Landmark size={18} /><span className="text-sm">Laporan Pajak</span></button>
-            <button onClick={() => go('bank-export')} className={NAV_BTN(activeTab === 'bank-export')}><Landmark size={18} /><span className="text-sm">Ekspor Bank</span></button>
-            <button onClick={() => go('thr')} className={NAV_BTN(activeTab === 'thr')}><Gift size={18} /><span className="text-sm">Perhitungan THR</span></button>
-            {/* Phase 2 New */}
-            <button onClick={() => go('bpjs-calculator')} className={NAV_BTN(activeTab === 'bpjs-calculator')}><Calculator size={18} /><span className="text-sm">Kalkulator BPJS</span></button>
-            <button onClick={() => go('form-1721')} className={NAV_BTN(activeTab === 'form-1721')}><FileText size={18} /><span className="text-sm">Form 1721-A1 PPh 21</span></button>
+            {modules.payroll && (
+              <>
+                <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Keuangan & Payroll</p>
+                <button onClick={() => go('finance')} className={NAV_BTN(activeTab === 'finance')}><TrendingUp size={18} /><span className="text-sm">Dashboard Keuangan</span></button>
+                <button onClick={() => go('payroll')} className={NAV_BTN(activeTab === 'payroll')}><Calculator size={18} /><span className="text-sm">Penggajian & Pajak</span></button>
+                <button onClick={() => go('salary-components')} className={NAV_BTN(activeTab === 'salary-components')}><Layers size={18} /><span className="text-sm">Komponen Gaji</span></button>
+                <button onClick={() => go('salary-revision')} className={NAV_BTN(activeTab === 'salary-revision')}><GitBranch size={18} /><span className="text-sm">Revisi Gaji</span></button>
+                <button onClick={() => go('employee-salary')} className={NAV_BTN(activeTab === 'employee-salary')}><Wallet size={18} /><span className="text-sm">Data Gaji Karyawan</span></button>
+                <button onClick={() => go('payroll-run')} className={NAV_BTN(activeTab === 'payroll-run')}><DollarSign size={18} /><span className="text-sm">Proses Penggajian</span></button>
+                <button onClick={() => go('timesheet')} className={NAV_BTN(activeTab === 'timesheet')}><CalendarDays size={18} /><span className="text-sm">Timesheet</span></button>
+                <button onClick={() => go('overtime')} className={NAV_BTN(activeTab === 'overtime')}><Zap size={18} /><span className="text-sm">Manajemen Lembur</span></button>
+                <button onClick={() => go('payroll-reports')} className={NAV_BTN(activeTab === 'payroll-reports')}><FileText size={18} /><span className="text-sm">Laporan Penggajian</span></button>
+                <button onClick={() => go('tax-reports')} className={NAV_BTN(activeTab === 'tax-reports')}><Landmark size={18} /><span className="text-sm">Laporan Pajak</span></button>
+                <button onClick={() => go('bank-export')} className={NAV_BTN(activeTab === 'bank-export')}><Landmark size={18} /><span className="text-sm">Ekspor Bank</span></button>
+                <button onClick={() => go('thr')} className={NAV_BTN(activeTab === 'thr')}><Gift size={18} /><span className="text-sm">Perhitungan THR</span></button>
+                <button onClick={() => go('bpjs-calculator')} className={NAV_BTN(activeTab === 'bpjs-calculator')}><Calculator size={18} /><span className="text-sm">Kalkulator BPJS</span></button>
+                <button onClick={() => go('form-1721')} className={NAV_BTN(activeTab === 'form-1721')}><FileText size={18} /><span className="text-sm">Form 1721-A1 PPh 21</span></button>
+              </>
+            )}
 
             {/* ─── Analitik & Sistem ─── */}
             <p className="text-[9px] text-gray-600 uppercase tracking-[0.2em] font-bold px-2 pt-4 pb-1">Analitik & Sistem</p>
@@ -283,11 +408,25 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             <button onClick={() => go('qrcode')} className={NAV_BTN(activeTab === 'qrcode')}><QrCode size={18} /><span className="text-sm">Manajemen QR</span></button>
             <button onClick={() => go('workflow')} className={NAV_BTN(activeTab === 'workflow')}><GitBranch size={18} /><span className="text-sm">Workflow Persetujuan</span></button>
             <button onClick={() => go('system-config')} className={NAV_BTN(activeTab === 'system-config')}><Wrench size={18} /><span className="text-sm">Konfigurasi Sistem</span></button>
-            <button onClick={() => go('hybrid-work-settings')} className={NAV_BTN(activeTab === 'hybrid-work-settings')}><MapPin size={18} /><span className="text-sm">Aturan WFH/WFA</span></button>
+            {modules.hybrid_work && <button onClick={() => go('hybrid-work-settings')} className={NAV_BTN(activeTab === 'hybrid-work-settings')}><MapPin size={18} /><span className="text-sm">Aturan WFH/WFA</span></button>}
           </div>
 
           {/* Bottom Actions */}
           <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-2">
+            <button onClick={toggleTheme} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-400 hover:bg-white/5 hover:text-white">
+              {getThemeIcon()}<span className="text-sm">{getThemeLabel()}</span>
+            </button>
+            <button onClick={() => { setIsSidebarOpen(false); setShowPanel(true); }} className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-gray-400 hover:bg-white/5 hover:text-white">
+              <div className="flex items-center gap-3">
+                <Bell size={18} className="text-gray-400" />
+                <span className="text-sm">Notifikasi</span>
+              </div>
+              {unreadCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-[var(--danger)] text-white text-[10px] font-bold shadow-lg">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
             <HRISExportWrapper tenantId={tenantData?.id} className="w-full justify-start py-3 border-none bg-white/5 hover:bg-[var(--danger)]/20 text-gray-400 hover:text-[var(--danger)]" label="Unduh Database HRIS" />
             <button onClick={() => go('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-white/10 text-[var(--aurora-3)] border border-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
               <Settings size={18} /><span className="text-sm">Pengaturan Umum</span>
@@ -306,13 +445,12 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] lg:hidden" />}
 
       {/* Main Content */}
-      <main className="flex-1 p-0 z-10 overflow-y-auto flex flex-col">
+      <main id="main-scroll-container" className="flex-1 p-0 z-10 overflow-y-auto flex flex-col">
         <GlobalHeader 
           title={getTabTitle()} 
           onMenuClick={() => setIsSidebarOpen(true)} 
-          onSettingsClick={() => go('settings')}
         />
-        <div className={`w-full max-w-7xl mx-auto px-4 flex-1 ${isImpersonating ? 'pt-10 mt-2 sm:mt-4' : 'mt-2 sm:mt-4'}`}>
+        <div className={`w-full max-w-7xl mx-auto px-4 flex-1 pb-24 lg:pb-4 ${isImpersonating ? 'pt-10 mt-2 sm:mt-4' : 'mt-2 sm:mt-4'}`}>
           <Suspense fallback={<div className="p-20 text-center"><div className="w-8 h-8 border-2 border-[var(--aurora-3)] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
             {activeTab === 'home' && <DashboardHome onNavigate={(tab) => { setActiveTab(tab); setIsSidebarOpen(false); }} />}
             {activeTab === 'profile' && <CompanyProfile onUpdate={fetchTenantData} />}
@@ -377,7 +515,22 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             {activeTab === 'auto-shift' && <AutoShift />}
           </Suspense>
         </div>
+
+        {/* Clean JDC-Style centered footer */}
+        <footer className="app-footer pb-28 lg:pb-8">
+          <span>© 2026 <strong className="text-[var(--aurora-3)]">{tenantData?.name || 'Aplikasi Absensi'}</strong>. Hak Cipta Dilindungi.</span>
+          <DeveloperWatermark />
+        </footer>
       </main>
+
+      {/* Bottom Navigation for Mobile */}
+      <BottomNav
+        currentTab={activeTab}
+        onNavClick={(tab) => go(tab)}
+        onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
+        isSidebarOpen={isSidebarOpen}
+        items={bottomNavItems}
+      />
     </div>
   );
 };

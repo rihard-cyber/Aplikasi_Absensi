@@ -15,7 +15,16 @@ import { registerBackHandler } from '../../utils/navigation';
 import ThemeToggle from '../../components/ThemeToggle';
 import GlobalHeader from '../../components/GlobalHeader';
 import DeveloperWatermark from '../../components/DeveloperWatermark';
+import DeveloperWatermarkBackground from '../../components/DeveloperWatermarkBackground';
 import { useNotifications } from '../../components/Notifications';
+import BottomNav from '../../components/BottomNav';
+
+const subAdminBottomNavItems = [
+  { id: 'monitor', label: 'Monitor', icon: Activity },
+  { id: 'approval', label: 'Persetujuan', icon: CheckCircle2 },
+  { id: 'employees', label: 'Karyawan', icon: Users },
+  { id: 'reports', label: 'Laporan', icon: BarChart3 }
+];
 
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
@@ -255,13 +264,14 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
   ];
 
   return (
-    <div className={`min-h-screen bg-[#0B0C10] text-white flex flex-col ${isImpersonating && !isEmbedded ? 'pt-10' : ''}`}>
+    <div id={!isEmbedded ? "main-scroll-container" : undefined} className={`min-h-screen bg-[#0B0C10] text-white flex flex-col ${isImpersonating && !isEmbedded ? 'pt-10 overflow-y-auto' : ''}`}>
+      {!isEmbedded && <DeveloperWatermarkBackground theme="dark" />}
       {!isEmbedded && (
         <GlobalHeader title="PORTAL OPERASIONAL" onBack={() => navigate('/')} />
       )}
-      <div className={`max-w-6xl mx-auto w-full flex-1 ${isEmbedded ? '' : 'p-4 sm:p-6'}`}>
+      <div className={`max-w-6xl mx-auto w-full flex-1 ${isEmbedded ? '' : 'p-4 sm:p-6 pb-24 lg:pb-6'}`}>
 
-        <nav className="flex flex-wrap gap-2 mb-6">
+        <nav className="hidden lg:flex flex-wrap gap-2 mb-6">
           {navItems.map(item => (
             <button key={item.key} onClick={() => setActiveTab(item.key)}
               className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === item.key ? 'bg-[var(--aurora-3)]/20 text-[var(--aurora-3)] border border-[var(--aurora-3)]/30 shadow-[0_0_10px_rgba(0,201,255,0.1)]' : 'bg-white/5 text-gray-400 border border-white/5 hover:bg-white/10 hover:text-white'}`}>
@@ -416,14 +426,21 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
           </div>
         )}
         {!isEmbedded && (
-          <div className="mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 pb-4">
-            <div className="text-[10px] text-gray-500 uppercase tracking-widest font-sans">
-              Portal Operasional Sub-Admin
-            </div>
+          <footer className="app-footer pb-28 lg:pb-8 mt-8">
+            <span>© 2026 <strong className="text-[var(--aurora-3)]">Portal Operasional Sub-Admin</strong>. Hak Cipta Dilindungi.</span>
             <DeveloperWatermark />
-          </div>
+          </footer>
         )}
       </div>
+      {!isEmbedded && (
+        <BottomNav
+          currentTab={activeTab}
+          onNavClick={(tab) => setActiveTab(tab)}
+          onToggleSidebar={() => {}}
+          isSidebarOpen={false}
+          items={subAdminBottomNavItems}
+        />
+      )}
     </div>
   );
 };

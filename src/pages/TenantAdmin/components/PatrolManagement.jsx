@@ -2,11 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Route, ClipboardList, AlertTriangle, Users, Plus, QrCode, GripVertical, Loader2, CheckCircle2, XCircle, Map, Clock, Search, Save, Trash2, ToggleLeft, ToggleRight, Eye, Printer, Download, X } from 'lucide-react';
+import { MapPin, Route, ClipboardList, AlertTriangle, Users, Plus, QrCode, GripVertical, Loader2, CheckCircle2, XCircle, Map, Clock, Search, Save, Trash2, ToggleLeft, ToggleRight, Eye, Printer, Download, X, BookOpen, FileText } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
+import { useConfirm } from '../../../components/ConfirmDialog';
 import { logAudit } from '../../../utils/auditLogger';
 import { notifyAdminsInTenant, NOTIF_TYPES } from '../../../utils/notificationEngine';
+import { exportTableToPdf } from '../../../utils/exportPdf';
 
 /** @type {(s: string) => string} Passthrough i18n — app is monolingual Indonesian */
 const t = (s) => s;
@@ -15,6 +17,7 @@ const TABS = [
   { key: 'checkpoints', label: 'Checkpoints', icon: MapPin },
   { key: 'routes', label: 'Routes', icon: Route },
   { key: 'logs', label: 'Logs', icon: ClipboardList },
+  { key: 'mutasi', label: 'Buku Mutasi', icon: BookOpen },
   { key: 'incidents', label: 'Incidents', icon: AlertTriangle },
   { key: 'handovers', label: 'Shift Handovers', icon: Users },
 ];
@@ -28,6 +31,10 @@ const PatrolManagement = () => {
   const [incidents, setIncidents] = useState([]);
   const [handovers, setHandovers] = useState([]);
   const [profiles, setProfiles] = useState([]);
+  const [mutasiLogs, setMutasiLogs] = useState([]);
+  const [searchMutasi, setSearchMutasi] = useState('');
+  const [filterKatMutasi, setFilterKatMutasi] = useState('');
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAddCheckpoint, setShowAddCheckpoint] = useState(false);
   const [showAddRoute, setShowAddRoute] = useState(false);
@@ -35,6 +42,7 @@ const PatrolManagement = () => {
   const [selectedLog, setSelectedLog] = useState(null);
   const [missedGuards, setMissedGuards] = useState([]);
   const toast = useToast();
+  const confirm = useConfirm();
 
   const downloadQRCode = async (data, filename) => {
     try {
@@ -120,13 +128,14 @@ const PatrolManagement = () => {
     if (activeTenantId) setTenantId(activeTenantId);
     const tid = activeTenantId;
 
-    const [cpData, rData, lData, iData, hData, pData] = await Promise.all([
+    const [cpData, rData, lData, iData, hData, pData, mData] = await Promise.all([
       tid ? supabase.from('patrol_checkpoints').select('*').eq('tenant_id', tid).order('name') : Promise.resolve({ data: [] }),
       tid ? supabase.from('patrol_routes').select('*, patrol_route_checkpoints(*, patrol_checkpoints(*))').eq('tenant_id', tid).order('name') : Promise.resolve({ data: [] }),
       tid ? supabase.from('patrol_logs').select('*, profiles(full_name, nip), patrol_checkpoints(name, qr_code, latitude, longitude)').eq('tenant_id', tid).order('scan_time', { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
       tid ? supabase.from('patrol_incidents').select('*, patrol_logs(*, patrol_checkpoints(name), profiles(full_name))').eq('tenant_id', tid).order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
       tid ? supabase.from('patrol_shift_handovers').select('*, from_profile:profiles!patrol_shift_handovers_from_profile_id_fkey(full_name), to_profile:profiles!patrol_shift_handovers_to_profile_id_fkey(full_name)').eq('tenant_id', tid).order('handover_time', { ascending: false }).limit(50) : Promise.resolve({ data: [] }),
       tid ? supabase.from('profiles').select('id, full_name, nip, role').in('role', ['security', 'satpam']).eq('tenant_id', tid) : Promise.resolve({ data: [] }),
+      tid ? supabase.from('mutasi_logs').select('*, profiles(full_name, nip)').eq('tenant_id', tid).order('created_at', { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
     ]);
     if (cpData.data) setCheckpoints(cpData.data);
     if (rData.data) setRoutes(rData.data);
@@ -134,6 +143,7 @@ const PatrolManagement = () => {
     if (iData.data) setIncidents(iData.data);
     if (hData.data) setHandovers(hData.data);
     if (pData.data) setProfiles(pData.data);
+    if (mData.data) setMutasiLogs(mData.data);
 
     // Auto-detect missed guards (satpam with schedule but no clock-in today)
     if (tid) {
@@ -495,12 +505,212 @@ const PatrolManagement = () => {
     </div>
   );
 
+  const deleteMutasi = async (id) => {
+    const ok = await confirm("Hapus catatan mutasi ini?", "Hapus Mutasi");
+    if (!ok) return;
+    try {
+      const { error } = await supabase.from('mutasi_logs').delete().eq('id', id);
+      if (error) throw error;
+      toast('Catatan mutasi berhasil dihapus!', 'success');
+      init();
+    } catch (e) {
+      toast('Gagal menghapus: ' + e.message, 'error');
+    }
+  };
+
+  const handleExportMutasiPDF = () => {
+    const filtered = mutasiLogs.filter(l => {
+      const matchSearch = !searchMutasi || 
+        l.uraian.toLowerCase().includes(searchMutasi.toLowerCase()) || 
+        l.lokasi.toLowerCase().includes(searchMutasi.toLowerCase()) || 
+        (l.profiles?.full_name || '').toLowerCase().includes(searchMutasi.toLowerCase());
+      const matchKat = !filterKatMutasi || l.kategori === filterKatMutasi;
+      return matchSearch && matchKat;
+    });
+
+    const ok = exportTableToPdf({
+      title: 'Buku Mutasi Pelaporan Penjagaan Satpam',
+      fileName: `buku-mutasi-patroli-${new Date().toISOString().split('T')[0]}`,
+      meta: [
+        { label: 'Filter Kategori', value: filterKatMutasi || 'Semua' },
+        { label: 'Pencarian', value: searchMutasi || '-' },
+        { label: 'Total Catatan', value: filtered.length }
+      ],
+      columns: [
+        { header: 'NO', width: '5%' },
+        { header: 'HARI / TANGGAL', width: '15%' },
+        { header: 'JAM DINAS', width: '10%' },
+        { header: 'PETUGAS (NRP)', width: '20%' },
+        { header: 'LOKASI / POS', width: '15%' },
+        { header: 'KATEGORI', width: '10%' },
+        { header: 'URAIAN LAPORAN KEJADIAN', width: '25%' }
+      ],
+      rows: filtered.map((log, idx) => [
+        idx + 1,
+        `${log.tanggal_kejadian} (${log.shift || '-'})`,
+        log.jam_kejadian || '-',
+        `${log.profiles?.full_name || '—'} (${log.profiles?.nip || '-'})`,
+        log.lokasi || '-',
+        log.kategori.toUpperCase(),
+        log.uraian || '-'
+      ])
+    });
+    
+    if (!ok) toast('Gagal mengekspor PDF, silakan periksa pop-up blocker browser Anda', 'error');
+    else toast('PDF Mutasi berhasil diunduh!', 'success');
+  };
+
+  const renderMutasi = () => {
+    const filtered = mutasiLogs.filter(l => {
+      const matchSearch = !searchMutasi || 
+        l.uraian.toLowerCase().includes(searchMutasi.toLowerCase()) || 
+        l.lokasi.toLowerCase().includes(searchMutasi.toLowerCase()) || 
+        (l.profiles?.full_name || '').toLowerCase().includes(searchMutasi.toLowerCase());
+      const matchKat = !filterKatMutasi || l.kategori === filterKatMutasi;
+      return matchSearch && matchKat;
+    });
+
+    return (
+      <div>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4 flex-wrap">
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest">{t('Buku Mutasi Satpam')}</h3>
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+            <div className="relative flex-1 md:flex-none">
+              <input 
+                type="text" 
+                value={searchMutasi} 
+                onChange={e => setSearchMutasi(e.target.value)} 
+                placeholder="Cari mutasi..." 
+                className="w-full md:w-48 bg-white/5 border border-white/20 rounded-xl pl-8 pr-4 py-2 text-xs text-white outline-none focus:border-[#00C9FF]" 
+              />
+              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            </div>
+            
+            <select 
+              value={filterKatMutasi} 
+              onChange={e => setFilterKatMutasi(e.target.value)} 
+              className="bg-[#1A1C23] border border-white/20 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[#00C9FF]"
+            >
+              <option value="">Semua Kategori</option>
+              <option value="informasi">Informasi</option>
+              <option value="kehilangan">Kehilangan</option>
+              <option value="kerusakan">Kerusakan</option>
+              <option value="gangguan">Gangguan</option>
+              <option value="emergency">Emergency</option>
+            </select>
+
+            <button 
+              onClick={handleExportMutasiPDF} 
+              className="px-3 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[10px] font-bold flex items-center gap-1.5"
+            >
+              <Printer size={12} /> Export PDF
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto border border-white/10 rounded-2xl bg-black/20">
+          <table className="w-full border-collapse text-left text-xs text-white min-w-[700px]">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/5 font-bold uppercase tracking-wider text-gray-400 text-[10px]">
+                <th className="p-3 w-12 text-center">No</th>
+                <th className="p-3 w-32">Waktu Kejadian</th>
+                <th className="p-3 w-48">Petugas / Regu</th>
+                <th className="p-3 w-36">Lokasi / Pos</th>
+                <th className="p-3">Uraian Laporan Kejadian</th>
+                <th className="p-3 w-20 text-center">Foto</th>
+                <th className="p-3 w-16 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="p-8 text-center text-gray-500 font-medium">Belum ada catatan mutasi penjagaan.</td>
+                </tr>
+              ) : (
+                filtered.map((log, idx) => (
+                  <tr key={log.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                    <td className="p-3 text-center font-bold text-gray-500">{idx + 1}</td>
+                    <td className="p-3">
+                      <div className="font-bold text-white">{log.jam_kejadian?.substring(0, 5)} WIB</div>
+                      <div className="text-[9px] text-gray-500 mt-0.5">{log.tanggal_kejadian}</div>
+                    </td>
+                    <td className="p-3">
+                      <div className="font-bold text-white">{log.profiles?.full_name || '—'}</div>
+                      <div className="text-[9px] text-gray-500 mt-0.5">NIP: {log.profiles?.nip || '-'} | {log.regu || 'Regu A'}</div>
+                    </td>
+                    <td className="p-3">
+                      <span className="px-2 py-0.5 rounded-full bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] border border-[var(--aurora-3)]/20 font-bold text-[9px]">
+                        📍 {log.lokasi}
+                      </span>
+                    </td>
+                    <td className="p-3 leading-relaxed">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-wide ${
+                          log.kategori === 'emergency' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                          log.kategori === 'gangguan' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+                          log.kategori === 'kerusakan' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                          'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        }`}>
+                          {log.kategori}
+                        </span>
+                      </div>
+                      <p className="text-gray-300 font-medium">{log.uraian}</p>
+                    </td>
+                    <td className="p-3 text-center">
+                      {log.foto ? (
+                        <img 
+                          src={log.foto} 
+                          alt="Bukti" 
+                          onClick={() => setSelectedPhoto(log.foto)}
+                          className="w-12 h-8 object-cover rounded border border-white/10 cursor-pointer hover:scale-105 transition-all mx-auto" 
+                        />
+                      ) : (
+                        <span className="text-[10px] text-gray-600">—</span>
+                      )}
+                    </td>
+                    <td className="p-3 text-center">
+                      <button 
+                        onClick={() => deleteMutasi(log.id)}
+                        className="p-1.5 hover:bg-[var(--danger)]/20 rounded-lg text-gray-400 hover:text-[var(--danger)] transition-colors"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Lightbox Modal for Photo Preview */}
+        {selectedPhoto && (
+          <div 
+            onClick={() => setSelectedPhoto(null)} 
+            className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-[9999]"
+          >
+            <div className="relative max-w-[90%] max-h-[90%]" onClick={e => e.stopPropagation()}>
+              <button 
+                onClick={() => setSelectedPhoto(null)} 
+                className="absolute -top-10 right-0 text-white font-bold text-xs flex items-center gap-1 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl hover:bg-white/10"
+              >
+                <X size={14} /> Tutup
+              </button>
+              <img src={selectedPhoto} alt="Bukti Mutasi" className="max-w-full max-h-[80vh] object-contain rounded-2xl border border-white/10 shadow-2xl" />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderTabContent = () => {
     if (loading) return <div className="flex items-center justify-center py-16"><Loader2 size={32} className="animate-spin text-[var(--aurora-3)]" /></div>;
     switch (tab) {
       case 'checkpoints': return renderCheckpoints();
       case 'routes': return renderRoutes();
       case 'logs': return renderLogs();
+      case 'mutasi': return renderMutasi();
       case 'incidents': return renderIncidents();
       case 'handovers': return renderHandovers();
       default: return null;

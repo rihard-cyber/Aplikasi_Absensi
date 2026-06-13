@@ -6,7 +6,19 @@ import { supabase } from '../../../utils/supabaseClient';
 /** @type {(s: string) => string} Passthrough i18n */
 const t = (s) => s;
 
-const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
+const EmployeeHome = ({ onAction, user, stats, companyInfo, modules = {
+  helpdesk: true,
+  work_order: true,
+  patrol: true,
+  visitor: true,
+  booking: true,
+  incident: true,
+  fleet: true,
+  inventory: true,
+  shift_swap: true,
+  hybrid_work: true,
+  payroll: true
+} }) => {
   const [announcements, setAnnouncements] = useState([]);
   const [leaveBalance, setLeaveBalance] = useState(null);
   const [upcomingHolidays, setUpcomingHolidays] = useState([]);
@@ -90,6 +102,33 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
       console.error("Gagal menarik pengumuman:", e);
     }
   };
+
+  const allActions = [
+    { id: 'leave', label: 'Izin / Cuti', icon: <Calendar />, color: 'var(--aurora-3)', module: null },
+    { id: 'lembur', label: 'Lembur', icon: <Zap />, color: 'var(--warning)', module: 'payroll' },
+    { id: 'qr', label: 'QR Absen', icon: <QrCode />, color: 'var(--aurora-3)', module: null },
+    { id: 'req-absen', label: 'Req. Absen', icon: <CheckCircle2 />, color: 'var(--success)', module: null },
+    { id: 'salary', label: 'Slip Gaji', icon: <Wallet />, color: 'var(--aurora-1)', module: 'payroll' },
+    { id: 'loan', label: 'Pinjaman', icon: <DollarSign />, color: 'var(--aurora-3)', module: 'payroll' },
+    { id: 'reimbursement', label: 'Klaim Biaya', icon: <Receipt />, color: 'var(--success)', module: 'payroll' },
+    { id: 'edit-profile', label: 'Edit Profil', icon: <Edit3 />, color: 'var(--aurora-1)', module: null },
+    { id: 'contract', label: 'PKWT / Kontrak', icon: <FileText />, color: 'var(--aurora-3)', module: null },
+    { id: 'chatbot', label: 'Tanya AI', icon: <Bot />, color: 'var(--aurora-2)', module: null },
+    { id: 'helpdesk', label: 'Helpdesk', icon: <Headphones />, color: 'var(--danger)', module: 'helpdesk' },
+    { id: 'booking', label: 'Booking', icon: <DoorOpen />, color: 'var(--aurora-3)', module: 'booking' },
+    { id: 'patrol-scan', label: 'Patroli', icon: <Route />, color: 'var(--warning)', module: 'patrol' },
+    { id: 'shift-swap', label: 'Tukar Shift', icon: <Repeat />, color: 'var(--aurora-2)', module: 'shift_swap' },
+    { id: 'attendance-calendar', label: 'Riwayat Absen', icon: <CalendarDays />, color: 'var(--aurora-3)', module: null },
+    { id: 'incident-report', label: 'Lapor Insiden', icon: <AlertTriangle />, color: 'var(--danger)', module: 'incident' },
+    { id: 'home-address', label: 'Alamat Rumah', icon: <MapPin />, color: 'var(--success)', module: 'hybrid_work' },
+    { id: 'task-plan', label: 'Rencana Kerja', icon: <ClipboardList />, color: 'var(--aurora-1)', module: null },
+  ];
+
+  const activeActions = allActions.filter(act => {
+    if (!act.module) return true;
+    return !!modules[act.module];
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -134,24 +173,9 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
 
       {/* QUICK ACTIONS GRID */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-2">
-        <ActionButton icon={<Calendar />} label="Izin / Cuti" color="var(--aurora-3)" onClick={() => onAction('leave')} />
-        <ActionButton icon={<Zap />} label="Lembur" color="var(--warning)" onClick={() => onAction('lembur')} />
-        <ActionButton icon={<QrCode />} label="QR Absen" color="var(--aurora-3)" onClick={() => onAction('qr')} />
-        <ActionButton icon={<CheckCircle2 />} label="Req. Absen" color="var(--success)" onClick={() => onAction('req-absen')} />
-        <ActionButton icon={<Wallet />} label="Slip Gaji" color="var(--aurora-1)" onClick={() => onAction('salary')} />
-        <ActionButton icon={<DollarSign />} label="Pinjaman" color="var(--aurora-3)" onClick={() => onAction('loan')} />
-        <ActionButton icon={<Receipt />} label="Klaim Biaya" color="var(--success)" onClick={() => onAction('reimbursement')} />
-        <ActionButton icon={<Edit3 />} label="Edit Profil" color="var(--aurora-1)" onClick={() => onAction('edit-profile')} />
-        <ActionButton icon={<FileText />} label="PKWT / Kontrak" color="var(--aurora-3)" onClick={() => onAction('contract')} />
-        <ActionButton icon={<Bot />} label="Tanya AI" color="var(--aurora-2)" onClick={() => onAction('chatbot')} />
-        <ActionButton icon={<Headphones />} label="Helpdesk" color="var(--danger)" onClick={() => onAction('helpdesk')} />
-        <ActionButton icon={<DoorOpen />} label="Booking" color="var(--aurora-3)" onClick={() => onAction('booking')} />
-        <ActionButton icon={<Route />} label="Patroli" color="var(--warning)" onClick={() => onAction('patrol-scan')} />
-        <ActionButton icon={<Repeat />} label="Tukar Shift" color="var(--aurora-2)" onClick={() => onAction('shift-swap')} />
-        <ActionButton icon={<CalendarDays />} label="Riwayat Absen" color="var(--aurora-3)" onClick={() => onAction('attendance-calendar')} />
-        <ActionButton icon={<AlertTriangle />} label="Lapor Insiden" color="var(--danger)" onClick={() => onAction('incident-report')} />
-        <ActionButton icon={<MapPin />} label="Alamat Rumah" color="var(--success)" onClick={() => onAction('home-address')} />
-        <ActionButton icon={<ClipboardList />} label="Rencana Kerja" color="var(--aurora-1)" onClick={() => onAction('task-plan')} />
+        {activeActions.map(act => (
+          <ActionButton key={act.id} icon={act.icon} label={act.label} color={act.color} onClick={() => onAction(act.id)} />
+        ))}
       </div>
 
       {/* ANNOUNCEMENTS SECTION */}
@@ -219,15 +243,15 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo }) => {
 
       {/* Company Information Card (REPLACED SALARY ESTIMATE) */}
       <div className="glass-panel p-6 rounded-[32px] border border-white/5 relative overflow-hidden bg-gradient-to-br from-white/[0.02] to-transparent">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] flex items-center justify-center">
-              <TrendingUp size={20} />
+        <div className="flex justify-between items-center gap-2 mb-6">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] flex items-center justify-center shrink-0">
+              <TrendingUp size={16} />
             </div>
-            <h3 className="font-serif text-lg text-white font-bold tracking-tight">{t('Informasi Perusahaan')}</h3>
+            <h3 className="font-serif text-sm sm:text-lg text-white font-bold tracking-tight">{t('Informasi Perusahaan')}</h3>
           </div>
-          <div className="px-3 py-1 rounded-full bg-[var(--success)]/10 border border-[var(--success)]/30">
-            <span className="text-[8px] font-black text-[var(--success)] uppercase tracking-widest">{t('Terhubung')}</span>
+          <div className="px-2.5 py-0.5 rounded-full bg-[var(--success)]/10 border border-[var(--success)]/30 shrink-0">
+            <span className="text-[7.5px] font-black text-[var(--success)] uppercase tracking-wider">{t('Terhubung')}</span>
           </div>
         </div>
         

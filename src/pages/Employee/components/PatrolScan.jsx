@@ -20,9 +20,21 @@ const PatrolScan = ({ onBack }) => {
   const [logs, setLogs] = useState([]);
   const [checkpoints, setCheckpoints] = useState([]);
   const [showIncidentForm, setShowIncidentForm] = useState(false);
+  const [showMutasiForm, setShowMutasiForm] = useState(false);
   const [showHandoverForm, setShowHandoverForm] = useState(false);
   const [guards, setGuards] = useState([]);
   const [incidentForm, setIncidentForm] = useState({ incident_type: '', description: '', severity: 'medium', photo: null });
+  const [mutasiForm, setMutasiForm] = useState({ 
+    tanggal_kejadian: new Date().toISOString().split('T')[0],
+    jam_kejadian: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':'),
+    kategori: 'informasi',
+    kategori_lainnya: '',
+    lokasi: '',
+    lokasi_custom: '',
+    is_custom_lokasi: false,
+    uraian: '',
+    photo: null
+  });
   const [handoverForm, setHandoverForm] = useState({ to_profile_id: '', notes: '' });
   const [submitting, setSubmitting] = useState(false);
   const [gpsPosition, setGpsPosition] = useState(null);
@@ -181,6 +193,66 @@ const PatrolScan = ({ onBack }) => {
     finally { setSubmitting(false); }
   };
 
+  const submitMutasi = async () => {
+    const finalLokasi = mutasiForm.is_custom_lokasi ? mutasiForm.lokasi_custom : mutasiForm.lokasi;
+    const finalKategori = mutasiForm.kategori === '__lainnya__' ? mutasiForm.kategori_lainnya : mutasiForm.kategori;
+
+    if (!finalLokasi.trim() || !finalKategori.trim() || !mutasiForm.uraian.trim()) {
+      toast('Lengkapi form Buku Mutasi!', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      let photo_url = null;
+      if (mutasiForm.photo) {
+        const ext = mutasiForm.photo.name.split('.').pop();
+        const path = `mutasi_logs/${profile.id}/${Date.now()}.${ext}`;
+        await supabase.storage.from('documents').upload(path, mutasiForm.photo);
+        const { data: urlData } = supabase.storage.from('documents').getPublicUrl(path);
+        if (urlData?.publicUrl) photo_url = urlData.publicUrl;
+      }
+
+      const currentHour = new Date().getHours();
+      const shift = currentHour >= 7 && currentHour < 19 ? 'Shift Pagi (07:00 - 19:00)' : 'Shift Malam (19:00 - 07:00)';
+
+      const { error } = await supabase.from('mutasi_logs').insert({
+        tenant_id: tenantId,
+        profile_id: profile.id,
+        tanggal: new Date().toISOString().split('T')[0],
+        waktu: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':'),
+        tanggal_kejadian: mutasiForm.tanggal_kejadian,
+        jam_kejadian: mutasiForm.jam_kejadian,
+        lokasi: finalLokasi,
+        uraian: mutasiForm.uraian,
+        kategori: finalKategori,
+        foto: photo_url,
+        shift
+      });
+
+      if (error) throw error;
+
+      logAudit('PATROL_MUTASI_LOG', { kategori: finalKategori, lokasi: finalLokasi });
+      toast('Catatan Buku Mutasi disimpan!', 'success');
+      setShowMutasiForm(false);
+      setMutasiForm({
+        tanggal_kejadian: new Date().toISOString().split('T')[0],
+        jam_kejadian: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace('.', ':'),
+        kategori: 'informasi',
+        kategori_lainnya: '',
+        lokasi: '',
+        lokasi_custom: '',
+        is_custom_lokasi: false,
+        uraian: '',
+        photo: null
+      });
+    } catch (e) {
+      console.error(e);
+      toast('Gagal: ' + e.message, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const todayLogs = logs.filter(l => new Date(l.scan_time).toDateString() === new Date().toDateString());
   const scannedToday = todayLogs.length;
   const totalRouteCps = routeCheckpoints.length;
@@ -251,16 +323,18 @@ const PatrolScan = ({ onBack }) => {
       </div>
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-2 gap-4">
-        <button onClick={() => setShowIncidentForm(true)} className="glass-panel p-5 rounded-[32px] border border-[var(--danger)]/20 hover:border-[var(--danger)]/40 transition-all text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[var(--danger)]/10 text-[var(--danger)] flex items-center justify-center mx-auto mb-3"><AlertTriangle size={24} /></div>
-          <p className="text-white font-bold text-xs">{t('Lapor Insiden')}</p>
-          <p className="text-[9px] text-gray-500 mt-1">{t('Laporkan kejadian selama patroli')}</p>
+      <div className="grid grid-cols-3 gap-2">
+        <button onClick={() => setShowIncidentForm(true)} className="glass-panel p-3 rounded-[24px] border border-[var(--danger)]/20 hover:border-[var(--danger)]/40 transition-all text-center">
+          <div className="w-8 h-8 rounded-xl bg-[var(--danger)]/10 text-[var(--danger)] flex items-center justify-center mx-auto mb-1.5"><AlertTriangle size={16} /></div>
+          <p className="text-white font-bold text-[10px] leading-tight">{t('Lapor Insiden')}</p>
         </button>
-        <button onClick={() => setShowHandoverForm(true)} className="glass-panel p-5 rounded-[32px] border border-[var(--aurora-3)]/20 hover:border-[var(--aurora-3)]/40 transition-all text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] flex items-center justify-center mx-auto mb-3"><Users size={24} /></div>
-          <p className="text-white font-bold text-xs">{t('Shift Handover')}</p>
-          <p className="text-[9px] text-gray-500 mt-1">{t('Serahkan shift ke petugas lain')}</p>
+        <button onClick={() => setShowMutasiForm(true)} className="glass-panel p-3 rounded-[24px] border border-[var(--aurora-1)]/20 hover:border-[var(--aurora-1)]/40 transition-all text-center">
+          <div className="w-8 h-8 rounded-xl bg-[var(--aurora-1)]/10 text-[var(--aurora-1)] flex items-center justify-center mx-auto mb-1.5"><ClipboardList size={16} /></div>
+          <p className="text-white font-bold text-[10px] leading-tight">{t('Buku Mutasi')}</p>
+        </button>
+        <button onClick={() => setShowHandoverForm(true)} className="glass-panel p-3 rounded-[24px] border border-[var(--aurora-3)]/20 hover:border-[var(--aurora-3)]/40 transition-all text-center">
+          <div className="w-8 h-8 rounded-xl bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] flex items-center justify-center mx-auto mb-1.5"><Users size={16} /></div>
+          <p className="text-white font-bold text-[10px] leading-tight">{t('Handover')}</p>
         </button>
       </div>
 
@@ -360,6 +434,96 @@ const PatrolScan = ({ onBack }) => {
                     {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Serahkan Shift
                   </button>
                   <button onClick={() => setShowHandoverForm(false)} className="flex-1 py-4 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">{t('Batal')}</button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mutasi Modal */}
+      <AnimatePresence>
+        {showMutasiForm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowMutasiForm(false)}>
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-[#1A1C23] rounded-3xl border border-white/10 p-6 max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">📝 Catat Buku Mutasi</h3>
+              <p className="text-xs text-gray-500 mb-6">{t('Catat kejadian atau laporan mutasi jaga')}</p>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tanggal Kejadian')}</label>
+                    <input type="date" value={mutasiForm.tanggal_kejadian} onChange={e => setMutasiForm({...mutasiForm, tanggal_kejadian: e.target.value})} className="w-full bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-white text-xs outline-none focus:border-[#00C9FF]" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Jam Kejadian')}</label>
+                    <input type="time" value={mutasiForm.jam_kejadian} onChange={e => setMutasiForm({...mutasiForm, jam_kejadian: e.target.value})} className="w-full bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-white text-xs outline-none focus:border-[#00C9FF]" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Plotting Pos / Lokasi')}</label>
+                  {!mutasiForm.is_custom_lokasi ? (
+                    <select value={mutasiForm.lokasi} onChange={e => {
+                      if (e.target.value === '__custom__') {
+                        setMutasiForm({...mutasiForm, is_custom_lokasi: true, lokasi: ''});
+                      } else {
+                        setMutasiForm({...mutasiForm, lokasi: e.target.value});
+                      }
+                    }} className="w-full bg-[#1A1C23] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#00C9FF]">
+                      <option value="">-- Pilih Pos Jaga --</option>
+                      {checkpoints.map(cp => <option key={cp.id} value={cp.name}>{cp.name}</option>)}
+                      <option value="__custom__">-- Ketik Manual (Lainnya) --</option>
+                    </select>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <input value={mutasiForm.lokasi_custom} onChange={e => setMutasiForm({...mutasiForm, lokasi_custom: e.target.value})} placeholder="Ketik lokasi manual..." className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#00C9FF]" />
+                      <button type="button" onClick={() => setMutasiForm({...mutasiForm, is_custom_lokasi: false, lokasi: '', lokasi_custom: ''})} className="text-[10px] text-gray-500 underline text-left">← Kembali ke pilihan pos</button>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Kategori Laporan')}</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: 'informasi', label: 'Informasi' },
+                      { id: 'kehilangan', label: 'Kehilangan' },
+                      { id: 'kerusakan', label: 'Kerusakan' },
+                      { id: 'gangguan', label: 'Gangguan' },
+                      { id: 'emergency', label: 'Emergency' },
+                      { id: '__lainnya__', label: 'Lainnya...' }
+                    ].map(k => (
+                      <button key={k.id} type="button" onClick={() => setMutasiForm({...mutasiForm, kategori: k.id})}
+                        className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all ${mutasiForm.kategori === k.id ? 'bg-[var(--aurora-3)]/20 border-[var(--aurora-3)] text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}>
+                        {k.label}
+                      </button>
+                    ))}
+                  </div>
+                  {mutasiForm.kategori === '__lainnya__' && (
+                    <input type="text" value={mutasiForm.kategori_lainnya} onChange={e => setMutasiForm({...mutasiForm, kategori_lainnya: e.target.value})} placeholder="Ketik kategori lainnya..." className="mt-2 w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#00C9FF]" />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Uraian Kejadian')}</label>
+                  <textarea value={mutasiForm.uraian} onChange={e => setMutasiForm({...mutasiForm, uraian: e.target.value})} rows={3} placeholder="Tuliskan catatan kejadian..." className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none resize-none focus:border-[#00C9FF]" />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Lampiran Foto')}</label>
+                  <label className="flex items-center gap-3 p-3 bg-white/5 border border-dashed border-white/20 rounded-xl cursor-pointer hover:bg-white/10">
+                    <Camera size={18} className="text-gray-400" />
+                    <span className="text-xs text-gray-400">{mutasiForm.photo ? mutasiForm.photo.name : 'Ambil foto bukti'}</span>
+                    <input type="file" accept="image/*" onChange={e => setMutasiForm({...mutasiForm, photo: e.target.files[0]})} className="hidden" />
+                  </label>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button onClick={submitMutasi} disabled={submitting} className="flex-1 py-4 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white font-bold text-xs flex items-center justify-center gap-2 disabled:opacity-50">
+                    {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Simpan Catatan
+                  </button>
+                  <button type="button" onClick={() => setShowMutasiForm(false)} className="flex-1 py-4 rounded-xl bg-white/5 text-gray-400 border border-white/10 text-xs font-bold">{t('Batal')}</button>
                 </div>
               </div>
             </motion.div>

@@ -80,6 +80,8 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
   const [killConfirm, setKillConfirm] = useState(null); // id of tenant awaiting confirm
   const [killCountdown, setKillCountdown] = useState(3);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [tenantModules, setTenantModules] = useState({});
+  const [loadingModules, setLoadingModules] = useState(false);
   const scrollRef = useRef(null);
   const { playClick, playAlert, playConfirm } = useSFX();
   const confirm = useConfirm();
@@ -176,6 +178,101 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
       setFetchError(err.message || 'Koneksi gagal');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (expandedId) {
+      fetchTenantModules(expandedId);
+    }
+  }, [expandedId]);
+
+  const fetchTenantModules = async (id) => {
+    setLoadingModules(true);
+    try {
+      const { data, error } = await supabase
+        .from('tenant_modules')
+        .select('module_key, is_active')
+        .eq('tenant_id', id);
+      if (error) throw error;
+      
+      const modulesObj = {
+        helpdesk: true,
+        patrol: true,
+        booking: true,
+        visitor: true,
+        work_order: true,
+        fleet: true,
+        inventory: true,
+        incident: true,
+        shift_swap: true,
+        hybrid_work: true,
+        payroll: true
+      };
+      
+      if (data && data.length > 0) {
+        data.forEach(m => {
+          modulesObj[m.module_key] = m.is_active;
+        });
+      }
+      
+      setTenantModules(prev => ({ ...prev, [id]: modulesObj }));
+    } catch (err) {
+      console.error("Gagal memuat modul tenant:", err);
+      setTenantModules(prev => ({
+        ...prev,
+        [id]: {
+          helpdesk: true,
+          patrol: true,
+          booking: true,
+          visitor: true,
+          work_order: true,
+          fleet: true,
+          inventory: true,
+          incident: true,
+          shift_swap: true,
+          hybrid_work: true,
+          payroll: true
+        }
+      }));
+    } finally {
+      setLoadingModules(false);
+    }
+  };
+
+  const handleToggleModule = async (tenantId, moduleKey, currentStatus) => {
+    const nextStatus = !currentStatus;
+    setTenantModules(prev => ({
+      ...prev,
+      [tenantId]: {
+        ...prev[tenantId],
+        [moduleKey]: nextStatus
+      }
+    }));
+    
+    try {
+      const { error } = await supabase
+        .from('tenant_modules')
+        .upsert({
+          tenant_id: tenantId,
+          module_key: moduleKey,
+          is_active: nextStatus,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'tenant_id, module_key' });
+        
+      if (error) throw error;
+      toast(`Modul ${moduleKey} ${nextStatus ? 'diaktifkan' : 'dinonaktifkan'}`, 'success');
+      playConfirm();
+    } catch (err) {
+      console.error("Gagal update modul:", err);
+      toast("Gagal mengubah status modul", 'error');
+      setTenantModules(prev => ({
+        ...prev,
+        [tenantId]: {
+          ...prev[tenantId],
+          [moduleKey]: currentStatus
+        }
+      }));
     }
   };
 
@@ -471,6 +568,50 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                               </button>
                             )}
                           </div>
+                        </div>
+
+                        {/* Modules configuration section */}
+                        <div className="px-4 py-4 bg-white/[0.02] border-b border-white/5">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] text-[var(--aurora-3)] font-black uppercase tracking-widest block">Pengaturan Modul & Fitur</span>
+                            {loadingModules && <Loader2 size={12} className="animate-spin text-gray-500" />}
+                          </div>
+                          
+                          {tenantModules[tenant.id] ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                              {[
+                                { key: 'helpdesk', label: 'Helpdesk Tiket' },
+                                { key: 'work_order', label: 'Work Order' },
+                                { key: 'patrol', label: 'Patroli & Mutasi' },
+                                { key: 'visitor', label: 'Manajemen Tamu' },
+                                { key: 'booking', label: 'Booking Fasilitas' },
+                                { key: 'incident', label: 'Laporan K3 Insiden' },
+                                { key: 'fleet', label: 'Logistik Kendaraan' },
+                                { key: 'inventory', label: 'Stok & Inventaris' },
+                                { key: 'shift_swap', label: 'Tukar Shift' },
+                                { key: 'hybrid_work', label: 'Aturan WFH/WFA' },
+                                { key: 'payroll', label: 'Keuangan & Payroll' }
+                              ].map(m => {
+                                const active = tenantModules[tenant.id][m.key];
+                                return (
+                                  <label key={m.key} className="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-2xl cursor-pointer hover:bg-white/[0.08] hover:border-white/10 transition-all">
+                                    <input
+                                      type="checkbox"
+                                      checked={!!active}
+                                      onChange={() => handleToggleModule(tenant.id, m.key, active)}
+                                      className="accent-[var(--aurora-3)] w-4 h-4 rounded-lg cursor-pointer"
+                                    />
+                                    <div>
+                                      <p className="text-xs font-bold text-white leading-none">{m.label}</p>
+                                      <p className="text-[8px] text-gray-500 mt-1 uppercase tracking-wider">{active ? 'Aktif' : 'Non-aktif'}</p>
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="text-center py-4 text-xs text-gray-500">Memuat status modul...</div>
+                          )}
                         </div>
 
                         <div className="p-4 flex flex-wrap gap-2">
