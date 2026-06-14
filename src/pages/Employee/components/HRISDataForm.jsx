@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { User, MapPin, Briefcase, Heart, CreditCard, Shield, Activity, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
+import { isSecurityDivision } from '../../../utils/featureAccess';
 
 const t = (s) => s;
 
@@ -32,7 +33,7 @@ const HRISDataForm = ({ user, onCancel, onSave }) => {
     certificate_issued_date: '', certificate_expiry_date: ''
   });
 
-  const isSatpam = (user.divisions?.name || user.division || '').toLowerCase().includes('satpam') || (user.divisions?.name || user.division || '').toLowerCase().includes('security');
+  const isSatpam = isSecurityDivision(user.divisions?.name || user.division);
 
   useEffect(() => {
     fetchHRISData();

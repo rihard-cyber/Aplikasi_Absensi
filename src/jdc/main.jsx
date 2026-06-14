@@ -21,7 +21,13 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0b0f19', color: '#f8fafc', fontFamily: 'Inter, sans-serif', flexDirection: 'column', gap: '1rem', padding: '2rem', textAlign: 'center' }}>
-          <img src="jdc-logo.png" alt="SMPJDC" className="logo-3d" style={{ width: '80px', opacity: 0.5 }} />
+          <img 
+            src={(() => { try { return localStorage.getItem('tenant_logo_url') || 'jdc-logo.png'; } catch { return 'jdc-logo.png'; } })()} 
+            alt="SMPJDC" 
+            className="logo-3d" 
+            style={{ width: '80px', opacity: 0.5 }} 
+            onError={(e) => { e.target.src = 'jdc-logo.png'; }}
+          />
           <h1 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Terjadi Kesalahan</h1>
           <p style={{ color: '#94a3b8', maxWidth: '400px' }}>Aplikasi mengalami error. Silakan refresh halaman.</p>
           <pre style={{ 

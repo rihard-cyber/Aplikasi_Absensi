@@ -33,6 +33,11 @@ export const formatDateForFile = (value = new Date()) => {
   return date.toISOString().slice(0, 10);
 };
 
+export const getFirstPhoto = (photos) => {
+  if (Array.isArray(photos)) return photos.find(Boolean) || '';
+  return photos || '';
+};
+
 const toInlineStyle = (style) => {
   if (!style || typeof style !== 'object') return '';
   return Object.entries(style)
@@ -40,11 +45,24 @@ const toInlineStyle = (style) => {
     .join(';');
 };
 
+const isPhotoCell = (cell) => cell && typeof cell === 'object' && !Array.isArray(cell) && ('image' in cell || 'images' in cell);
+
 const renderCell = (cell) => {
   if (cell && typeof cell === 'object' && !Array.isArray(cell)) {
     const className = cell.className ? ` class="${escapeHtml(cell.className)}"` : '';
     const style = cell.style ? ` style="${escapeHtml(toInlineStyle(cell.style))}"` : '';
     const text = cell.text ?? '';
+    const isPhoto = isPhotoCell(cell);
+    if (isPhoto) {
+      const image = cell.image || getFirstPhoto(cell.images);
+      const imageHtml = image
+        ? `<div class="photo-box photo-box-has"><img src="${escapeHtml(image)}" alt="Foto" /></div>`
+        : '<div class="photo-box photo-box-empty"><span class="photo-na">-</span></div>';
+      const textHtml = text !== '' && text !== null && text !== undefined
+        ? `<div class="photo-caption">${escapeHtml(text)}</div>`
+        : '';
+      return `<td class="cell cell-photo${className}"${style}>${imageHtml}${textHtml}</td>`;
+    }
     const textHtml = text !== '' && text !== null && text !== undefined
       ? `<div>${escapeHtml(text)}</div>`
       : '';
@@ -121,14 +139,14 @@ export function exportTableToPdf({
           .report-page { width: 100%; }
           .report-title {
             text-align: center;
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
             margin: 0 0 3px;
             line-height: 1.2;
           }
           .report-subtitle {
             text-align: center;
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 700;
             color: #555;
             margin-bottom: 8px;
@@ -165,7 +183,7 @@ export function exportTableToPdf({
             border: 1px solid #000;
           }
           th {
-            background: #6200ee;
+            background: #0070c0;
             color: #fff;
             border: 1px solid #000;
             padding: 6px 4px;
@@ -190,6 +208,30 @@ export function exportTableToPdf({
           .text-right { text-align: right; }
           .mono { font-family: Consolas, 'Courier New', monospace; }
           .status-done { font-weight: 700; }
+          .cell-photo { vertical-align: middle; }
+          .photo-box {
+            width: 100%;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+          }
+          .photo-box-has img {
+            max-width: 100%;
+            max-height: 68px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border: 1px solid #555;
+            display: block;
+          }
+          .photo-box-empty {
+            color: #999;
+            font-size: 8px;
+          }
+          .photo-na { font-style: italic; }
+          .photo-caption { font-size: 7px; color: #666; margin-top: 1px; }
           .empty {
             padding: 22px;
             font-size: 11px;
@@ -212,16 +254,11 @@ export function exportTableToPdf({
             margin-bottom: 5px;
             opacity: 0.85;
           }
-          .developer-watermark .ornament-line {
-            flex: 1;
-            height: 1px;
-            background: #6200ee;
-            opacity: 0.3;
-          }
-          .developer-watermark .ornament-symbol {
-            color: #6200ee;
+          .developer-watermark .ornament {
+            color: #0070c0;
             font-size: 10px;
             font-weight: bold;
+            user-select: none;
           }
           .developer-watermark .watermark-text {
             font-family: 'Great Vibes', 'Brush Script MT', cursive;
@@ -250,11 +287,9 @@ export function exportTableToPdf({
             <tbody>${bodyHtml}</tbody>
           </table>
           <div class="developer-watermark">
-            <span class="ornament-line"></span>
-            <span class="ornament-symbol">❁❀❁</span>
+            <span class="ornament">✧══════════•❁❀❁•══════════✧</span>
             <span class="watermark-text">Developer Richard Meha</span>
-            <span class="ornament-symbol">❁❀❁</span>
-            <span class="ornament-line"></span>
+            <span class="ornament">✧══════════•❁❀❁•══════════✧</span>
           </div>
           <div class="print-footer">
             <span>${escapeHtml(footer)}</span>

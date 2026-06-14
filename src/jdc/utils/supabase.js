@@ -1,24 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
-import supabaseConfig, { isSupabaseConfigured } from './supabaseConfig';
-
-let supabase = null;
+import { supabase as mainSupabase } from '../../utils/supabaseClient';
 
 export const initSupabase = () => {
-  if (supabase) return supabase;
-  if (!isSupabaseConfigured()) {
-    console.log('[Supabase] Tidak dikonfigurasi — fallback ke localStorage');
-    return null;
-  }
-  try {
-    supabase = createClient(supabaseConfig.url, supabaseConfig.anonKey, {
-      realtime: { params: { eventsPerSecond: 10 } }
-    });
-    console.log('[Supabase] Terhubung:', supabaseConfig.url);
-  } catch (e) {
-    console.warn('[Supabase] Gagal init:', e);
-    supabase = null;
-  }
-  return supabase;
+  return mainSupabase;
 };
 
 // ─── Helpers: snake_case ↔ camelCase ───
@@ -43,17 +26,54 @@ function normalizeDoc(doc) {
 }
 
 const KNOWN_TABLE_COLUMNS = {
-  users: new Set(['id', 'nrp', 'nama', 'jabatan', 'regu', 'avatar', 'status', 'email', 'nomor_hp', 'last_active', 'firebase_saved_at', 'created_at', 'updated_at']),
-  patrol_reports: new Set(['id', 'user_id', 'user_name', 'nrp', 'nomor_hp', 'shift', 'regu', 'area_id', 'gedung', 'lantai', 'zona', 'titik', 'kondisi', 'keterangan', 'foto', 'severity', 'timestamp', 'timestamp_end', 'date', 'time', 'kategori', 'kode_temuan', 'temuan', 'status', 'anti_fraud', 'jabatan', 'created_at', 'firebase_saved_at', 'updated_at']),
-  findings: new Set(['id', 'report_id', 'kategori', 'area', 'tanggal', 'pelapor', 'nrp', 'nomor_hp', 'shift', 'regu', 'status', 'severity', 'detail', 'foto', 'department', 'wa_status', 'wa_sent_at', 'created_at', 'firebase_saved_at', 'updated_at']),
-  attendance_logs: new Set(['id', 'tanggal', 'shift', 'regu', 'details', 'created_at', 'firebase_saved_at', 'updated_at']),
-  mutasi_logs: new Set(['id', 'tanggal', 'shift', 'regu', 'waktu', 'tanggal_kejadian', 'jam_kejadian', 'lokasi', 'uraian', 'kategori', 'foto', 'petugas', 'nrp', 'nomor_hp', 'tindak_lanjut', 'pelapor', 'anti_fraud', 'petugas_masuk', 'petugas_keluar', 'catatan', 'created_at', 'firebase_saved_at', 'updated_at']),
-  complaints: new Set(['id', 'ticket_id', 'name', 'phone', 'tenant', 'floor', 'location', 'category', 'description', 'department', 'status', 'remarks', 'wa_status', 'wa_sent_at', 'photos', 'history', 'created_at', 'firebase_saved_at', 'updated_at']),
-  areas: new Set(['id', 'gedung', 'lantai', 'nomor_titik', 'zona', 'titik', 'qr_code', 'created_at', 'firebase_saved_at', 'updated_at']),
-  pos_list: new Set(['id', 'lantai', 'titik', 'keterangan', 'kode', 'created_at', 'firebase_saved_at', 'updated_at']),
-  rosters: new Set(['year_month', 'roster_data', 'updated_by', 'created_at', 'updated_at']),
-  config: new Set(['key', 'data', 'updated_at']),
+  users: new Set(['id', 'nrp', 'nama', 'jabatan', 'regu', 'avatar', 'status', 'email', 'nomor_hp', 'last_active', 'firebase_saved_at', 'created_at', 'updated_at', 'tenant_id']),
+  patrol_reports: new Set(['id', 'user_id', 'user_name', 'nrp', 'nomor_hp', 'shift', 'regu', 'area_id', 'gedung', 'lantai', 'zona', 'titik', 'kondisi', 'keterangan', 'foto', 'severity', 'timestamp', 'timestamp_end', 'date', 'time', 'kategori', 'kode_temuan', 'temuan', 'status', 'anti_fraud', 'jabatan', 'created_at', 'firebase_saved_at', 'updated_at', 'tenant_id']),
+  findings: new Set(['id', 'report_id', 'kategori', 'area', 'tanggal', 'pelapor', 'nrp', 'nomor_hp', 'shift', 'regu', 'status', 'severity', 'detail', 'foto', 'department', 'wa_status', 'wa_sent_at', 'created_at', 'firebase_saved_at', 'updated_at', 'tenant_id']),
+  attendance_logs: new Set(['id', 'tanggal', 'shift', 'regu', 'details', 'created_at', 'firebase_saved_at', 'updated_at', 'tenant_id']),
+  mutasi_logs: new Set(['id', 'tanggal', 'shift', 'regu', 'waktu', 'tanggal_kejadian', 'jam_kejadian', 'lokasi', 'uraian', 'kategori', 'foto', 'petugas', 'nrp', 'nomor_hp', 'tindak_lanjut', 'pelapor', 'anti_fraud', 'petugas_masuk', 'petugas_keluar', 'catatan', 'created_at', 'firebase_saved_at', 'updated_at', 'tenant_id']),
+  complaints: new Set(['id', 'ticket_id', 'name', 'phone', 'tenant', 'floor', 'location', 'category', 'description', 'department', 'status', 'remarks', 'wa_status', 'wa_sent_at', 'photos', 'history', 'created_at', 'firebase_saved_at', 'updated_at', 'tenant_id']),
+  areas: new Set(['id', 'gedung', 'lantai', 'nomor_titik', 'zona', 'titik', 'qr_code', 'created_at', 'firebase_saved_at', 'updated_at', 'tenant_id']),
+  pos_list: new Set(['id', 'lantai', 'titik', 'keterangan', 'kode', 'created_at', 'firebase_saved_at', 'updated_at', 'tenant_id']),
+  rosters: new Set(['year_month', 'roster_data', 'updated_by', 'created_at', 'updated_at', 'tenant_id']),
+  config: new Set(['key', 'data', 'updated_at', 'tenant_id']),
 };
+
+// Internal Cache for Session/Profile
+let _sessionCache = {
+  session: null,
+  profile: null,
+  lastChecked: 0
+};
+
+export const clearJdcCache = () => {
+  _sessionCache = { session: null, profile: null, lastChecked: 0 };
+};
+
+async function getAuthenticatedTenantId(client) {
+  const now = Date.now();
+  if (_sessionCache.profile && (now - _sessionCache.lastChecked < 60000)) {
+    return _sessionCache.profile.tenant_id;
+  }
+
+  try {
+    const { data: { session } } = await client.auth.getSession();
+    if (!session?.user?.id) return null;
+    
+    const { data: profile } = await client
+      .from('profiles')
+      .select('role, tenant_id')
+      .eq('auth_id', session.user.id)
+      .maybeSingle();
+      
+    if (profile) {
+      _sessionCache = { session, profile, lastChecked: now };
+      return profile.tenant_id;
+    }
+  } catch (e) {
+    console.warn('[JDC] Gagal ambil tenant_id:', e);
+  }
+  return null;
+}
 
 function prepareData(data, tableName) {
   const { supabaseId, firebaseId, ...rest } = data || {};
@@ -79,6 +99,17 @@ const createSubscriber = (tableName, callback, orderField = 'created_at', opts =
   const fetchData = async () => {
     if (unsubscribed) return;
     let query = client.from(tableName).select('*');
+    
+    // Auto-filter by tenant_id
+    try {
+      const tenantId = await getAuthenticatedTenantId(client);
+      if (tenantId) {
+        query = query.eq('tenant_id', tenantId);
+      }
+    } catch (e) {
+      console.warn('[JDC Subscriber] Gagal filter tenant_id:', e);
+    }
+
     const orderCol = toSnake(orderField);
     query = query.order(orderCol, { ascending: false, nullsFirst: false });
     if (opts.limit) query = query.limit(opts.limit);
@@ -114,6 +145,16 @@ const createAdder = (tableName) => async (data) => {
   const dbData = prepareData(data, tableName);
   if (!dbData.created_at) dbData.created_at = new Date().toISOString();
   dbData.firebase_saved_at = new Date().toISOString();
+
+  // Auto-inject tenant_id
+  try {
+    const tenantId = await getAuthenticatedTenantId(client);
+    if (tenantId) {
+      dbData.tenant_id = tenantId;
+    }
+  } catch (e) {
+    console.warn('[JDC sync] Failed to auto-inject tenant_id:', e);
+  }
 
   // Coba upsert dulu (jika UNIQUE constraint ada di DB)
   // Jika gagal karena constraint tidak ada, fallback ke insert biasa
@@ -164,6 +205,22 @@ const createUpdater = (tableName) => async (supabaseId, updates) => {
   try {
     const dbData = prepareData(updates, tableName);
     dbData.updated_at = new Date().toISOString();
+
+    // Auto-inject tenant_id
+    try {
+      const { data: { session } } = await client.auth.getSession();
+      if (session?.user?.id) {
+        const { data: profile } = await client
+          .from('profiles')
+          .select('tenant_id')
+          .eq('auth_id', session.user.id)
+          .maybeSingle();
+        if (profile?.tenant_id) {
+          dbData.tenant_id = profile.tenant_id;
+        }
+      }
+    } catch {}
+
     await client.from(tableName).update(dbData).eq('supabase_id', supabaseId);
   } catch (e) {
     console.warn(`[Supabase] Gagal update ${tableName}:`, e);
@@ -182,7 +239,24 @@ const createLoader = (tableName, orderField = 'created_at') => async () => {
   if (!client) return null;
   try {
     const orderCol = toSnake(orderField);
-    const { data, error } = await client.from(tableName).select('*').order(orderCol, { ascending: false, nullsFirst: false });
+    let query = client.from(tableName).select('*');
+
+    // Auto-filter by tenant_id
+    try {
+      const { data: { session } } = await client.auth.getSession();
+      if (session?.user?.id) {
+        const { data: profile } = await client
+          .from('profiles')
+          .select('role, tenant_id')
+          .eq('auth_id', session.user.id)
+          .maybeSingle();
+        if (profile && profile.role !== 'SUPER_ADMIN' && profile.tenant_id) {
+          query = query.eq('tenant_id', profile.tenant_id);
+        }
+      }
+    } catch {}
+
+    const { data, error } = await query.order(orderCol, { ascending: false, nullsFirst: false });
     if (error) throw error;
     return (data || []).map(normalizeDoc);
   } catch (e) {

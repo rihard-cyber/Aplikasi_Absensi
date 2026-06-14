@@ -9,6 +9,8 @@
  * =======================================================
  */
 
+import { analyzePosition, logFakeGpsAttempt } from '../../utils/antiFakeGps';
+
 // Simple hash for PIN (not crypto-grade, prevents casual reading via DevTools)
 export function hashPin(pin) {
   let hash = 0;
@@ -206,7 +208,24 @@ export function getGPSCoordinates() {
 
 // Generate the complete anti-fraud audit record
 export async function generateAntiFraudData(userId) {
+  // Use high-level analysis if available
+  let gpsAnalysis = { isMocked: false, riskScore: 0, flags: [] };
+  
   const coords = await getGPSCoordinates();
+  
+  if (coords) {
+    // Wrap in object that matches what analyzePosition expects
+    gpsAnalysis = analyzePosition({
+      coords: {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        accuracy: coords.accuracy,
+        timestamp: Date.now()
+      },
+      timestamp: Date.now()
+    });
+  }
+
   const userAgent = navigator.userAgent;
   
   // Clean up device names for easier viewing in logs
@@ -219,7 +238,7 @@ export async function generateAntiFraudData(userId) {
   }
   
   // Generate secure verification token based on timestamp, user, and coordinates
-  const rawToken = `token_${userId}_${Date.now()}_${coords ? coords.latitude : 'no_gps'}`;
+  const rawToken = `token_${userId}_${Date.now()}_${coords ? coords.latitude : 'no_gps'}_${gpsAnalysis.riskScore}`;
   let hash = 0;
   for (let i = 0; i < rawToken.length; i++) {
     hash = ((hash << 5) - hash) + rawToken.charCodeAt(i);
@@ -228,7 +247,10 @@ export async function generateAntiFraudData(userId) {
   const dynamicToken = 'SEC-' + Math.abs(hash).toString(16).toUpperCase();
 
   return {
-    gpsValid: coords !== null,
+    gpsValid: coords !== null && !gpsAnalysis.isMocked,
+    isMocked: gpsAnalysis.isMocked,
+    riskScore: gpsAnalysis.riskScore,
+    flags: gpsAnalysis.flags,
     coords: coords,
     device,
     dynamicToken

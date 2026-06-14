@@ -20,8 +20,11 @@ import {
   CheckCircle2,
   Phone,
   Shield,
-  FileText
+  FileText,
+  Download,
+  Printer
 } from 'lucide-react';
+import QRCode from 'qrcode';
 import { getWAContacts, buildWAMessage, buildWALink } from '../data/waContacts';
 import { hapticMedium, hapticSuccess, hapticError, hapticWarning } from '../utils/haptics';
 import { exportTableToPdf, formatDateForFile, formatDateTimeId, getFirstPhoto } from '../utils/exportPdf';
@@ -69,6 +72,98 @@ export default function ManagementDashboard({
   const [complaintFilter, setComplaintFilter] = useState('all');
   const [expandedComplaint, setExpandedComplaint] = useState(null);
   const [activeCommandTab, setActiveCommandTab] = useState('temuan');
+  const [downloadingId, setDownloadingId] = useState(null);
+  const [printLoadingId, setPrintLoadingId] = useState(null);
+  const [searchCode, setSearchCode] = useState('');
+
+  const generateQRDataURL = async (text) => {
+    try {
+      return await QRCode.toDataURL(text, { width: 400, margin: 2, color: { dark: '#0b0f19', light: '#ffffff' } });
+    } catch {
+      return await QRCode.toDataURL(text, { width: 400, margin: 2 });
+    }
+  };
+
+  const handleDownloadQR = async (qrVal, fileName) => {
+    if (downloadingId) return;
+    setDownloadingId(qrVal);
+    try {
+      const dataUrl = await generateQRDataURL(qrVal);
+      const link = document.createElement('a');
+      link.download = `${fileName || qrVal}.png`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Download QR failed:', err);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handlePrintQR = async (qrVal, title, subtitle) => {
+    if (printLoadingId) return;
+    setPrintLoadingId(qrVal);
+    const printWin = window.open('', '_blank', 'width=400,height=600');
+    if (!printWin || printWin.closed || typeof printWin.closed === 'undefined') {
+      alert('Izinkan popup untuk mencetak barcode.');
+      setPrintLoadingId(null);
+      return;
+    }
+    try {
+      const dataUrl = await generateQRDataURL(qrVal);
+      printWin.document.write(`
+        <html>
+          <head>
+            <title>Cetak QR - ${qrVal}</title>
+            <style>
+              body {
+                font-family: 'Inter', sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                margin: 0;
+                padding: 20px;
+                box-sizing: border-box;
+                text-align: center;
+                color: #0b0f19;
+              }
+              .qr-card {
+                border: 3px double #0b0f19;
+                padding: 25px;
+                border-radius: 12px;
+                display: inline-block;
+                background: #fff;
+              }
+              img { width: 280px; height: 280px; margin-bottom: 15px; }
+              h2 { margin: 0 0 5px 0; font-size: 22px; letter-spacing: 1px; }
+              p { margin: 0; font-size: 14px; color: #555; }
+              @media print { body { -webkit-print-color-adjust: exact; } }
+            </style>
+          </head>
+          <body>
+            <div class="qr-card">
+              <img src="${dataUrl}" alt="QR Code" />
+              <h2>${qrVal}</h2>
+              <p style="font-weight: bold; margin-bottom: 4px;">${title || ''}</p>
+              <p>${subtitle || ''}</p>
+            </div>
+            <p style="margin-top: 20px; font-size: 12px; color: #999;">Tutup jendela ini setelah mencetak.</p>
+            <script>window.onload=function(){setTimeout(function(){window.print();},500)};<\/script>
+          </body>
+        </html>
+      `);
+      printWin.document.close();
+    } catch (err) {
+      console.error('Print QR failed:', err);
+      printWin.close();
+    } finally {
+      setPrintLoadingId(null);
+    }
+  };
 
   const STATUS_OPTIONS = ['Baru', 'Diterima', 'Diproses', 'Selesai'];
 
@@ -1066,8 +1161,8 @@ export default function ManagementDashboard({
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                  <div>Dipatroli: <strong>{patrolledAreasToday.size}</strong> pos</div>
-                  <div>Sisa: <strong style={{ color: '#ef4444' }}>{areas.length - patrolledAreasToday.size}</strong> pos</div>
+                  <div>Dipatroli: <strong>{patrolledAreasToday.size}</strong> titik</div>
+                  <div>Sisa: <strong style={{ color: '#ef4444' }}>{areas.length - patrolledAreasToday.size}</strong> titik</div>
                   <div>Target: <strong style={{ color: '#00f0ff' }}>90%</strong></div>
                 </div>
               </div>
@@ -1237,6 +1332,9 @@ export default function ManagementDashboard({
           </button>
           <button className={`command-tab-btn ${activeCommandTab === 'arsip' ? 'active' : ''}`} onClick={() => setActiveCommandTab('arsip')}>
             ⚙️ Pengaturan & Arsip
+          </button>
+          <button className={`command-tab-btn ${activeCommandTab === 'master_code' ? 'active' : ''}`} onClick={() => setActiveCommandTab('master_code')}>
+            🔑 Master Code & QR
           </button>
         </div>
 
@@ -1845,7 +1943,7 @@ export default function ManagementDashboard({
                   {unvisitedAreas.length === 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                       <CheckCircle size={24} color="var(--color-success)" style={{ marginBottom: '0.5rem' }}/>
-                      <p style={{ fontSize: '0.8rem', textAlign: 'center' }}>Hebat! Seluruh pos telah terpatroli.</p>
+                      <p style={{ fontSize: '0.8rem', textAlign: 'center' }}>Hebat! Seluruh titik checkpoint telah terpatroli.</p>
                     </div>
                   )}
                 </div>
@@ -1952,6 +2050,144 @@ export default function ManagementDashboard({
           </div>
         )}
 
+        {/* Tab 6: Master Code & QR */}
+        {activeCommandTab === 'master_code' && (
+          <div className="command-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Grid of Global/System Master Codes */}
+            <div className="grid-cols-2" style={{ gap: '1.5rem' }}>
+              {/* Card 1: Master Code Absensi */}
+              <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl" />
+                <h4 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '0.5rem', color: 'white', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  🔑 Master Barcode Presensi (Absensi Staff)
+                </h4>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1.25rem', maxWidth: '340px' }}>
+                  QR Code utama yang ditempel di Ruang Staff/Jaga. Anggota Danru, Wadanru, dan Staff Security melakukan scan QR ini untuk Clock-In dan Clock-Out dinas harian.
+                </p>
+                <div style={{ background: 'white', padding: '0.75rem', borderRadius: '12px', display: 'inline-block', marginBottom: '1.25rem', boxShadow: '0 0 20px rgba(99,102,241,0.2)' }}>
+                  <QRCodeContainer qrVal="JDC-MASTER-PRESENSI" size={140} />
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '0.8rem', color: '#818cf8', marginBottom: '1rem', fontFamily: 'monospace' }}>
+                  CODE: JDC-MASTER-PRESENSI
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', width: '100%', justifyContent: 'center' }}>
+                  <button onClick={() => handleDownloadQR('JDC-MASTER-PRESENSI', 'jdc-master-presensi')} className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Download size={14} /> Download PNG
+                  </button>
+                  <button onClick={() => handlePrintQR('JDC-MASTER-PRESENSI', 'Ruang Staff / Jaga JDC', 'ABSENSI MASUK/PULANG SECURITY')} className="btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Printer size={14} /> Cetak Stiker
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 2: Master Code Komplain */}
+              <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl" />
+                <h4 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '0.5rem', color: 'white', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  📩 Portal Komplain Tenant (Tanpa Login)
+                </h4>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1.25rem', maxWidth: '340px' }}>
+                  QR Code publik yang dapat discan oleh Tenant Gedung atau Pengunjung tanpa login untuk langsung mengajukan komplain, keluhan, atau laporan fasilitas ke manajemen JDC.
+                </p>
+                <div style={{ background: 'white', padding: '0.75rem', borderRadius: '12px', display: 'inline-block', marginBottom: '1.25rem', boxShadow: '0 0 20px rgba(16,185,129,0.2)' }}>
+                  <QRCodeContainer qrVal={window.location.origin + window.location.pathname + '#/jdc?complaint=true'} size={140} />
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '0.72rem', color: '#34d399', marginBottom: '1rem', fontFamily: 'monospace', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={window.location.origin + window.location.pathname + '#/jdc?complaint=true'}>
+                  URL: {window.location.origin + window.location.pathname + '#/jdc?complaint=true'}
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', width: '100%', justifyContent: 'center' }}>
+                  <button onClick={() => handleDownloadQR(window.location.origin + window.location.pathname + '#/jdc?complaint=true', 'jdc-portal-komplain')} className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Download size={14} /> Download PNG
+                  </button>
+                  <button onClick={() => handlePrintQR(window.location.origin + window.location.pathname + '#/jdc?complaint=true', 'PORTAL KOMPLAIN PUBLIC', 'SCAN UNTUK MELAPORKAN KELUHAN')} className="btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Printer size={14} /> Cetak Stiker
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Checkpoint Barcode List Section */}
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    🗺️ Barcode Master Checkpoint Patroli ({areas.length} Titik)
+                  </h4>
+                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.2rem 0' }}>
+                    Tempel stiker barcode ini di lokasi/titik checkpoint masing-masing lantai untuk dipatroli anggota secara berkala.
+                  </p>
+                </div>
+                {/* Search Bar */}
+                <input 
+                  type="text" 
+                  placeholder="Cari checkpoint..." 
+                  value={searchCode}
+                  onChange={e => setSearchCode(e.target.value)}
+                  className="modern-select" 
+                  style={{ width: '220px', padding: '0.4rem 0.8rem', fontSize: '0.75rem' }} 
+                />
+              </div>
+
+              <div style={{ maxHeight: '450px', overflowY: 'auto', border: '1px solid var(--border-glass)', borderRadius: '8px' }}>
+                <table className="modern-table" style={{ width: '100%', fontSize: '0.75rem' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ padding: '0.75rem' }}>NO.</th>
+                      <th style={{ padding: '0.75rem' }}>KODE QR</th>
+                      <th style={{ padding: '0.75rem' }}>GEDUNG & LANTAI</th>
+                      <th style={{ padding: '0.75rem' }}>ZONA & TITIK CHECKPOINT</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'center' }}>PREVIEW</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'center' }}>AKSI</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {areas
+                      .filter(a => 
+                        a.qrCode?.toLowerCase().includes(searchCode.toLowerCase()) || 
+                        a.titik?.toLowerCase().includes(searchCode.toLowerCase()) ||
+                        a.lantai?.toLowerCase().includes(searchCode.toLowerCase())
+                      )
+                      .map((area, index) => (
+                        <tr key={area.id || index}>
+                          <td style={{ padding: '0.75rem', fontWeight: 700 }}>{index + 1}</td>
+                          <td style={{ padding: '0.75rem', fontWeight: 700, fontFamily: 'monospace', color: '#818cf8' }}>{area.qrCode}</td>
+                          <td style={{ padding: '0.75rem' }}>
+                            <div style={{ fontWeight: 600 }}>{area.gedung || 'SMPJDC'}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Lantai {area.lantai}</div>
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            <div style={{ fontWeight: 600, color: 'white' }}>{area.titik}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Zona {area.zona} - Titik #{area.nomorTitik || index + 1}</div>
+                          </td>
+                          <td style={{ padding: '0.5rem', textAlign: 'center' }}>
+                            <div style={{ background: 'white', padding: '0.2rem', borderRadius: '4px', display: 'inline-block', verticalAlign: 'middle' }}>
+                              <QRCodeContainer qrVal={area.qrCode} size={36} />
+                            </div>
+                          </td>
+                          <td style={{ padding: '0.5rem', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>
+                              <button onClick={() => handleDownloadQR(area.qrCode, area.qrCode)} className="btn-icon-primary" title="Download QR" style={{ padding: '0.3rem' }}>
+                                <Download size={13} />
+                              </button>
+                              <button onClick={() => handlePrintQR(area.qrCode, area.titik, `${area.gedung} - Lt.${area.lantai} (${area.zona})`)} className="btn-icon" title="Print QR" style={{ padding: '0.3rem' }}>
+                                <Printer size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    {areas.length === 0 && (
+                      <tr>
+                        <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Tidak ada master barcode checkpoint patroli ditemukan.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tab 5: Pengaturan & Arsip */}
         {activeCommandTab === 'arsip' && (
           <div className="command-tab-content" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -2027,6 +2263,29 @@ export default function ManagementDashboard({
         )}
       </div>
 
+    </div>
+  );
+}
+
+function QRCodeContainer({ qrVal, size = 120 }) {
+  const [imgUrl, setImgUrl] = useState('');
+  useEffect(() => {
+    let active = true;
+    if (qrVal) {
+      QRCode.toDataURL(qrVal, { width: size * 2, margin: 1 })
+        .then(url => {
+          if (active) setImgUrl(url);
+        })
+        .catch(err => console.error(err));
+    }
+    return () => { active = false; };
+  }, [qrVal, size]);
+
+  return imgUrl ? (
+    <img src={imgUrl} alt="QR Code" style={{ width: `${size}px`, height: `${size}px`, display: 'block', margin: '0 auto', imageRendering: 'pixelated' }} />
+  ) : (
+    <div style={{ width: `${size}px`, height: `${size}px`, background: '#eee', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', fontSize: '10px' }}>
+      Loading...
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Calendar, Wallet, TrendingUp, Zap, CheckCircle2, FileText, Megaphone, Sun, QrCode, DollarSign, Receipt, Edit3, Bot, Headphones, DoorOpen, Route, Repeat, AlertTriangle, MapPin, ClipboardList, CalendarDays, Users } from 'lucide-react';
+import { Clock, Calendar, Wallet, TrendingUp, Zap, CheckCircle2, FileText, Megaphone, Sun, QrCode, DollarSign, Receipt, Edit3, Bot, Headphones, DoorOpen, Route, Repeat, AlertTriangle, MapPin, ClipboardList, CalendarDays, Users, Wrench, Truck, Building2, Monitor, Scale } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../../utils/supabaseClient';
+import { filterFeaturesByDivision, filterFeaturesByRole } from '../../../utils/featureAccess';
 
 /** @type {(s: string) => string} Passthrough i18n */
 const t = (s) => s;
@@ -18,7 +19,7 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo, modules = {
   shift_swap: true,
   hybrid_work: true,
   payroll: true
-} }) => {
+}, rolePermissions }) => {
   const [announcements, setAnnouncements] = useState([]);
   const [leaveBalance, setLeaveBalance] = useState(null);
   const [upcomingHolidays, setUpcomingHolidays] = useState([]);
@@ -118,6 +119,12 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo, modules = {
     { id: 'booking', label: 'Booking', icon: <DoorOpen />, color: 'var(--aurora-3)', module: 'booking' },
     { id: 'patrol-scan', label: 'Patroli', icon: <Route />, color: 'var(--warning)', module: 'patrol' },
     { id: 'patrol-lapor', label: 'Lapor Temuan', icon: <AlertTriangle />, color: 'var(--danger)', module: 'patrol' },
+    { id: 'cleaning-task', label: 'Cleaning Task', icon: <ClipboardList />, color: 'var(--success)', module: null },
+    { id: 'teknisi-task', label: 'Tugas Teknisi', icon: <Wrench />, color: 'var(--aurora-3)', module: null },
+    { id: 'driver-trip', label: 'Perjalanan', icon: <Truck />, color: 'var(--aurora-2)', module: null },
+    { id: 'office-ga', label: 'Office / GA', icon: <Building2 />, color: 'var(--aurora-1)', module: null },
+    { id: 'it-equipment', label: 'IT Equipment', icon: <Monitor />, color: 'var(--aurora-3)', module: 'it' },
+    { id: 'legal-view', label: 'Legal Portal', icon: <Scale />, color: 'var(--aurora-2)', module: 'legal' },
     { id: 'patrol-mutasi', label: 'Buku Mutasi', icon: <ClipboardList />, color: 'var(--warning)', module: 'patrol' },
     { id: 'patrol-handover', label: 'Handover Jaga', icon: <Users />, color: 'var(--aurora-2)', module: 'patrol' },
     { id: 'shift-swap', label: 'Tukar Shift', icon: <Repeat />, color: 'var(--aurora-2)', module: 'shift_swap' },
@@ -127,31 +134,7 @@ const EmployeeHome = ({ onAction, user, stats, companyInfo, modules = {
     { id: 'task-plan', label: 'Rencana Kerja', icon: <ClipboardList />, color: 'var(--aurora-1)', module: null },
   ];
 
-  const activeActions = allActions.filter(act => {
-    // 1. Filter by tenant-wide module availability
-    if (act.module && !modules[act.module]) return false;
-
-    // 2. Filter dynamically by employee division
-    const divisionName = (user?.division || '').toLowerCase();
-    
-    // Satpam / Security specific actions
-    const isSecurityDiv = divisionName.includes('security') || divisionName.includes('satpam') || divisionName.includes('pengamanan');
-    
-    // Office / IT specific actions
-    const isOfficeDiv = divisionName.includes('office') || divisionName.includes('it') || divisionName.includes('staff') || divisionName.includes('admin') || divisionName.includes('hr') || divisionName.includes('management') || divisionName.includes('developer') || divisionName === 'general' || divisionName === '';
-
-    // Restrict patrol/incident to Security division
-    if (act.id === 'patrol-scan' || act.id === 'patrol-lapor' || act.id === 'patrol-mutasi' || act.id === 'patrol-handover' || act.id === 'incident-report') {
-      return isSecurityDiv;
-    }
-    
-    // Restrict WFH/Hybrid work geofence, Booking facilities, and Rencana Kerja to Office/IT/General
-    if (act.id === 'home-address' || act.id === 'booking' || act.id === 'task-plan') {
-      return isOfficeDiv;
-    }
-    
-    return true;
-  });
+  const activeActions = filterFeaturesByRole(allActions, user, user?.division, modules, rolePermissions);
 
   return (
     <motion.div

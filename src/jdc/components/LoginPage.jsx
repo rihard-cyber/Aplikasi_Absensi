@@ -6,6 +6,13 @@ export default function LoginPage({ users: usersProp = [], onLogin, onSetup, has
   const [nrp, setNrp] = useState('');
   const [pin, setPin] = useState('');
   const [showPin, setShowPin] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(() => {
+    try {
+      return localStorage.getItem('tenant_logo_url') || 'jdc-logo.png';
+    } catch {
+      return 'jdc-logo.png';
+    }
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -142,7 +149,7 @@ export default function LoginPage({ users: usersProp = [], onLogin, onSetup, has
           <div className="login-card">
             <div className="login-header">
               <div className="login-logo-ring">
-                <img src="jdc-logo.png" alt="SMPJDC" className="login-logo logo-3d" />
+                <img src={logoUrl} alt="SMPJDC" className="login-logo logo-3d" onError={() => setLogoUrl('jdc-logo.png')} />
               </div>
               <h1 className="login-title">Setup Awal SMPJDC</h1>
               <p className="login-subtitle">Buat akun Admin Super untuk memulai</p>
@@ -233,7 +240,7 @@ export default function LoginPage({ users: usersProp = [], onLogin, onSetup, has
         <div className="login-card">
           <div className="login-header">
             <div className="login-logo-ring">
-              <img src="jdc-logo.png" alt="SMPJDC" className="login-logo logo-3d" />
+              <img src={logoUrl} alt="SMPJDC" className="login-logo logo-3d" onError={() => setLogoUrl('jdc-logo.png')} />
             </div>
             <h1 className="login-title">SMPJDC</h1>
             <p className="login-subtitle">SISTEM MANAGEMENT KEAMANAN JDC</p>

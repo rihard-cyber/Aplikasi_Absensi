@@ -146,8 +146,12 @@ const DocumentVault = () => {
 
       // Insert document record
       const { error: dbErr } = await supabase.from('employee_documents').insert({
-        tenant_id: prof.tenant_id, user_id: prof.id,
-        doc_type: docLabel, file_url: publicUrl, verification_status: 'PENDING'
+        tenant_id: prof.tenant_id, 
+        user_id: prof.id,
+        doc_type: docLabel, 
+        file_url: publicUrl, 
+        verification_status: 'PENDING',
+        expiry_date: activeCategory === 'cert' ? formData.cert_expiry || null : null
       });
       if (dbErr) throw dbErr;
 

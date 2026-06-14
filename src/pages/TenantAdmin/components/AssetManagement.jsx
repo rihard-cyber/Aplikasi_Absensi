@@ -29,7 +29,7 @@ const AssetManagement = () => {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ asset_code: '', asset_name: '', category: 'LAPTOP', brand: '', model: '', serial_number: '', purchase_price: '', assigned_to: '', status: 'AVAILABLE', notes: '' });
+  const [form, setForm] = useState({ asset_code: '', asset_name: '', category: 'LAPTOP', brand: '', model: '', serial_number: '', purchase_price: '', assigned_to: '', status: 'AVAILABLE', notes: '', last_condition_report: '' });
   const toast = useToast();
   const { t } = useTranslation();
 
@@ -57,19 +57,25 @@ const AssetManagement = () => {
   };
 
   const openNew = () => {
-    setForm({ asset_code: '', asset_name: '', category: 'LAPTOP', brand: '', model: '', serial_number: '', purchase_price: '', assigned_to: '', status: 'AVAILABLE', notes: '' });
+    setForm({ asset_code: '', asset_name: '', category: 'LAPTOP', brand: '', model: '', serial_number: '', purchase_price: '', assigned_to: '', status: 'AVAILABLE', notes: '', last_condition_report: '' });
     setEditingId(null); setShowForm(true);
   };
 
   const openEdit = (a) => {
-    setForm({ asset_code: a.asset_code, asset_name: a.asset_name, category: a.category, brand: a.brand || '', model: a.model || '', serial_number: a.serial_number || '', purchase_price: a.purchase_price || '', assigned_to: a.assigned_to || '', status: a.status, notes: a.notes || '' });
+    setForm({ asset_code: a.asset_code, asset_name: a.asset_name, category: a.category, brand: a.brand || '', model: a.model || '', serial_number: a.serial_number || '', purchase_price: a.purchase_price || '', assigned_to: a.assigned_to || '', status: a.status, notes: a.notes || '', last_condition_report: a.last_condition_report || '' });
     setEditingId(a.id); setShowForm(true);
   };
 
   const handleSave = async () => {
     if (!form.asset_code || !form.asset_name) { toast('Kode & nama aset wajib', 'error'); return; }
     try {
-      const payload = { ...form, tenant_id: tenantId, purchase_price: form.purchase_price ? Number(form.purchase_price) : null, assigned_to: form.assigned_to || null };
+      const payload = { 
+        ...form, 
+        tenant_id: tenantId, 
+        purchase_price: form.purchase_price ? Number(form.purchase_price) : null, 
+        assigned_to: form.assigned_to || null,
+        last_condition_report: form.last_condition_report || null
+      };
       if (editingId) {
         await supabase.from('company_assets').update(payload).eq('id', editingId);
         toast('Aset diperbarui', 'success');
@@ -161,6 +167,10 @@ const AssetManagement = () => {
                 <option value="MAINTENANCE">{t('asset.maintenance')}</option>
                 <option value="RETIRED">{t('asset.retired')}</option>
               </select>
+            </div>
+            <div className="md:col-span-3">
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('asset.conditionReport', 'Laporan Kondisi Terakhir')}</label>
+              <textarea value={form.last_condition_report} onChange={e => setForm({...form, last_condition_report: e.target.value})} placeholder="Contoh: Lecet pemakaian di bodi samping, mesin halus." rows={2} className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
             </div>
           </div>
           <div className="flex gap-3">

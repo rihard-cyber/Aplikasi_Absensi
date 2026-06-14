@@ -15,9 +15,39 @@ const PerformanceAppraisal = () => {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ user_id: '', period_label: '', kpi_score: 80, behavioral_score: 80, achievements: '', improvements: '', reviewer_notes: '' });
   const [saving, setSaving] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
   const toast = useToast();
 
   useEffect(() => { fetchData(); }, []);
+
+  const handleAutoCalculate = async (userId) => {
+    if (!userId) return;
+    setIsCalculating(true);
+    try {
+      const monthYear = new Date().toISOString().substring(0, 7); // YYYY-MM
+      const { data, error } = await supabase.rpc('calculate_monthly_performance', { 
+        p_user_id: userId, 
+        p_month_year: monthYear 
+      });
+      
+      if (error) throw error;
+      
+      if (data) {
+        setForm(prev => ({
+          ...prev,
+          user_id: userId,
+          kpi_score: data.total_score || 80,
+          reviewer_notes: `Auto-generated: Attendance (${Math.round(data.attendance_score)}%), Patrol (${Math.round(data.patrol_score)}%), Work Orders (${Math.round(data.work_order_score)}%)`
+        }));
+        toast('Skor KPI berhasil dikalkulasi otomatis!', 'success');
+      }
+    } catch (e) {
+      console.error('KPI Calc error:', e);
+      toast('Gagal kalkulasi: ' + e.message, 'error');
+    } finally {
+      setIsCalculating(false);
+    }
+  };
 
   const fetchData = async () => {
     const isGod = (() => { try { return sessionStorage.getItem('super_admin_verified') === 'true'; } catch { return false; } })();
@@ -90,10 +120,21 @@ const PerformanceAppraisal = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('appraisal.employee')}</label>
-              <select value={form.user_id} onChange={e => setForm({...form, user_id: e.target.value})} className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
-                <option value="">{t('appraisal.selectEmployee')}</option>
-                {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} — {e.nip}</option>)}
-              </select>
+              <div className="flex gap-2">
+                <select value={form.user_id} onChange={e => setForm({...form, user_id: e.target.value})} className="flex-1 bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                  <option value="">{t('appraisal.selectEmployee')}</option>
+                  {employees.map(e => <option key={e.id} value={e.id}>{e.full_name} — {e.nip}</option>)}
+                </select>
+                <button 
+                  type="button"
+                  onClick={() => handleAutoCalculate(form.user_id)}
+                  disabled={!form.user_id || isCalculating}
+                  className="px-4 bg-[var(--aurora-3)]/10 hover:bg-[var(--aurora-3)]/20 text-[var(--aurora-3)] border border-[var(--aurora-3)]/30 rounded-xl text-[10px] font-black uppercase transition-all disabled:opacity-30"
+                  title="Kalkulasi Otomatis dari Log Operasional"
+                >
+                  {isCalculating ? <Loader2 size={14} className="animate-spin" /> : 'Auto-KPI'}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('appraisal.period')}</label>

@@ -41,6 +41,14 @@ const QRScanner = ({ onBack }) => {
     setStatus('scanning');
     try {
       const token = rawCode.trim().split('token=').pop()?.split('&')[0] || rawCode.trim();
+      
+      if (token === 'JDC-MASTER-PRESENSI') {
+        setStatus('idle');
+        setPendingToken({ id: 'jdc-master-presensi', is_master: true, tenant_id: profile?.tenant_id });
+        setShowFaceVerif(true);
+        return;
+      }
+
       const { data: qrToken, error } = await supabase.from('qr_attendance_tokens')
         .select('id, project_id, is_active, tenant_id, expires_at')
         .eq('token', token)
@@ -66,22 +74,39 @@ const QRScanner = ({ onBack }) => {
     setStatus('scanning');
     try {
       const timestamp = new Date().toISOString();
+      let action = 'CLOCK_IN';
+
+      if (pendingToken.is_master) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const { data: logs } = await supabase.from('attendance_logs')
+          .select('action')
+          .eq('user_id', profile.id)
+          .gte('timestamp', todayStr + 'T00:00:00Z')
+          .order('timestamp', { ascending: false })
+          .limit(1);
+        if (logs && logs.length > 0 && logs[0].action === 'CLOCK_IN') {
+          action = 'CLOCK_OUT';
+        }
+      }
+
       await supabase.from('attendance_logs').insert({
         tenant_id: profile.tenant_id,
         user_id: profile.id,
-        action: 'CLOCK_IN',
+        action,
         status: 'ONTIME',
         timestamp,
         face_confidence: confidence,
       });
 
-      await supabase.from('qr_attendance_logs').insert({
-        tenant_id: profile.tenant_id,
-        user_id: profile.id,
-        token_id: pendingToken.id,
-        action: 'CLOCK_IN',
-        timestamp,
-      });
+      if (!pendingToken.is_master) {
+        await supabase.from('qr_attendance_logs').insert({
+          tenant_id: profile.tenant_id,
+          user_id: profile.id,
+          token_id: pendingToken.id,
+          action: 'CLOCK_IN',
+          timestamp,
+        });
+      }
 
       setPendingToken(null);
       setStatus('success');

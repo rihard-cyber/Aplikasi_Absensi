@@ -170,12 +170,12 @@ export default function TargetDashboard({ reports, findings, areas, currentUser,
                 // Custom status/missed areas text
                 let descriptionText = `Target: ${config.target}. `;
                 if (complianceVal === 100) {
-                  descriptionText += 'Seluruh pos patroli aman dan sudah diperiksa.';
+                  descriptionText += 'Seluruh titik checkpoint patroli aman dan sudah diperiksa.';
                 } else if (complianceVal > 0) {
                   const unvisited = floorAreas.filter(a => !reportsToday.some(r => r.areaId === a.id));
-                  descriptionText += `Pos terlewat: ${unvisited.map(a => a.titik).join(', ')}.`;
+                  descriptionText += `Titik terlewat: ${unvisited.map(a => a.titik).join(', ')}.`;
                 } else {
-                  descriptionText += 'Belum ada pos yang dipatroli pada shift ini.';
+                  descriptionText += 'Belum ada titik checkpoint yang dipatroli pada shift ini.';
                 }
 
                 // If there are findings on this floor
@@ -189,7 +189,7 @@ export default function TargetDashboard({ reports, findings, areas, currentUser,
                     <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
                       <span style={{ fontWeight: 700 }}>{config.name}</span>
                       <span style={{ fontWeight: 700, color: colorClass }}>
-                        {complianceVal}% Compliance ({visitedAreas.length}/{floorAreas.length} Pos Checked)
+                        {complianceVal}% Compliance ({visitedAreas.length}/{floorAreas.length} Checkpoint Checked)
                       </span>
                     </div>
                     <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.06)', borderRadius: '3px' }}>

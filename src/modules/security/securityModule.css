@@ -1,0 +1,23 @@
+/* Scoped wrapper — JDC theme hanya di dalam modul keamanan, tidak mengganggu absensi */
+.security-module-embedded {
+  position: relative;
+  width: 100%;
+  min-height: calc(100vh - 4rem);
+  isolation: isolate;
+  background: #070a13;
+}
+
+.security-module-embedded .jdc-root {
+  min-height: calc(100vh - 4rem);
+}
+
+.security-module-loading,
+.security-module-error {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}

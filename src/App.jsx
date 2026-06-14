@@ -8,9 +8,12 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ConfirmProvider } from './components/ConfirmDialog';
 import { NotificationProvider } from './components/Notifications';
 import OfflineIndicator from './components/OfflineIndicator';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { supabase } from './utils/supabaseClient';
 import ErrorBoundary from './components/ErrorBoundary';
 import { executeBackHandlers } from './utils/navigation';
+import { isSecurityDivision } from './utils/featureAccess';
+import { clearAllAuthData } from './utils/authCleanup';
 
 const AttendanceScreen = lazy(() => import('./pages/Employee/AttendanceScreen'));
 const AuthPortal = lazy(() => import('./pages/Auth/AuthPortal'));
@@ -84,7 +87,24 @@ const LoadingScreen = React.memo(() => {
   );
 });
 
-const includeLanding = import.meta.env.VITE_INCLUDE_LANDING !== 'false';
+const isInstalledApp = () => {
+  if (typeof window === 'undefined') return false;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  const isIOSStandalone = window.navigator?.standalone === true;
+  const isCapacitor = !!window.Capacitor;
+  return isStandalone || isIOSStandalone || isCapacitor;
+};
+
+// Global PWA prompt event handler
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    window.deferredPWAInstallPrompt = e;
+    window.dispatchEvent(new CustomEvent('pwa-installable'));
+  });
+}
+
+const includeLanding = import.meta.env.VITE_INCLUDE_LANDING !== 'false' && !isInstalledApp();
 
 const PageTransition = ({ children }) => (
   <motion.div
@@ -136,7 +156,7 @@ const RouteLoadingBar = React.memo(() => {
   );
 });
 
-const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handleLogin, handleImpersonate, handleGodModeReturn, handleLogout }) => {
+const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handleLogin, handleImpersonate, handleGodModeReturn, handleLogout, sessionProfile, clearSessionProfile }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const toast = useToast();
@@ -393,7 +413,13 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
           {/* LOGIN */}
           <Route path="/login" element={
             !isAuthenticated
-              ? <PageTransition><AuthPortal onLogin={handleLogin} /></PageTransition>
+              ? <PageTransition>
+                  <AuthPortal 
+                    onLogin={handleLogin} 
+                    sessionProfile={sessionProfile} 
+                    clearSessionProfile={clearSessionProfile} 
+                  />
+                </PageTransition>
               : <Navigate to={getDashboardRedirect()} replace />
           } />
 
@@ -448,10 +474,17 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
             }
           />
 
-          {/* JDC SECURITY SYSTEM */}
+          {/* JDC SECURITY SYSTEM - hanya untuk Security/Satpam atau Admin (Bypass untuk public complaint) */}
           <Route path="/jdc" element={
-              isAuthenticated
+              (typeof window !== 'undefined' && window.location.href.includes('complaint')) || (
+                isAuthenticated && (
+                  userRole === 'SUPER_ADMIN' ||
+                  userRole === 'TENANT_ADMIN' ||
+                  (() => { try { return isSecurityDivision(localStorage.getItem('user_division')); } catch { return false; } })()
+                )
+              )
                 ? <PageTransition><JDCApp /></PageTransition>
+                : isAuthenticated ? <Navigate to="/app" replace />
                 : <Navigate to="/login" replace />
             }
           />
@@ -467,6 +500,7 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
 
       {/* OFFLINE INDICATOR */}
       <OfflineIndicator />
+      <PWAInstallPrompt />
     </>
   );
 };
@@ -476,15 +510,10 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [originalRole, setOriginalRole] = useState(null);
+  const [sessionProfile, setSessionProfile] = useState(null);
 
   const clearClientAuthCache = useCallback(() => {
-    try { sessionStorage.removeItem('god_key'); } catch {}
-    try { sessionStorage.removeItem('super_admin_verified'); } catch {}
-    try { sessionStorage.removeItem('operational_access'); } catch {}
-    try { sessionStorage.removeItem('attendance_access'); } catch {}
-    try { localStorage.removeItem('is_authenticated'); } catch {}
-    try { localStorage.removeItem('user_role'); } catch {}
-    try { localStorage.removeItem('original_role'); } catch {}
+    clearAllAuthData();
   }, []);
 
   const applyProfileSession = useCallback((profile) => {
@@ -518,7 +547,7 @@ function App() {
     }
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('id, role, tenant_id, operational_access, attendance_access')
+      .select('id, role, tenant_id, operational_access, attendance_access, division_id, divisions(name)')
       .eq('auth_id', session.user.id)
       .maybeSingle();
     if (error || !profile) {
@@ -528,6 +557,8 @@ function App() {
       clearClientAuthCache();
       return;
     }
+    const divisionName = profile.divisions?.name || '';
+    try { localStorage.setItem('user_division', divisionName); } catch {}
     if (profile?.tenant_id) {
       try {
         const { data: tenant } = await supabase
@@ -543,8 +574,12 @@ function App() {
         console.warn("Gagal sinkronisasi data logo tenant:", e);
       }
     }
-    applyProfileSession(profile);
-  }, [applyProfileSession, clearClientAuthCache]);
+    if (!isAuthenticated && profile) {
+      setSessionProfile(profile);
+    } else {
+      applyProfileSession(profile);
+    }
+  }, [isAuthenticated, applyProfileSession, clearClientAuthCache]);
 
   useEffect(() => {
     let isMounted = true;
@@ -605,10 +640,9 @@ function App() {
     setIsAuthenticated(false);
     setUserRole(null);
     setOriginalRole(null);
-    try { sessionStorage.clear(); } catch {}
-    try { await supabase.auth.signOut(); } catch {}
-    clearClientAuthCache();
-  }, [clearClientAuthCache]);
+    await supabase.auth.signOut();
+    clearAllAuthData();
+  }, []);
 
   // Session Heartbeat (lightweight)
   useEffect(() => {
@@ -636,16 +670,18 @@ function App() {
         <ToastProvider>
           <ConfirmProvider>
             <NotificationProvider>
-            <AppRoutes
-              isAuthenticated={isAuthenticated}
-              authLoading={authLoading}
-              userRole={userRole}
-              originalRole={originalRole}
-              handleLogin={handleLogin}
-              handleImpersonate={handleImpersonate}
-              handleGodModeReturn={handleGodModeReturn}
-              handleLogout={handleLogout}
-            />
+             <AppRoutes
+               isAuthenticated={isAuthenticated}
+               authLoading={authLoading}
+               userRole={userRole}
+               originalRole={originalRole}
+               handleLogin={handleLogin}
+               handleImpersonate={handleImpersonate}
+               handleGodModeReturn={handleGodModeReturn}
+               handleLogout={handleLogout}
+               sessionProfile={sessionProfile}
+               clearSessionProfile={() => setSessionProfile(null)}
+             />
             </NotificationProvider>
           </ConfirmProvider>
         </ToastProvider>

@@ -21,6 +21,14 @@ import OvertimeRequest from './components/OvertimeRequest';
 import HelpdeskRequest from './components/HelpdeskRequest';
 import BookingRequest from './components/BookingRequest';
 import PatrolScan from './components/PatrolScan';
+import EmployeeMutasi from './components/EmployeeMutasi';
+import EmployeeTemuan from './components/EmployeeTemuan';
+import CleaningTask from './components/CleaningTask';
+import TeknisiTask from './components/TeknisiTask';
+import DriverTrip from './components/DriverTrip';
+import OfficeGATask from './components/OfficeGATask';
+import ITTask from './components/ITTask';
+import LegalTask from './components/LegalTask';
 import HomeAddressRegistration from './components/HomeAddressRegistration';
 import DailyTaskPlan from './components/DailyTaskPlan';
 import ShiftSwapRequest from './components/ShiftSwapRequest';
@@ -757,6 +765,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
     hybrid_work: true,
     payroll: true
   });
+  const [rolePermissions, setRolePermissions] = useState(null);
 
   // Handle layer-by-layer back button
   useEffect(() => {
@@ -898,7 +907,8 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
             setUserData({
               full_name: fullProfile.full_name || 'Karyawan',
               position: fullProfile.position || (fullProfile.role === 'SUB_ADMIN' ? 'Supervisor' : 'Staff'),
-              division: dName
+              division: dName,
+              role: fullProfile.role || 'EMPLOYEE'
             });
             setStats(prev => ({ ...prev, leaveBalance: fullProfile.leave_balance || 12 }));
           }
@@ -950,6 +960,22 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
               }
             } catch (err) {
               console.error("Gagal menarik module flags:", err);
+            }
+
+            try {
+              const { data: rpData } = await supabase
+                .from('tenant_role_permissions')
+                .select('role_name, allowed_modules')
+                .eq('tenant_id', tid);
+              if (rpData && rpData.length > 0) {
+                const rpObj = {};
+                rpData.forEach(p => {
+                  rpObj[p.role_name] = p.allowed_modules || [];
+                });
+                setRolePermissions(rpObj);
+              }
+            } catch (rpErr) {
+              console.warn("Gagal menarik role permissions:", rpErr);
             }
           }
 
@@ -1061,16 +1087,28 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
             <HelpdeskRequest key="helpdesk" onBack={() => setActiveSubView(null)} />
           ) : activeSubView === 'booking' ? (
             <BookingRequest key="booking" onBack={() => setActiveSubView(null)} />
-          ) : ['patrol-scan', 'patrol-lapor', 'patrol-mutasi', 'patrol-handover'].includes(activeSubView) ? (
+          ) : activeSubView === 'patrol-scan' || activeSubView === 'patrol-handover' ? (
             <PatrolScan 
               key="patrol-scan" 
               onBack={() => setActiveSubView(null)} 
-              initialTab={
-                activeSubView === 'patrol-lapor' ? 'lapor' :
-                activeSubView === 'patrol-mutasi' ? 'mutasi' :
-                activeSubView === 'patrol-handover' ? 'handover' : 'patroli'
-              } 
+              initialTab={activeSubView === 'patrol-handover' ? 'handover' : 'patroli'} 
             />
+          ) : activeSubView === 'patrol-mutasi' ? (
+            <EmployeeMutasi key="employee-mutasi" onBack={() => setActiveSubView(null)} user={userData} />
+          ) : activeSubView === 'patrol-lapor' ? (
+            <EmployeeTemuan key="employee-temuan" onBack={() => setActiveSubView(null)} user={userData} />
+          ) : activeSubView === 'cleaning-task' ? (
+            <CleaningTask key="cleaning-task" onBack={() => setActiveSubView(null)} user={userData} />
+          ) : activeSubView === 'teknisi-task' ? (
+            <TeknisiTask key="teknisi-task" onBack={() => setActiveSubView(null)} user={userData} />
+          ) : activeSubView === 'driver-trip' ? (
+            <DriverTrip key="driver-trip" onBack={() => setActiveSubView(null)} user={userData} />
+          ) : activeSubView === 'office-ga' ? (
+            <OfficeGATask key="office-ga" onBack={() => setActiveSubView(null)} user={userData} />
+          ) : activeSubView === 'it-equipment' ? (
+            <ITTask key="it-equipment" onBack={() => setActiveSubView(null)} user={userData} />
+          ) : activeSubView === 'legal-view' ? (
+            <LegalTask key="legal-view" onBack={() => setActiveSubView(null)} user={userData} />
           ) : activeSubView === 'home-address' ? (
             <HomeAddressRegistration key="home-address" onBack={() => setActiveSubView(null)} />
           ) : activeSubView === 'task-plan' ? (
@@ -1118,6 +1156,7 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
               stats={stats}
               companyInfo={companyInfo}
               modules={modules}
+              rolePermissions={rolePermissions}
             />
           ) : activeTab === 'absensi' ? (
             <ClockInTab key="absensi" />

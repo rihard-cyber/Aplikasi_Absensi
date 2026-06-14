@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, Suspense } from 'react';
 import { createPortal } from 'react-dom';
-import { ShieldAlert, Globe, Activity, Settings, Search, Users, Zap, BarChart3, ShieldCheck, MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, LogOut, Loader2, Sparkles, DollarSign, Menu, Sun, Moon, Bell } from 'lucide-react';
+import { ShieldAlert, Globe, Activity, Settings, Search, Users, Zap, BarChart3, ShieldCheck, MapPin, Home, Clock, FileText, User, Fingerprint, CheckCircle2, LogOut, Loader2, Sparkles, DollarSign, Menu, Sun, Moon, Bell, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../utils/supabaseClient';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +31,7 @@ const GlobalFinance = React.lazy(() => import('./components/GlobalFinance'));
 const GlobalAudit = React.lazy(() => import('./components/GlobalAudit'));
 const SubAdminDashboard = React.lazy(() => import('../SubAdmin/SubAdminDashboard'));
 const DemoApproval = React.lazy(() => import('./components/DemoApproval'));
+const TenantAuthorityControl = React.lazy(() => import('./components/TenantAuthorityControl'));
 
 const LSusp = ({ children }) => <Suspense fallback={<div className="flex items-center justify-center py-16"><Loader2 size={24} className="animate-spin text-[var(--aurora-3)]" /></div>}>{children}</Suspense>;
 
@@ -70,74 +71,172 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
   const [terminalLogs, setTerminalLogs] = useState([]);
   const [metrics, setMetrics] = useState({ activeTenants: 4, totalTenants: 5, activeUsers: 4800, maxUsers: 7800, validLicenses: 4 });
 
+  const fetchSaaSMetrics = useCallback(async () => {
+    try {
+      const { data: tenantData } = await supabase.from('tenants').select('is_active, max_users, days_left');
+      const { count: totalUsers } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+      
+      if (tenantData) {
+        const total = tenantData.length;
+        const active = tenantData.filter(t => t.is_active).length;
+        const maxUsrs = tenantData.reduce((acc, t) => acc + (t.max_users || 0), 0);
+        const validLics = tenantData.filter(t => t.days_left > 30).length;
+        
+        setMetrics({
+          activeTenants: active,
+          totalTenants: total || 1,
+          activeUsers: totalUsers || 0,
+          maxUsers: maxUsrs || 100,
+          validLicenses: validLics
+        });
+      }
+    } catch (err) {
+      console.warn("Metrics fetch failed", err);
+    }
+  }, []);
+
   React.useEffect(() => {
-    // Fetch initial audit logs from Supabase
+    fetchSaaSMetrics();
+  }, [fetchSaaSMetrics]);
+
+  React.useEffect(() => {
     const fetchTerminalLogs = async () => {
       try {
-        const { data } = await supabase
+        const { data: auditData } = await supabase
           .from('audit_logs')
-          .select('id, action, created_at, profiles(full_name)')
+          .select('id, action, details, created_at, user_id')
           .order('created_at', { ascending: false })
-          .limit(15);
-        if (data) {
-          const formatted = data.map(log => ({
-            time: new Date(log.created_at).toLocaleTimeString('id-ID'),
-            text: `⚙️ [AUDIT] Aksi ${log.action} oleh ${log.profiles?.full_name || 'Sistem'}`,
-            color: log.action.includes('DEACTIVATE') ? '#FF0055' : log.action.includes('ACTIVATE') ? '#00FF87' : '#00C9FF'
-          }));
-          setTerminalLogs(formatted);
-        }
-      } catch (err) {
-        console.warn("Terminal logs fetch failed", err);
-      }
-    };
-    fetchTerminalLogs();
-
-    // Set up a mock interval to simulate real-time operations
-    const mockEvents = [
-      { text: "🔒 Impersonasi sesi Tenant Admin diaktifkan (God Mode)", color: "#FFD700" },
-      { text: "🚀 Entitas CV. Maju Jaya diperpanjang +365 Hari lisensi", color: "#00FF87" },
-      { text: "🎯 Modul Payroll Fase 2 dimuat untuk Tenant Company Alpha", color: "#00C9FF" },
-      { text: "💾 Backup terjadwal untuk Ultimate Master Schema selesai", color: "#8E2DE2" },
-      { text: "🔑 Reset token keamanan admin untuk PT. Provices Project", color: "#00C9FF" }
-    ];
-
-    const interval = setInterval(() => {
-      const randomEvent = mockEvents[Math.floor(Math.random() * mockEvents.length)];
-      const now = new Date().toLocaleTimeString('id-ID');
-      setTerminalLogs(prev => [
-        { time: now, text: randomEvent.text, color: randomEvent.color },
-        ...prev.slice(0, 14)
-      ]);
-    }, 8000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  React.useEffect(() => {
-    const fetchSaaSMetrics = async () => {
-      try {
-        const { data } = await supabase.from('tenants').select('is_active, max_users, days_left');
-        if (data && data.length > 0) {
-          const total = data.length;
-          const active = data.filter(t => t.is_active).length;
-          const maxUsrs = data.reduce((acc, t) => acc + (t.max_users || 0), 0);
-          const validLics = data.filter(t => t.days_left > 30).length;
+          .limit(10);
           
-          setMetrics({
-            activeTenants: active,
-            totalTenants: total || 1,
-            activeUsers: Math.round(maxUsrs * 0.45), // Mock active user percentage based on capacity
-            maxUsers: maxUsrs || 100,
-            validLicenses: validLics
+        const { data: attendanceData } = await supabase
+          .from('attendance_logs')
+          .select('id, action, status, timestamp, user_id, profiles(full_name)')
+          .order('timestamp', { ascending: false })
+          .limit(10);
+          
+        let logsList = [];
+        
+        if (auditData) {
+          for (const log of auditData) {
+            let userName = 'Sistem';
+            if (log.user_id) {
+              const { data: prof } = await supabase.from('profiles').select('full_name').eq('auth_id', log.user_id).maybeSingle();
+              if (prof) userName = prof.full_name;
+            }
+            logsList.push({
+              time: new Date(log.created_at).toLocaleTimeString('id-ID'),
+              timestamp: new Date(log.created_at).getTime(),
+              text: `⚙️ [AUDIT] Aksi ${log.action}: ${log.details || ''} oleh ${userName}`,
+              color: log.action.includes('DEACTIVATE') || log.action.includes('KILL') ? '#FF0055' : log.action.includes('ACTIVATE') || log.action.includes('EXTEND') ? '#00FF87' : '#00C9FF'
+            });
+          }
+        }
+        
+        if (attendanceData) {
+          attendanceData.forEach(log => {
+            logsList.push({
+              time: new Date(log.timestamp).toLocaleTimeString('id-ID'),
+              timestamp: new Date(log.timestamp).getTime(),
+              text: `👤 [ABSENSI] ${log.profiles?.full_name || 'Karyawan'} - ${log.action === 'CLOCK_IN' ? 'CLOCK IN' : 'CLOCK OUT'} (${log.status})`,
+              color: log.status === 'LATE' ? '#FFD700' : log.status === 'OUT_OF_RANGE' ? '#FF0055' : '#00FF87'
+            });
           });
         }
+        
+        logsList.sort((a, b) => b.timestamp - a.timestamp);
+        setTerminalLogs(logsList.slice(0, 15));
       } catch (err) {
-        console.warn("Metrics fetch failed", err);
+        console.warn("Terminal logs initial fetch failed", err);
       }
     };
-    fetchSaaSMetrics();
-  }, []);
+
+    fetchTerminalLogs();
+
+    const auditChannel = supabase
+      .channel('realtime:audit_logs')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, async (payload) => {
+        const newLog = payload.new;
+        let userName = 'Sistem';
+        if (newLog.user_id) {
+          const { data: prof } = await supabase.from('profiles').select('full_name').eq('auth_id', newLog.user_id).maybeSingle();
+          if (prof) userName = prof.full_name;
+        }
+        const now = new Date(newLog.created_at).toLocaleTimeString('id-ID');
+        const text = `⚙️ [AUDIT] Aksi ${newLog.action}: ${newLog.details || ''} oleh ${userName}`;
+        const color = newLog.action.includes('DEACTIVATE') || newLog.action.includes('KILL') ? '#FF0055' : newLog.action.includes('ACTIVATE') || newLog.action.includes('EXTEND') ? '#00FF87' : '#00C9FF';
+        
+        setTerminalLogs(prev => [
+          { time: now, text, color, timestamp: new Date(newLog.created_at).getTime() },
+          ...prev
+        ].sort((a, b) => b.timestamp - a.timestamp).slice(0, 15));
+        fetchSaaSMetrics();
+      })
+      .subscribe();
+
+    const attendanceChannel = supabase
+      .channel('realtime:attendance_logs')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'attendance_logs' }, async (payload) => {
+        const newLog = payload.new;
+        let userName = 'Karyawan';
+        if (newLog.user_id) {
+          const { data: prof } = await supabase.from('profiles').select('full_name').eq('id', newLog.user_id).maybeSingle();
+          if (prof) userName = prof.full_name;
+        }
+        const now = new Date(newLog.timestamp).toLocaleTimeString('id-ID');
+        const text = `👤 [ABSENSI] ${userName} - ${newLog.action === 'CLOCK_IN' ? 'CLOCK IN' : 'CLOCK OUT'} (${newLog.status})`;
+        const color = newLog.status === 'LATE' ? '#FFD700' : newLog.status === 'OUT_OF_RANGE' ? '#FF0055' : '#00FF87';
+        
+        setTerminalLogs(prev => [
+          { time: now, text, color, timestamp: new Date(newLog.timestamp).getTime() },
+          ...prev
+        ].sort((a, b) => b.timestamp - a.timestamp).slice(0, 15));
+        fetchSaaSMetrics();
+      })
+      .subscribe();
+
+    const profileChannel = supabase
+      .channel('realtime:profiles')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const newProf = payload.new;
+          const now = new Date(newProf.created_at).toLocaleTimeString('id-ID');
+          const text = `🆕 [PENGGUNA] Akun baru terdaftar: ${newProf.full_name} (${newProf.nip || 'Tanpa NIP'}) - ${newProf.position || 'Staff'}`;
+          const color = '#8E2DE2';
+          
+          setTerminalLogs(prev => [
+            { time: now, text, color, timestamp: new Date(newProf.created_at).getTime() },
+            ...prev
+          ].sort((a, b) => b.timestamp - a.timestamp).slice(0, 15));
+        }
+        fetchSaaSMetrics();
+      })
+      .subscribe();
+
+    const tenantChannel = supabase
+      .channel('realtime:tenants')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tenants' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const newT = payload.new;
+          const now = new Date(newT.created_at).toLocaleTimeString('id-ID');
+          const text = `🏢 [SaaS] Tenant Baru Terdaftar: ${newT.name} (${newT.tier})`;
+          const color = '#00C9FF';
+          
+          setTerminalLogs(prev => [
+            { time: now, text, color, timestamp: new Date(newT.created_at).getTime() },
+            ...prev
+          ].sort((a, b) => b.timestamp - a.timestamp).slice(0, 15));
+        }
+        fetchSaaSMetrics();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(auditChannel);
+      supabase.removeChannel(attendanceChannel);
+      supabase.removeChannel(profileChannel);
+      supabase.removeChannel(tenantChannel);
+    };
+  }, [fetchSaaSMetrics]);
 
   // Prevent background scroll when God Menu is open
   React.useEffect(() => {
@@ -196,6 +295,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
   const superNavItems = [
     { key: 'infrastructure', label: 'Infrastructure', icon: Globe, color: 'var(--aurora-3)' },
     { key: 'operations', label: 'Global Operations', icon: Activity, color: 'var(--aurora-1)' },
+    { key: 'authority', label: 'Otoritas & Tenant', icon: Shield, color: 'var(--warning)' },
     { key: 'shifts', label: 'Jadwal Global', icon: Clock, color: 'var(--warning)' },
     { key: 'finance', label: 'Finance', icon: DollarSign, color: 'var(--success)' },
     { key: 'audit', label: 'Global Audit', icon: FileText, color: 'var(--danger)' },
@@ -211,6 +311,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
     switch (activeTab) {
       case 'infrastructure': return 'SaaS Infrastructure';
       case 'operations': return 'Global Operations';
+      case 'authority': return 'Otoritas & Tenant';
       case 'shifts': return 'Jadwal Global';
       case 'finance': return 'Keuangan Global';
       case 'audit': return 'Global Audit Trail';
@@ -612,6 +713,11 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
         {activeTab === 'operations' && (
           <motion.div key="ops" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 z-10">
             <LSusp><SubAdminDashboard isEmbedded={true} initialTab="monitor" /></LSusp>
+          </motion.div>
+        )}
+        {activeTab === 'authority' && (
+          <motion.div key="authority" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="flex-1 z-10">
+            <LSusp><TenantAuthorityControl searchQuery={searchQuery} /></LSusp>
           </motion.div>
         )}
         {activeTab === 'shifts' && (

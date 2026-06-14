@@ -52,6 +52,7 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isGod, setIsGod] = useState(false);
   const [isImpersonating, setIsImpersonating] = useState(false);
+  const [accessLevel, setAccessLevel] = useState('full'); // 'full' | 'limited'
 
   // --- Data states ---
   const [todayAttendance, setTodayAttendance] = useState([]);
@@ -88,11 +89,13 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
         .maybeSingle();
       if (prof) {
         const role = prof.role?.toUpperCase();
-        const authOk = isEmbedded || ['SUPER_ADMIN', 'TENANT_ADMIN', 'SUB_ADMIN'].includes(role) || (role === 'EMPLOYEE' && prof.operational_access);
+        const isLimited = role === 'EMPLOYEE' && prof.operational_access;
+        const authOk = isEmbedded || ['SUPER_ADMIN', 'TENANT_ADMIN', 'SUB_ADMIN'].includes(role) || isLimited;
         if (!authOk) {
           navigate('/');
           return;
         }
+        setAccessLevel(isLimited ? 'limited' : 'full');
         setMyTenantId(prof.tenant_id);
         setIsAuthorized(true);
       } else if (isGod) {
@@ -268,7 +271,7 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
       {!isEmbedded && <DeveloperWatermarkBackground theme="dark" />}
       {!isEmbedded && (
         <GlobalHeader 
-          title="PORTAL OPERASIONAL" 
+          title={"PORTAL OPERASIONAL" + (accessLevel === 'limited' ? ' (TERBATAS)' : '')}
           onBack={() => {
             const role = localStorage.getItem('user_role');
             if (role === 'TENANT_ADMIN') {
@@ -278,6 +281,14 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
             }
           }} 
         />
+      )}
+      {accessLevel === 'limited' && !isEmbedded && (
+        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-2">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--warning)]/10 border border-[var(--warning)]/20 text-[var(--warning)] text-xs font-bold">
+            <ShieldAlert size={14} />
+            Akses Terbatas — Anda login sebagai Karyawan dengan hak Operasional
+          </div>
+        </div>
       )}
       <div className={`max-w-6xl mx-auto w-full flex-1 ${isEmbedded ? '' : 'p-4 sm:p-6 pb-24 lg:pb-6'}`}>
 

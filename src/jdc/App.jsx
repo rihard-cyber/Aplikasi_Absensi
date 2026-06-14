@@ -83,6 +83,7 @@ const ManagementDashboard = lazy(() => import('./components/ManagementDashboard'
 const SecurityPatrolApp = lazy(() => import('./components/SecurityPatrolApp'));
 const BarcodeGenerator = lazy(() => import('./components/BarcodeGenerator'));
 const ComplaintAdmin = lazy(() => import('./components/ComplaintAdmin'));
+const DutyAssignment = lazy(() => import('./components/DutyAssignment'));
 
 const DB_VERSION_KEY = 'smpjdc_db_version';
 const CURRENT_DB_VERSION = '5.2-stable';
@@ -312,12 +313,51 @@ export function OrnamentalWatermark() {
   );
 }
 
-export default function App() {
-  const [authenticated, setAuthenticated] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
+export default function App({
+  embedded = false,
+  saasUser = null,
+  onBack = null,
+  skipSplash = false,
+} = {}) {
+  const [authenticated, setAuthenticated] = useState(
+    embedded && saasUser ? true : null
+  );
+  const [currentUser, setCurrentUser] = useState(embedded && saasUser ? saasUser : null);
   const [hasUsers, setHasUsers] = useState(true);
   const [firebaseUsersLoaded, setFirebaseUsersLoaded] = useState(false);
   const [showSplash, setShowSplash] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(() => {
+    try {
+      return localStorage.getItem('tenant_logo_url') || 'jdc-logo.png';
+    } catch {
+      return 'jdc-logo.png';
+    }
+  });
+
+  useEffect(() => {
+    const checkLogo = () => {
+      try {
+        const cached = localStorage.getItem('tenant_logo_url');
+        if (cached) setLogoUrl(cached);
+      } catch {}
+    };
+    checkLogo();
+    window.addEventListener('storage', checkLogo);
+    return () => window.removeEventListener('storage', checkLogo);
+  }, []);
+
+  // Embedded SaaS: auto-login dari session absensi (tanpa NRP/PIN kedua)
+  useEffect(() => {
+    if (!embedded || !saasUser) return;
+    setCurrentUser(saasUser);
+    setAuthenticated(true);
+    setShowSplash(false);
+    const targetTab = ['Danru', 'Wadanru', 'Anggota'].includes(saasUser.jabatan)
+      ? 'guard-simulator'
+      : 'dashboard';
+    setCurrentTab(targetTab);
+    try { localStorage.setItem('smpjdc_last_route', targetTab); } catch {}
+  }, [embedded, saasUser]);
   const [cyberLogs, setCyberLogs] = useState([]);
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState('BOOTING...');
@@ -462,6 +502,8 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (embedded && saasUser) return;
+
     const stored = localStorage.getItem('sapujagat_users');
     const users = stored ? JSON.parse(stored) : null;
     const hasExistingUsers = Array.isArray(users) && users.length > 0;
@@ -520,7 +562,7 @@ export default function App() {
       }
     }
     setAuthenticated(false);
-  }, []);
+  }, [embedded, saasUser]);
 
   // Sync tab state when browser popstate triggers (e.g. Back button in browser/PWA)
   useEffect(() => {
@@ -2119,12 +2161,24 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    if (embedded && onBack) {
+      onBack();
+      return;
+    }
     localStorage.removeItem('smpjdc_session');
     localStorage.removeItem('smpjdc_last_route');
     setAuthenticated(false);
     setCurrentUser(null);
     setShowSplash(false);
     addToast('Anda telah logout', 'info');
+  };
+
+  const handleBackToSaas = () => {
+    if (embedded && onBack) {
+      onBack();
+      return;
+    }
+    window.location.hash = '#/tenantadmin';
   };
 
   const handleNavClick = (tabName) => {
@@ -2175,7 +2229,7 @@ export default function App() {
   const isPatrol = ['Danru', 'Wadanru', 'Anggota', 'BKO', 'KH (Khusus)', 'Middle 1', 'Middle 2'].includes(currentUser?.jabatan);
 
   // Public complaint form — accessible without login via QR code or direct URL
-  const isPublicComplaint = typeof window !== 'undefined' && window.location.search.includes('complaint');
+  const isPublicComplaint = typeof window !== 'undefined' && window.location.href.includes('complaint');
   if (isPublicComplaint) {
     return (
       <div style={{ minHeight: '100vh', background: '#0f172a', position: 'relative' }}>
@@ -2198,7 +2252,7 @@ export default function App() {
     );
   }
 
-  if (showSplash) {
+  if (showSplash && !(embedded && skipSplash)) {
     return (
       <div className="splash-screen cyber-screen">
         <div className="cyber-corner corner-tl"></div>
@@ -2213,7 +2267,7 @@ export default function App() {
           <div className="hud-ring ring-inner"></div>
           <div className="hud-ring ring-dashed"></div>
           <div className="splash-logo-container">
-            <img src="jdc-logo.png" alt="SMPJDC" className="splash-logo cyber-logo logo-3d-spin" />
+            <img src={logoUrl} alt="SMPJDC" className="splash-logo cyber-logo logo-3d-spin" onError={() => setLogoUrl('jdc-logo.png')} />
           </div>
         </div>
         <div className="cyber-progress-container">
@@ -2253,7 +2307,7 @@ export default function App() {
       <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-brand">
           <div className="sidebar-logo-box">
-            <img src="jdc-logo.png" alt="SMPJDC" className="logo-3d" />
+            <img src={logoUrl} alt="SMPJDC" className="logo-3d" onError={() => setLogoUrl('jdc-logo.png')} />
           </div>
           <div>
             <h2>SMPJDC<span className="text-primary"> JDC</span></h2>
@@ -2279,7 +2333,10 @@ export default function App() {
                 <LayoutDashboard size={18} /> <span>Dashboard Utama</span>
               </button>
               <button onClick={() => handleNavClick('absensi')} className={`nav-tab-btn ${currentTab === 'absensi' ? 'active' : ''}`}>
-                <ClipboardList size={18} /> <span>Absensi & Plotting</span>
+                <ClipboardList size={18} /> <span>Absensi Regu</span>
+              </button>
+              <button onClick={() => handleNavClick('duty-assignment')} className={`nav-tab-btn ${currentTab === 'duty-assignment' ? 'active' : ''}`}>
+                <MapPin size={18} /> <span>Plotingan Harian</span>
               </button>
               <button onClick={() => handleNavClick('target-compliance')} className={`nav-tab-btn ${currentTab === 'target-compliance' ? 'active' : ''}`}>
                 <Target size={18} /> <span>Dashboard Target</span>
@@ -2319,7 +2376,10 @@ export default function App() {
                 <LayoutDashboard size={18} /> <span>Dashboard Management</span>
               </button>
               <button onClick={() => handleNavClick('absensi')} className={`nav-tab-btn ${currentTab === 'absensi' ? 'active' : ''}`}>
-                <ClipboardList size={18} /> <span>Absensi & Plotting</span>
+                <ClipboardList size={18} /> <span>Absensi Regu</span>
+              </button>
+              <button onClick={() => handleNavClick('duty-assignment')} className={`nav-tab-btn ${currentTab === 'duty-assignment' ? 'active' : ''}`}>
+                <MapPin size={18} /> <span>Plotingan Harian</span>
               </button>
               <button onClick={() => handleNavClick('target-compliance')} className={`nav-tab-btn ${currentTab === 'target-compliance' ? 'active' : ''}`}>
                 <Target size={18} /> <span>Dashboard Target</span>
@@ -2358,7 +2418,10 @@ export default function App() {
               {['Danru', 'Wadanru'].includes(currentUser.jabatan) && (
                 <>
                   <button onClick={() => handleNavClick('absensi')} className={`nav-tab-btn ${currentTab === 'absensi' ? 'active' : ''}`}>
-                    <ClipboardList size={18} /> <span>Absensi & Plotting</span>
+                    <ClipboardList size={18} /> <span>Absensi Regu</span>
+                  </button>
+                  <button onClick={() => handleNavClick('duty-assignment')} className={`nav-tab-btn ${currentTab === 'duty-assignment' ? 'active' : ''}`}>
+                    <MapPin size={18} /> <span>Plotingan Harian</span>
                   </button>
                   <button onClick={() => handleNavClick('mutasi')} className={`nav-tab-btn ${currentTab === 'mutasi' ? 'active' : ''}`}>
                     <BookOpen size={18} /> <span>Mutasi Penjagaan</span>
@@ -2387,9 +2450,9 @@ export default function App() {
             {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
             <span>{theme === 'dark' ? 'Mode Terang' : 'Mode Gelap'}</span>
           </button>
-          <button onClick={() => window.location.hash = '#/tenantadmin'} className="sidebar-logout-btn" style={{ borderColor: 'rgba(59, 130, 246, 0.3)', color: '#3b82f6', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }} title="Kembali ke Dashboard">
+          <button onClick={handleBackToSaas} className="sidebar-logout-btn" style={{ borderColor: 'rgba(59, 130, 246, 0.3)', color: '#3b82f6', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }} title="Kembali ke Dashboard">
             <ArrowLeft size={15} />
-            <span>Kembali ke Absensi</span>
+            <span>{embedded ? 'Kembali ke Admin' : 'Kembali ke Absensi'}</span>
           </button>
           <button onClick={handleLogout} className="sidebar-logout-btn" title="Keluar">
             <LogOut size={15} />
@@ -2411,13 +2474,14 @@ export default function App() {
                 {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
               <div className="header-logo-box">
-                <img src="jdc-logo.png" alt="SMPJDC" className="logo-3d" />
+                <img src={logoUrl} alt="SMPJDC" className="logo-3d" onError={() => setLogoUrl('jdc-logo.png')} />
               </div>
               <div className="header-brand-text">
                 <span className="header-brand-name">SMPJDC</span>
                 <h1 className="header-page-title">
                   {currentTab === 'dashboard' && 'Dashboard Manajemen Keamanan'}
-                  {currentTab === 'absensi' && 'Absensi & Plotting Penjagaan'}
+                  {currentTab === 'absensi' && 'Absensi Regu Penjagaan'}
+                  {currentTab === 'duty-assignment' && 'Daily Plotting & Tasking'}
                   {currentTab === 'target-compliance' && 'Dashboard Target & SLA'}
                   {currentTab === 'barcodes' && 'Master Area & Barcode Generator'}
                   {currentTab === 'mutasi' && 'Mutasi Penjagaan'}
@@ -2526,6 +2590,12 @@ export default function App() {
                 });
               }} 
             />
+          )}
+
+          {currentTab === 'duty-assignment' && (
+            <Suspense fallback={<div className="loading-pulse" style={{padding:'2rem',textAlign:'center',color:'var(--text-muted)'}}>Memuat Modul Plotingan...</div>}>
+              <DutyAssignment />
+            </Suspense>
           )}
 
           {currentTab === 'target-compliance' && (

@@ -17,6 +17,8 @@ const NOTIF_TYPES = {
   SHIFT_SWAP_REJECTED: 'shift_swap_rejected',
   VISITOR_CHECKED_IN: 'visitor_checked_in',
   MISSED_GUARD: 'missed_guard',
+  DOC_EXPIRY: 'doc_expiry',
+  DUTY_ASSIGNED: 'duty_assigned',
   INFO: 'info',
 };
 

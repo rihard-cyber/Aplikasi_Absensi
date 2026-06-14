@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Settings, FileText, CheckCircle, Activity, Calculator, BarChart3, ShieldCheck, Building2, Megaphone, CalendarDays, LogOut, XCircle, Upload, Fingerprint, Users, DollarSign, TrendingUp, Sun, Moon, Calendar, Star, Briefcase, Gift, ScrollText, PartyPopper, ClipboardList, QrCode, Activity as ActivityIcon, LineChart, UserCircle, Wallet, Layers, GitBranch, Landmark, ClipboardCheck, Image, Wrench, Zap, Wifi, Bot, ScanLine, Webhook, Headphones, Route, DoorOpen, UserCheck, Hammer, Truck, Package, AlertTriangle, Repeat, Home, MapPin, Bell, Menu } from 'lucide-react';
+import { Settings, FileText, CheckCircle, Activity, Calculator, BarChart3, ShieldCheck, Building2, Megaphone, CalendarDays, LogOut, XCircle, Upload, Fingerprint, Users, DollarSign, TrendingUp, Sun, Moon, Calendar, Star, Briefcase, Gift, ScrollText, PartyPopper, ClipboardList, QrCode, Activity as ActivityIcon, LineChart, UserCircle, Wallet, Layers, GitBranch, Landmark, ClipboardCheck, Image, Wrench, Zap, Wifi, Bot, ScanLine, Webhook, Headphones, Route, DoorOpen, UserCheck, Hammer, Truck, Package, AlertTriangle, Repeat, Home, MapPin, Bell, Menu, Target, Building, HardDrive, Monitor, Scale, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '../../components/ConfirmDialog';
 import { useTheme } from '../../context/ThemeContext';
@@ -57,6 +57,7 @@ const SalaryComponents = lazy(() => import('./components/SalaryComponents'));
 const SalaryRevision = lazy(() => import('./components/SalaryRevision'));
 const SystemConfig = lazy(() => import('./components/SystemConfig'));
 const TaxReports = lazy(() => import('./components/TaxReports'));
+const RoleMappingSettings = lazy(() => import('./components/RoleMappingSettings'));
 // Phase 2 — Essential Features
 const AutoShift = lazy(() => import('./components/AutoShift'));
 const BPJSCalculator = lazy(() => import('./components/BPJSCalculator'));
@@ -67,6 +68,15 @@ const OCRScanner = lazy(() => import('./components/OCRScanner'));
 const HRChatbot = lazy(() => import('./components/HRChatbot'));
 const WebhookSettings = lazy(() => import('./components/WebhookSettings'));
 
+const SLADashboard = lazy(() => import('./components/SLADashboard'));
+const TenantComplaintAdmin = lazy(() => import('./components/TenantComplaintAdmin'));
+const BackupRestore = lazy(() => import('./components/BackupRestore'));
+const RosterGrid = lazy(() => import('./components/RosterGrid'));
+const WADispatch = lazy(() => import('./components/WADispatch'));
+const CleaningManagement = lazy(() => import('./components/CleaningManagement'));
+const EngineeringManagement = lazy(() => import('./components/EngineeringManagement'));
+const DriverManagement = lazy(() => import('./components/DriverManagement'));
+const OfficeGAManagement = lazy(() => import('./components/OfficeGAManagement'));
 const TimesheetView = lazy(() => import('./components/TimesheetView'));
 const OvertimeManagement = lazy(() => import('./components/OvertimeManagement'));
 const HelpdeskTicketing = lazy(() => import('./components/HelpdeskTicketing'));
@@ -80,6 +90,9 @@ const IncidentReporting = lazy(() => import('./components/IncidentReporting'));
 const ShiftSwapManagement = lazy(() => import('./components/ShiftSwapManagement'));
 const HybridWorkSettings = lazy(() => import('./components/HybridWorkSettings'));
 const WorkModeDashboard = lazy(() => import('./components/WorkModeDashboard'));
+const ITManagement = lazy(() => import('./components/ITManagement'));
+const LegalManagement = lazy(() => import('./components/LegalManagement'));
+const SecurityOpsShell = lazy(() => import('../../modules/security/SecurityOpsShell'));
 import HRISExportWrapper from '../../components/HRISExportWrapper';
 import { supabase } from '../../utils/supabaseClient';
 
@@ -154,6 +167,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
       'helpdesk': 'helpdesk',
       'work-order': 'work_order',
       'patrol': 'patrol',
+      'security-ops': 'patrol',
       'visitor': 'visitor',
       'facility-booking': 'booking',
       'incident': 'incident',
@@ -175,7 +189,9 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
       'bank-export': 'payroll',
       'thr': 'payroll',
       'bpjs-calculator': 'payroll',
-      'form-1721': 'payroll'
+      'form-1721': 'payroll',
+      'it-management': 'it',
+      'legal-management': 'legal'
     };
     const mappedModule = tabModuleMapping[activeTab];
     if (mappedModule && !modules[mappedModule]) {
@@ -255,6 +271,12 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
       case 'auto-shift': return 'JADWAL OTOMATIS';
       case 'schedule': return 'UNGGAH JADWAL';
       case 'schedule-calendar': return 'KALENDAR SHIFT';
+      case 'roster-grid': return 'ROSTER BULANAN';
+      case 'wa-dispatch': return 'LAPORAN & WA DISPATCH';
+      case 'cleaning': return 'CLEANING MANAGEMENT';
+      case 'engineering': return 'ENGINEERING';
+      case 'driver': return 'DRIVER';
+      case 'office-ga': return 'OFFICE / GA';
       case 'holidays': return 'HARI LIBUR';
       case 'broadcast': return 'SIARAN INFORMASI';
       case 'approval': return 'PERSETUJUAN';
@@ -266,11 +288,15 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
       case 'assets': return 'ASET PERUSAHAAN';
       case 'events': return 'KEGIATAN';
       case 'policies': return 'KEBIJAKAN';
+      case 'role-mapping': return 'KONFIGURASI ROLE OTOMATIS';
       case 'payroll': return 'PENGATURAN PAYROLL';
       case 'payroll-run': return 'PROSES PAYROLL';
       case 'timesheet': return 'TIMESHEET';
       case 'overtime': return 'LEMBUR';
       case 'thr': return 'PERHITUNGAN THR';
+      case 'it-management': return 'IT MANAGEMENT';
+      case 'legal-management': return 'LEGAL MANAGEMENT';
+      case 'security-ops': return 'OPERASI KEAMANAN JDC';
       case 'settings': return 'PENGATURAN UMUM';
       default: return 'ADMIN PANEL';
     }
@@ -323,13 +349,23 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
                 {modules.helpdesk && <button onClick={() => go('helpdesk')} className={NAV_BTN(activeTab === 'helpdesk')}><Headphones size={18} /><span className="text-sm">Helpdesk Tiket</span></button>}
                 {modules.work_order && <button onClick={() => go('work-order')} className={NAV_BTN(activeTab === 'work-order')}><Hammer size={18} /><span className="text-sm">Work Order Maintenance</span></button>}
                 {modules.patrol && <button onClick={() => go('patrol')} className={NAV_BTN(activeTab === 'patrol')}><Route size={18} /><span className="text-sm">Patroli Satpam</span></button>}
-                <button onClick={() => { setIsSidebarOpen(false); navigate('/jdc'); }} className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-400 hover:bg-[var(--aurora-3)]/10 hover:text-[var(--aurora-3)] border border-dashed border-white/5 hover:border-[var(--aurora-3)]/30">
-                  <ShieldCheck size={18} />
-                  <span className="text-sm font-bold">Aplikasi JDC (100%)</span>
-                </button>
+                {modules.patrol && <button onClick={() => go('security-ops')} className={NAV_BTN(activeTab === 'security-ops')}><ShieldCheck size={18} /><span className="text-sm font-bold">Operasi Keamanan JDC</span></button>}
+                {modules.patrol && (
+                  <button onClick={() => { setIsSidebarOpen(false); navigate('/jdc'); }} className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-500 hover:bg-white/5 hover:text-gray-300 border border-dashed border-white/5 text-xs">
+                    <ShieldCheck size={16} />
+                    <span>JDC Fullscreen (legacy)</span>
+                  </button>
+                )}
+                <button onClick={() => go('sla-dashboard')} className={NAV_BTN(activeTab === 'sla-dashboard')}><Target size={18} /><span className="text-sm">Dashboard Target & SLA</span></button>
                 {modules.visitor && <button onClick={() => go('visitor')} className={NAV_BTN(activeTab === 'visitor')}><UserCheck size={18} /><span className="text-sm">Manajemen Tamu</span></button>}
                 {modules.booking && <button onClick={() => go('facility-booking')} className={NAV_BTN(activeTab === 'facility-booking')}><DoorOpen size={18} /><span className="text-sm">Booking Fasilitas</span></button>}
                 {modules.incident && <button onClick={() => go('incident')} className={NAV_BTN(activeTab === 'incident')}><AlertTriangle size={18} /><span className="text-sm">Laporan Insiden (K3)</span></button>}
+                <button onClick={() => go('wa-dispatch')} className={NAV_BTN(activeTab === 'wa-dispatch')}><Send size={18} /><span className="text-sm">Laporan & WA Dispatch</span></button>
+                <button onClick={() => go('complaints')} className={NAV_BTN(activeTab === 'complaints')}><Building size={18} /><span className="text-sm">Komplain Tenant</span></button>
+                <button onClick={() => go('cleaning')} className={NAV_BTN(activeTab === 'cleaning')}><ClipboardList size={18} /><span className="text-sm">Cleaning Management</span></button>
+                <button onClick={() => go('engineering')} className={NAV_BTN(activeTab === 'engineering')}><Wrench size={18} /><span className="text-sm">Engineering</span></button>
+                <button onClick={() => go('driver')} className={NAV_BTN(activeTab === 'driver')}><Truck size={18} /><span className="text-sm">Driver</span></button>
+                <button onClick={() => go('office-ga')} className={NAV_BTN(activeTab === 'office-ga')}><Building2 size={18} /><span className="text-sm">Office / GA</span></button>
               </>
             )}
 
@@ -364,6 +400,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             <button onClick={() => go('auto-shift')} className={NAV_BTN(activeTab === 'auto-shift')}><Zap size={18} /><span className="text-sm">Auto-Shift Generator</span></button>
             <button onClick={() => go('schedule')} className={NAV_BTN(activeTab === 'schedule')}><Upload size={18} /><span className="text-sm">Upload Jadwal</span></button>
             <button onClick={() => go('schedule-calendar')} className={NAV_BTN(activeTab === 'schedule-calendar')}><Calendar size={18} /><span className="text-sm">Kalender Jadwal</span></button>
+            <button onClick={() => go('roster-grid')} className={NAV_BTN(activeTab === 'roster-grid')}><Users size={18} /><span className="text-sm">Roster Bulanan</span></button>
             <button onClick={() => go('holidays')} className={NAV_BTN(activeTab === 'holidays')}><Sun size={18} /><span className="text-sm">Kalender Libur</span></button>
 
             {/* ─── SDM & Operasional ─── */}
@@ -378,6 +415,8 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             <button onClick={() => go('policies')} className={NAV_BTN(activeTab === 'policies')}><ScrollText size={18} /><span className="text-sm">Kebijakan Perusahaan</span></button>
             <button onClick={() => go('onboarding')} className={NAV_BTN(activeTab === 'onboarding')}><ClipboardCheck size={18} /><span className="text-sm">Checklist Onboarding</span></button>
             <button onClick={() => go('employee-profile')} className={NAV_BTN(activeTab === 'employee-profile')}><UserCircle size={18} /><span className="text-sm">Profil Karyawan</span></button>
+            {modules.it && <button onClick={() => go('it-management')} className={NAV_BTN(activeTab === 'it-management')}><Monitor size={18} /><span className="text-sm">IT Management</span></button>}
+            {modules.legal && <button onClick={() => go('legal-management')} className={NAV_BTN(activeTab === 'legal-management')}><Scale size={18} /><span className="text-sm">Legal Management</span></button>}
 
             {/* ─── Keuangan & Payroll ─── */}
             {modules.payroll && (
@@ -406,12 +445,14 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             <button onClick={() => go('analytics')} className={NAV_BTN(activeTab === 'analytics')}><LineChart size={18} /><span className="text-sm">Dashboard Analitik</span></button>
             <button onClick={() => go('permissions')} className={NAV_BTN(activeTab === 'permissions')}><ShieldCheck size={18} /><span className="text-sm">Otoritas Tim</span></button>
             <button onClick={() => go('audit')} className={NAV_BTN(activeTab === 'audit')}><Activity size={18} /><span className="text-sm">Jejak Audit</span></button>
+            <button onClick={() => go('role-mapping')} className={NAV_BTN(activeTab === 'role-mapping')}><Key size={18} /><span className="text-sm">Konfigurasi Role</span></button>
             <button onClick={() => go('broadcast')} className={NAV_BTN(activeTab === 'broadcast')}><Megaphone size={18} /><span className="text-sm">Pusat Pengumuman</span></button>
             <button onClick={() => go('banners')} className={NAV_BTN(activeTab === 'banners')}><Image size={18} /><span className="text-sm">Manajemen Banner</span></button>
             <button onClick={() => go('bulk-import')} className={NAV_BTN(activeTab === 'bulk-import')}><Upload size={18} /><span className="text-sm">Import Data</span></button>
             <button onClick={() => go('qrcode')} className={NAV_BTN(activeTab === 'qrcode')}><QrCode size={18} /><span className="text-sm">Manajemen QR</span></button>
             <button onClick={() => go('workflow')} className={NAV_BTN(activeTab === 'workflow')}><GitBranch size={18} /><span className="text-sm">Workflow Persetujuan</span></button>
             <button onClick={() => go('system-config')} className={NAV_BTN(activeTab === 'system-config')}><Wrench size={18} /><span className="text-sm">Konfigurasi Sistem</span></button>
+            <button onClick={() => go('backup')} className={NAV_BTN(activeTab === 'backup')}><HardDrive size={18} /><span className="text-sm">Backup & Restore</span></button>
             {modules.hybrid_work && <button onClick={() => go('hybrid-work-settings')} className={NAV_BTN(activeTab === 'hybrid-work-settings')}><MapPin size={18} /><span className="text-sm">Aturan WFH/WFA</span></button>}
           </div>
 
@@ -450,6 +491,12 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
 
       {/* Main Content */}
       <main id="main-scroll-container" className="flex-1 p-0 z-10 overflow-y-auto flex flex-col">
+        {activeTab === 'security-ops' ? (
+          <Suspense fallback={<div className="p-20 text-center"><div className="w-8 h-8 border-2 border-[var(--aurora-3)] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
+            <SecurityOpsShell onBack={() => go('home')} />
+          </Suspense>
+        ) : (
+          <>
         <GlobalHeader 
           title={getTabTitle()} 
           onMenuClick={() => setIsSidebarOpen(true)} 
@@ -465,6 +512,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             {activeTab === 'auto-shift' && <AutoShift />}
             {activeTab === 'schedule' && <ScheduleUpload />}
             {activeTab === 'schedule-calendar' && <ScheduleCalendar />}
+            {activeTab === 'roster-grid' && <RosterGrid />}
             {activeTab === 'holidays' && <HolidayManagement />}
             {activeTab === 'broadcast' && <BroadcastCenter />}
             {activeTab === 'approval' && <SubAdminDashboard isEmbedded={true} initialTab="verification" />}
@@ -501,16 +549,27 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
             {activeTab === 'tax-reports' && <TaxReports />}
             {activeTab === 'bank-export' && <BankExport />}
             {activeTab === 'bulk-import' && <BulkImport />}
+            {activeTab === 'role-mapping' && <RoleMappingSettings />}
             {activeTab === 'qrcode' && <QRCodeManagement />}
             {activeTab === 'banners' && <BannerManager />}
             {activeTab === 'helpdesk' && <HelpdeskTicketing />}
             {activeTab === 'patrol' && <PatrolManagement />}
+            {activeTab === 'sla-dashboard' && <SLADashboard />}
             {activeTab === 'facility-booking' && <FacilityBooking />}
             {activeTab === 'visitor' && <VisitorManagement />}
             {activeTab === 'work-order' && <WorkOrderManagement />}
             {activeTab === 'fleet' && <FleetManagement />}
             {activeTab === 'inventory' && <InventoryManagement />}
             {activeTab === 'incident' && <IncidentReporting />}
+            {activeTab === 'complaints' && <TenantComplaintAdmin />}
+            {activeTab === 'wa-dispatch' && <WADispatch />}
+            {activeTab === 'cleaning' && <CleaningManagement />}
+            {activeTab === 'engineering' && <EngineeringManagement />}
+            {activeTab === 'driver' && <DriverManagement />}
+            {activeTab === 'office-ga' && <OfficeGAManagement />}
+            {activeTab === 'it-management' && <ITManagement />}
+            {activeTab === 'legal-management' && <LegalManagement />}
+            {activeTab === 'backup' && <BackupRestore />}
             {activeTab === 'shift-swap' && <ShiftSwapManagement />}
             {activeTab === 'work-mode-dashboard' && <WorkModeDashboard />}
             {activeTab === 'hybrid-work-settings' && <HybridWorkSettings />}
@@ -525,9 +584,12 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
           <span>© 2026 <strong className="text-[var(--aurora-3)]">{tenantData?.name || 'Aplikasi Absensi'}</strong>. Hak Cipta Dilindungi.</span>
           <DeveloperWatermark />
         </footer>
+          </>
+        )}
       </main>
 
       {/* Bottom Navigation for Mobile */}
+      {activeTab !== 'security-ops' && (
       <BottomNav
         currentTab={activeTab}
         onNavClick={(tab) => go(tab)}
@@ -535,6 +597,7 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
         isSidebarOpen={isSidebarOpen}
         items={bottomNavItems}
       />
+      )}
     </div>
   );
 };

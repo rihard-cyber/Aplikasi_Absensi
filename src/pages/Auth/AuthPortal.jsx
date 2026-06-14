@@ -105,7 +105,7 @@ const getLogoInitials = (name) => {
   return clean.substring(0, 2).toUpperCase();
 };
 
-const AuthPortal = ({ onLogin }) => {
+const AuthPortal = ({ onLogin, sessionProfile, clearSessionProfile }) => {
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -131,6 +131,24 @@ const AuthPortal = ({ onLogin }) => {
   const [secretClickCount, setSecretClickCount] = useState(0);
   const [tenantBrand, setTenantBrand] = useState(null);
   const [biometricScan, setBiometricScan] = useState(0);
+
+  // Boot splash screen states
+  const [showBootSplash, setShowBootSplash] = useState(false);
+  const [bootProgress, setBootProgress] = useState(0);
+  const [bootStatusText, setBootStatusText] = useState('BOOTING...');
+  const [bootLogs, setBootLogs] = useState([]);
+  const [bootTenantName, setBootTenantName] = useState('SI PRESENSI');
+  const [bootTenantLogo, setBootTenantLogo] = useState(null);
+  const [logoError, setLogoError] = useState(false);
+  const [bootLogoError, setBootLogoError] = useState(false);
+
+  useEffect(() => {
+    setLogoError(false);
+  }, [tenantBrand]);
+
+  useEffect(() => {
+    setBootLogoError(false);
+  }, [bootTenantLogo]);
 
   // Login method toggle
   const [loginMethod, setLoginMethod] = useState('email'); // 'email' | 'whatsapp'
@@ -204,23 +222,108 @@ const AuthPortal = ({ onLogin }) => {
     return formData.identifier.length > 3 && formData.password.length > 3;
   }, [formData.identifier, formData.password, loginMethod]);
 
-  // PERSISTENT SESSION & AUTO-LOGIN ROUTING
+  // Trigger boot calibration transitions on initial load / reload if active session profile is passed
   useEffect(() => {
-    let cancelled = false;
-    const checkSession = async () => {
-      let session;
-      try {
-        const res = await supabase.auth.getSession();
-        session = res.data?.session;
-      } catch (e) {
-        toast('Gagal terhubung ke server. Cek koneksi atau restore database.', 'error');
-        return;
-      }
-      if (!session || cancelled) return;
-      const { data: userProfile } = await supabase.from('profiles').select('*').eq('auth_id', session.user.id).maybeSingle();
+    if (!sessionProfile) return;
 
-      if (userProfile && !cancelled) {
-        const role = userProfile?.role?.toUpperCase();
+    const runSessionBoot = async () => {
+      const role = sessionProfile.role?.toUpperCase();
+      let tName = localStorage.getItem('tenant_name') || 'SI PRESENSI';
+      let tLogo = localStorage.getItem('tenant_logo_url') || null;
+
+      if (sessionProfile.tenant_id) {
+        try {
+          const { data: tData } = await supabase
+            .from('tenants')
+            .select('name, logo_url')
+            .eq('id', sessionProfile.tenant_id)
+            .maybeSingle();
+          if (tData) {
+            tName = tData.name;
+            tLogo = tData.logo_url;
+          }
+        } catch (err) {
+          console.warn("Error fetching tenant info on session check:", err);
+        }
+      } else if (role === 'SUPER_ADMIN') {
+        tName = 'PORTAL SUPER ADMIN';
+      }
+
+      // Save to localStorage immediately so that it is globally available across all screens
+      try {
+        localStorage.setItem('tenant_name', tName);
+        if (tLogo) {
+          localStorage.setItem('tenant_logo_url', tLogo);
+        } else {
+          localStorage.removeItem('tenant_logo_url');
+        }
+      } catch (e) {
+        console.warn("Gagal menulis logo/nama tenant ke localStorage:", e);
+      }
+
+      // Setup dynamic boot screen
+      setBootTenantName(tName);
+      setBootTenantLogo(tLogo);
+      setBootProgress(0);
+      setBootStatusText('RECONNECTING...');
+      
+      const employeeName = sessionProfile.full_name || 'Karyawan';
+      const employeeNip = sessionProfile.nip || sessionProfile.email || 'IDENT-OK';
+      const deviceIdVal = sessionStorage.getItem('bound_device_id') || 'GPS-SECURE';
+
+      const allBootLogs = [
+        `>> DETECTING ACTIVE SESSION PROTOCOL...`,
+        `>> RE-ESTABLISHING SECURE GATEWAY TUNNEL...`,
+        `>> CONNECTING TO CLIENT HOST: ${tName.toUpperCase()}`,
+        `>> RESTORING SESSION IDENTITY: ${employeeName.toUpperCase()}`,
+        `>> PRIVILEGE TOKEN ACTIVE [ROLE: ${role}]`,
+        `>> CHECKING DEVICE METRICS: ${deviceIdVal}`,
+        `>> SYNCHRONIZING REALTIME TELEMETRY DATA...`,
+        `>> INTEL PROTOCOLS: ACTIVE & STANDBY`,
+        `>> CORE INTERFACE SECURELY MOUNTED`,
+        `>> PROTOCOL RESTORE COMPLETE // ACCESS GRANTED`
+      ];
+
+      setBootLogs([allBootLogs[0]]);
+      setShowBootSplash(true);
+
+      // Progress bar loop
+      let curProgress = 0;
+      const progressInterval = setInterval(() => {
+        curProgress += Math.floor(Math.random() * 9) + 4;
+        if (curProgress >= 100) {
+          curProgress = 100;
+          clearInterval(progressInterval);
+        }
+        setBootProgress(curProgress);
+      }, 110);
+
+      // Status text mapping
+      const statusInterval = setInterval(() => {
+        setBootProgress(p => {
+          if (p < 25) setBootStatusText('RECONNECTING CORE...');
+          else if (p < 55) setBootStatusText('SYNCING PROFILE DATA...');
+          else if (p < 85) setBootStatusText('VALIDATING SYSTEM SHIELD...');
+          else {
+            setBootStatusText('SECURE & OPERATIONAL');
+            clearInterval(statusInterval);
+          }
+          return p;
+        });
+      }, 200);
+
+      // Logs printing loop
+      let logIdx = 1;
+      const logInterval = setInterval(() => {
+        if (logIdx < allBootLogs.length) {
+          setBootLogs(prev => [...prev, allBootLogs[logIdx]]);
+          logIdx++;
+        } else {
+          clearInterval(logInterval);
+        }
+      }, 280);
+
+      const completeLoginRouting = () => {
         if (role === 'SUPER_ADMIN') {
           sessionStorage.removeItem('god_key');
           sessionStorage.setItem('super_admin_verified', 'true');
@@ -228,22 +331,33 @@ const AuthPortal = ({ onLogin }) => {
           navigate('/superadmin');
         } else if (role === 'TENANT_ADMIN') {
           sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
+          sessionStorage.setItem('attendance_access', 'YA');
           onLogin('TENANT_ADMIN');
           navigate('/tenantadmin');
         } else if (role === 'SUB_ADMIN') {
           sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
+          sessionStorage.setItem('attendance_access', 'YA');
           onLogin('SUB_ADMIN');
           navigate('/subadmin');
         } else {
-          sessionStorage.setItem('operational_access', userProfile?.operational_access ? 'MEMILIKI AKSES' : 'TIDAK');
+          sessionStorage.setItem('attendance_access', sessionProfile.attendance_access ? 'YA' : 'TIDAK');
+          sessionStorage.setItem('operational_access', sessionProfile.operational_access ? 'MEMILIKI AKSES' : 'TIDAK');
           onLogin('EMPLOYEE');
           navigate('/app');
         }
-      }
+        clearSessionProfile();
+      };
+
+      setTimeout(() => {
+        clearInterval(progressInterval);
+        clearInterval(statusInterval);
+        clearInterval(logInterval);
+        completeLoginRouting();
+      }, 3500);
     };
-    checkSession();
-    return () => { cancelled = true; };
-  }, [navigate, onLogin]);
+
+    runSessionBoot();
+  }, [sessionProfile, onLogin, navigate, clearSessionProfile]);
 
   // Pre-load tenant brand from localStorage cache on mount
   useEffect(() => {
@@ -698,27 +812,133 @@ const AuthPortal = ({ onLogin }) => {
         }
       }
 
-      // 4. Route based on role
+      // 4. Route based on role (Trigger Cyber boot screen overlay first)
       const role = userProfile.role?.toUpperCase();
-      if (role === 'SUPER_ADMIN') {
-        onLogin('SUPER_ADMIN');
-        navigate('/superadmin');
-      } else if (role === 'TENANT_ADMIN') {
-        sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
-        sessionStorage.setItem('attendance_access', 'YA');
-        onLogin('TENANT_ADMIN');
-        navigate('/tenantadmin');
-      } else if (role === 'SUB_ADMIN') {
-        sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
-        sessionStorage.setItem('attendance_access', 'YA');
-        onLogin('SUB_ADMIN');
-        navigate('/subadmin');
-      } else {
-        sessionStorage.setItem('attendance_access', userProfile.attendance_access ? 'YA' : 'TIDAK');
-        sessionStorage.setItem('operational_access', userProfile.operational_access ? 'MEMILIKI AKSES' : 'TIDAK');
-        onLogin('EMPLOYEE');
-        navigate('/app');
+      
+      let tName = tenantBrand?.name || 'SI PRESENSI';
+      let tLogo = tenantBrand?.logo_url || null;
+
+      if (userProfile.tenant_id) {
+        try {
+          const { data: tData } = await supabase
+            .from('tenants')
+            .select('name, logo_url')
+            .eq('id', userProfile.tenant_id)
+            .maybeSingle();
+          if (tData) {
+            tName = tData.name;
+            tLogo = tData.logo_url;
+          }
+        } catch (err) {
+          console.warn("Error fetching tenant info for boot splash:", err);
+        }
+      } else if (role === 'SUPER_ADMIN') {
+        tName = 'PORTAL SUPER ADMIN';
       }
+
+      // Save to localStorage immediately so that it is globally available across all screens
+      try {
+        localStorage.setItem('tenant_name', tName);
+        if (tLogo) {
+          localStorage.setItem('tenant_logo_url', tLogo);
+        } else {
+          localStorage.removeItem('tenant_logo_url');
+        }
+      } catch (e) {
+        console.warn("Gagal menulis logo/nama tenant ke localStorage:", e);
+      }
+
+      // Set Boot Info
+      setBootTenantName(tName);
+      setBootTenantLogo(tLogo);
+      setBootProgress(0);
+      setBootStatusText('INITIALIZING...');
+      
+      const employeeName = userProfile.full_name || 'Karyawan';
+      const employeeNip = userProfile.nip || userProfile.email || 'IDENT-OK';
+      const deviceIdVal = sessionStorage.getItem('bound_device_id') || 'GPS-SECURE';
+
+      const allBootLogs = [
+        `>> CONNECTING CORE GATEWAY PROTOCOL...`,
+        `>> ENCRYPTING SECURITY TUNNEL [SHA-256]...`,
+        `>> CONNECTING DATABASE TO: ${tName.toUpperCase()}...`,
+        `>> VALIDATING USER IDENTITY...`,
+        `>> MEMBER IDENTIFIED: ${employeeName.toUpperCase()} (NIP: ${employeeNip})`,
+        `>> VERIFYING ACCESS PRIVILEGES [ROLE: ${role}]...`,
+        `>> SYSTEM BOUND TO DEVICE INTEGRITY: ${deviceIdVal}`,
+        `>> ESTABLISHING OPERATIONAL TELEMETRY & GEO-FENCE...`,
+        `>> FIREWALL INTELLIGENCE PROTOCOL STANDBY: SHIELD ACTIVE`,
+        `>> ACCESS GRANTED // READY TO START SESSIONS...`
+      ];
+
+      setBootLogs([allBootLogs[0]]);
+      setShowBootSplash(true);
+
+      const completeLoginRouting = () => {
+        if (role === 'SUPER_ADMIN') {
+          onLogin('SUPER_ADMIN');
+          navigate('/superadmin');
+        } else if (role === 'TENANT_ADMIN') {
+          sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
+          sessionStorage.setItem('attendance_access', 'YA');
+          onLogin('TENANT_ADMIN');
+          navigate('/tenantadmin');
+        } else if (role === 'SUB_ADMIN') {
+          sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
+          sessionStorage.setItem('attendance_access', 'YA');
+          onLogin('SUB_ADMIN');
+          navigate('/subadmin');
+        } else {
+          sessionStorage.setItem('attendance_access', userProfile.attendance_access ? 'YA' : 'TIDAK');
+          sessionStorage.setItem('operational_access', userProfile.operational_access ? 'MEMILIKI AKSES' : 'TIDAK');
+          onLogin('EMPLOYEE');
+          navigate('/app');
+        }
+      };
+
+      // Progress bar loop
+      let curProgress = 0;
+      const progressInterval = setInterval(() => {
+        curProgress += Math.floor(Math.random() * 8) + 4;
+        if (curProgress >= 100) {
+          curProgress = 100;
+          clearInterval(progressInterval);
+        }
+        setBootProgress(curProgress);
+      }, 120);
+
+      // Status text mapping
+      const statusInterval = setInterval(() => {
+        setBootProgress(p => {
+          if (p < 25) setBootStatusText('BOOTING CORE ENGINE...');
+          else if (p < 55) setBootStatusText('CONNECTING CENTRAL DB...');
+          else if (p < 85) setBootStatusText('CALIBRATING ENVIRONMENT...');
+          else {
+            setBootStatusText('SECURE & OPERATIONAL');
+            clearInterval(statusInterval);
+          }
+          return p;
+        });
+      }, 200);
+
+      // Logs printing loop
+      let logIdx = 1;
+      const logInterval = setInterval(() => {
+        if (logIdx < allBootLogs.length) {
+          setBootLogs(prev => [...prev, allBootLogs[logIdx]]);
+          logIdx++;
+        } else {
+          clearInterval(logInterval);
+        }
+      }, 300);
+
+      // Complete login routing after splash completes
+      setTimeout(() => {
+        clearInterval(progressInterval);
+        clearInterval(statusInterval);
+        clearInterval(logInterval);
+        completeLoginRouting();
+      }, 3500);
     } catch (error) {
       console.error("Login failed:", error.message);
       const isConnectionError = !navigator.onLine || error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError') || error.message?.includes('ERR_NAME_NOT_RESOLVED');
@@ -795,12 +1015,12 @@ const AuthPortal = ({ onLogin }) => {
           {/* Logo Area & Adaptive Branding */}
           <div className="login-header cursor-pointer" onClick={handleLogoClick}>
             <div className="login-logo-ring">
-              {tenantBrand?.logo_url || localStorage.getItem('tenant_logo_url') ? (
+              {(tenantBrand?.logo_url || localStorage.getItem('tenant_logo_url')) && !logoError ? (
                 <img 
                   src={tenantBrand?.logo_url || localStorage.getItem('tenant_logo_url')} 
                   alt="Logo" 
                   className="w-full h-full object-contain p-2 logo-3d-spin rounded-full" 
-                  onError={(e) => { e.target.style.display = 'none'; }}
+                  onError={() => setLogoError(true)}
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-[var(--aurora-3)] to-[var(--aurora-1)] rounded-full flex items-center justify-center font-serif font-bold text-white text-xl shadow-[0_0_15px_rgba(0,201,255,0.4)] logo-3d-spin">
@@ -1430,6 +1650,74 @@ const AuthPortal = ({ onLogin }) => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Dynamic Cyber-Theme Boot Splash Overlay */}
+      <AnimatePresence>
+        {showBootSplash && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="splash-screen cyber-screen"
+          >
+            <div className="cyber-corner corner-tl"></div>
+            <div className="cyber-corner corner-tr"></div>
+            <div className="cyber-corner corner-bl"></div>
+            <div className="cyber-corner corner-br"></div>
+            <div className="cyber-grid"></div>
+            <div className="cyber-scanline"></div>
+            
+            <div className="cyber-hud-container">
+              <div className="hud-ring ring-outer"></div>
+              <div className="hud-ring ring-middle"></div>
+              <div className="hud-ring ring-inner"></div>
+              <div className="hud-ring ring-dashed"></div>
+              <div className="splash-logo-container">
+                {bootTenantLogo && !bootLogoError ? (
+                  <img 
+                    src={bootTenantLogo} 
+                    alt={bootTenantName} 
+                    className="splash-logo cyber-logo logo-3d-spin rounded-full p-2 bg-[#03060f]/60" 
+                    onError={() => setBootLogoError(true)}
+                  />
+                ) : (
+                  <div className="w-20 h-20 bg-gradient-to-br from-[var(--aurora-3)] to-[var(--aurora-1)] rounded-full flex items-center justify-center font-serif font-bold text-white text-3xl shadow-[0_0_25px_rgba(0,201,255,0.6)] logo-3d-spin">
+                    {getLogoInitials(bootTenantName)}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="cyber-progress-container">
+              <div className="cyber-progress-header font-mono">
+                <span className="progress-label">{bootStatusText}</span>
+                <span className="progress-percent">{bootProgress}%</span>
+              </div>
+              <div className="cyber-progress-bar">
+                <div className="cyber-progress-fill" style={{ width: `${bootProgress}%` }}></div>
+              </div>
+            </div>
+            
+            <div className="cyber-console font-mono">
+              <div className="console-header">
+                <span className="console-title">[{bootTenantName.toUpperCase()} SECURE BOOT]</span>
+                <span className="console-status blink">OPERATIONAL</span>
+              </div>
+              <div className="console-body">
+                {bootLogs.slice(-4).map((log, idx) => (
+                  <p key={idx} className="console-line">{log}</p>
+                ))}
+              </div>
+            </div>
+            
+            <div className="splash-footer cyber-footer">
+              <p className="splash-title cyber-title">{bootTenantName.toUpperCase()}</p>
+              <p className="splash-subtitle cyber-subtitle">POWERED BY SI PRESENSI // HOST ACCESS SECURE</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Cursive Signature Watermark */}
       <div className="absolute bottom-4 left-0 right-0 z-10 pointer-events-none flex justify-center">

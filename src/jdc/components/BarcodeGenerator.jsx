@@ -100,6 +100,14 @@ export default function BarcodeGenerator({
   const [ePosKeterangan, setEPosKeterangan] = useState('');
   const [ePosKode, setEPosKode] = useState('');
 
+  const generateQRDataURL = useCallback(async (text) => {
+    try {
+      return await QRCode.toDataURL(text, { width: 400, margin: 2, color: { dark: '#0b0f19', light: '#ffffff' } });
+    } catch {
+      return await QRCode.toDataURL(text, { width: 400, margin: 2 });
+    }
+  }, []);
+
   useEffect(() => {
     const nums = areas.map(a => parseInt(a.nomorTitik, 10)).filter(n => !isNaN(n));
     const next = nums.length > 0 ? String(Math.max(...nums) + 1) : '1';
@@ -167,14 +175,6 @@ export default function BarcodeGenerator({
     localStorage.setItem('smpjdc_qr_counter', String(newCount));
     setTitik('');
   };
-
-  const generateQRDataURL = useCallback(async (text) => {
-    try {
-      return await QRCode.toDataURL(text, { width: 400, margin: 2, color: { dark: '#0b0f19', light: '#ffffff' } });
-    } catch {
-      return await QRCode.toDataURL(text, { width: 400, margin: 2 });
-    }
-  }, []);
 
   const handleDownloadQR = async (area) => {
     if (downloadingId) return

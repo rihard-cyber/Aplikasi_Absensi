@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Plus, Save, X, AlertTriangle, Flame, Shield, Lock, Eye, Loader2, MapPin, Camera, User, ArrowLeft } from 'lucide-react';
+import { Search, Plus, Save, X, AlertTriangle, Flame, Shield, Lock, Eye, Loader2, MapPin, Camera, User, ArrowLeft, ShieldOff } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { logAudit } from '../../../utils/auditLogger';
+import { isSecurityDivision } from '../../../utils/featureAccess';
 
 const t = (s) => s;
 
@@ -31,6 +32,24 @@ const STATUS_STYLES = new Map([
 ]);
 
 const IncidentReporting = ({ onBack }) => {
+  if (!isSecurityDivision(localStorage.getItem('user_division'))) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 p-8">
+        <div className="w-20 h-20 rounded-3xl bg-[var(--danger)]/10 flex items-center justify-center">
+          <ShieldOff size={40} className="text-[var(--danger)]" />
+        </div>
+        <h3 className="text-xl font-serif font-bold text-white text-center">Akses Ditolak</h3>
+        <p className="text-sm text-gray-400 text-center max-w-xs">
+          Fitur Laporan Insiden khusus untuk divisi Security / Satpam.
+        </p>
+        {onBack && (
+          <button onClick={onBack} className="mt-4 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 font-bold text-sm">
+            Kembali
+          </button>
+        )}
+      </div>
+    );
+  }
   const [incidents, setIncidents] = useState([]);
   const [tenantId, setTenantId] = useState(null);
   const [profileId, setProfileId] = useState(null);

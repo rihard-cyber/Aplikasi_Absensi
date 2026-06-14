@@ -13,7 +13,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Camera, Clock, Check, AlertTriangle, QrCode, Shield,
   Wifi, WifiOff, Database, ThumbsUp, MapPin,
-  FileText, History, Send, Info, Search, Wrench, Radio, X
+  FileText, History, Send, Info, Search, Wrench, Radio, X, Home
 } from 'lucide-react';
 import KATEGORI_TEMUAN from '../data/kategoriTemuan';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -36,6 +36,13 @@ export default function SecurityPatrolApp({
   onAddReport, onTriggerSOS, onAddLog, onAddAttendance
 }) {
   const [online, setOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [logoUrl, setLogoUrl] = useState(() => {
+    try {
+      return localStorage.getItem('tenant_logo_url') || 'logo.png';
+    } catch {
+      return 'logo.png';
+    }
+  });
   const [queue, setQueue] = useState(() => {
     try { return JSON.parse(localStorage.getItem('sapujagat_offline_queue')) || []; }
     catch { return []; }
@@ -84,7 +91,7 @@ export default function SecurityPatrolApp({
     }
   }, [online]);
 
-  const [tab, setTab] = useState('presensi');
+  const [tab, setTab] = useState('home');
   const [cameraStream, setCameraStream] = useState(null);
   const [selfiePhoto, setSelfiePhoto] = useState(null);
   const [faceRecognized, setFaceRecognized] = useState(false);
@@ -800,6 +807,8 @@ export default function SecurityPatrolApp({
   const [mErrors, setMErrors] = useState({});
   const [mSent, setMSent] = useState(false);
   const [mJamKejadian, setMJamKejadian] = useState(() => new Date().toTimeString().slice(0, 5));
+  const [isCustomLokasi, setIsCustomLokasi] = useState(false);
+  const [mLokasiCustom, setMLokasiCustom] = useState('');
 
   // ── Tab: Temuan (Standalone) ──
   const [tLokasi, setTLokasi] = useState('');
@@ -821,6 +830,12 @@ export default function SecurityPatrolApp({
       const [h, m] = tWaktu.split(':');
       reportDate.setHours(parseInt(h, 10), parseInt(m, 10), 0, 0);
     }
+    
+    const kat = kategoriData.find(k => k.id === tKategori);
+    const standAloneDaftarTemuan = tKategori ? kat?.items || [] : [];
+    const item = standAloneDaftarTemuan.find(t => t.kode === tTemuan);
+    const severityMap = { low: 'Rendah', medium: 'Sedang', high: 'Tinggi', critical: 'Kritis' };
+
     const reportData = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       areaId: selectedArea?.id || 'manual',
@@ -832,9 +847,13 @@ export default function SecurityPatrolApp({
       userName: currentUser.nama,
       userId: currentUser.id,
       nrp: currentUser.nrp,
-      kondisi: 'Ada Temuan',
+      kategori: kat?.nama || '',
+      kodeTemuan: item?.kode || '',
+      temuan: item?.nama || '',
+      status: 'temuan',
+      kondisi: item?.nama || 'Temuan',
       keterangan: tDeskripsi,
-      severity: colorSeverity(tSeverity).replace('#','') === '10b981' ? 'Rendah' : tSeverity === 'medium' ? 'Sedang' : tSeverity === 'high' ? 'Tinggi' : 'Kritis',
+      severity: severityMap[tSeverity] || 'Rendah',
       foto: tFoto,
       timestamp: reportDate.toISOString(),
       date: reportDate.toISOString().split('T')[0],
@@ -880,6 +899,7 @@ export default function SecurityPatrolApp({
     setMSent(true);
     setMLokasi(''); setMUraian(''); setMFoto(null); setMKat('informasi'); setMKatLainnya('');
     setMJamKejadian(new Date().toTimeString().slice(0, 5));
+    setIsCustomLokasi(false); setMLokasiCustom('');
     setTimeout(() => setMSent(false), 3000);
   };
 
@@ -907,7 +927,7 @@ export default function SecurityPatrolApp({
         {/* Header with SOS */}
         <div className="mobile-header">
           <div style={{ justifySelf: 'start', display: 'flex', alignItems: 'center' }}>
-            <img src="jdc-logo.png" alt="" className="mobile-logo logo-3d" />
+            <img src={logoUrl} alt="" className="mobile-logo logo-3d" onError={() => setLogoUrl('logo.png')} />
           </div>
           <div className="mobile-brand-title" style={{ justifySelf: 'center', textAlign: 'center' }}>
             <h4 className="mobile-app-title" style={{ margin: 0 }}>SMPJDC</h4>
@@ -965,49 +985,206 @@ export default function SecurityPatrolApp({
         )}
 
         {/* Tab Navigation */}
-        <div className="mobile-tab-bar" style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.75rem', background: 'var(--bg-glass)', borderRadius: '10px', padding: '0.2rem' }}>
+        <div className="mobile-tab-bar" style={{ display: 'flex', gap: '0.15rem', marginBottom: '0.75rem', background: 'var(--bg-glass)', borderRadius: '10px', padding: '0.2rem', overflowX: 'auto', flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
+          <button onClick={() => setTab('home')} className={`mobile-tab ${tab === 'home' ? 'active' : ''}`} style={{
+            flex: 1, padding: '0.45rem 0.2rem', fontSize: '0.65rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer',
+            fontFamily: 'var(--font-sans)',
+            background: tab === 'home' ? 'var(--color-primary)' : 'transparent',
+            color: tab === 'home' ? 'white' : 'var(--text-secondary)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.15rem', minWidth: '55px'
+          }}><Home size={12} /> Home</button>
           <button onClick={() => setTab('presensi')} className={`mobile-tab ${tab === 'presensi' ? 'active' : ''}`} style={{
-            flex: 1, padding: '0.45rem 0.3rem', fontSize: '0.7rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer',
+            flex: 1, padding: '0.45rem 0.2rem', fontSize: '0.65rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer',
             fontFamily: 'var(--font-sans)',
             background: tab === 'presensi' ? 'var(--color-primary)' : 'transparent',
             color: tab === 'presensi' ? 'white' : 'var(--text-secondary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem'
-          }}><Clock size={14} /> Presensi</button>
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.15rem', minWidth: '55px'
+          }}><Clock size={12} /> Presensi</button>
           <button onClick={() => { setTab('patroli'); resetLaporan(); }} className={`mobile-tab ${tab === 'patroli' ? 'active' : ''}`} style={{
-            flex: 1, padding: '0.45rem 0.3rem', fontSize: '0.7rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer',
+            flex: 1, padding: '0.45rem 0.2rem', fontSize: '0.65rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer',
             fontFamily: 'var(--font-sans)',
             background: tab === 'patroli' ? 'var(--color-primary)' : 'transparent',
             color: tab === 'patroli' ? 'white' : 'var(--text-secondary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem'
-          }}><QrCode size={14} /> Patroli</button>
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.15rem', minWidth: '55px'
+          }}><QrCode size={12} /> Patroli</button>
           <button onClick={() => setTab('temuan')} className={`mobile-tab ${tab === 'temuan' ? 'active' : ''}`} style={{
-            flex: 1, padding: '0.45rem 0.3rem', fontSize: '0.7rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer',
+            flex: 1, padding: '0.45rem 0.2rem', fontSize: '0.65rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer',
             fontFamily: 'var(--font-sans)',
             background: tab === 'temuan' ? 'var(--color-primary)' : 'transparent',
             color: tab === 'temuan' ? 'white' : 'var(--text-secondary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem'
-          }}><AlertTriangle size={14} /> Temuan</button>
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.15rem', minWidth: '55px'
+          }}><AlertTriangle size={12} /> Temuan</button>
           <button onClick={() => setTab('mutasi')} className={`mobile-tab ${tab === 'mutasi' ? 'active' : ''}`} style={{
-            flex: 1, padding: '0.45rem 0.3rem', fontSize: '0.7rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer',
+            flex: 1, padding: '0.45rem 0.2rem', fontSize: '0.65rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer',
             fontFamily: 'var(--font-sans)',
             background: tab === 'mutasi' ? 'var(--color-primary)' : 'transparent',
             color: tab === 'mutasi' ? 'white' : 'var(--text-secondary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem'
-          }}><FileText size={14} /> Mutasi</button>
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.15rem', minWidth: '55px'
+          }}><FileText size={12} /> Mutasi</button>
           <button onClick={() => setTab('riwayat')} className={`mobile-tab ${tab === 'riwayat' ? 'active' : ''}`} style={{
-            flex: 1, padding: '0.45rem 0.3rem', fontSize: '0.7rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer',
+            flex: 1, padding: '0.45rem 0.2rem', fontSize: '0.65rem', fontWeight: 700, border: 'none', borderRadius: '8px', cursor: 'pointer',
             fontFamily: 'var(--font-sans)',
             background: tab === 'riwayat' ? 'var(--color-primary)' : 'transparent',
             color: tab === 'riwayat' ? 'white' : 'var(--text-secondary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem'
-          }}><History size={14} /> Riwayat</button>
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.15rem', minWidth: '55px'
+          }}><History size={12} /> Riwayat</button>
         </div>
+
+        {/* ============================================================ */}
+        {/* TAB: HOME (MENU UTAMA) */}
+        {/* ============================================================ */}
+        {tab === 'home' && (
+          <div className="tab-home-container animate-fade-in" style={{ padding: '0.2rem 0', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {/* Welcome Greeting & Active Shift status */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                  Halo, {currentUser.nama}!
+                </h3>
+                <p style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' })}
+                </p>
+              </div>
+              <span style={{
+                background: clockedStatus === 'in' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                color: clockedStatus === 'in' ? 'var(--color-success)' : 'var(--color-danger)',
+                border: clockedStatus === 'in' ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)',
+                fontSize: '0.6rem',
+                fontWeight: 800,
+                padding: '0.2rem 0.45rem',
+                borderRadius: '6px',
+                textTransform: 'uppercase'
+              }}>
+                {clockedStatus === 'in' ? 'Shift Aktif' : 'Belum Absen'}
+              </span>
+            </div>
+
+            {/* Quick Status / Info Panel */}
+            <div className="glass-panel" style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-glass)', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Shift Dinas:</span>
+                <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{shift}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Plotting Pos:</span>
+                <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{myPlotting?.posPlotting || 'Belum Terplotting'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Presensi Masuk:</span>
+                <span style={{ fontWeight: 700, color: clockedStatus === 'in' ? 'var(--color-success)' : 'var(--text-muted)' }}>{clockInTime || 'Belum Masuk'}</span>
+              </div>
+            </div>
+
+            {/* Grid Menu Buttons */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+              {/* Menu 1: Presensi */}
+              <div onClick={() => setTab('presensi')} className="home-menu-card" style={{
+                background: 'var(--bg-glass, rgba(255,255,255,0.01))', border: '1px solid var(--border-glass)', borderRadius: '14px', padding: '1rem 0.75rem',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', boxShadow: '0 4px 10px rgba(0,0,0,0.15)'
+              }}>
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(124, 58, 237, 0.12)', border: '1px solid rgba(124, 58, 237, 0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa'
+                }}><Clock size={20} /></div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.78rem', color: 'var(--text-primary)', marginBottom: '0.15rem' }}>Presensi Staff</div>
+                  <div style={{ fontSize: '0.62rem', color: 'var(--text-secondary)' }}>Selfie & GPS Absen</div>
+                </div>
+              </div>
+
+              {/* Menu 2: Patroli */}
+              <div onClick={() => { setTab('patroli'); resetLaporan(); }} className="home-menu-card" style={{
+                background: 'var(--bg-glass, rgba(255,255,255,0.01))', border: '1px solid var(--border-glass)', borderRadius: '14px', padding: '1rem 0.75rem',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', boxShadow: '0 4px 10px rgba(0,0,0,0.15)'
+              }}>
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa'
+                }}><QrCode size={20} /></div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.78rem', color: 'var(--text-primary)', marginBottom: '0.15rem' }}>Patroli Barcode</div>
+                  <div style={{ fontSize: '0.62rem', color: 'var(--text-secondary)' }}>Scan Checkpoint</div>
+                </div>
+              </div>
+
+              {/* Menu 3: Temuan */}
+              <div onClick={() => setTab('temuan')} className="home-menu-card" style={{
+                background: 'var(--bg-glass, rgba(255,255,255,0.01))', border: '1px solid var(--border-glass)', borderRadius: '14px', padding: '1rem 0.75rem',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', boxShadow: '0 4px 10px rgba(0,0,0,0.15)'
+              }}>
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fbbf24'
+                }}><AlertTriangle size={20} /></div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.78rem', color: 'var(--text-primary)', marginBottom: '0.15rem' }}>Lapor Temuan</div>
+                  <div style={{ fontSize: '0.62rem', color: 'var(--text-secondary)' }}>Kerusakan & Kendala</div>
+                </div>
+              </div>
+
+              {/* Menu 4: Mutasi */}
+              <div onClick={() => setTab('mutasi')} className="home-menu-card" style={{
+                background: 'var(--bg-glass, rgba(255,255,255,0.01))', border: '1px solid var(--border-glass)', borderRadius: '14px', padding: '1rem 0.75rem',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', boxShadow: '0 4px 10px rgba(0,0,0,0.15)'
+              }}>
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f87171'
+                }}><FileText size={20} /></div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.78rem', color: 'var(--text-primary)', marginBottom: '0.15rem' }}>Mutasi Jaga</div>
+                  <div style={{ fontSize: '0.62rem', color: 'var(--text-secondary)' }}>Log Kejadian Petugas</div>
+                </div>
+              </div>
+
+              {/* Menu 5: Riwayat */}
+              <div onClick={() => setTab('riwayat')} className="home-menu-card" style={{
+                background: 'var(--bg-glass, rgba(255,255,255,0.01))', border: '1px solid var(--border-glass)', borderRadius: '14px', padding: '1rem 0.75rem',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', boxShadow: '0 4px 10px rgba(0,0,0,0.15)'
+              }}>
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.25)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399'
+                }}><History size={20} /></div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.78rem', color: 'var(--text-primary)', marginBottom: '0.15rem' }}>Riwayat Aktivitas</div>
+                  <div style={{ fontSize: '0.62rem', color: 'var(--text-secondary)' }}>Log Absen & Patroli</div>
+                </div>
+              </div>
+
+              {/* Menu 6: SOS Panggilan */}
+              <div onClick={() => onTriggerSOS(currentUser.nama, area?.titik || 'Lobby')} className="home-menu-card-sos" style={{
+                background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%)', border: '1px solid rgba(220, 38, 38, 0.3)', borderRadius: '14px', padding: '1rem 0.75rem',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s', boxShadow: '0 4px 10px rgba(220, 38, 38, 0.1)'
+              }}>
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '50%', background: '#dc2626', border: '2px solid rgba(255,255,255,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 0 10px rgba(220,38,38,0.5)', animation: 'warning-pulse 1.5s infinite'
+                }}><Radio size={20} /></div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.78rem', color: '#ef4444', marginBottom: '0.15rem' }}>Panggilan SOS</div>
+                  <div style={{ fontSize: '0.62rem', color: '#fca5a5' }}>Picu Alarm Darurat</div>
+                </div>
+              </div>
+            </div>
+
+            <style>{`
+              .home-menu-card:hover { background: rgba(255, 255, 255, 0.04) !important; transform: translateY(-2px); }
+              .home-menu-card-sos:hover { background: linear-gradient(135deg, rgba(220, 38, 38, 0.25) 0%, rgba(239, 68, 68, 0.08) 100%) !important; transform: translateY(-2px); }
+            `}</style>
+          </div>
+        )}
 
         {/* ============================================================ */}
         {/* TAB: PRESENSI (SI PRESENSI PRO MAX) */}
         {/* ============================================================ */}
         {tab === 'presensi' && (
           <div className="tab-presensi-container animate-fade-in" style={{ padding: '0.1rem 0' }}>
+            {/* Back to Home Button */}
+            <button onClick={() => setTab('home')} style={{
+              display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)',
+              borderRadius: '6px', color: 'var(--text-secondary)', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', padding: '0.35rem 0.65rem', marginBottom: '0.75rem', width: 'fit-content'
+            }}>← Kembali ke Beranda</button>
             {/* Header Title & Mode Badge */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
               <div>
@@ -1465,6 +1642,11 @@ export default function SecurityPatrolApp({
           <>
             {step === 1 && (
               <div className="step-login">
+                {/* Back to Home Button */}
+                <button onClick={() => setTab('home')} style={{
+                  display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)',
+                  borderRadius: '6px', color: 'var(--text-secondary)', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', padding: '0.35rem 0.65rem', marginBottom: '0.75rem', width: 'fit-content'
+                }}>← Kembali ke Beranda</button>
                 <div className="step-login-header">
                   <h3>Mulai Patroli</h3>
                   <p>Scan barcode checkpoint untuk memulai patroli.</p>
@@ -1760,6 +1942,11 @@ export default function SecurityPatrolApp({
             )}
             {!tSent && (
               <form onSubmit={handleTemuanStandaloneSubmit}>
+                {/* Back to Home Button */}
+                <button type="button" onClick={() => setTab('home')} style={{
+                  display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)',
+                  borderRadius: '6px', color: 'var(--text-secondary)', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', padding: '0.35rem 0.65rem', marginBottom: '0.75rem', width: 'fit-content'
+                }}>← Kembali ke Beranda</button>
                 <div className="glass-panel form-section">
                   <h5 className="form-section-title"><AlertTriangle size={14} /> FORM TEMUAN / KENDALA</h5>
                   
@@ -1791,8 +1978,8 @@ export default function SecurityPatrolApp({
                   <div className="step-field">
                     <label>JENIS TEMUAN</label>
                     <select value={tTemuan} onChange={e => setTTemuan(e.target.value)} className="modern-select" disabled={!tKategori} required>
-                      <option value="">-- Pilih --</option>
-                      {daftarTemuan.filter(t => t.kategori === tKategori).map(t => (
+                      <option value="">-- Pilih Detail Temuan --</option>
+                      {(tKategori ? (kategoriData.find(k => k.id === tKategori)?.items || []) : []).map(t => (
                         <option key={t.kode} value={t.kode}>[{t.kode}] {t.nama}</option>
                       ))}
                     </select>
@@ -1872,11 +2059,19 @@ export default function SecurityPatrolApp({
                 <Check size={36} style={{ color: 'var(--color-success)', marginBottom: '0.5rem' }} />
                 <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-success)' }}>Mutasi Terkirim!</h4>
                 <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Catatan mutasi berhasil disimpan.</p>
+                <button onClick={() => { setMSent(false); setMLokasi(''); setMUraian(''); setMFoto(null); setTab('home'); }} className="btn-secondary btn-full" style={{ marginTop: '0.75rem' }}>
+                  Kembali ke Beranda
+                </button>
               </div>
             )}
 
             {!mSent && (
               <>
+                {/* Back to Home Button */}
+                <button type="button" onClick={() => setTab('home')} style={{
+                  display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)',
+                  borderRadius: '6px', color: 'var(--text-secondary)', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', padding: '0.35rem 0.65rem', marginBottom: '0.75rem', width: 'fit-content'
+                }}>← Kembali ke Beranda</button>
                 <div className="glass-panel form-section">
                   <h5 className="form-section-title"><FileText size={14} /> FORM MUTASI / KEJADIAN</h5>
 
@@ -1904,9 +2099,35 @@ export default function SecurityPatrolApp({
                   </div>
 
                   <div className="step-field">
-                    <label>LOKASI / POS</label>
-                    <input type="text" value={mLokasi} onChange={e => { setMLokasi(e.target.value); setMErrors(p => ({ ...p, lokasi: '' })); }}
-                      placeholder="Contoh: Lobby Utama / Lt.3" className="modern-input" style={{ fontSize: '0.8rem' }} />
+                    <label>LOKASI / POS JAGA</label>
+                    {!isCustomLokasi ? (
+                      <select value={mLokasi} onChange={e => {
+                        const val = e.target.value;
+                        if (val === '__custom__') {
+                          setIsCustomLokasi(true);
+                          setMLokasi('');
+                        } else {
+                          setMLokasi(val);
+                          setMErrors(p => ({ ...p, lokasi: '' }));
+                        }
+                      }} className="modern-select" required>
+                        <option value="">-- Pilih Pos Jaga --</option>
+                        {posList.map(p => <option key={p.id} value={p.titik}>{p.titik}</option>)}
+                        <option value="__custom__">-- Lainnya (Ketik Manual) --</option>
+                      </select>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                        <input type="text" value={mLokasiCustom} onChange={e => {
+                          setMLokasiCustom(e.target.value);
+                          setMLokasi(e.target.value);
+                          setMErrors(p => ({ ...p, lokasi: '' }));
+                        }} placeholder="Ketik lokasi manual..." className="modern-input" style={{ fontSize: '0.8rem' }} required />
+                        <button type="button" onClick={() => { setIsCustomLokasi(false); setMLokasiCustom(''); setMLokasi(''); }}
+                          style={{ alignSelf: 'flex-start', fontSize: '0.72rem', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem 0', textDecoration: 'underline', minHeight: '36px', touchAction: 'manipulation' }}>
+                          ← Kembali ke pilihan pos
+                        </button>
+                      </div>
+                    )}
                     {mErrors.lokasi && <span style={{ fontSize: '0.65rem', color: 'var(--color-danger)' }}>{mErrors.lokasi}</span>}
                   </div>
 
@@ -1970,6 +2191,11 @@ export default function SecurityPatrolApp({
         {/* ============================================================ */}
         {tab === 'riwayat' && (
           <div>
+            {/* Back to Home Button */}
+            <button onClick={() => setTab('home')} style={{
+              display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-glass)',
+              borderRadius: '6px', color: 'var(--text-secondary)', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', padding: '0.35rem 0.65rem', marginBottom: '0.75rem', width: 'fit-content'
+            }}>← Kembali ke Beranda</button>
             {/* Sub-tab: Patroli / Temuan / Mutasi */}
             <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.75rem', background: 'var(--bg-glass)', borderRadius: '8px', padding: '0.15rem' }}>
               {[

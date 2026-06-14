@@ -207,7 +207,9 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
         incident: true,
         shift_swap: true,
         hybrid_work: true,
-        payroll: true
+        payroll: true,
+        it: true,
+        legal: true
       };
       
       if (data && data.length > 0) {
@@ -232,7 +234,9 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
           incident: true,
           shift_swap: true,
           hybrid_work: true,
-          payroll: true
+          payroll: true,
+          it: true,
+          legal: true
         }
       }));
     } finally {
@@ -590,7 +594,9 @@ const SaaSManagement = ({ onImpersonate, searchQuery = '' }) => {
                                 { key: 'inventory', label: 'Stok & Inventaris' },
                                 { key: 'shift_swap', label: 'Tukar Shift' },
                                 { key: 'hybrid_work', label: 'Aturan WFH/WFA' },
-                                { key: 'payroll', label: 'Keuangan & Payroll' }
+                                { key: 'payroll', label: 'Keuangan & Payroll' },
+                                { key: 'it', label: 'IT Management' },
+                                { key: 'legal', label: 'Legal Management' }
                               ].map(m => {
                                 const active = tenantModules[tenant.id][m.key];
                                 return (

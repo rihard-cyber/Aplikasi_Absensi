@@ -8,7 +8,11 @@ import { useTranslation } from 'react-i18next';
 
 const QRCodeManagement = () => {
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState('attendance');
   const [tokens, setTokens] = useState([]);
+  const [patrolPoints, setPatrolPoints] = useState([]);
+  const [guardPosts, setGuardPosts] = useState([]);
+  const [assets, setAssets] = useState([]);
   const [projects, setProjects] = useState([]);
   const [tenantId, setTenantId] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -37,17 +41,27 @@ const QRCodeManagement = () => {
 
     if (!activeTenantId && !isGod) return;
     if (activeTenantId) setTenantId(activeTenantId);
+    const tid = activeTenantId;
 
-    let q1 = supabase.from('projects').select('id, name, code, tenant_id');
-    if (activeTenantId) q1 = q1.eq('tenant_id', activeTenantId);
-    const { data: projs } = await q1;
+    // 1. Attendance Tokens
+    const { data: attTokens } = await supabase.from('qr_attendance_tokens').select('*, projects(name)').eq('tenant_id', tid).order('created_at', { ascending: false });
+    if (attTokens) setTokens(attTokens);
+
+    // 2. Patrol Points (Areas)
+    const { data: points } = await supabase.from('areas').select('*').eq('tenant_id', tid).order('nomor_titik');
+    if (points) setPatrolPoints(points);
+
+    // 3. Guard Posts (Pos List)
+    const { data: postsData } = await supabase.from('pos_list').select('*').eq('tenant_id', tid).order('kode');
+    if (postsData) setGuardPosts(postsData);
+
+    // 4. Assets
+    const { data: assetData } = await supabase.from('company_assets').select('*').eq('tenant_id', tid).order('asset_name');
+    if (assetData) setAssets(assetData);
+
+    // 5. Projects for selector
+    const { data: projs } = await supabase.from('projects').select('id, name, code').eq('tenant_id', tid);
     if (projs) setProjects(projs);
-
-    let q2 = supabase.from('qr_attendance_tokens').select('*, projects(name)');
-    if (activeTenantId) q2 = q2.eq('tenant_id', activeTenantId);
-    q2 = q2.order('created_at', { ascending: false });
-    const { data: t } = await q2;
-    if (t) setTokens(t);
   };
 
   const generateToken = async () => {
@@ -160,9 +174,32 @@ const QRCodeManagement = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/10 pb-6 mb-8">
         <div>
           <h2 className="text-xl sm:text-2xl font-serif font-bold text-white">{t('qrCode.title')}</h2>
-          <p className="text-sm text-gray-400 mt-1">{t('qrCode.subtitle')}</p>
+          <p className="text-sm text-gray-400 mt-1">Pusat Manajemen Barcode & QR Code Terpusat</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-xs font-bold flex items-center gap-2 whitespace-nowrap"><Plus size={16} /> {t('qrCode.generateQR')}</button>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => setActiveTab('attendance')} className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${activeTab === 'attendance' ? 'bg-[var(--aurora-3)]/20 border border-[var(--aurora-3)] text-white' : 'bg-white/5 border border-white/10 text-gray-500 hover:text-white'}`}>Absensi</button>
+          <button onClick={() => setActiveTab('patrol')} className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${activeTab === 'patrol' ? 'bg-[var(--aurora-3)]/20 border border-[var(--aurora-3)] text-white' : 'bg-white/5 border border-white/10 text-gray-500 hover:text-white'}`}>Patroli</button>
+          <button onClick={() => setActiveTab('pos')} className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${activeTab === 'pos' ? 'bg-[var(--aurora-3)]/20 border border-[var(--aurora-3)] text-white' : 'bg-white/5 border border-white/10 text-gray-500 hover:text-white'}`}>Pos Jaga</button>
+          <button onClick={() => setActiveTab('assets')} className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition-all ${activeTab === 'assets' ? 'bg-[var(--aurora-3)]/20 border border-[var(--aurora-3)] text-white' : 'bg-white/5 border border-white/10 text-gray-500 hover:text-white'}`}>Aset/Fasilitas</button>
+        </div>
+      </div>
+      
+      <div className="flex justify-between items-center mb-6">
+        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+          {activeTab === 'attendance' && 'QR Code untuk Absensi Mobile'}
+          {activeTab === 'patrol' && 'Barcode untuk Titik Checkpoint Patroli'}
+          {activeTab === 'pos' && 'Barcode Identitas Pos Penjagaan'}
+          {activeTab === 'assets' && 'Barcode Tagging Aset & Fasilitas'}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {activeTab === 'attendance' ? (
+            <button onClick={() => setShowForm(true)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--aurora-1)] to-[var(--aurora-3)] text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 whitespace-nowrap shadow-[0_4px_12px_rgba(142,45,226,0.2)] hover:scale-105 transition-all"><Plus size={14} /> {t('qrCode.generateQR')}</button>
+          ) : (
+            <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[9px] text-gray-500 font-bold uppercase flex items-center gap-2">
+              <Info size={12} /> Kelola Master Data di Modul Terkait
+            </div>
+          )}
+        </div>
       </div>
 
       {showForm && (
@@ -188,7 +225,7 @@ const QRCodeManagement = () => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {tokens.map(token => (
+        {activeTab === 'attendance' && tokens.map(token => (
           <div key={token.id} className={`p-5 rounded-2xl border transition-all ${token.is_active ? 'bg-white/5 border-white/10' : 'bg-white/[0.02] border-white/5 opacity-50'}`}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -245,7 +282,77 @@ const QRCodeManagement = () => {
             </div>
           </div>
         ))}
-        {!tokens.length && <p className="text-center text-gray-500 py-8 col-span-full text-sm">{t('qrCode.noToken')}</p>}
+
+        {activeTab === 'patrol' && patrolPoints.map(p => (
+          <div key={p.supabase_id} className="p-5 rounded-2xl border border-white/10 bg-white/5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] flex items-center justify-center">
+                <MapPin size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-black text-gray-500 uppercase tracking-widest">{p.qr_code}</p>
+                <p className="text-sm font-bold text-white">{p.titik}</p>
+              </div>
+            </div>
+            <div className="bg-black/30 p-3 rounded-xl border border-white/5 mb-4">
+              <p className="text-[10px] text-gray-400 italic">Lt. {p.lantai} - {p.zona}</p>
+            </div>
+            <button 
+              onClick={() => setActiveQRModal({ url: p.qr_code, title: `QR Patroli: ${p.titik}`, filename: `patrol-${p.qr_code}.png` })}
+              className="w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-white/10"
+            >
+              <QrCode size={14} /> Lihat & Cetak Barcode
+            </button>
+          </div>
+        ))}
+
+        {activeTab === 'pos' && guardPosts.map(p => (
+          <div key={p.supabase_id} className="p-5 rounded-2xl border border-white/10 bg-white/5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[var(--success)]/10 text-[var(--success)] flex items-center justify-center">
+                <Shield size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-black text-gray-500 uppercase tracking-widest">{p.kode || 'POS-UNSET'}</p>
+                <p className="text-sm font-bold text-white">{p.titik}</p>
+              </div>
+            </div>
+            <div className="bg-black/30 p-3 rounded-xl border border-white/5 mb-4">
+              <p className="text-[10px] text-gray-400">Lantai: {p.lantai}</p>
+            </div>
+            <button 
+              onClick={() => setActiveQRModal({ url: p.kode || p.titik, title: `QR Pos Jaga: ${p.titik}`, filename: `pos-${p.kode || 'unknown'}.png` })}
+              className="w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-white/10"
+            >
+              <QrCode size={14} /> Generate Barcode Pos
+            </button>
+          </div>
+        ))}
+
+        {activeTab === 'assets' && assets.map(a => (
+          <div key={a.id} className="p-5 rounded-2xl border border-white/10 bg-white/5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[var(--aurora-1)]/10 text-[var(--aurora-1)] flex items-center justify-center">
+                <QrCode size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-black text-gray-500 uppercase tracking-widest">{a.asset_code}</p>
+                <p className="text-sm font-bold text-white">{a.asset_name}</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setActiveQRModal({ url: a.asset_code, title: `QR Aset: ${a.asset_name}`, filename: `asset-${a.asset_code}.png` })}
+              className="w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-white/10"
+            >
+              <QrCode size={14} /> Cetak Tag Aset
+            </button>
+          </div>
+        ))}
+
+        {activeTab === 'attendance' && !tokens.length && <p className="text-center text-gray-500 py-8 col-span-full text-sm">{t('qrCode.noToken')}</p>}
+        {activeTab === 'patrol' && !patrolPoints.length && <p className="text-center text-gray-500 py-8 col-span-full text-sm">Belum ada titik patroli terdaftar.</p>}
+        {activeTab === 'pos' && !guardPosts.length && <p className="text-center text-gray-500 py-8 col-span-full text-sm">Belum ada pos jaga terdaftar.</p>}
+        {activeTab === 'assets' && !assets.length && <p className="text-center text-gray-500 py-8 col-span-full text-sm">Belum ada aset terdaftar.</p>}
       </div>
 
       {/* Visual QR Code Modal */}

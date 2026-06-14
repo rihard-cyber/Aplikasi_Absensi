@@ -4,12 +4,13 @@ import {
   QrCode, CheckCircle2, XCircle, ArrowLeft, Loader2, MapPin, 
   AlertTriangle, Users, Send, Camera, ClipboardList, Route, 
   ShieldCheck, History, ThumbsUp, Check, Info, Shield, Calendar, 
-  FileText, Clock, Trash2, Eye 
+  FileText, Clock, Trash2, Eye, ShieldOff
 } from 'lucide-react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useToast } from '../../../components/Toast';
 import { logAudit } from '../../../utils/auditLogger';
 import { Html5Qrcode } from 'html5-qrcode';
+import { isSecurityDivision } from '../../../utils/featureAccess';
 
 /** @type {(s: string) => string} Passthrough i18n — app is monolingual Indonesian */
 const t = (s) => s;
@@ -81,6 +82,24 @@ const KATEGORI_MUTASI = [
 ];
 
 const PatrolScan = ({ onBack, initialTab }) => {
+  if (!isSecurityDivision(localStorage.getItem('user_division'))) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-8">
+        <div className="w-20 h-20 rounded-3xl bg-[var(--danger)]/10 flex items-center justify-center">
+          <ShieldOff size={40} className="text-[var(--danger)]" />
+        </div>
+        <h3 className="text-xl font-serif font-bold text-white text-center">Akses Ditolak</h3>
+        <p className="text-sm text-gray-400 text-center max-w-xs">
+          Fitur Patroli khusus untuk divisi Security / Satpam.
+        </p>
+        {onBack && (
+          <button onClick={onBack} className="mt-4 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 font-bold text-sm">
+            Kembali
+          </button>
+        )}
+      </div>
+    );
+  }
   const [profile, setProfile] = useState(null);
   const [tenantId, setTenantId] = useState(null);
   const [activeTab, setActiveTab] = useState(initialTab || 'patroli'); // patroli, lapor, mutasi, handover, riwayat
@@ -155,7 +174,20 @@ const PatrolScan = ({ onBack, initialTab }) => {
         if (!session) return;
         const { data: p } = await supabase.from('profiles').select('id, tenant_id, full_name').eq('auth_id', session.user.id).maybeSingle();
         if (p) {
-          setProfile(p);
+          let regu = '';
+          try {
+            const { data: posData } = await supabase
+              .from('security_positions')
+              .select('regu')
+              .eq('profile_id', p.id)
+              .eq('is_active', true)
+              .maybeSingle();
+            if (posData?.regu) regu = posData.regu;
+          } catch (err) {
+            console.warn('Error fetching security position:', err);
+          }
+          const profileWithRegu = { ...p, regu };
+          setProfile(profileWithRegu);
           setTenantId(p.tenant_id);
           await loadData(p.id, p.tenant_id);
         }
@@ -673,7 +705,7 @@ const PatrolScan = ({ onBack, initialTab }) => {
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
                     <span className="text-[8px] text-gray-500 uppercase tracking-wider block">Regu Jaga</span>
-                    <strong className="text-white text-xs">{profile?.regu || 'Regu Utama'}</strong>
+                    <strong className="text-white text-xs">{profile?.regu || 'Regu A'}</strong>
                   </div>
                   <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
                     <span className="text-[8px] text-gray-500 uppercase tracking-wider block">Shift Aktif</span>

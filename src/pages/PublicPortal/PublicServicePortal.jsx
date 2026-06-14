@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../utils/supabaseClient';
 import { useToast } from '../../components/Toast';
+import TenantComplaintForm from './TenantComplaintForm';
 
 const t = (s) => s;
 
@@ -31,6 +32,13 @@ const SERVICE_TYPES = [
     desc: 'Kirim tiket bantuan ke tim pengelola gedung / vendor IT & umum', 
     icon: <HelpCircle className="text-[var(--warning)]" size={24} />,
     gradient: 'from-[var(--warning)]/10 via-[var(--warning)]/5 to-transparent hover:border-[var(--warning)]/30 hover:shadow-[0_12px_40px_rgba(241,196,15,0.18)]'
+  },
+  { 
+    id: 'complaint', 
+    label: 'Komplain Tenant', 
+    desc: 'Laporkan masalah listrik, AC, pipa, kebersihan, atau fasilitas gedung lainnya', 
+    icon: <Building className="text-amber-400" size={24} />,
+    gradient: 'from-amber-500/10 via-amber-500/5 to-transparent hover:border-amber-500/30 hover:shadow-[0_12px_40px_rgba(245,158,11,0.18)]'
   }
 ];
 
@@ -953,6 +961,13 @@ export default function PublicServicePortal() {
                       )}
 
                       {/* Form 3: Helpdesk Form */}
+                      {selectedService === 'complaint' && (
+                        <TenantComplaintForm tenantId={selectedTenant?.id} tenantName={selectedTenant?.name} onSuccess={() => {
+                          setSelectedService(null);
+                          setActivePortalTab('progress');
+                          setProgressInput(selectedTenant?.name || '');
+                        }} />
+                      )}
                       {selectedService === 'helpdesk' && (
                         <div className="space-y-5 border-t border-white/5 pt-4">
                           <div className="text-[10px] text-gray-500 uppercase tracking-widest font-black border-l-2 border-[var(--warning)] pl-2">{t('DETAIL PERMINTAAN TIKET')}</div>

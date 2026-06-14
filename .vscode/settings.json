@@ -57,5 +57,5 @@
     "javascript:S5869": { "level": "off" }
   },
   "sonarlint.connectedMode.project": {},
-  "extensions.ignoreRecommendations": false
+  "extensions.ignoreRecommendations": true
 }
