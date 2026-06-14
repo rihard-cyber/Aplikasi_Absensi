@@ -112,7 +112,7 @@ export default function GlobalHeader({ title, onMenuClick, onBack }) {
                 onError={() => setLogoUrl(null)} 
               />
             ) : (
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-[var(--aurora-3)] to-[var(--aurora-1)] flex items-center justify-center font-serif font-bold text-white text-[15px] logo-3d-spin">
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-[var(--aurora-3)] to-[var(--aurora-1)] flex items-center justify-center font-serif font-bold text-white text-[19px] logo-3d-spin">
                 {getLogoInitials(tenantName)}
               </div>
             )}

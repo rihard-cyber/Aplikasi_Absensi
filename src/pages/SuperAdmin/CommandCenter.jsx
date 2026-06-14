@@ -403,7 +403,7 @@ const CommandCenter = ({ onImpersonate, onCycleRole, onLogout }) => {
         <div className="h-full bg-white/5 backdrop-blur-lg border border-white/10 p-6 flex flex-col gap-2 rounded-none lg:rounded-3xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
           {/* Logo */}
           <div className="mb-8 lg:mb-10 px-2 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center font-serif font-bold text-white text-lg logo-3d-spin shadow-[0_0_15px_rgba(142,45,226,0.4)] shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--aurora-1)] to-[var(--aurora-3)] flex items-center justify-center font-serif font-bold text-white text-2xl logo-3d-spin shadow-[0_0_15px_rgba(142,45,226,0.4)] shrink-0">
               SA
             </div>
             <div className="min-w-0">
