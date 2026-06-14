@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SI PRESENSI PRO MAX - Sistem Absensi & HRIS Digital Masa Depan</title>
+  <meta name="description" content="SI PRESENSI PRO MAX - Platform absensi digital dengan face recognition, geofencing, dan manajemen HRIS lengkap untuk perusahaan masa depan." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-deep: #07080B;
+      --bg-dark: #12141A;
+      --bg-card: rgba(18, 20, 26, 0.6);
+      --aurora-1: #8E2DE2;
+      --aurora-2: #4A00E0;
+      --aurora-3: #00C9FF;
+      --success: #00FF87;
+      --danger: #FF0055;
+      --warning: #FFD700;
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --glass-border: rgba(255, 255, 255, 0.06);
+      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    .noise-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      opacity: .03;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
+    }
+
+    .bg-glow {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-glow-1 {
+      width: 600px;
+      height: 600px;
+      background: rgba(142, 45, 226, 0.12);
+      top: -200px;
+      right: -100px;
+      animation: float 12s ease-in-out infinite;
+    }
+    .bg-glow-2 {
+      width: 500px;
+      height: 500px;
+      background: rgba(0, 201, 255, 0.08);
+      bottom: -150px;
+      left: -150px;
+      animation: float 15s ease-in-out infinite reverse;
+    }
+    .bg-glow-3 {
+      width: 400px;
+      height: 400px;
+      background: rgba(0, 255, 135, 0.05);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation: float 18s ease-in-out infinite 2s;
+    }
+
+    @keyframes float {
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1);
+      }
+      33% {
+        transform: translate(30px, -30px) scale(1.05);
+      }
+      66% {
+        transform: translate(-20px, 20px) scale(0.95);
+      }
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* NAVBAR */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 16px 0;
+      transition: all 0.4s ease;
+    }
+    nav.scrolled {
+      background: rgba(7, 8, 11, 0.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 12px 0;
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--aurora-1), var(--aurora-3));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 14px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      box-shadow: 0 0 20px rgba(142, 45, 226, 0.3);
+    }
+    .logo-text {
+      font-weight: 800;
+      font-size: 18px;
+      background: linear-gradient(135deg, var(--text-primary), var(--aurora-3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .logo-text span {
+      font-weight: 400;
+      font-size: 12px;
+      display: block;
+      -webkit-text-fill-color: var(--text-secondary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.3s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--aurora-1), var(--aurora-3));
+      transition: width 0.3s;
+      border-radius: 1px;
+    }
+    .nav-links a:hover {
+      color: var(--text-primary);
+    }
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+    .nav-cta {
+      padding: 10px 24px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--aurora-1), var(--aurora-2));
+      color: #fff !important;
+      font-weight: 600 !important;
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.3s;
+      box-shadow: 0 4px 20px rgba(142, 45, 226, 0.3);
+    }
+    .nav-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(142, 45, 226, 0.5);
+    }
+    .nav-cta::after {
+      display: none !important;
+    }
+    .mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 28px;
+      cursor: pointer;
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 0 80px;
+      position: relative;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 100px;
+      background: rgba(0, 201, 255, 0.08);
+      border: 1px solid rgba(0, 201, 255, 0.15);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--aurora-3);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      animation: fadeUp 0.8s ease forwards;
+    }
+    .hero-badge .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.5;
+        transform: scale(1.3);
+      }
+    }
+    .hero h1 {
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      animation: fadeUp 0.8s ease 0.1s forwards;
+      opacity: 0;
+    }
+    .hero h1 .gradient-text {
+      background: linear-gradient(135deg, var(--aurora-1), var(--aurora-3), var(--success));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: clamp(16px, 1.4vw, 19px);
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: 36px;
+      max-width: 540px;
+      animation: fadeUp 0.8s ease 0.2s forwards;
+      opacity: 0;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      animation: fadeUp 0.8s ease 0.3s forwards;
+      opacity: 0;
+    }
+    .btn-primary {
+      padding: 16px 36px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--aurora-1), var(--aurora-2));
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      text-decoration: none;
+      transition: all 0.3s;
+      box-shadow: 0 4px 25px rgba(142, 45, 226, 0.35);
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: inherit;
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 40px rgba(142, 45, 226, 0.5);
+    }
+    .btn-secondary {
+      padding: 16px 36px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      transition: all 0.3s;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: inherit;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+      margin-top: 48px;
+      animation: fadeUp 0.8s ease 0.4s forwards;
+      opacity: 0;
+    }
+    .hero-stat h3 {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--aurora-3), var(--success));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-stat p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 0;
+    }
+
+    /* HERO VISUAL */
+    .hero-visual {
+      position: relative;
+      animation: fadeUp 0.8s ease 0.3s forwards;
+      opacity: 0;
+    }
+    .hero-mockup {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3/4;
+      max-width: 340px;
+      margin: 0 auto;
+      border-radius: 32px;
+      background: linear-gradient(160deg, rgba(18, 20, 26, 0.9), rgba(7, 8, 11, 0.95));
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+      overflow: hidden;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .mockup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .mockup-time {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .mockup-battery {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+    .mockup-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .mockup-greeting {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .mockup-greeting strong {
+      color: var(--text-primary);
+      font-size: 16px;
+      display: block;
+      margin-top: 2px;
+    }
+    .mockup-card {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .mockup-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .mockup-card-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    .mockup-card-status {
+      font-size: 10px;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: rgba(0, 255, 135, 0.1);
+      color: var(--success);
+      font-weight: 600;
+    }
+    .mockup-clock-btn {
+      width: 100%;
+      padding: 18px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--aurora-1), var(--aurora-3));
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 25px rgba(142, 45, 226, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .mockup-clock-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+    .mockup-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .mockup-stat {
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .mockup-stat-value {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--aurora-3);
+    }
+    .mockup-stat-label {
+      font-size: 9px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    .mockup-nav {
+      display: flex;
+      justify-content: space-around;
+      padding-top: 16px;
+      margin-top: auto;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .mockup-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      color: var(--text-secondary);
+      opacity: 0.5;
+    }
+    .mockup-nav-item.active {
+      opacity: 1;
+      color: var(--aurora-3);
+    }
+    .mockup-nav-item svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .floating-badge {
+      position: absolute;
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: rgba(18, 20, 26, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 11px;
+      font-weight: 600;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      animation: float 6s ease-in-out infinite;
+      white-space: nowrap;
+    }
+    .floating-badge-1 {
+      top: 5%;
+      right: -15%;
+      animation-delay: 0s;
+      color: var(--success);
+    }
+    .floating-badge-2 {
+      bottom: 20%;
+      left: -18%;
+      animation-delay: 2s;
+      color: var(--aurora-3);
+    }
+    .floating-badge-3 {
+      top: 40%;
+      right: -20%;
+      animation-delay: 4s;
+      color: var(--warning);
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* SECTION HEADERS */
+    .section {
+      padding: 100px 0;
+      position: relative;
+    }
+    .section-header {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 60px;
+    }
+    .section-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 14px;
+      border-radius: 100px;
+      background: rgba(142, 45, 226, 0.08);
+      border: 1px solid rgba(142, 45, 226, 0.12);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--aurora-1);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .section-header h2 {
+      font-size: clamp(28px, 3.5vw, 42px);
+      font-weight: 800;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    .section-header h2 .gradient-text {
+      background: linear-gradient(135deg, var(--aurora-1), var(--aurora-3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .section-header p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* FEATURES GRID */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      padding: 32px 28px;
+      border-radius: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--aurora-1), var(--aurora-3), transparent);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    .feature-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+    .feature-icon.purple {
+      background: rgba(142, 45, 226, 0.12);
+      color: var(--aurora-1);
+    }
+    .feature-icon.cyan {
+      background: rgba(0, 201, 255, 0.12);
+      color: var(--aurora-3);
+    }
+    .feature-icon.green {
+      background: rgba(0, 255, 135, 0.12);
+      color: var(--success);
+    }
+    .feature-icon.pink {
+      background: rgba(255, 0, 85, 0.12);
+      color: var(--danger);
+    }
+    .feature-icon.gold {
+      background: rgba(255, 215, 0, 0.12);
+      color: var(--warning);
+    }
+    .feature-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* ROLE SECTIONS */
+    .role-section {
+      padding: 100px 0;
+    }
+    .role-section:nth-child(even) {
+      background: rgba(255, 255, 255, 0.01);
+    }
+    .role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    .role-grid.reversed {
+      direction: rtl;
+    }
+    .role-grid.reversed>* {
+      direction: ltr;
+    }
+    .role-content h3 {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .role-content .role-sub {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+    .role-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .role-features li {
+      display: flex;
+      align-items: start;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .role-features li svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .role-features li .check-purple {
+      color: var(--aurora-1);
+    }
+    .role-features li .check-cyan {
+      color: var(--aurora-3);
+    }
+    .role-features li .check-green {
+      color: var(--success);
+    }
+    .role-features li .check-gold {
+      color: var(--warning);
+    }
+    .role-features li .check-pink {
+      color: var(--danger);
+    }
+    .role-visual {
+      position: relative;
+    }
+    .role-card-mock {
+      padding: 28px;
+      border-radius: 24px;
+      background: linear-gradient(160deg, rgba(18, 20, 26, 0.8), rgba(7, 8, 11, 0.9));
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    .role-card-mock h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .role-card-mock .mock-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      font-size: 13px;
+    }
+    .role-card-mock .mock-row:last-child {
+      border-bottom: none;
+    }
+    .mock-row .label {
+      color: var(--text-secondary);
+    }
+    .mock-row .value {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .mock-badge {
+      padding: 2px 10px;
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .mock-badge.ontime {
+      background: rgba(0, 255, 135, 0.1);
+      color: var(--success);
+    }
+    .mock-badge.late {
+      background: rgba(255, 0, 85, 0.1);
+      color: var(--danger);
+    }
+    .mock-badge.pending {
+      background: rgba(255, 215, 0, 0.1);
+      color: var(--warning);
+    }
+
+    /* TECH STACK */
+    .tech-strip {
+      padding: 60px 0;
+      text-align: center;
+    }
+    .tech-strip p {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-secondary);
+      margin-bottom: 30px;
+      font-weight: 600;
+    }
+    .tech-icons {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .tech-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .tech-icon svg {
+      width: 32px;
+      height: 32px;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+    .tech-icon:hover svg {
+      opacity: 1;
+    }
+
+    /* CTA */
+    .cta-section {
+      padding: 120px 0;
+      position: relative;
+      text-align: center;
+    }
+    .cta-box {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 60px 40px;
+      border-radius: 32px;
+      background: linear-gradient(160deg, rgba(142, 45, 226, 0.06), rgba(0, 201, 255, 0.04));
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at center, rgba(142, 45, 226, 0.04), transparent 60%);
+      animation: float 10s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .cta-box h2 {
+      font-size: clamp(28px, 3vw, 40px);
+      font-weight: 800;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .cta-box p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 500px;
+      margin: 0 auto 32px;
+      line-height: 1.7;
+      position: relative;
+    }
+
+    /* FOOTER */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      text-align: center;
+    }
+    footer p {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    footer a {
+      color: var(--aurora-3);
+      text-decoration: none;
+    }
+
+    /* prefers-reduced-motion */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+      .reveal {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        text-align: center;
+      }
+      .hero p {
+        margin: 0 auto 36px;
+      }
+      .hero-actions {
+        justify-content: center;
+      }
+      .hero-stats {
+        justify-content: center;
+      }
+      .hero-visual {
+        order: -1;
+      }
+      .hero-mockup {
+        max-width: 280px;
+      }
+      .floating-badge {
+        display: none;
+      }
+      .role-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+      .role-grid.reversed {
+        direction: ltr;
+      }
+      .nav-links {
+        display: none;
+      }
+      .mobile-toggle {
+        display: block;
+      }
+      .nav-links.open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(7, 8, 11, 0.95);
+        backdrop-filter: blur(24px);
+        padding: 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        gap: 16px;
+      }
+    }
+    @media (max-width: 600px) {
+      .hero {
+        padding: 100px 0 60px;
+      }
+      .hero-stats {
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+      .section {
+        padding: 60px 0;
+      }
+      .cta-box {
+        padding: 40px 24px;
+      }
+      .role-card-mock {
+        padding: 20px 16px;
+      }
+      .role-card-mock .mock-row {
+        font-size: 12px;
+        padding: 8px 0;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .hero {
+        padding: 80px 0 40px;
+      }
+      .hero h1 {
+        font-size: 28px;
+      }
+      .btn-primary, .btn-secondary {
+        padding: 14px 20px;
+        font-size: 13px;
+        width: 100%;
+        justify-content: center;
+      }
+      .hero-actions {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .hero-stats {
+        gap: 12px;
+      }
+      .hero-stat {
+        min-width: 80px;
+      }
+      .hero-stat h3 {
+        font-size: 22px;
+      }
+      .logo-text span {
+        display: none;
+      }
+      .cta-box {
+        padding: 32px 16px;
+      }
+      .cta-box h2 {
+        font-size: 22px;
+      }
+      .cta-box .btn-primary {
+        padding: 14px 24px;
+        font-size: 14px;
+        width: 100%;
+        justify-content: center;
+      }
+      .section {
+        padding: 40px 0;
+      }
+      .features-grid {
+        gap: 16px;
+      }
+      .feature-card {
+        padding: 24px 16px;
+      }
+      .role-card-mock {
+        padding: 16px 12px;
+      }
+      .role-content h3 {
+        font-size: 22px;
+      }
+    }
+
+    /* SCROLL ANIMATIONS */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 {
+      transition-delay: 0.1s;
+    }
+    .reveal-delay-2 {
+      transition-delay: 0.2s;
+    }
+    .reveal-delay-3 {
+      transition-delay: 0.3s;
+    }
+    .reveal-delay-4 {
+      transition-delay: 0.4s;
+    }
+  </style>
+</head>
+<body>
+  <div class="noise-overlay"></div>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+  <div class="bg-glow bg-glow-3"></div>
+
+  <!-- NAVBAR -->
+  <nav id="navbar">
+    <div class="nav-inner">
+      <a href="#" class="logo">
+        <div class="logo-icon">SP</div>
+        <div class="logo-text">SI PRESENSI <span>Pulsating Digital Enterprise</span></div>
+      </a>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Menu">&#9776;</button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#features">Fitur</a></li>
+        <li><a href="#roles">Peran</a></li>
+        <li><a href="#tech">Teknologi</a></li>
+        <li><a href="./#/login" class="nav-cta">Masuk Aplikasi</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <span class="dot"></span>
+            Siap Produksi v1.0
+          </div>
+          <h1>
+            Revolusi Absensi<br>
+            <span class="gradient-text">Digital Masa Depan</span>
+          </h1>
+          <p>
+            SI PRESENSI adalah platform absensi dan manajemen HRIS generasi terbaru dengan
+            <strong>Face Recognition</strong>, <strong>Geofencing GPS</strong>,
+            <strong>Multi-Tenant SaaS</strong>, dan sistem approval cerdas —
+            dirancang untuk perusahaan yang bergerak cepat.
+          </p>
+          <div class="hero-actions">
+            <a href="./#/login" class="btn-primary">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              Coba Gratis Sekarang
+            </a>
+            <a href="#features" class="btn-secondary">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Pelajari Lebih Lanjut
+            </a>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <h3>4</h3>
+              <p>Role Level</p>
+            </div>
+            <div class="hero-stat">
+              <h3>30+</h3>
+              <p>Fitur Unggulan</p>
+            </div>
+            <div class="hero-stat">
+              <h3>100%</h3>
+              <p>Berbasis Cloud</p>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-mockup">
+            <div class="mockup-header">
+              <span class="mockup-time">09:41</span>
+              <span class="mockup-battery">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="10" x2="23" y2="14"/></svg>
+                87%
+              </span>
+            </div>
+            <div class="mockup-body">
+              <div class="mockup-greeting">
+                Selamat Datang, <strong>Aldi Pratama</strong>
+              </div>
+              <div class="mockup-card">
+                <div class="mockup-card-header">
+                  <span class="mockup-card-label">Absensi Hari Ini</span>
+                  <span class="mockup-card-status">&#9679; Aktif</span>
+                </div>
+                <button class="mockup-clock-btn" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Clock In / Masuk
+                </button>
+              </div>
+              <div class="mockup-stats">
+                <div class="mockup-stat">
+                  <div class="mockup-stat-value">42</div>
+                  <div class="mockup-stat-label">Jam Minggu Ini</div>
+                </div>
+                <div class="mockup-stat">
+                  <div class="mockup-stat-value">5</div>
+                  <div class="mockup-stat-label">Sisa Cuti</div>
+                </div>
+              </div>
+              <div class="mockup-nav">
+                <div class="mockup-nav-item active">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                  Beranda
+                </div>
+                <div class="mockup-nav-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Riwayat
+                </div>
+                <div class="mockup-nav-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+                  Dokumen
+                </div>
+                <div class="mockup-nav-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Profil
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="floating-badge floating-badge-1">
+            &#10003; Face ID Verified
+          </div>
+          <div class="floating-badge floating-badge-2">
+            &#9670; GPS Geofence Active
+          </div>
+          <div class="floating-badge floating-badge-3">
+            &#9881; Offline Sync Ready
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section" id="features">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">Fitur Unggulan</div>
+        <h2>Semua yang Anda Butuhkan dalam <span class="gradient-text">Satu Platform</span></h2>
+        <p>Dari absensi wajah hingga manajemen penggajian, SI PRESENSI menyatukan seluruh ekosistem HR digital perusahaan Anda.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon purple">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <h3>Face ID Attendance</h3>
+          <p>Absensi dengan verifikasi wajah real-time. Foto diambil setiap clock-in/out untuk mencegah kecurangan. Dilengkapi anti-spoofing dan deteksi wajah hidup.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon cyan">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <h3>Smart Geofencing</h3>
+          <p>Batasi absensi hanya di lokasi proyek/perusahaan dengan radius GPS presisi. Anti-Fake GPS terintegrasi. Cocok untuk karyawan lapangan dan multi-cabang.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon green">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <h3>Multi-Level Approval</h3>
+          <p>Konfigurasi rantai approval berjenjang (Supervisor &rarr; Dept Head &rarr; HR &rarr; Director). Setiap level bisa diatur wajib atau opsional. Fleksibel untuk berbagai kebutuhan.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-4">
+          <div class="feature-icon pink">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <h3>Digital Document Vault</h3>
+          <p>Penyimpanan dokumen digital terpusat: KTP, KK, Ijazah, Sertifikat, BPJS, Rekening Bank. Upload mandiri oleh karyawan dengan verifikasi oleh atasan.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon gold">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3>HRIS Data Center</h3>
+          <p>Data HRIS komprehensif dalam 6 langkah: Identitas, Keluarga &amp; Pendidikan, Kepegawaian, Legal/Asuransi/Bank, Alamat &amp; Kontak Darurat, dan data khusus keamanan.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon purple">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <h3>Analytics &amp; Laporan</h3>
+          <p>Grafik pertumbuhan real-time dengan Recharts, metrik kehadiran harian/mingguan/bulanan, laporan audit trail, dan ekspor CSV dengan proteksi PIN.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon cyan">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <h3>Shift &amp; Jadwal Pintar</h3>
+          <p>Definisi shift dengan dukungan lintas hari, upload jadwal massal via CSV, dan auto-creation profil karyawan. Dictionary shift reusable untuk semua proyek.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-4">
+          <div class="feature-icon green">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <h3>Broadcast &amp; Notifikasi</h3>
+          <p>Kirim pengumuman ke seluruh karyawan atau per proyek. Dilengkapi animasi marquee di halaman utama. Manajemen notifikasi aktif/nonaktif.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon pink">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          </div>
+          <h3>Multi-Tenant SaaS</h3>
+          <p>Arsitektur enterprise dengan isolasi data per tenant. Super Admin dapat mengelola ribuan perusahaan dalam satu dashboard. Tier Bronze, Silver, Gold, Enterprise.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon gold">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>Security &amp; Audit Trail</h3>
+          <p>Setiap aksi tercatat dalam audit trail dengan severity color. Device binding per karyawan. Kill switch tenant. Proteksi ekspor dengan PIN. Deteksi fake GPS.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon purple">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <h3>Payroll &amp; BPJS Engine</h3>
+          <p>Kalkulasi BPJS Kesehatan &amp; Ketenagakerjaan otomatis berdasarkan data HRIS. PPh 21 auto-calculation. Status PTKP dihitung dari status pernikahan dan jumlah tanggungan.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROLES -->
+  <section class="role-section" id="roles">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">Empat Level Akses</div>
+        <h2>Setiap Peran Punya <span class="gradient-text">Kendali Penuh</span></h2>
+        <p>Dari karyawan hingga super admin, setiap level mendapatkan pengalaman yang sesuai dengan kebutuhan dan wewenangnya.</p>
+      </div>
+
+      <!-- EMPLOYEE -->
+      <div class="role-grid reveal" style="margin-bottom:80px">
+        <div class="role-content">
+          <h3 style="color:var(--aurora-3)">Karyawan</h3>
+          <div class="role-sub">Employee Level &mdash; Fokus pada kehadiran dan produktivitas harian</div>
+          <ul class="role-features">
+            <li><svg class="check-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Absensi Face ID dengan verifikasi foto real-time</li>
+            <li><svg class="check-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Geofencing GPS &mdash; hanya bisa absen di lokasi yang ditentukan</li>
+            <li><svg class="check-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Pengajuan cuti, izin, lembur, dan tukar shift (15+ jenis)</li>
+            <li><svg class="check-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Dokumen digital vault &mdash; KTP, KK, Ijazah, BPJS, Rekening</li>
+            <li><svg class="check-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> HRIS data lengkap dalam 6 langkah wizard</li>
+            <li><svg class="check-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Mode offline &mdash; absen tetap bisa tanpa internet, sinkron otomatis</li>
+            <li><svg class="check-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Device binding &mdash; akun terikat ke satu perangkat untuk keamanan</li>
+          </ul>
+        </div>
+        <div class="role-visual">
+          <div class="role-card-mock">
+            <h4><span style="color:var(--aurora-3)">&#9679;</span> Dashboard Karyawan</h4>
+            <div class="mock-row"><span class="label">Jam Minggu Ini</span><span class="value">42 jam 15 menit</span></div>
+            <div class="mock-row"><span class="label">Status Hari Ini</span><span class="mock-badge ontime">ON TIME</span></div>
+            <div class="mock-row"><span class="label">Sisa Cuti</span><span class="value">5 hari</span></div>
+            <div class="mock-row"><span class="label">Titik Lokasi</span><span class="value" style="color:var(--aurora-3)">&#9670; Kantor Pusat</span></div>
+            <div class="mock-row"><span class="label">Perangkat</span><span class="value" style="font-size:11px;color:var(--text-secondary)">Xiaomi 14 · Terverifikasi</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB ADMIN -->
+      <div class="role-grid reversed reveal" style="margin-bottom:80px">
+        <div class="role-content">
+          <h3 style="color:var(--warning)">Admin Tim</h3>
+          <div class="role-sub">Sub Admin Level &mdash; Monitoring dan verifikasi operasional harian</div>
+          <ul class="role-features">
+            <li><svg class="check-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Live monitoring kehadiran dengan filter proyek/divisi</li>
+            <li><svg class="check-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Verifikasi pengajuan cuti, izin, dan dokumen karyawan</li>
+            <li><svg class="check-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Upload jadwal massal via CSV dengan auto-profile creation</li>
+            <li><svg class="check-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> 6 metrik cepat: Tim Aktif, Hadir, Terlambat, Izin, Cuti, Absen</li>
+            <li><svg class="check-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Galeri selfie &mdash; verifikasi foto absensi karyawan</li>
+            <li><svg class="check-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Ekspor data HRIS dengan proteksi PIN 6 digit</li>
+          </ul>
+        </div>
+        <div class="role-visual">
+          <div class="role-card-mock">
+            <h4><span style="color:var(--warning)">&#9679;</span> Monitoring Admin</h4>
+            <div class="mock-row"><span class="label">Total Tim</span><span class="value">24 orang</span></div>
+            <div class="mock-row"><span class="label">Hadir</span><span class="value" style="color:var(--success)">18</span> <span class="mock-badge ontime">85%</span></div>
+            <div class="mock-row"><span class="label">Terlambat</span><span class="value" style="color:var(--warning)">3</span></div>
+            <div class="mock-row"><span class="label">Izin / Cuti</span><span class="value" style="color:var(--aurora-3)">2</span></div>
+            <div class="mock-row"><span class="label">Pending</span><span class="mock-badge pending">4 perlu verifikasi</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TENANT ADMIN -->
+      <div class="role-grid reveal" style="margin-bottom:80px">
+        <div class="role-content">
+          <h3 style="color:var(--aurora-1)">Admin Perusahaan</h3>
+          <div class="role-sub">Tenant Admin Level &mdash; Kelola seluruh aspek operasional perusahaan</div>
+          <ul class="role-features">
+            <li><svg class="check-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Manajemen struktur perusahaan: proyek &amp; divisi dengan GPS</li>
+            <li><svg class="check-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Kamus shift &amp; upload jadwal massal via CSV</li>
+            <li><svg class="check-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Konfigurasi approval chain multi-level (up to 4 stages)</li>
+            <li><svg class="check-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Pengaturan penggajian: BPJS %, PPh 21, PTKP otomatis</li>
+            <li><svg class="check-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Aturan perusahaan: jam kerja, toleransi, denda keterlambatan</li>
+            <li><svg class="check-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Broadcast center &mdash; pengumuman ke seluruh karyawan</li>
+            <li><svg class="check-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Manajemen otoritas &mdash; promosi/demosi Sub Admin</li>
+            <li><svg class="check-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Audit trail lengkap dengan pencarian dan filter</li>
+          </ul>
+        </div>
+        <div class="role-visual">
+          <div class="role-card-mock">
+            <h4><span style="color:var(--aurora-1)">&#9679;</span> Panel Perusahaan</h4>
+            <div class="mock-row"><span class="label">Total Karyawan</span><span class="value">24</span></div>
+            <div class="mock-row"><span class="label">Proyek Aktif</span><span class="value">3</span></div>
+            <div class="mock-row"><span class="label">Divisi</span><span class="value">5</span></div>
+            <div class="mock-row"><span class="label">Shift Aktif</span><span class="value">7</span></div>
+            <div class="mock-row"><span class="label">Approval Chain</span><span class="value">3 tahap</span></div>
+            <div class="mock-row"><span class="label">Kode Aktivasi</span><span class="value" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--success)">SI-A7K2M9</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUPER ADMIN -->
+      <div class="role-grid reversed reveal">
+        <div class="role-content">
+          <h3 style="color:var(--danger)">Master Control</h3>
+          <div class="role-sub">Super Admin Level &mdash; Komando penuh seluruh ekosistem SaaS</div>
+          <ul class="role-features">
+            <li><svg class="check-pink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Manajemen multi-tenant: CRUD perusahaan, tier Bronze s/d Enterprise</li>
+            <li><svg class="check-pink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Impersonasi &mdash; login sebagai tenant atau karyawan mana pun</li>
+            <li><svg class="check-pink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Kill switch &mdash; nonaktifkan tenant dalam 3 detik</li>
+            <li><svg class="check-pink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Generate kode aktivasi karyawan (SI-) &amp; admin (ADM-)</li>
+            <li><svg class="check-pink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Global map &mdash; heatmap aktivitas seluruh tenant</li>
+            <li><svg class="check-pink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Keamanan real-time &mdash; audit feed langsung dengan filter severity</li>
+            <li><svg class="check-pink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> God Mode &mdash; akses total, bypass semua batasan (kode khusus)</li>
+          </ul>
+        </div>
+        <div class="role-visual">
+          <div class="role-card-mock" style="border-color:rgba(255,0,85,0.1)">
+            <h4><span style="color:var(--danger)">&#9679;</span> Command Center</h4>
+            <div class="mock-row"><span class="label">Total Tenant</span><span class="value">12 perusahaan</span></div>
+            <div class="mock-row"><span class="label">Total Karyawan</span><span class="value">847 orang</span></div>
+            <div class="mock-row"><span class="label">Sistem Status</span><span class="value" style="color:var(--success)">&#10003; All Systems Operational</span></div>
+            <div class="mock-row"><span class="label">Impersonasi</span><span class="value" style="color:var(--warning)">Tidak Aktif</span></div>
+            <div class="mock-row"><span class="label">God Mode</span><span class="value" style="color:var(--danger);font-weight:700">AKTIF</span></div>
+            <div class="mock-row"><span class="label">Versi Sistem</span><span class="value" style="font-family:'JetBrains Mono',monospace;font-size:11px">v1.0.0</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECH -->
+  <section class="section" id="tech">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">Teknologi</div>
+        <h2>Dibangun dengan <span class="gradient-text">Stack Modern</span></h2>
+        <p>Teknologi enterprise-grade yang andal, aman, dan siap skala.</p>
+      </div>
+      <div class="tech-strip reveal">
+        <div class="tech-icons">
+          <div class="tech-icon">
+            <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="4" fill="#61DAFB"/><text x="16" y="22" font-size="14" font-weight="900" text-anchor="middle" fill="#000" font-family="Arial">R</text></svg>
+            React 18
+          </div>
+          <div class="tech-icon">
+            <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="4" fill="#646CFF"/><text x="16" y="22" font-size="14" font-weight="900" text-anchor="middle" fill="#fff" font-family="Arial">V</text></svg>
+            Vite 5
+          </div>
+          <div class="tech-icon">
+            <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="4" fill="#38B2AC"/><text x="16" y="22" font-size="10" font-weight="900" text-anchor="middle" fill="#fff" font-family="Arial">TW</text></svg>
+            Tailwind CSS
+          </div>
+          <div class="tech-icon">
+            <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="4" fill="#3ECF8E"/><text x="16" y="22" font-size="10" font-weight="900" text-anchor="middle" fill="#fff" font-family="Arial">SB</text></svg>
+            Supabase
+          </div>
+          <div class="tech-icon">
+            <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="4" fill="#5A67D8"/><text x="16" y="22" font-size="14" font-weight="900" text-anchor="middle" fill="#fff" font-family="Arial">FM</text></svg>
+            Framer Motion
+          </div>
+          <div class="tech-icon">
+            <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="4" fill="#0066FF"/><text x="16" y="22" font-size="10" font-weight="900" text-anchor="middle" fill="#fff" font-family="Arial">CAP</text></svg>
+            Capacitor
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="container reveal">
+      <div class="cta-box">
+        <h2>Siap <span class="gradient-text">Transformasi Digital</span> Perusahaan Anda?</h2>
+        <p>Bergabung dengan perusahaan-perusahaan modern yang sudah menggunakan SI PRESENSI untuk meningkatkan efisiensi dan akurasi manajemen SDM.</p>
+        <a href="./#/login" class="btn-primary" style="font-size:16px;padding:18px 48px">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Mulai Gratis Sekarang
+        </a>
+        <p style="margin-top:20px;font-size:13px;color:var(--text-secondary)">Tidak perlu kartu kredit &bull; Setup 5 menit &bull; Dukungan 24/7</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 <strong style="color:var(--text-primary)">SI PRESENSI</strong> by <a href="#">Pulsating Digital Enterprise</a>. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Navbar scroll
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // Mobile toggle
+    const toggle = document.getElementById('mobileToggle');
+    const links = document.getElementById('navLinks');
+    toggle.addEventListener('click', () => links.classList.toggle('open'));
+
+    // Close mobile menu on link click
+    links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => links.classList.remove('open')));
+
+    // Scroll reveal
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // Parallax glow effect
+    document.addEventListener('mousemove', (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 20;
+      const y = (e.clientY / window.innerHeight - 0.5) * 20;
+      document.querySelectorAll('.bg-glow').forEach((el, i) => {
+        el.style.transform = `translate(${x * (i + 1) * 0.5}px, ${y * (i + 1) * 0.5}px)`;
+      });
+    });
+  </script>
+</body>
+</html>

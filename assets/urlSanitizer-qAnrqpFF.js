@@ -1,0 +1,1 @@
+const a=r=>{if(!r)return"";const s=String(r).trim(),t=s.toLowerCase();return t.startsWith("javascript:")||t.startsWith("vbscript:")||t.startsWith("data:")&&!t.startsWith("data:image/")?"about:blank":s};export{a as s};
