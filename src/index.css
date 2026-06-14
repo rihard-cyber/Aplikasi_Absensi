@@ -125,6 +125,39 @@ html {
   touch-action: pan-y;
 }
 
+/* Custom global smooth scrolling, momentum, and responsive touches */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(11, 12, 16, 0.5);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(142, 45, 226, 0.3);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--aurora-1);
+}
+
+.overflow-y-auto, .overflow-x-auto, .overflow-auto {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(142, 45, 226, 0.3) transparent;
+}
+
+/* Active click feedback and responsive hover transition defaults for links and buttons */
+a, button, [role="button"], input[type="submit"] {
+  touch-action: manipulation;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+a:active, button:active, [role="button"]:active {
+  transform: scale(0.97);
+}
+
 /* Prevent zoom on input focus in iOS WebView */
 input, textarea, select {
   font-size: 16px;

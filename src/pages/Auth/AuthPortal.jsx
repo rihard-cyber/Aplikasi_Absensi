@@ -324,6 +324,12 @@ const AuthPortal = ({ onLogin, sessionProfile, clearSessionProfile }) => {
       }, 280);
 
       const completeLoginRouting = () => {
+        try {
+          sessionStorage.removeItem('employee_active_tab');
+          sessionStorage.removeItem('employee_active_subview');
+          sessionStorage.removeItem('tenant_active_tab');
+        } catch {}
+
         if (role === 'SUPER_ADMIN') {
           sessionStorage.removeItem('god_key');
           sessionStorage.setItem('super_admin_verified', 'true');
@@ -875,6 +881,12 @@ const AuthPortal = ({ onLogin, sessionProfile, clearSessionProfile }) => {
       setShowBootSplash(true);
 
       const completeLoginRouting = () => {
+        try {
+          sessionStorage.removeItem('employee_active_tab');
+          sessionStorage.removeItem('employee_active_subview');
+          sessionStorage.removeItem('tenant_active_tab');
+        } catch {}
+
         if (role === 'SUPER_ADMIN') {
           onLogin('SUPER_ADMIN');
           navigate('/superadmin');
