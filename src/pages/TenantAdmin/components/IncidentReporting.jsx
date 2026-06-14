@@ -40,8 +40,9 @@ const IncidentReporting = ({ onBack }) => {
   const [showForm, setShowForm] = useState(false);
   const [showAction, setShowAction] = useState(null);
   const [form, setForm] = useState({ incident_type: 'k3', location: '', description: '', severity: 'medium', photo_url: '' });
-  const [actionForm, setActionForm] = useState({ action_pic: '', action_deadline: '', corrective_action: '' });
+  const [actionForm, setActionForm] = useState({ action_pic: '', action_deadline: '', corrective_action: '', division_id: '' });
   const [profiles, setProfiles] = useState([]);
+  const [divisions, setDivisions] = useState([]);
   const [uploading, setUploading] = useState(false);
   const toast = useToast();
 
@@ -67,7 +68,7 @@ const IncidentReporting = ({ onBack }) => {
     if (p) setProfileId(p.id);
     if (activeTenantId) setTenantId(activeTenantId);
 
-    let q = supabase.from('incident_reports').select('*, profiles!reporter_id(full_name, nip)');
+    let q = supabase.from('incident_reports').select('*, profiles!reporter_id(full_name, nip), divisions(name)');
     if (activeTenantId) q = q.eq('tenant_id', activeTenantId);
     q = q.order('created_at', { ascending: false });
     const { data: r } = await q;
@@ -83,11 +84,15 @@ const IncidentReporting = ({ onBack }) => {
       setIncidents(formatted);
     }
 
-    let q2 = supabase.from('profiles').select('id, full_name, nip');
+    let q2 = supabase.from('profiles').select('id, full_name, nip, division_id');
     if (activeTenantId) q2 = q2.eq('tenant_id', activeTenantId);
-    q2 = q2.in('role', ['EMPLOYEE', 'SUB_ADMIN']);
     const { data: pr } = await q2;
     if (pr) setProfiles(pr);
+
+    let dq = supabase.from('divisions').select('*');
+    if (activeTenantId) dq = dq.eq('tenant_id', activeTenantId);
+    const { data: divs } = await dq;
+    if (divs) setDivisions(divs);
   };
 
   const handleSubmit = async () => {
@@ -125,6 +130,7 @@ const IncidentReporting = ({ onBack }) => {
       corrective_action: actionForm.corrective_action,
       action_pic: actionForm.action_pic || null,
       action_deadline: actionForm.action_deadline || null,
+      division_id: actionForm.division_id || null,
     }).eq('id', id);
     toast('Tindakan korektif ditetapkan', 'success');
     setShowAction(null);
@@ -318,6 +324,12 @@ const IncidentReporting = ({ onBack }) => {
                     <span className="flex items-center gap-1"><MapPin size={10} /> {inc.location}</span>
                     <span className="flex items-center gap-1"><User size={10} /> {inc.profiles?.full_name}</span>
                     <span>{new Date(inc.created_at).toLocaleDateString()}</span>
+                    {inc.divisions?.name && (
+                      <>
+                        <span>•</span>
+                        <span className="text-[var(--aurora-3)] font-bold">Divisi: {inc.divisions.name}</span>
+                      </>
+                    )}
                   </div>
                   {inc.description && <p className="text-xs text-gray-400 mt-2">{inc.description}</p>}
                   {inc.corrective_action && (
@@ -338,7 +350,15 @@ const IncidentReporting = ({ onBack }) => {
                   </button>
                 )}
                 {inc.status !== 'Closed' && inc.status !== 'Resolved' && (
-                  <button onClick={() => { setShowAction(showAction === inc.id ? null : inc.id); setActionForm({ action_pic: inc.action_pic || '', action_deadline: inc.action_deadline || '', corrective_action: inc.corrective_action || '' }); }}
+                  <button onClick={() => { 
+                    setShowAction(showAction === inc.id ? null : inc.id); 
+                    setActionForm({ 
+                      action_pic: inc.action_pic || '', 
+                      action_deadline: inc.action_deadline || '', 
+                      corrective_action: inc.corrective_action || '',
+                      division_id: inc.division_id || ''
+                    }); 
+                  }}
                     className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-[9px] font-bold text-gray-400 hover:text-white">
                     {t('Assign Action')}
                   </button>
@@ -347,21 +367,31 @@ const IncidentReporting = ({ onBack }) => {
             </div>
             {showAction === inc.id && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 pt-4 border-t border-white/10">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
                   <div>
-                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('PIC')}</label>
-                    <select value={actionForm.action_pic} onChange={e => setActionForm({...actionForm, action_pic: e.target.value})}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
-                      <option value="">— {t('Pilih')} —</option>
-                      {profiles.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Oposisi Divisi')}</label>
+                    <select value={actionForm.division_id} onChange={e => setActionForm({...actionForm, division_id: e.target.value, action_pic: ''})}  className="w-full bg-[#12141A] border border-white/20 rounded-xl px-4 py-2 text-white text-xs outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                      <option value="">— {t('Pilih Divisi')} —</option>
+                      {divisions.map(div => <option key={div.id} value={div.id}>{div.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('PIC Pelaksana')}</label>
+                    <select value={actionForm.action_pic} onChange={e => setActionForm({...actionForm, action_pic: e.target.value})}  className="w-full bg-[#12141A] border border-white/20 rounded-xl px-4 py-2 text-white text-xs outline-none transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" >
+                      <option value="">— {t('Pilih PIC')} —</option>
+                      {profiles
+                        .filter(p => !actionForm.division_id || p.division_id === actionForm.division_id)
+                        .map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)
+                      }
                     </select>
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Deadline')}</label>
-                    <input type="date" value={actionForm.action_deadline} onChange={e => setActionForm({...actionForm, action_deadline: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                    <input type="date" value={actionForm.action_deadline} onChange={e => setActionForm({...actionForm, action_deadline: e.target.value})}   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1">{t('Tindakan')}</label>
-                    <input value={actionForm.corrective_action} onChange={e => setActionForm({...actionForm, corrective_action: e.target.value})}  placeholder={t('Tindakan...')}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white text-sm outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                    <input value={actionForm.corrective_action} onChange={e => setActionForm({...actionForm, corrective_action: e.target.value})}  placeholder={t('Tindakan...')}  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-2 text-white text-xs outline-none placeholder:text-gray-400 transition-all duration-300 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
                   </div>
                 </div>
                 <button onClick={() => handleActionSubmit(inc.id)} className="px-4 py-2 rounded-xl bg-blue-500 text-white text-[10px] font-bold">{t('Simpan Tindakan')}</button>

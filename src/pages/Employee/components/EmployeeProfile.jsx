@@ -412,7 +412,7 @@ const EmployeeProfile = () => {
                 triggerHaptic('HEAVY');
                 // Ensure state is set before navigating
                 sessionStorage.setItem('operational_access', 'MEMILIKI AKSES');
-                navigate('/subadmin');
+                navigate(user.role === 'TENANT_ADMIN' ? '/tenantadmin' : '/subadmin');
               }}
               className="glass-panel p-5 rounded-3xl border border-[var(--warning)]/30 group relative overflow-hidden flex items-center gap-4 hover:border-[var(--warning)]/60 transition-all"
             >

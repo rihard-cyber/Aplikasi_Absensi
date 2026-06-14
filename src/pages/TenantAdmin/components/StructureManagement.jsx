@@ -86,18 +86,37 @@ const StructureManagement = () => {
   const handleAddDivision = async (e) => {
     e.preventDefault();
     if (!newDivision.project_id) { toast(t('structure.toastSelectProjectFirst'), 'error'); return; }
+    
+    // Split names by comma or newline, trim and filter out empty names
+    const names = newDivision.name
+      .split(/[\n,]+/)
+      .map(name => name.trim())
+      .filter(name => name.length > 0);
+
+    if (names.length === 0) {
+      toast('Nama divisi tidak boleh kosong', 'error');
+      return;
+    }
+
     try {
       if (!tenantId) throw new Error(t('structure.toastNoTenant'));
-      const { data, error } = await supabase.from('divisions').insert([{
+      
+      // Prepare payload for bulk insert
+      const insertData = names.map(name => ({
         tenant_id: tenantId,
-        name: newDivision.name,
+        name: name,
         project_id: newDivision.project_id
-      }]).select('*, projects(name)');
+      }));
+
+      const { data, error } = await supabase.from('divisions')
+        .insert(insertData)
+        .select('*, projects(name)');
 
       if (error) throw error;
-      setDivisions([data[0], ...divisions]);
+      
+      setDivisions(prev => [...data, ...prev]);
       setNewDivision({ name: '', project_id: '' });
-      toast(t('structure.toastDivisionAdded'), 'success');
+      toast(`${names.length} divisi berhasil ditambahkan!`, 'success');
     } catch (e) {
       toast(t('structure.toastDivisionAddFail') + e.message, 'error');
     }
@@ -253,8 +272,9 @@ const StructureManagement = () => {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-gray-400 uppercase tracking-widest font-bold block mb-2">{t('structure.divisionNameLabel')}</label>
-                <input required value={newDivision.name} onChange={e => setNewDivision({...newDivision, name: e.target.value})} type="text"  placeholder={t('structure.divisionNamePlaceholder')}  className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                <label className="text-xs text-gray-400 uppercase tracking-widest font-bold block mb-2">Nama Divisi</label>
+                <textarea required value={newDivision.name} onChange={e => setNewDivision({...newDivision, name: e.target.value})} placeholder="Masukkan nama divisi. Untuk menambahkan banyak sekaligus, pisahkan dengan koma (,) atau buat baris baru (Enter)..." className="w-full bg-[#0B0C10] border border-white/20 rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors h-28 resize-none placeholder:text-gray-400 focus:outline-none focus:border-[#00C9FF] focus:ring-2 focus:ring-[#00C9FF]/30 hover:border-white/40" />
+                <p className="text-[9px] text-gray-500 mt-1">Gunakan tanda koma (,) atau tekan Enter untuk memisahkan daftar divisi.</p>
               </div>
               <button type="submit" className="w-full py-3 mt-4 rounded-xl bg-gradient-to-r from-[var(--aurora-3)] to-[#8E2DE2] text-white font-bold tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
                 <Plus size={18} /> {t('structure.saveDivision')}

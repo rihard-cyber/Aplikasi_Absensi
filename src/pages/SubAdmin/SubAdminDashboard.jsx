@@ -267,7 +267,17 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
     <div id={!isEmbedded ? "main-scroll-container" : undefined} className={`min-h-screen bg-[#0B0C10] text-white flex flex-col ${isImpersonating && !isEmbedded ? 'pt-10 overflow-y-auto' : ''}`}>
       {!isEmbedded && <DeveloperWatermarkBackground theme="dark" />}
       {!isEmbedded && (
-        <GlobalHeader title="PORTAL OPERASIONAL" onBack={() => navigate('/')} />
+        <GlobalHeader 
+          title="PORTAL OPERASIONAL" 
+          onBack={() => {
+            const role = localStorage.getItem('user_role');
+            if (role === 'TENANT_ADMIN') {
+              navigate('/tenantadmin');
+            } else {
+              navigate('/app');
+            }
+          }} 
+        />
       )}
       <div className={`max-w-6xl mx-auto w-full flex-1 ${isEmbedded ? '' : 'p-4 sm:p-6 pb-24 lg:pb-6'}`}>
 

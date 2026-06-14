@@ -40,6 +40,7 @@ const HelpdeskTicketing = () => {
   const [tenantId, setTenantId] = useState(null);
   const [tickets, setTickets] = useState([]);
   const [technicians, setTechnicians] = useState([]);
+  const [divisions, setDivisions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('all');
   const [expandedId, setExpandedId] = useState(null);
@@ -61,17 +62,38 @@ const HelpdeskTicketing = () => {
     if (profile?.tenant_id) setTenantId(profile.tenant_id);
     const tid = profile?.tenant_id;
 
-    let q = supabase.from('helpdesk_tickets').select('*, submitter:profiles!helpdesk_tickets_submitter_id_fkey(full_name, nip), assigned:profiles!helpdesk_tickets_assigned_to_fkey(full_name, nip)');
+    let q = supabase.from('helpdesk_tickets').select('*, submitter:profiles!helpdesk_tickets_submitter_id_fkey(full_name, nip), assigned:profiles!helpdesk_tickets_assigned_to_fkey(full_name, nip), divisions(name)');
     if (tid) q = q.eq('tenant_id', tid);
     q = q.order('created_at', { ascending: false });
     const { data } = await q;
     if (data) setTickets(data);
 
-    let tq = supabase.from('profiles').select('id, full_name, nip, role').in('role', ['teknisi', 'cleaning_service', 'security', 'teknisihvac', 'teknisiplumbing', 'teknisiac', 'teknisiit']);
+    let tq = supabase.from('profiles').select('id, full_name, nip, role, division_id');
     if (tid) tq = tq.eq('tenant_id', tid);
     const { data: techs } = await tq;
     if (techs) setTechnicians(techs);
+
+    let dq = supabase.from('divisions').select('*');
+    if (tid) dq = dq.eq('tenant_id', tid);
+    const { data: divs } = await dq;
+    if (divs) setDivisions(divs);
+
     setLoading(false);
+  };
+
+  const updateTicketDivision = async (ticketId, divId) => {
+    const { error } = await supabase.from('helpdesk_tickets').update({
+      division_id: divId || null,
+      assigned_to: null
+    }).eq('id', ticketId);
+
+    if (error) {
+      toast('Gagal mengupdate divisi: ' + error.message, 'error');
+    } else {
+      toast('Divisi tiket berhasil diupdate!', 'success');
+      logAudit('ROUTE_TICKET_DIVISION', { ticket: ticketId, division: divId });
+      init();
+    }
   };
 
   const generateTicketNumber = async () => {
@@ -225,6 +247,7 @@ const HelpdeskTicketing = () => {
               <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Kategori</span>{renderCategoryBadge(t.category)}</div>
               <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Prioritas</span>{renderPriorityBadge(t.priority)}</div>
               <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Status</span>{renderStatusBadge(t.status)}</div>
+              <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Divisi Teroposisi</span><span className="text-[var(--aurora-3)] font-bold">{t.divisions?.name || '—'}</span></div>
               <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Pengirim</span><span className="text-white font-bold">{t.submitter?.full_name || '-'}</span></div>
               <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">Ditugaskan Ke</span><span className="text-white font-bold">{t.assigned?.full_name || '—'}</span></div>
               {t.sla_deadline && <div className="flex justify-between bg-white/5 p-3 rounded-xl"><span className="text-gray-400">SLA Deadline</span><span className={`font-bold ${new Date(t.sla_deadline) < new Date() ? 'text-rose-400' : 'text-emerald-400'}`}>{new Date(t.sla_deadline).toLocaleString('id-ID')}</span></div>}
@@ -407,6 +430,12 @@ const HelpdeskTicketing = () => {
                         <span className="flex items-center gap-1"><User size={10} /> {t.submitter?.full_name || '-'}</span>
                         <span>•</span>
                         <span>{new Date(t.created_at).toLocaleDateString('id-ID')}</span>
+                        {t.divisions?.name && (
+                          <>
+                            <span>•</span>
+                            <span className="text-[var(--aurora-3)] font-bold">Divisi: {t.divisions.name}</span>
+                          </>
+                        )}
                         {t.assigned?.full_name && (
                           <>
                             <span>•</span>
@@ -478,6 +507,10 @@ const HelpdeskTicketing = () => {
                             <div className="mt-1">{renderStatusBadge(t.status)}</div>
                           </div>
                           <div className="bg-white/[0.03] rounded-xl p-2.5 border border-white/5">
+                            <span className="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Divisi Teroposisi</span>
+                            <div className="mt-1 text-xs text-gray-300 font-bold">{t.divisions?.name || '—'}</div>
+                          </div>
+                          <div className="bg-white/[0.03] rounded-xl p-2.5 border border-white/5">
                             <span className="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Teknisi</span>
                             <div className="mt-1 flex items-center gap-1.5">
                               <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-[8px] font-bold text-white">
@@ -503,14 +536,28 @@ const HelpdeskTicketing = () => {
 
                     {/* Action Buttons */}
                     <div className="flex flex-wrap gap-2 items-center mt-4 pt-3 border-t border-white/5">
+                      {/* Route Division */}
+                      <div className="relative group">
+                        <button className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-[10px] font-bold flex items-center gap-1 hover:bg-white/10 transition-all"><Plus size={12} /> Oposisi Divisi</button>
+                        <div className="absolute top-full left-0 mt-1 w-56 bg-[#12141A] border border-white/10 rounded-xl shadow-xl z-20 hidden group-hover:block max-h-40 overflow-y-auto">
+                          <button onClick={() => updateTicketDivision(t.id, null)} className="w-full text-left px-4 py-2 text-[10px] text-gray-400 hover:bg-white/10 hover:text-white transition-colors">Tanpa Divisi (Reset)</button>
+                          {divisions.map(div => (
+                            <button key={div.id} onClick={() => updateTicketDivision(t.id, div.id)} className="w-full text-left px-4 py-2 text-[10px] text-gray-300 hover:bg-white/10 hover:text-white transition-colors">{div.name}</button>
+                          ))}
+                        </div>
+                      </div>
+
                       {/* Assign */}
                       <div className="relative group">
-                        <button className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-[10px] font-bold flex items-center gap-1 hover:bg-white/10 transition-all"><UserCheck size={12} /> Assign</button>
-                        <div className="absolute top-full left-0 mt-1 w-56 bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl shadow-xl z-10 hidden group-hover:block max-h-40 overflow-y-auto">
+                        <button className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 text-[10px] font-bold flex items-center gap-1 hover:bg-white/10 transition-all"><UserCheck size={12} /> Assign PIC</button>
+                        <div className="absolute top-full left-0 mt-1 w-56 bg-[#12141A] border border-white/10 rounded-xl shadow-xl z-20 hidden group-hover:block max-h-40 overflow-y-auto">
                           <button onClick={() => assignTechnician(t.id, null)} className="w-full text-left px-4 py-2 text-[10px] text-gray-400 hover:bg-white/10 hover:text-white transition-colors">Unassign</button>
-                          {technicians.map(tech => (
-                            <button key={tech.id} onClick={() => assignTechnician(t.id, tech.id)} className="w-full text-left px-4 py-2 text-[10px] text-gray-300 hover:bg-white/10 hover:text-white transition-colors">{tech.full_name} ({tech.role})</button>
-                          ))}
+                          {technicians
+                            .filter(tech => !t.division_id || tech.division_id === t.division_id)
+                            .map(tech => (
+                              <button key={tech.id} onClick={() => assignTechnician(t.id, tech.id)} className="w-full text-left px-4 py-2 text-[10px] text-gray-300 hover:bg-white/10 hover:text-white transition-colors">{tech.full_name} ({tech.role || 'Staf'})</button>
+                            ))
+                          }
                         </div>
                       </div>
                       {/* Status transitions */}

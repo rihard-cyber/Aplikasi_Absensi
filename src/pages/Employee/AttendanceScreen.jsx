@@ -1061,8 +1061,16 @@ const AttendanceScreen = ({ onGodModeReturn, isImpersonating, onCycleRole }) => 
             <HelpdeskRequest key="helpdesk" onBack={() => setActiveSubView(null)} />
           ) : activeSubView === 'booking' ? (
             <BookingRequest key="booking" onBack={() => setActiveSubView(null)} />
-          ) : activeSubView === 'patrol-scan' ? (
-            <PatrolScan key="patrol-scan" onBack={() => setActiveSubView(null)} />
+          ) : ['patrol-scan', 'patrol-lapor', 'patrol-mutasi', 'patrol-handover'].includes(activeSubView) ? (
+            <PatrolScan 
+              key="patrol-scan" 
+              onBack={() => setActiveSubView(null)} 
+              initialTab={
+                activeSubView === 'patrol-lapor' ? 'lapor' :
+                activeSubView === 'patrol-mutasi' ? 'mutasi' :
+                activeSubView === 'patrol-handover' ? 'handover' : 'patroli'
+              } 
+            />
           ) : activeSubView === 'home-address' ? (
             <HomeAddressRegistration key="home-address" onBack={() => setActiveSubView(null)} />
           ) : activeSubView === 'task-plan' ? (

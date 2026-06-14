@@ -32,6 +32,7 @@ const PatrolManagement = () => {
   const [handovers, setHandovers] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [mutasiLogs, setMutasiLogs] = useState([]);
+  const [divisions, setDivisions] = useState([]);
   const [searchMutasi, setSearchMutasi] = useState('');
   const [filterKatMutasi, setFilterKatMutasi] = useState('');
   const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -128,39 +129,50 @@ const PatrolManagement = () => {
     if (activeTenantId) setTenantId(activeTenantId);
     const tid = activeTenantId;
 
-    const [cpData, rData, lData, iData, hData, pData, mData] = await Promise.all([
+    const [cpData, rData, lData, iData, hData, pData, mData, divData] = await Promise.all([
       tid ? supabase.from('patrol_checkpoints').select('*').eq('tenant_id', tid).order('name') : Promise.resolve({ data: [] }),
       tid ? supabase.from('patrol_routes').select('*, patrol_route_checkpoints(*, patrol_checkpoints(*))').eq('tenant_id', tid).order('name') : Promise.resolve({ data: [] }),
       tid ? supabase.from('patrol_logs').select('*, profiles(full_name, nip), patrol_checkpoints(name, qr_code, latitude, longitude)').eq('tenant_id', tid).order('scan_time', { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
-      tid ? supabase.from('patrol_incidents').select('*, patrol_logs(*, patrol_checkpoints(name), profiles(full_name))').eq('tenant_id', tid).order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
+      tid ? supabase.from('patrol_incidents').select('*, patrol_logs(*, patrol_checkpoints(name), profiles(full_name)), divisions(name)').eq('tenant_id', tid).order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
       tid ? supabase.from('patrol_shift_handovers').select('*, from_profile:profiles!patrol_shift_handovers_from_profile_id_fkey(full_name), to_profile:profiles!patrol_shift_handovers_to_profile_id_fkey(full_name)').eq('tenant_id', tid).order('handover_time', { ascending: false }).limit(50) : Promise.resolve({ data: [] }),
-      tid ? supabase.from('profiles').select('id, full_name, nip, role').in('role', ['security', 'satpam']).eq('tenant_id', tid) : Promise.resolve({ data: [] }),
+      tid ? supabase.from('profiles').select('id, full_name, nip, role, division_id').eq('tenant_id', tid) : Promise.resolve({ data: [] }),
       tid ? supabase.from('mutasi_logs').select('*, profiles(full_name, nip)').eq('tenant_id', tid).order('created_at', { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
+      tid ? supabase.from('divisions').select('id, name').eq('tenant_id', tid) : Promise.resolve({ data: [] }),
     ]);
     if (cpData.data) setCheckpoints(cpData.data);
     if (rData.data) setRoutes(rData.data);
     if (lData.data) setLogs(lData.data);
     if (iData.data) setIncidents(iData.data);
     if (hData.data) setHandovers(hData.data);
-    if (pData.data) setProfiles(pData.data);
+    if (divData.data) setDivisions(divData.data);
+    
+    let filteredProfiles = [];
+    if (pData.data) {
+      const secDivIds = (divData.data || []).filter(d => /security|satpam/i.test(d.name)).map(d => d.id);
+      filteredProfiles = pData.data.filter(p => 
+        ['security', 'satpam'].includes(p.role) || 
+        secDivIds.includes(p.division_id)
+      );
+    }
+    setProfiles(filteredProfiles);
     if (mData.data) setMutasiLogs(mData.data);
-
+ 
     // Auto-detect missed guards (satpam with schedule but no clock-in today)
     if (tid) {
       const today = new Date().toISOString().split('T')[0];
-      const guardIds = pData.data?.map(g => g.id) || [];
+      const guardIds = filteredProfiles.map(g => g.id);
       if (guardIds.length > 0) {
         const { data: schedules } = await supabase
           .from('user_schedules').select('user_id').eq('tenant_id', tid).eq('date', today)
           .in('user_id', guardIds).not('shift_id', 'is', null);
         const scheduledIds = new Set((schedules || []).map(s => s.user_id));
-
+ 
         const { data: attendances } = await supabase
           .from('attendance_logs').select('user_id').eq('tenant_id', tid).gte('timestamp', today)
           .lt('timestamp', today + 'T23:59:59').eq('action', 'CLOCK_IN');
         const clockedIds = new Set((attendances || []).map(a => a.user_id));
-
-        const missing = (pData.data || []).filter(g => scheduledIds.has(g.id) && !clockedIds.has(g.id));
+ 
+        const missing = filteredProfiles.filter(g => scheduledIds.has(g.id) && !clockedIds.has(g.id));
         if (missing.length > 0) notifyAdminsInTenant({ type: NOTIF_TYPES.MISSED_GUARD, title: missing.length + ' Satpam Belum Absen', body: missing.map(g => g.full_name).join(', '), link: '/patrol' });
         setMissedGuards(missing);
       }
@@ -229,6 +241,20 @@ const PatrolManagement = () => {
     logAudit('DELETE_PATROL_ROUTE', { routeId });
     toast('Route dihapus', 'success');
     init();
+  };
+
+  const updateIncidentDivision = async (incidentId, divId) => {
+    const { error } = await supabase.from('patrol_incidents').update({
+      division_id: divId || null
+    }).eq('id', incidentId);
+
+    if (error) {
+      toast('Gagal mengdelegasikan insiden: ' + error.message, 'error');
+    } else {
+      toast('Delegasi divisi berhasil disimpan!', 'success');
+      logAudit('DELEGATE_PATROL_INCIDENT', { incident: incidentId, division: divId });
+      init();
+    }
   };
 
   const renderCheckpoints = () => (
@@ -453,7 +479,7 @@ const PatrolManagement = () => {
           <div key={inc.id} className="bg-white/5 rounded-2xl border border-[var(--danger)]/20 p-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-[var(--danger)]/10 text-[var(--danger)] flex items-center justify-center shrink-0"><AlertTriangle size={18} /></div>
-              <div>
+              <div className="flex-1">
                 <p className="text-white text-sm font-bold">{inc.incident_type}</p>
                 <p className="text-xs text-gray-400 mt-1">{inc.description}</p>
                 <div className="flex items-center gap-3 mt-2 text-[9px] text-gray-500">
@@ -468,7 +494,38 @@ const PatrolManagement = () => {
                     <img src={inc.photo_url} alt="" className="w-full h-full object-cover" />
                   </a>
                 )}
-                <span className={`mt-2 inline-block px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest border ${inc.severity === 'critical' ? 'bg-[var(--danger)]/20 text-[var(--danger)] border-[var(--danger)]/40' : inc.severity === 'high' ? 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30' : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'}`}>{inc.severity || 'medium'}</span>
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest border ${inc.severity === 'critical' ? 'bg-[var(--danger)]/20 text-[var(--danger)] border-[var(--danger)]/40' : inc.severity === 'high' ? 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/30' : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'}`}>{inc.severity || 'medium'}</span>
+                  {inc.divisions?.name && (
+                    <span className="px-2 py-0.5 rounded-full bg-[var(--aurora-3)]/10 text-[var(--aurora-3)] border border-[var(--aurora-3)]/20 font-bold text-[8px] uppercase tracking-wide">
+                      Delegasi: {inc.divisions.name}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 shrink-0">
+                <div className="relative group">
+                  <button className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white text-[9px] font-bold flex items-center gap-1 transition-all">
+                    Delegasikan Divisi
+                  </button>
+                  <div className="absolute top-full right-0 mt-1 w-48 bg-[#1A1C23] border border-white/10 rounded-xl shadow-xl z-20 hidden group-hover:block max-h-40 overflow-y-auto">
+                    <button 
+                      onClick={() => updateIncidentDivision(inc.id, null)} 
+                      className="w-full text-left px-4 py-2 text-[10px] text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      Tanpa Delegasi (Reset)
+                    </button>
+                    {divisions.map(div => (
+                      <button 
+                        key={div.id} 
+                        onClick={() => updateIncidentDivision(inc.id, div.id)} 
+                        className="w-full text-left px-4 py-2 text-[10px] text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+                      >
+                        {div.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
