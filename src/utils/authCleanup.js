@@ -4,14 +4,7 @@
  * and the specialized modules (like JDC) during logout or session expiration.
  */
 
-import { clearJdcCache } from '../jdc/utils/supabase';
-
 export const clearAllAuthData = () => {
-  // 0. Clear In-Memory Caches
-  try {
-    clearJdcCache();
-  } catch {}
-
   // 1. Session Storage
   try {
     sessionStorage.clear();

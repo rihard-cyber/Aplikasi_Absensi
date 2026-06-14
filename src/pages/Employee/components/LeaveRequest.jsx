@@ -122,8 +122,8 @@ const LeaveRequest = ({ onBack, category = 'leave' }) => {
         if (data) {
           // Filter manually for flexibility or refine query
           const filtered = category === 'salary' 
-            ? data.filter(d => d.doc_type.includes('Slip') || d.doc_type.includes('Gaji'))
-            : data.filter(d => d.doc_type.includes('Kontrak') || d.doc_type.includes('PKWT') || d.doc_type.includes('Kartu Keluarga'));
+            ? data.filter(d => d.doc_type?.includes('Slip') || d.doc_type?.includes('Gaji'))
+            : data.filter(d => d.doc_type?.includes('Kontrak') || d.doc_type?.includes('PKWT') || d.doc_type?.includes('Kartu Keluarga'));
 
           const formatted = filtered.map(item => ({
             id: item.id, 

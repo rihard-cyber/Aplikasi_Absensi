@@ -40,19 +40,8 @@ const BannerManager = () => {
           }
         }
       } else {
-        const isAdmin = ['SUPER_ADMIN', 'TENANT_ADMIN', 'SUB_ADMIN'].includes(userRole);
-        if (!isAdmin) return;
-        const { data: firstTenant } = await supabase.from('tenants').select('id, name').order('created_at').limit(1).maybeSingle();
-        if (firstTenant) {
-          tid = firstTenant.id;
-          setTenantName(firstTenant.name);
-        } else {
-          const cachedTid = (() => { try { return sessionStorage.getItem('banners_tenant_id'); } catch { return null; } })();
-          if (cachedTid) {
-            tid = cachedTid;
-            setTenantName('Tersimpan (cache)');
-          }
-        }
+        toast('Gagal: Akun Anda tidak terasosiasi dengan Tenant mana pun.', 'error');
+        return;
       }
     }
     if (tid) setTenantId(tid);

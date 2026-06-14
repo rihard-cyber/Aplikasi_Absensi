@@ -92,7 +92,6 @@ const HybridWorkSettings = lazy(() => import('./components/HybridWorkSettings'))
 const WorkModeDashboard = lazy(() => import('./components/WorkModeDashboard'));
 const ITManagement = lazy(() => import('./components/ITManagement'));
 const LegalManagement = lazy(() => import('./components/LegalManagement'));
-const SecurityOpsShell = lazy(() => import('../../modules/security/SecurityOpsShell'));
 import HRISExportWrapper from '../../components/HRISExportWrapper';
 import { supabase } from '../../utils/supabaseClient';
 
@@ -167,7 +166,6 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
       'helpdesk': 'helpdesk',
       'work-order': 'work_order',
       'patrol': 'patrol',
-      'security-ops': 'patrol',
       'visitor': 'visitor',
       'facility-booking': 'booking',
       'incident': 'incident',
@@ -296,7 +294,6 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
       case 'thr': return 'PERHITUNGAN THR';
       case 'it-management': return 'IT MANAGEMENT';
       case 'legal-management': return 'LEGAL MANAGEMENT';
-      case 'security-ops': return 'OPERASI KEAMANAN JDC';
       case 'settings': return 'PENGATURAN UMUM';
       default: return 'ADMIN PANEL';
     }
@@ -349,13 +346,6 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
                 {modules.helpdesk && <button onClick={() => go('helpdesk')} className={NAV_BTN(activeTab === 'helpdesk')}><Headphones size={18} /><span className="text-sm">Helpdesk Tiket</span></button>}
                 {modules.work_order && <button onClick={() => go('work-order')} className={NAV_BTN(activeTab === 'work-order')}><Hammer size={18} /><span className="text-sm">Work Order Maintenance</span></button>}
                 {modules.patrol && <button onClick={() => go('patrol')} className={NAV_BTN(activeTab === 'patrol')}><Route size={18} /><span className="text-sm">Patroli Satpam</span></button>}
-                {modules.patrol && <button onClick={() => go('security-ops')} className={NAV_BTN(activeTab === 'security-ops')}><ShieldCheck size={18} /><span className="text-sm font-bold">Operasi Keamanan JDC</span></button>}
-                {modules.patrol && (
-                  <button onClick={() => { setIsSidebarOpen(false); navigate('/jdc'); }} className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-500 hover:bg-white/5 hover:text-gray-300 border border-dashed border-white/5 text-xs">
-                    <ShieldCheck size={16} />
-                    <span>JDC Fullscreen (legacy)</span>
-                  </button>
-                )}
                 <button onClick={() => go('sla-dashboard')} className={NAV_BTN(activeTab === 'sla-dashboard')}><Target size={18} /><span className="text-sm">Dashboard Target & SLA</span></button>
                 {modules.visitor && <button onClick={() => go('visitor')} className={NAV_BTN(activeTab === 'visitor')}><UserCheck size={18} /><span className="text-sm">Manajemen Tamu</span></button>}
                 {modules.booking && <button onClick={() => go('facility-booking')} className={NAV_BTN(activeTab === 'facility-booking')}><DoorOpen size={18} /><span className="text-sm">Booking Fasilitas</span></button>}
@@ -491,12 +481,6 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
 
       {/* Main Content */}
       <main id="main-scroll-container" className="flex-1 p-0 z-10 overflow-y-auto flex flex-col">
-        {activeTab === 'security-ops' ? (
-          <Suspense fallback={<div className="p-20 text-center"><div className="w-8 h-8 border-2 border-[var(--aurora-3)] border-t-transparent rounded-full animate-spin mx-auto" /></div>}>
-            <SecurityOpsShell onBack={() => go('home')} />
-          </Suspense>
-        ) : (
-          <>
         <GlobalHeader 
           title={getTabTitle()} 
           onMenuClick={() => setIsSidebarOpen(true)} 
@@ -584,12 +568,9 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
           <span>© 2026 <strong className="text-[var(--aurora-3)]">{tenantData?.name || 'Aplikasi Absensi'}</strong>. Hak Cipta Dilindungi.</span>
           <DeveloperWatermark />
         </footer>
-          </>
-        )}
       </main>
 
       {/* Bottom Navigation for Mobile */}
-      {activeTab !== 'security-ops' && (
       <BottomNav
         currentTab={activeTab}
         onNavClick={(tab) => go(tab)}
@@ -597,7 +578,6 @@ const TenantDashboard = ({ onGodModeReturn, isImpersonating, onCycleRole, onLogo
         isSidebarOpen={isSidebarOpen}
         items={bottomNavItems}
       />
-      )}
     </div>
   );
 };

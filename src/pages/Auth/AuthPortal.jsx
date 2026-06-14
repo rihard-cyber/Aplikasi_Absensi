@@ -8,6 +8,7 @@ import { useToast } from '../../components/Toast';
 import { registerBackHandler } from '../../utils/navigation';
 import DeveloperWatermark from '../../components/DeveloperWatermark';
 import DeveloperWatermarkBackground from '../../components/DeveloperWatermarkBackground';
+import { isSecurityDivision } from '../../utils/featureAccess';
 
 const OTP_LENGTH = 6;
 
@@ -790,7 +791,7 @@ const AuthPortal = ({ onLogin, sessionProfile, clearSessionProfile }) => {
       // 2. Fetch User Profile & Role
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, divisions(name)')
         .eq('auth_id', authData.user.id)
         .maybeSingle();
 
@@ -886,6 +887,13 @@ const AuthPortal = ({ onLogin, sessionProfile, clearSessionProfile }) => {
           sessionStorage.removeItem('employee_active_subview');
           sessionStorage.removeItem('tenant_active_tab');
         } catch {}
+
+        const divisionName = userProfile?.divisions?.name || '';
+        try {
+          localStorage.setItem('user_division', divisionName);
+        } catch (e) {
+          console.warn("Gagal menyimpan divisi user ke localStorage:", e);
+        }
 
         if (role === 'SUPER_ADMIN') {
           onLogin('SUPER_ADMIN');

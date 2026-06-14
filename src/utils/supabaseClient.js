@@ -16,3 +16,4 @@ if (supabaseUrl.includes('your-') || supabaseUrl.includes('placeholder') || supa
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+if (typeof window !== 'undefined') window.supabase = supabase;

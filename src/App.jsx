@@ -25,7 +25,6 @@ const SubAdminDashboard = lazy(() => import('./pages/SubAdmin/SubAdminDashboard'
 const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
 const QRScanner = lazy(() => import('./pages/Employee/components/QRScanner'));
 const PublicServicePortal = lazy(() => import('./pages/PublicPortal/PublicServicePortal'));
-const JDCApp = lazy(() => import('./jdc/App'));
 
 const DASHBOARD_ROUTES = ['/app', '/tenantadmin', '/superadmin', '/subadmin'];
 const EXIT_ROUTES = ['/', '/login'];
@@ -324,7 +323,9 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
     else handleImpersonate(nextRole);
     if (nextRole === 'SUPER_ADMIN') navigate('/superadmin');
     else if (nextRole === 'TENANT_ADMIN') navigate('/tenantadmin');
-    else if (nextRole === 'SUB_ADMIN') navigate('/subadmin');
+    else if (nextRole === 'SUB_ADMIN') {
+      navigate('/subadmin');
+    }
     else if (nextRole === 'EMPLOYEE') navigate('/app');
     if (window.navigator?.vibrate) window.navigator.vibrate([100, 50, 100]);
   };
@@ -474,20 +475,7 @@ const AppRoutes = ({ isAuthenticated, authLoading, userRole, originalRole, handl
             }
           />
 
-          {/* JDC SECURITY SYSTEM - hanya untuk Security/Satpam atau Admin (Bypass untuk public complaint) */}
-          <Route path="/jdc" element={
-              (typeof window !== 'undefined' && window.location.href.includes('complaint')) || (
-                isAuthenticated && (
-                  userRole === 'SUPER_ADMIN' ||
-                  userRole === 'TENANT_ADMIN' ||
-                  (() => { try { return isSecurityDivision(localStorage.getItem('user_division')); } catch { return false; } })()
-                )
-              )
-                ? <PageTransition><JDCApp /></PageTransition>
-                : isAuthenticated ? <Navigate to="/app" replace />
-                : <Navigate to="/login" replace />
-            }
-          />
+
 
           <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
         </Routes>

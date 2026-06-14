@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { 
   Users, Activity, Camera, Calendar, Download, Upload, 
-  Search, Filter, CheckCircle2, XCircle, ChevronLeft, 
+  Search, Filter, CheckCircle2, XCircle, ChevronLeft, ChevronRight,
   MoreVertical, ArrowLeftRight, ShieldAlert, Zap,
   BarChart3, Clock, AlertTriangle, FileSpreadsheet,
   ShieldCheck, CheckSquare, Eye, Trash2, Network, Building2,
@@ -18,6 +18,12 @@ import DeveloperWatermark from '../../components/DeveloperWatermark';
 import DeveloperWatermarkBackground from '../../components/DeveloperWatermarkBackground';
 import { useNotifications } from '../../components/Notifications';
 import BottomNav from '../../components/BottomNav';
+import { isSecurityDivision } from '../../utils/featureAccess';
+
+const PatrolManagement = lazy(() => import('../TenantAdmin/components/PatrolManagement'));
+const IncidentReporting = lazy(() => import('../TenantAdmin/components/IncidentReporting'));
+const TenantComplaintAdmin = lazy(() => import('../TenantAdmin/components/TenantComplaintAdmin'));
+const VisitorManagement = lazy(() => import('../TenantAdmin/components/VisitorManagement'));
 
 const subAdminBottomNavItems = [
   { id: 'monitor', label: 'Monitor', icon: Activity },
@@ -84,11 +90,13 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setIsChecking(false); return; }
       const { data: prof } = await supabase.from('profiles')
-        .select('role, operational_access, tenant_id')
+        .select('role, operational_access, tenant_id, divisions(name)')
         .eq('auth_id', session.user.id)
         .maybeSingle();
       if (prof) {
         const role = prof.role?.toUpperCase();
+        const divisionName = prof.divisions?.name || '';
+        try { localStorage.setItem('user_division', divisionName); } catch {}
         const isLimited = role === 'EMPLOYEE' && prof.operational_access;
         const authOk = isEmbedded || ['SUPER_ADMIN', 'TENANT_ADMIN', 'SUB_ADMIN'].includes(role) || isLimited;
         if (!authOk) {
@@ -259,6 +267,23 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
     return (<div className="min-h-screen bg-[#0B0C10] flex items-center justify-center text-white">Akses Ditolak</div>);
   }
 
+  const division = localStorage.getItem('user_division');
+  const isSecurity = isSecurityDivision(division);
+
+  const getSubAdminTitle = () => {
+    switch (activeTab) {
+      case 'monitor': return 'PORTAL OPERASIONAL';
+      case 'approval': return 'PUSAT PERSETUJUAN';
+      case 'employees': return 'DIREKTORI KARYAWAN';
+      case 'reports': return 'EKSPOR LAPORAN';
+      case 'patrol': return 'PATROLI KEAMANAN';
+      case 'incident': return 'LAPORAN INSIDEN (K3)';
+      case 'complaints': return 'KOMPLAIN TENANT';
+      case 'visitor': return 'MANAJEMEN TAMU';
+      default: return 'PORTAL OPERASIONAL';
+    }
+  };
+
   const navItems = [
     { key: 'monitor', label: 'Monitoring', icon: <Activity size={18} /> },
     { key: 'approval', label: 'Persetujuan' + (pendingLeaves.length + pendingLoans.length + pendingReimb.length > 0 ? ` (${pendingLeaves.length + pendingLoans.length + pendingReimb.length})` : ''), icon: <CheckCircle2 size={18} /> },
@@ -266,12 +291,21 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
     { key: 'reports', label: 'Laporan', icon: <BarChart3 size={18} /> },
   ];
 
+  if (isSecurity) {
+    navItems.push(
+      { key: 'patrol', label: 'Patroli Keamanan', icon: <ShieldCheck size={18} /> },
+      { key: 'incident', label: 'Laporan Insiden', icon: <AlertTriangle size={18} /> },
+      { key: 'complaints', label: 'Komplain Tenant', icon: <Building2 size={18} /> },
+      { key: 'visitor', label: 'Tamu / Visitor', icon: <UserCheck size={18} /> }
+    );
+  }
+
   return (
     <div id={!isEmbedded ? "main-scroll-container" : undefined} className={`min-h-screen bg-[#0B0C10] text-white flex flex-col ${isImpersonating && !isEmbedded ? 'pt-10 overflow-y-auto' : ''}`}>
       {!isEmbedded && <DeveloperWatermarkBackground theme="dark" />}
       {!isEmbedded && (
         <GlobalHeader 
-          title={"PORTAL OPERASIONAL" + (accessLevel === 'limited' ? ' (TERBATAS)' : '')}
+          title={getSubAdminTitle() + (accessLevel === 'limited' ? ' (TERBATAS)' : '')}
           onBack={() => {
             const role = localStorage.getItem('user_role');
             if (role === 'TENANT_ADMIN') {
@@ -303,6 +337,25 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
 
         {activeTab === 'monitor' && (
           <div className="space-y-6">
+            {isSecurity && (
+              <div className="glass-panel p-5 rounded-2xl border border-[var(--aurora-3)]/30 bg-gradient-to-r from-[var(--aurora-3)]/10 to-transparent flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-[0_0_20px_rgba(0,201,255,0.05)] animate-fade-in">
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <ShieldCheck size={16} className="text-[var(--aurora-3)]" />
+                    Modul Operasi Keamanan JDC Aktif
+                  </h4>
+                  <p className="text-[11px] text-gray-400 mt-1 max-w-xl font-sans leading-relaxed">
+                    Sebagai Manajemen / SPV Divisi Keamanan, Anda dapat mengakses dashboard pemantauan patroli, regu jaga, mutasi, dan komplain tenant secara lengkap.
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setActiveTab('patrol')} 
+                  className="w-full sm:w-auto px-4 py-2.5 bg-[var(--aurora-3)] text-black rounded-xl text-xs font-bold hover:bg-cyan-400 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(0,201,255,0.2)] shrink-0 font-serif"
+                >
+                  Buka Patroli Keamanan <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="glass-panel p-4 rounded-2xl border border-white/5 text-center">
                 <p className="text-2xl font-bold text-white">{stats.total}</p>
@@ -446,6 +499,28 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
             </div>
           </div>
         )}
+
+        {activeTab === 'patrol' && isSecurity && (
+          <Suspense fallback={<div className="p-8 text-center"><Loader2 className="animate-spin mx-auto text-[var(--aurora-3)]" size={24} /></div>}>
+            <PatrolManagement />
+          </Suspense>
+        )}
+        {activeTab === 'incident' && isSecurity && (
+          <Suspense fallback={<div className="p-8 text-center"><Loader2 className="animate-spin mx-auto text-[var(--aurora-3)]" size={24} /></div>}>
+            <IncidentReporting />
+          </Suspense>
+        )}
+        {activeTab === 'complaints' && isSecurity && (
+          <Suspense fallback={<div className="p-8 text-center"><Loader2 className="animate-spin mx-auto text-[var(--aurora-3)]" size={24} /></div>}>
+            <TenantComplaintAdmin />
+          </Suspense>
+        )}
+        {activeTab === 'visitor' && isSecurity && (
+          <Suspense fallback={<div className="p-8 text-center"><Loader2 className="animate-spin mx-auto text-[var(--aurora-3)]" size={24} /></div>}>
+            <VisitorManagement />
+          </Suspense>
+        )}
+
         {!isEmbedded && (
           <footer className="app-footer pb-28 lg:pb-8 mt-8">
             <span>© 2026 <strong className="text-[var(--aurora-3)]">Portal Operasional Sub-Admin</strong>. Hak Cipta Dilindungi.</span>
@@ -459,7 +534,13 @@ const SubAdminDashboard = ({ isEmbedded = false, initialTab = 'monitor', onCycle
           onNavClick={(tab) => setActiveTab(tab)}
           onToggleSidebar={() => {}}
           isSidebarOpen={false}
-          items={subAdminBottomNavItems}
+          items={isSecurity ? [
+            { id: 'monitor', label: 'Monitor', icon: Activity },
+            { id: 'approval', label: 'Persetujuan', icon: CheckCircle2 },
+            { id: 'patrol', label: 'Patroli', icon: ShieldCheck },
+            { id: 'incident', label: 'Insiden', icon: AlertTriangle },
+            { id: 'complaints', label: 'Komplain', icon: Building2 }
+          ] : subAdminBottomNavItems}
         />
       )}
     </div>
